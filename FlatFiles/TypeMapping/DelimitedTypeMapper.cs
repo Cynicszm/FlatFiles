@@ -839,13 +839,11 @@ namespace FlatFiles.TypeMapping
             return typedReader.ReadAll();
         }
 
-#if !NET451 && !NETSTANDARD1_6 && !NETSTANDARD2_0
         public IAsyncEnumerable<TEntity> ReadAsync(TextReader reader, DelimitedOptions? options = null)
         {
             var typedReader = GetReader(reader, options);
             return typedReader.ReadAllAsync();
         }
-#endif
 
         public IDelimitedTypedReader<TEntity> GetReader(TextReader reader, DelimitedOptions? options = null)
         {
@@ -886,7 +884,6 @@ namespace FlatFiles.TypeMapping
             return typedWriter.WriteAllAsync(entities);
         }
 
-#if !NET451 && !NETSTANDARD1_6 && !NETSTANDARD2_0
         public Task WriteAsync(TextWriter writer, IAsyncEnumerable<TEntity> entities, DelimitedOptions? options = null)
         {
             if (entities == null)
@@ -896,7 +893,6 @@ namespace FlatFiles.TypeMapping
             var typedWriter = GetWriter(writer, options);
             return typedWriter.WriteAllAsync(entities);
         }
-#endif
 
         public ITypedWriter<TEntity> GetWriter(TextWriter writer, DelimitedOptions? options = null)
         {
@@ -1107,14 +1103,12 @@ namespace FlatFiles.TypeMapping
             return untypedReader.ReadAll();
         }
 
-#if !NET451 && !NETSTANDARD1_6 && !NETSTANDARD2_0
         IAsyncEnumerable<object> IDynamicDelimitedTypeMapper.ReadAsync(TextReader reader, DelimitedOptions? options)
         {
             IDynamicDelimitedTypeMapper untypedMapper = this;
             var untypedReader = untypedMapper.GetReader(reader, options);
             return untypedReader.ReadAllAsync();
         }
-#endif
 
         IDelimitedTypedReader<object> IDynamicDelimitedTypeMapper.GetReader(TextReader reader, DelimitedOptions? options)
         {
@@ -1135,14 +1129,12 @@ namespace FlatFiles.TypeMapping
             return untypedWriter.WriteAllAsync(entities);
         }
 
-#if !NET451 && !NETSTANDARD1_6 && !NETSTANDARD2_0
         Task IDynamicDelimitedTypeMapper.WriteAsync(TextWriter writer, IAsyncEnumerable<object> entities, DelimitedOptions? options)
         {
             IDynamicDelimitedTypeMapper untypedMapper = this;
             var untypedWriter = untypedMapper.GetWriter(writer, options);
             return untypedWriter.WriteAllAsync(entities);
         }
-#endif
 
         ITypedWriter<object> IDynamicDelimitedTypeMapper.GetWriter(TextWriter writer, DelimitedOptions? options)
         {

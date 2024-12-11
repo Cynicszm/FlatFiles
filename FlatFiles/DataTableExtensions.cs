@@ -1,5 +1,4 @@
-﻿#if NET451 || NETSTANDARD2_0 || NETCOREAPP
-
+﻿
 using System;
 using System.Data;
 using System.Linq;
@@ -78,4 +77,3 @@ namespace FlatFiles
     }
 }
 
-#endif
