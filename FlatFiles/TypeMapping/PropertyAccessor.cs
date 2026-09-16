@@ -9,7 +9,7 @@ namespace FlatFiles.TypeMapping
 
         public IMemberAccessor? ParentAccessor { get; } = parent;
 
-        public string Name => ParentAccessor == null ? propertyInfo.Name : $"{ParentAccessor.Name}.{propertyInfo.Name}";
+        public string Name => ParentAccessor is null ? propertyInfo.Name : $"{ParentAccessor.Name}.{propertyInfo.Name}";
 
         public Type Type => propertyInfo.PropertyType;
 

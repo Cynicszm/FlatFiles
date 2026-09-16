@@ -41,7 +41,7 @@ namespace FlatFiles
         protected override DateTime OnParse(IColumnContext? context, string value)
         {
             var provider = FormatProvider ?? CultureInfo.CurrentCulture;
-            if (InputFormat == null)
+            if (InputFormat is null)
             {
                 return DateTime.Parse(value, provider);
             }
@@ -57,7 +57,7 @@ namespace FlatFiles
         protected override string OnFormat(IColumnContext? context, DateTime value)
         {
             var provider = GetFormatProvider(context, FormatProvider);
-            if (OutputFormat == null)
+            if (OutputFormat is null)
             {
                 return value.ToString(provider);
             }

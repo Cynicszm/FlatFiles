@@ -885,7 +885,7 @@ namespace FlatFiles
                 Type type = underlyingType ?? typeof(T);
                 if (record.IsDBNull(i))
                 {
-                    if (type.IsValueType && underlyingType == null)
+                    if (type.IsValueType && underlyingType is null)
                     {
                         throw new InvalidCastException();
                     }
@@ -928,7 +928,7 @@ namespace FlatFiles
         {
             try
             {
-                if (type.GetCustomAttribute(typeof(FlagsAttribute)) != null)
+                if (type.GetCustomAttribute(typeof(FlagsAttribute)) is not null)
                 {
                     return ToEnum(type, value);
                 }

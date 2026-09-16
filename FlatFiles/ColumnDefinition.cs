@@ -183,17 +183,17 @@ namespace FlatFiles
         public override object? Parse(IColumnContext? context, string value)
         {
 #pragma warning disable CS0618 // Type or member is obsolete
-            if (Preprocessor != null)
+            if (Preprocessor is not null)
             {
                 value = Preprocessor(value) ?? String.Empty;
             }
 #pragma warning restore CS0618 // Type or member is obsolete
-            if (OnParsing != null)
+            if (OnParsing is not null)
             {
                 value = OnParsing(context, value) ?? String.Empty;
             }
             object? result = ParseValue(context, value);
-            if (OnParsed != null)
+            if (OnParsed is not null)
             {
                 result = OnParsed(context, result);
             }
@@ -202,7 +202,7 @@ namespace FlatFiles
 
         private object? ParseValue(IColumnContext? context, string? value)
         {
-            if (value == null || NullFormatter.IsNullValue(context, value))
+            if (value is null || NullFormatter.IsNullValue(context, value))
             {
                 if (IsNullable)
                 {
@@ -241,12 +241,12 @@ namespace FlatFiles
         /// <returns>The formatted value.</returns>
         public override string Format(IColumnContext? context, object? value)
         {
-            if (OnFormatting != null)
+            if (OnFormatting is not null)
             {
                 value = OnFormatting(context, value);
             }
             string result = FormatValue(context, value);
-            if (OnFormatted != null)
+            if (OnFormatted is not null)
             {
                 result = OnFormatted(context, result) ?? String.Empty;
             }
@@ -255,7 +255,7 @@ namespace FlatFiles
 
         private string FormatValue(IColumnContext? context, object? value)
         {
-            if (value == null)
+            if (value is null)
             {
                 return NullFormatter.FormatNull(context) ?? String.Empty;
             }

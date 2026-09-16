@@ -1,4 +1,5 @@
-﻿using System;
+﻿using System.Globalization;
+using System;
 
 namespace FlatFiles
 {
@@ -8,13 +9,13 @@ namespace FlatFiles
     public sealed class RecordProcessingException : FlatFileException
     {
         internal RecordProcessingException(IRecordContext context, string message)
-            : base(String.Format(null, message, context.PhysicalRecordNumber))
+            : base(String.Format(CultureInfo.CurrentCulture, message, context.PhysicalRecordNumber))
         {
             RecordContext = context;
         }
 
         internal RecordProcessingException(IRecordContext context, string message, Exception innerException)
-            : base(String.Format(null, message, context.PhysicalRecordNumber), innerException)
+            : base(String.Format(CultureInfo.CurrentCulture, message, context.PhysicalRecordNumber), innerException)
         {
             RecordContext = context;
         }

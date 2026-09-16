@@ -40,7 +40,7 @@ namespace FlatFiles
                 ArgumentNullException.ThrowIfNull( table );
                 ArgumentNullException.ThrowIfNull( writer );
                 var schema = writer.GetSchema();
-                if (schema == null)
+                if (schema is null)
                 {
                     throw new FlatFileException(Resources.SchemaNotDefined);
                 }

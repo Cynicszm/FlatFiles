@@ -39,7 +39,7 @@ namespace FlatFiles
         /// <returns>The current selector to allow for further customization.</returns>
         public IDelimitedSchemaSelectorUseBuilder WithDefault(DelimitedSchema? schema)
         {
-            if (schema == null)
+            if (schema is null)
             {
                 defaultMatcher = nonMatcher;
             }

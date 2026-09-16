@@ -66,7 +66,7 @@ namespace FlatFiles
         /// <exception cref="FlatFileException">This column requires column-level context but it has been disabled.</exception>
         protected override string OnFormat(IColumnContext? context)
         {
-            if (context == null)
+            if (context is null)
             {
                 throw new FlatFileException(Resources.MetadataExpectingContext);
             }
@@ -82,7 +82,7 @@ namespace FlatFiles
         /// <exception cref="FlatFileException">This column requires column-level context but it has been disabled.</exception>
         protected override int OnParse(IColumnContext? context)
         {
-            if (context == null)
+            if (context is null)
             {
                 throw new FlatFileException(Resources.MetadataExpectingContext);
             }

@@ -53,7 +53,7 @@ namespace FlatFiles
         protected override string OnFormat(IColumnContext? context, byte value)
         {
             var provider = GetFormatProvider(context, FormatProvider);
-            if (OutputFormat == null)
+            if (OutputFormat is null)
             {
                 return value.ToString(provider);
             }

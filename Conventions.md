@@ -64,6 +64,19 @@ The changelog entries written before this rule was adopted are left as their aut
 - `var` is fine anywhere the type is obvious from the right-hand side, including for built-in types.
 - Do not convert a method to an expression body just because it fits on one line.
 
+## Null checks and slicing
+
+- `is null` and `is not null`, not `== null` and `!= null`. The pattern form cannot be intercepted by
+  an overloaded `operator ==`, so it means what it says regardless of the type. No type here overloads
+  the operator today, which is exactly why the rule is cheap to keep.
+- Prefer the range operator where the intent is a prefix, a suffix or everything after a point:
+  `value[..length]`, `value[^width..]`, `value[separator.Length..]`. Keep `Substring` for a slice taken
+  from an offset with an unrelated length, where the two-argument form still reads better.
+- Switch expressions over switch statements when every arm produces a value.
+- Pass the `IFormatProvider` explicitly rather than passing `null` and relying on the ambient culture.
+  `null` and `CultureInfo.CurrentCulture` behave identically, but only one of them tells the next
+  reader that the current culture was the intent rather than an oversight.
+
 ## Naming
 
 - Interfaces take an `I` prefix: `IColumnContext`.

@@ -7,7 +7,7 @@ namespace FlatFiles
         public ColumnContext(IRecordContext recordContext, int physicalIndex, int logicalIndex)
         {
             var schema = recordContext.ExecutionContext.Schema;
-            if (schema == null)
+            if (schema is null)
             {
                 throw new FlatFileException(Resources.SchemaNotDefined);
             }

@@ -31,7 +31,7 @@ namespace FlatFiles
         public override object? Parse(IColumnContext? context, string value)
         {
             var sourceValue = columnDefinition.Parse(context, value);
-            if (sourceValue == null)
+            if (sourceValue is null)
             {
                 return null;
             }
@@ -42,7 +42,7 @@ namespace FlatFiles
         /// <inheritdoc />
         public override string Format(IColumnContext? context, object? value)
         {
-            var destinationValue = value == null ? (object?)null : formatter((TDestination)value);
+            var destinationValue = value is null ? (object?)null : formatter((TDestination)value);
             var sourceValue = columnDefinition.Format(context, destinationValue);
             return sourceValue;
         }

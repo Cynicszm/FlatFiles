@@ -31,7 +31,7 @@ namespace FlatFiles
         /// <returns>The current selector to allow for further customization.</returns>
         public IFixedLengthSchemaSelectorUseBuilder WithDefault(FixedLengthSchema schema)
         {
-            if (schema == null)
+            if (schema is null)
             {
                 defaultMatcher = null;
             }
@@ -59,7 +59,7 @@ namespace FlatFiles
                     return matcher.Schema;
                 }
             }
-            if (defaultMatcher != null && defaultMatcher.Predicate(record))
+            if (defaultMatcher is not null && defaultMatcher.Predicate(record))
             {
                 defaultMatcher.Action?.Invoke();
                 return defaultMatcher.Schema;
@@ -112,7 +112,7 @@ namespace FlatFiles
 
             public void OnMatch(Action? action)
             {
-                if (matcher != null)
+                if (matcher is not null)
                 {
                     matcher.Action = action;
                 }

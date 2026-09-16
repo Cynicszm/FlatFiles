@@ -24,9 +24,9 @@ namespace FlatFiles
             separatorMatcher = RecordSeparatorMatcher.GetMatcher(reader, separator);
             var recordSeparator = options.RecordSeparator;
             recordSeparatorMatcher = RecordSeparatorMatcher.GetMatcher(reader, recordSeparator);
-            if (recordSeparator != null && recordSeparator.StartsWith(separator))
+            if (recordSeparator is not null && recordSeparator.StartsWith(separator))
             {
-                string postfix = recordSeparator.Substring(separator.Length);
+                string postfix = recordSeparator[separator.Length..];
                 postfixMatcher = RecordSeparatorMatcher.GetMatcher(reader, postfix);
             }
             separatorLength = Math.Max(recordSeparatorMatcher.Size, separator.Length);
@@ -380,7 +380,7 @@ namespace FlatFiles
             {
                 // This code handles the case where the separator is a substring of the record separator.
                 // We check to see if the remaining characters make up the record separator.
-                if (postfixMatcher != null && postfixMatcher.IsMatch())
+                if (postfixMatcher is not null && postfixMatcher.IsMatch())
                 {
                     return TokenType.EndOfRecord;
                 }
@@ -388,7 +388,7 @@ namespace FlatFiles
                 return TokenType.EndOfToken;
             }
 
-            if (postfixMatcher == null && recordSeparatorMatcher.IsMatch())
+            if (postfixMatcher is null && recordSeparatorMatcher.IsMatch())
             {
                 // If the separator is a substring of the record separator and we didn't find it,
                 // we won't find the record separator either.

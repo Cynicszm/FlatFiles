@@ -75,7 +75,7 @@ namespace FlatFiles.TypeMapping
         public object? Parse(IColumnContext? context, string value)
         {
             var parsed = column.Parse(context, value);
-            if (parsed == null)
+            if (parsed is null)
             {
                 return null;
             }

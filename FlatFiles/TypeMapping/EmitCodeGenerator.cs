@@ -1,8 +1,9 @@
-﻿using System;
+﻿using FlatFiles.Properties;
 using System.Collections.Concurrent;
-using System.Reflection;
+using System.Globalization;
 using System.Reflection.Emit;
-using FlatFiles.Properties;
+using System.Reflection;
+using System;
 
 namespace FlatFiles.TypeMapping
 {
@@ -35,7 +36,7 @@ namespace FlatFiles.TypeMapping
         {
             var entityType = typeof(TEntity);
             var constructorInfo = MemberAccessorBuilder.GetConstructor<TEntity>(Type.EmptyTypes);
-            if (constructorInfo == null)
+            if (constructorInfo is null)
             {
                 throw new FlatFileException(Resources.NoDefaultConstructor);
             }
@@ -68,11 +69,11 @@ namespace FlatFiles.TypeMapping
             for (int index = 0; index != mappings.Length; ++index)
             {
                 var mapping = mappings[index];
-                if (mapping.Member != null)
+                if (mapping.Member is not null)
                 {
                     EmitMemberRead(methodGenerator, mapping.Member, mapping.LogicalIndex);
                 }
-                else if (mapping.Reader != null)
+                else if (mapping.Reader is not null)
                 {
                     EmitCustomRead(methodGenerator, fieldBuilder, index);
                 }
@@ -100,9 +101,9 @@ namespace FlatFiles.TypeMapping
             else if (member.MemberInfo is PropertyInfo propertyInfo)
             {
                 MethodInfo? setter = propertyInfo.GetSetMethod(true);
-                if (setter == null)
+                if (setter is null)
                 {
-                    string message = String.Format(null, Resources.ReadOnlyProperty, propertyInfo.Name);
+                    string message = String.Format(CultureInfo.CurrentCulture, Resources.ReadOnlyProperty, propertyInfo.Name);
                     throw new FlatFileException(message);
                 }
                 generator.Emit(OpCodes.Unbox_Any, propertyInfo.PropertyType);
@@ -184,11 +185,11 @@ namespace FlatFiles.TypeMapping
             for (int index = 0; index != mappings.Length; ++index)
             {
                 var mapping = mappings[index];
-                if (mapping.Member != null)
+                if (mapping.Member is not null)
                 {
                     EmitMemberWrite(methodGenerator, mapping.Member, mapping.LogicalIndex);
                 }
-                else if (mapping.Writer != null)
+                else if (mapping.Writer is not null)
                 {
                     EmitCustomWrite<TEntity>(methodGenerator, fieldBuilder, index);
                 }
@@ -219,9 +220,9 @@ namespace FlatFiles.TypeMapping
             else if (member.MemberInfo is PropertyInfo propertyInfo)
             {
                 var getter = propertyInfo.GetGetMethod(true);
-                if (getter == null)
+                if (getter is null)
                 {
-                    string message = String.Format(null, Resources.WriteOnlyProperty, propertyInfo.Name);
+                    string message = String.Format(CultureInfo.CurrentCulture, Resources.WriteOnlyProperty, propertyInfo.Name);
                     throw new FlatFileException(message);
                 }
                 generator.Emit(OpCodes.Callvirt, getter);

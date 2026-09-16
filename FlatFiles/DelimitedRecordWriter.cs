@@ -18,7 +18,7 @@ namespace FlatFiles
         {
             this.writer = writer;
             this.schema = schema;
-            this.Options = options == null ? new DelimitedOptions() : options.Clone();
+            this.Options = options is null ? new DelimitedOptions() : options.Clone();
             this.quoteString = Options.Quote.ToString();
             this.doubleQuoteString = Options.Quote.ToString() + Options.Quote;
         }
@@ -58,7 +58,7 @@ namespace FlatFiles
         private string FormatAndJoinValues(object?[] values)
         {
             var schema = GetSchema(values);
-            if (schema == null)
+            if (schema is null)
             {
                 schema = DelimitedSchema.BuildDynamicSchema(Options, values.Length);
             }
@@ -86,7 +86,7 @@ namespace FlatFiles
 
         internal DelimitedSchema? GetSchema(object?[] values)
         {
-            if (injector == null)
+            if (injector is null)
             {
                 return schema;
             }
@@ -96,7 +96,7 @@ namespace FlatFiles
         private string[] FormatValues(DelimitedRecordContext recordContext, object?[] values)
         {
             var schema = recordContext.ExecutionContext.Schema;
-            if (schema == null)
+            if (schema is null)
             {
                 string[] results = new string[values.Length];
                 for (int index = 0; index != results.Length; ++index)
@@ -124,7 +124,7 @@ namespace FlatFiles
 
         private string Escape(string? value)
         {
-            if (value == null)
+            if (value is null)
             {
                 return String.Empty;
             }
@@ -161,7 +161,7 @@ namespace FlatFiles
                 return true;
             }
             // Escape strings containing the record separator.
-            if (Options.RecordSeparator != null && value.Contains(Options.RecordSeparator))
+            if (Options.RecordSeparator is not null && value.Contains(Options.RecordSeparator))
             {
                 return true;
             }
@@ -175,7 +175,7 @@ namespace FlatFiles
 
         public void WriteSchema()
         {
-            if (schema == null)
+            if (schema is null)
             {
                 return;
             }
@@ -185,7 +185,7 @@ namespace FlatFiles
 
         public async Task WriteSchemaAsync()
         {
-            if (schema == null)
+            if (schema is null)
             {
                 return;
             }

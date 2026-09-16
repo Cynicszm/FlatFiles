@@ -14,7 +14,7 @@
             int length = value.Length;
             if (length >= 2 && value[length - 2] == first && value[length - 1] == second)
             {
-                return value.Substring(0, length - 2);
+                return value[..(length - 2)];
             }
             return value;
         }

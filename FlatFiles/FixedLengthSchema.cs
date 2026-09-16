@@ -50,11 +50,11 @@ namespace FlatFiles
         {
             get
             {
-                if (trailing == null)
+                if (trailing is null)
                 {
                     return base.ColumnDefinitions;
                 }
-                else if (cachedColumns == null)
+                else if (cachedColumns is null)
                 {
                     var copy = new ColumnCollection(base.ColumnDefinitions);
                     copy.AddColumn(trailing);

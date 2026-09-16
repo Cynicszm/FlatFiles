@@ -27,7 +27,7 @@ namespace FlatFiles.TypeMapping
 
         private static Action<IColumnContext?, TEntity, object?>? GetReader<TProp>(Expression<Func<TEntity, TProp>>? reader)
         {
-            if (reader == null)
+            if (reader is null)
             {
                 return null;
             }
@@ -46,7 +46,7 @@ namespace FlatFiles.TypeMapping
 
         private static Expression GetMemberExpression(Expression entityParameter, Expression expression)
         {
-            if (expression == null || expression is not MemberExpression memberExpression)
+            if (expression is null || expression is not MemberExpression memberExpression)
             {
                 throw new ArgumentException(Resources.BadPropertySelector, nameof(expression));
             }
@@ -74,19 +74,19 @@ namespace FlatFiles.TypeMapping
 
         public ICustomMapping<TEntity> WithReader(Action<TEntity, object?>? reader)
         {
-            Reader = reader == null ? null : (ctx, e, v) => reader((TEntity)e!, v);
+            Reader = reader is null ? null : (ctx, e, v) => reader((TEntity)e!, v);
             return this;
         }
 
         public ICustomMapping<TEntity> WithReader(Action<IColumnContext?, TEntity, object?>? reader)
         {
-            Reader = reader == null ? null : (ctx, e, v) => reader(ctx, (TEntity)e!, v);
+            Reader = reader is null ? null : (ctx, e, v) => reader(ctx, (TEntity)e!, v);
             return this;
         }
 
         ICustomMapping ICustomMapping.WithReader(Action<object?, object?>? reader)
         {
-            Reader = reader == null ? null : (ctx, e, v) => reader(e, v);
+            Reader = reader is null ? null : (ctx, e, v) => reader(e, v);
             return this;
         }
 
@@ -98,19 +98,19 @@ namespace FlatFiles.TypeMapping
 
         public ICustomMapping<TEntity> WithWriter(Action<TEntity, object?[]>? writer)
         {
-            Writer = writer == null ? null : (ctx, e, v) => writer((TEntity)e!, v);
+            Writer = writer is null ? null : (ctx, e, v) => writer((TEntity)e!, v);
             return this;
         }
 
         public ICustomMapping<TEntity> WithWriter(Action<IColumnContext?, TEntity, object?[]>? writer)
         {
-            Writer = writer == null ? null : (ctx, e, v) => writer(ctx, (TEntity)e!, v);
+            Writer = writer is null ? null : (ctx, e, v) => writer(ctx, (TEntity)e!, v);
             return this;
         }
 
         ICustomMapping ICustomMapping.WithWriter(Action<object?, object?[]>? writer)
         {
-            Writer = writer == null ? null : (ctx, e, v) => writer(e, v);
+            Writer = writer is null ? null : (ctx, e, v) => writer(e, v);
             return this;
         }
 
@@ -122,7 +122,7 @@ namespace FlatFiles.TypeMapping
 
         public ICustomMapping<TEntity> WithWriter<TProp>(Func<TEntity, TProp>? writer)
         {
-            Writer = writer == null ? null : (ctx, e, v) =>
+            Writer = writer is null ? null : (ctx, e, v) =>
             {
                 v[LogicalIndex] = writer((TEntity)e!);
             };
@@ -131,7 +131,7 @@ namespace FlatFiles.TypeMapping
 
         public ICustomMapping<TEntity> WithWriter<TProp>(Func<IColumnContext?, TEntity, TProp>? writer)
         {
-            Writer = writer == null ? null : (ctx, e, v) =>
+            Writer = writer is null ? null : (ctx, e, v) =>
             {
                 v[LogicalIndex] = writer(ctx, (TEntity)e!);
             };
@@ -140,7 +140,7 @@ namespace FlatFiles.TypeMapping
 
         ICustomMapping ICustomMapping.WithWriter(Func<object?, object?>? writer)
         {
-            Writer = writer == null ? null : (ctx, e, v) =>
+            Writer = writer is null ? null : (ctx, e, v) =>
             {
                 v[LogicalIndex] = writer(e);
             };
@@ -149,7 +149,7 @@ namespace FlatFiles.TypeMapping
 
         ICustomMapping ICustomMapping.WithWriter(Func<IColumnContext?, object?, object?>? writer)
         {
-            Writer = writer == null ? null : (ctx, e, v) =>
+            Writer = writer is null ? null : (ctx, e, v) =>
             {
                 v[LogicalIndex] = writer(ctx, e);
             };

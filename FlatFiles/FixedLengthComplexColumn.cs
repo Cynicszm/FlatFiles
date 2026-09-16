@@ -61,7 +61,7 @@ namespace FlatFiles
         /// <returns>A formatted string containing the embedded data.</returns>
         protected override string OnFormat(IColumnContext? context, object?[]? values)
         {
-            if (values == null)
+            if (values is null)
             {
                 return String.Empty;
             }
