@@ -3,15 +3,9 @@ using System.Threading.Tasks;
 
 namespace FlatFiles.TypeMapping
 {
-    internal sealed class MultiplexingDelimitedTypedReader : IDelimitedTypedReader<object>
+    internal sealed class MultiplexingDelimitedTypedReader(DelimitedReader reader) : IDelimitedTypedReader<object>
     {
-        private readonly DelimitedReader reader;
         private object? current;
-
-        public MultiplexingDelimitedTypedReader(DelimitedReader reader)
-        {
-            this.reader = reader;
-        }
 
         public IReader Reader => reader;
 

@@ -16,7 +16,7 @@ namespace FlatFiles
         {
             this.writer = writer;
             this.schema = schema;
-            Options = options == null ? new FixedLengthOptions() : options.Clone();
+            Options = options is null ? new FixedLengthOptions() : options.Clone();
         }
 
         public FixedLengthRecordWriter(TextWriter writer, FixedLengthSchemaInjector injector, FixedLengthOptions? options)
@@ -73,7 +73,7 @@ namespace FlatFiles
 
         public FixedLengthSchema GetSchema(object?[] values)
         {
-            return injector == null ? schema! : injector.GetSchema(values);
+            return injector is null ? schema! : injector.GetSchema(values);
         }
 
         private FixedLengthRecordContext NewRecordContext(FixedLengthSchema schema, string? record, string[]? values)
@@ -116,7 +116,7 @@ namespace FlatFiles
 
         public void WriteSchema()
         {
-            if (schema == null)
+            if (schema is null)
             {
                 return;
             }
@@ -135,7 +135,7 @@ namespace FlatFiles
 
         public async Task WriteSchemaAsync()
         {
-            if (schema == null)
+            if (schema is null)
             {
                 return;
             }
@@ -154,7 +154,7 @@ namespace FlatFiles
 
         private string FitWidth(Window window, string? value)
         {
-            if (value == null)
+            if (value is null)
             {
                 value = String.Empty;
             }
@@ -172,18 +172,13 @@ namespace FlatFiles
         private string GetTruncatedValue(string value, Window window)
         {
             var policy = window.TruncationPolicy ?? Options.TruncationPolicy;
-            switch (policy)
+            return policy switch
             {
-                case OverflowTruncationPolicy.TruncateLeading:
-                    int start = value.Length - window.Width;  // take characters on the end
-                    return value.Substring(start, window.Width);
-                case OverflowTruncationPolicy.TruncateTrailing:
-                    return value.Substring(0, window.Width);
-                case OverflowTruncationPolicy.ThrowException:
-                    throw new FlatFileException(Resources.ValueExceedsWindowWidth);
-                default:
-                    throw new FlatFileException(Resources.InvalidTruncationPolicy);
-            }            
+                OverflowTruncationPolicy.TruncateLeading => value[^window.Width..],
+                OverflowTruncationPolicy.TruncateTrailing => value[..window.Width],
+                OverflowTruncationPolicy.ThrowException => throw new FlatFileException(Resources.ValueExceedsWindowWidth),
+                _ => throw new FlatFileException(Resources.InvalidTruncationPolicy)
+            };
         }
 
         private string GetPaddedValue(string value, Window window)

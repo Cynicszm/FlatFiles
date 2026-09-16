@@ -3,18 +3,8 @@ using System.Text;
 
 namespace FlatFiles.TypeMapping
 {
-    internal sealed class ByteArrayPropertyMapping : IByteArrayPropertyMapping, IMemberMapping
+    internal sealed class ByteArrayPropertyMapping(ByteArrayColumn column, IMemberAccessor member, int physicalIndex, int logicalIndex) : IByteArrayPropertyMapping, IMemberMapping
     {
-        private readonly ByteArrayColumn column;
-
-        public ByteArrayPropertyMapping(ByteArrayColumn column, IMemberAccessor member, int physicalIndex, int logicalIndex)
-        {
-            this.column = column;
-            Member = member;
-            PhysicalIndex = physicalIndex;
-            LogicalIndex = logicalIndex;
-        }
-
         public IByteArrayPropertyMapping ColumnName(string name)
         {
             column.ColumnName = name;
@@ -77,7 +67,7 @@ namespace FlatFiles.TypeMapping
             return this;
         }
 
-        public IMemberAccessor Member { get; }
+        public IMemberAccessor Member { get; } = member;
 
         public Action<IColumnContext?, object?, object?>? Reader => null;
 
@@ -85,8 +75,8 @@ namespace FlatFiles.TypeMapping
 
         public IColumnDefinition ColumnDefinition => column;
 
-        public int PhysicalIndex { get; }
+        public int PhysicalIndex { get; } = physicalIndex;
 
-        public int LogicalIndex { get; }
+        public int LogicalIndex { get; } = logicalIndex;
     }
 }

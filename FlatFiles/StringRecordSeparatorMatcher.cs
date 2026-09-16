@@ -1,16 +1,7 @@
 ﻿namespace FlatFiles
 {
-    internal sealed class StringRecordSeparatorMatcher : IRecordSeparatorMatcher
+    internal sealed class StringRecordSeparatorMatcher(RetryReader reader, string separator) : IRecordSeparatorMatcher
     {
-        private readonly RetryReader reader;
-        private readonly string separator;
-
-        public StringRecordSeparatorMatcher(RetryReader reader, string separator)
-        {
-            this.reader = reader;
-            this.separator = separator;
-        }
-
         public int Size => separator.Length;
 
         public bool IsMatch()
@@ -22,7 +13,7 @@
         {
             if (value.EndsWith(separator))
             {
-                return value.Substring(0, value.Length - separator.Length);
+                return value[..^separator.Length];
             }
             return value;
         }

@@ -8,7 +8,7 @@ namespace FlatFiles
     /// </summary>
     public sealed class FixedLengthSchema : Schema
     {
-        private readonly List<Window> windows = new();
+        private readonly List<Window> windows = [];
         private ColumnCollection? cachedColumns;
         private IColumnDefinition? trailing;
 
@@ -27,10 +27,7 @@ namespace FlatFiles
         /// <returns>The current schema.</returns>
         public FixedLengthSchema AddColumn(IColumnDefinition definition, Window window)
         {
-            if (window == null)
-            {
-                throw new ArgumentNullException(nameof(window));
-            }
+            ArgumentNullException.ThrowIfNull( window );
             if (window == Window.Trailing)
             {
                 trailing = definition;
@@ -53,11 +50,11 @@ namespace FlatFiles
         {
             get
             {
-                if (trailing == null)
+                if (trailing is null)
                 {
                     return base.ColumnDefinitions;
                 }
-                else if (cachedColumns == null)
+                else if (cachedColumns is null)
                 {
                     var copy = new ColumnCollection(base.ColumnDefinitions);
                     copy.AddColumn(trailing);

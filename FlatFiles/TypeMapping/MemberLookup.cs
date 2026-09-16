@@ -51,7 +51,7 @@ namespace FlatFiles.TypeMapping
 
         public IMemberMapping[] GetMappings()
         {
-            return lookup.Values.OrderBy(m => m.PhysicalIndex).ToArray();
+            return [.. lookup.Values.OrderBy(m => m.PhysicalIndex)];
         }
 
         public Func<TEntity>? GetFactory<TEntity>()

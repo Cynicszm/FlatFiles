@@ -2,16 +2,11 @@
 
 namespace FlatFiles
 {
-    internal sealed class FixedLengthRecordContext : IFixedLengthRecordContext, IRecoverableRecordContext
+    internal sealed class FixedLengthRecordContext(FixedLengthExecutionContext executionContext) : IFixedLengthRecordContext, IRecoverableRecordContext
     {
-        public FixedLengthRecordContext(FixedLengthExecutionContext executionContext)
-        {
-            ExecutionContext = executionContext;
-        }
-
         public event EventHandler<ColumnErrorEventArgs>? ColumnError;
 
-        public FixedLengthExecutionContext ExecutionContext { get; }
+        public FixedLengthExecutionContext ExecutionContext { get; } = executionContext;
 
         public int PhysicalRecordNumber { get; set; }
 
@@ -25,7 +20,7 @@ namespace FlatFiles
 
         IExecutionContext IRecordContext.ExecutionContext => ExecutionContext;
 
-        public bool HasHandler => ColumnError != null;
+        public bool HasHandler => ColumnError is not null;
 
         public void ProcessError(object sender, ColumnErrorEventArgs e)
         {

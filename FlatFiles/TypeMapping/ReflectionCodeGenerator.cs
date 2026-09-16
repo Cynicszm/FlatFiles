@@ -16,12 +16,12 @@ namespace FlatFiles.TypeMapping
                 for (int index = 0; index != mappings.Length; ++index)
                 {
                     var mapping = mappings[index];
-                    if (mapping.Member != null)
+                    if (mapping.Member is not null)
                     {
                         var value = values[mapping.LogicalIndex];
                         mapping.Member.SetValue(entity!, value);
                     }
-                    else if (mapping.Reader != null)
+                    else if (mapping.Reader is not null)
                     {
                         var columnContext = GetColumnContext(recordContext, mapping);
                         var value = values[mapping.LogicalIndex];
@@ -40,12 +40,12 @@ namespace FlatFiles.TypeMapping
                 for (int index = 0; index != mappings.Length; ++index)
                 {
                     IMemberMapping mapping = mappings[index];
-                    if (mapping.Member != null)
+                    if (mapping.Member is not null)
                     {
                         object? value = mapping.Member.GetValue(entity!);
                         values[mapping.LogicalIndex] = value;
                     }
-                    else if (mapping.Writer != null)
+                    else if (mapping.Writer is not null)
                     {
                         var columnContext = GetColumnContext(recordContext, mapping);
                         mapping.Writer(columnContext, entity, values);

@@ -17,8 +17,8 @@ namespace FlatFiles.TypeMapping
         {
             string[] memberNames = memberName.Split('.');
             var member = GetMember(typeof(TEntity), memberNames, 0, null);
-            if (propertyType != null 
-                && member != null
+            if (propertyType is not null 
+                && member is not null
                 && member.Type != propertyType 
                 && member.Type != Nullable.GetUnderlyingType(propertyType))
             {
@@ -35,13 +35,13 @@ namespace FlatFiles.TypeMapping
             }
             string memberName = memberNames[nameIndex];
             var propertyInfo = GetProperty(entityType, memberName);
-            if (propertyInfo != null)
+            if (propertyInfo is not null)
             {
                 var accessor = new PropertyAccessor(propertyInfo, parent);
                 return GetMember(propertyInfo.PropertyType, memberNames, nameIndex + 1, accessor);
             }
             var fieldInfo = GetField(entityType, memberName);
-            if (fieldInfo != null)
+            if (fieldInfo is not null)
             {
                 var accessor = new FieldAccessor(fieldInfo, parent);
                 return GetMember(fieldInfo.FieldType, memberNames, nameIndex + 1, accessor);
@@ -63,10 +63,7 @@ namespace FlatFiles.TypeMapping
 
         public static IMemberAccessor GetMember<TEntity, TProp>(Expression<Func<TEntity, TProp>> accessor)
         {
-            if (accessor == null)
-            {
-                throw new ArgumentNullException(nameof(accessor));
-            }
+            ArgumentNullException.ThrowIfNull( accessor );
             return GetMember<TEntity>(accessor.Body);
         }
 
@@ -83,6 +80,12 @@ namespace FlatFiles.TypeMapping
                     return new PropertyAccessor(propertyInfo, null);
                 }
 
+                if (member.Expression is null)
+                {
+                    // A nested member needs an instance to read from. A static member has none, and
+                    // recursing on the null would surface as a NullReferenceException from inside.
+                    throw new ArgumentException(Resources.BadPropertySelector, nameof(expression));
+                }
                 IMemberAccessor parentAccessor = GetMember<TEntity>(member.Expression);
                 return new PropertyAccessor(propertyInfo, parentAccessor);
             }
@@ -94,6 +97,12 @@ namespace FlatFiles.TypeMapping
                     return new FieldAccessor(fieldInfo, null);
                 }
 
+                if (member.Expression is null)
+                {
+                    // A nested member needs an instance to read from. A static member has none, and
+                    // recursing on the null would surface as a NullReferenceException from inside.
+                    throw new ArgumentException(Resources.BadPropertySelector, nameof(expression));
+                }
                 IMemberAccessor parentAccessor = GetMember<TEntity>(member.Expression);
                 return new FieldAccessor(fieldInfo, parentAccessor);
             }

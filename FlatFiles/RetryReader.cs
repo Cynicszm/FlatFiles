@@ -5,17 +5,11 @@ using System.Threading.Tasks;
 
 namespace FlatFiles
 {
-    internal sealed class RetryReader
+    internal sealed class RetryReader(TextReader reader, bool preserveRecordText = true)
     {
         private readonly StringBuilder record = new();
         private readonly CircularQueue<char> queue = new(4096);
-        private readonly TextReader reader;
         private bool isEndOfStreamFound;
-
-        public RetryReader(TextReader reader)
-        {
-            this.reader = reader;
-        }
 
         public bool IsEndOfStream()
         {
@@ -48,24 +42,24 @@ namespace FlatFiles
             {
                 return;
             }
-            var segment = queue.PrepareBlock();
-            int length = reader.ReadBlock(segment.Array!, segment.Offset, segment.Count);
-            if (length < segment.Count)
+            var block = queue.PrepareBlock();
+            int length = reader.ReadBlock(block.Span);
+            if (length < block.Length)
             {
                 isEndOfStreamFound = true;
             }
             queue.RecordGrowth(length);
         }
 
-        public async Task LoadBufferAsync()
+        public async ValueTask LoadBufferAsync()
         {
             if (isEndOfStreamFound)
             {
                 return;
             }
-            var segment = queue.PrepareBlock();
-            int length = await reader.ReadBlockAsync(segment.Array!, segment.Offset, segment.Count).ConfigureAwait(false);
-            if (length < segment.Count)
+            var block = queue.PrepareBlock();
+            int length = await reader.ReadBlockAsync(block).ConfigureAwait(false);
+            if (length < block.Length)
             {
                 isEndOfStreamFound = true;
             }
@@ -126,6 +120,14 @@ namespace FlatFiles
 
         public string GetRecord()
         {
+            // The characters are appended either way: the appends themselves cost nothing, because
+            // the builder reuses its chunk after Clear. Materialising the string is the whole cost,
+            // so that is what gets skipped.
+            if (!preserveRecordText)
+            {
+                this.record.Clear();
+                return String.Empty;
+            }
             string record = this.record.ToString();
             this.record.Clear();
             return record;

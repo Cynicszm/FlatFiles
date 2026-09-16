@@ -20,7 +20,7 @@ namespace FlatFiles
             {
                 recordReader = new SeparatorRecordReader(reader, options.RecordSeparator);
             }
-            else if (schema == null)
+            else if (schema is null)
             {
                 throw new FlatFileException(Resources.RecordSeparatorRequired);
             }
@@ -68,7 +68,9 @@ namespace FlatFiles
 
             public SeparatorRecordReader(TextReader reader, string? separator)
             {
-                this.reader = new RetryReader(reader);
+                // Fixed-length reads its column values out of the record text, so unlike the
+                // delimited reader it can never skip capturing it.
+                this.reader = new RetryReader(reader, preserveRecordText: true);
                 matcher = RecordSeparatorMatcher.GetMatcher(this.reader, separator);
             }
 
@@ -144,7 +146,7 @@ namespace FlatFiles
                 {
                     return true;
                 }
-                length = reader.ReadBlock(buffer, 0, buffer.Length);
+                length = reader.ReadBlock(buffer);
                 if (length == 0)
                 {
                     isEndOfStream = true;
@@ -159,7 +161,7 @@ namespace FlatFiles
                 {
                     return true;
                 }
-                length = await reader.ReadBlockAsync(buffer, 0, buffer.Length).ConfigureAwait(false);
+                length = await reader.ReadBlockAsync(buffer).ConfigureAwait(false);
                 if (length == 0)
                 {
                     isEndOfStream = true;

@@ -9,7 +9,7 @@ namespace FlatFiles
     public sealed class DelimitedSchemaSelector
     {
         private static readonly SchemaMatcher nonMatcher = new(null, values => false);
-        private readonly List<SchemaMatcher> matchers = new();
+        private readonly List<SchemaMatcher> matchers = [];
         private SchemaMatcher defaultMatcher = nonMatcher;
 
         /// <summary>
@@ -28,10 +28,7 @@ namespace FlatFiles
         /// <remarks>Previously registered schemas will be used if their predicates match.</remarks>
         public IDelimitedSchemaSelectorWhenBuilder When(Func<string[], bool> predicate)
         {
-            if (predicate == null)
-            {
-                throw new ArgumentNullException(nameof(predicate));
-            }
+            ArgumentNullException.ThrowIfNull( predicate );
             return new DelimitedSchemaSelectorWhenBuilder(this, predicate);
         }
 
@@ -42,7 +39,7 @@ namespace FlatFiles
         /// <returns>The current selector to allow for further customization.</returns>
         public IDelimitedSchemaSelectorUseBuilder WithDefault(DelimitedSchema? schema)
         {
-            if (schema == null)
+            if (schema is null)
             {
                 defaultMatcher = nonMatcher;
             }
@@ -106,10 +103,7 @@ namespace FlatFiles
 
             public IDelimitedSchemaSelectorUseBuilder Use(DelimitedSchema schema)
             {
-                if (schema == null)
-                {
-                    throw new ArgumentNullException(nameof(schema));
-                }
+                ArgumentNullException.ThrowIfNull( schema );
                 var matcher = selector.Add(schema, predicate);
                 return new DelimitedSchemaSelectorUseBuilder(matcher);
             }

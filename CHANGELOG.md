@@ -5,7 +5,15 @@ The previous release built for .NET 8 and .NET 9. Both targets are dropped in fa
 
 Five .NET Framework-era compatibility packages were still being referenced, every one of which is part of the shared framework on modern .NET: `System.Net.Http`, `System.Text.RegularExpressions`, `System.ValueTuple`, `System.Threading.Tasks.Extensions` and, in the test project, `System.Data.DataSetExtensions`. None of them contributed anything to the build. `System.Net.Http` 4.3.4 is the one worth calling out, because it carries a published advisory that trips package audits in consuming solutions. With all five gone, the NuGet package now declares no dependencies at all.
 
-The `LangVersion 9.0` pin was removed at the same time, so the library compiles at the C# 14 default that comes with `net10.0`. No source was rewritten to use newer language features in this release, and there are no API changes.
+The `LangVersion 9.0` pin was removed at the same time, so the library compiles at the C# 14 default that comes with `net10.0`.
+
+**Breaking:** `IRecordContext.Record` is now an empty string for delimited files unless you ask for it. The reader was building a string of each record's original text so it could be handed to you through that property, and nothing in parsing needs it - the column values are tokenised separately, and a schema selector is given those values rather than the text. For a caller who never read it, that string was the single largest avoidable cost of reading a file: over 50,000 records it measured as 9.5 MB of the 49.2 MB the reader allocated, a fifth of the total. The new `DelimitedOptions.PreserveRecordText` defaults to `false` and skips it.
+
+If you read `IRecordContext.Record` on a delimited file, set `PreserveRecordText = true` and you get the old behaviour back exactly. Nothing else changes: the parsed values are identical either way, and throughput is the same to within a millisecond or two on a 50,000 record read - what this buys is allocation and the GC pressure that comes with it, not wall-clock time.
+
+One consequence worth knowing before you take the default: this applies to the error path too. A `RecordError` or `ColumnError` handler that logged `e.RecordContext.Record` to show which line failed to parse now logs an empty string, leaving the physical record number as the identifier. The exception messages themselves are unchanged, since they format the record number rather than the text. Set `PreserveRecordText = true` if your error handling reads it.
+
+Fixed-length files are unaffected and have no such option. That reader takes its column values out of the record text with `Substring`, so it always has the text and always reports it.
 
 ## 6.0.4 (2024-12-11)
 **Summary** - Replace the .NET Framework and .NET Standard targets with .NET 8 and .NET 9, and strip out the conditional compilation those older targets needed.

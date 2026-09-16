@@ -14,9 +14,6 @@ namespace FlatFiles
         /// </summary>
         public static readonly Window Trailing = new();
 
-        private FixedAlignment? alignment;
-        private OverflowTruncationPolicy? truncationPolicy;
-
         /// <summary>
         /// Initializes a new instance of a Window representing the trailing data in a record.
         /// </summary>
@@ -48,14 +45,14 @@ namespace FlatFiles
         /// </summary>
         public FixedAlignment? Alignment
         {
-            get => alignment;
+            get => field;
             set
             {
-                if (value != null && !Enum.IsDefined(typeof(FixedAlignment), value.Value))
+                if (value is not null && !Enum.IsDefined(value.Value))
                 {
                     throw new ArgumentException(Resources.InvalidAlignment, nameof(value));
                 }
-                alignment = value;
+                field = value;
             }
         }
 
@@ -70,14 +67,14 @@ namespace FlatFiles
         /// </summary>
         public OverflowTruncationPolicy? TruncationPolicy 
         {
-            get => truncationPolicy;
+            get => field;
             set
             {
-                if (value != null && !Enum.IsDefined(typeof(OverflowTruncationPolicy), value.Value))
+                if (value is not null && !Enum.IsDefined(value.Value))
                 {
                     throw new ArgumentException(Resources.InvalidTruncationPolicy, nameof(value));
                 }
-                truncationPolicy = value;
+                field = value;
             }
         }
 

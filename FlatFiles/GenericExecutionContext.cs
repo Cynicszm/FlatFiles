@@ -1,15 +1,9 @@
 ﻿namespace FlatFiles
 {
-    internal class GenericExecutionContext : IExecutionContext
+    internal class GenericExecutionContext(ISchema? schema, IOptions options) : IExecutionContext
     {
-        public GenericExecutionContext(ISchema? schema, IOptions options)
-        {
-            Schema = schema;
-            Options = options;
-        }
+        public ISchema? Schema { get; } = schema;
 
-        public ISchema? Schema { get; }
-
-        public IOptions Options { get; }
+        public IOptions Options { get; } = options;
     }
 }

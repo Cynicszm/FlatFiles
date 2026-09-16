@@ -9,7 +9,7 @@
     <RepositoryUrl>https://github.com/jehugaleahsa/FlatFiles.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>csv;comma;tab;separated;value;delimited;flat;file;fixed;width;fixed-width;length;fixed-length;parser;parsing;parse</PackageTags>
-    <PackageReleaseNotes>Targets .NET 10 exclusively; .NET 8 and .NET 9 are no longer supported, so stay on 6.0.4 if you need them. The deprecated System.* compatibility packages have been removed and the package now declares no dependencies.</PackageReleaseNotes>
+    <PackageReleaseNotes>Targets .NET 10 exclusively; .NET 8 and .NET 9 are no longer supported, so stay on 6.0.4 if you need them. The deprecated System.* compatibility packages have been removed and the package now declares no dependencies. BREAKING: IRecordContext.Record is now empty for delimited files unless DelimitedOptions.PreserveRecordText is set to true. Skipping that text removes about a fifth of the allocation from reading a delimited file.</PackageReleaseNotes>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>FlatFiles.snk</AssemblyOriginatorKeyFile>
     <Version>7.0.0</Version>

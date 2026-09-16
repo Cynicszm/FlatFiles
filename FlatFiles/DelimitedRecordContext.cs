@@ -2,16 +2,11 @@
 
 namespace FlatFiles
 {
-    internal sealed class DelimitedRecordContext : IDelimitedRecordContext, IRecoverableRecordContext
+    internal sealed class DelimitedRecordContext(DelimitedExecutionContext executionContext) : IDelimitedRecordContext, IRecoverableRecordContext
     {
-        public DelimitedRecordContext(DelimitedExecutionContext executionContext)
-        {
-            ExecutionContext = executionContext;
-        }
-
         public event EventHandler<ColumnErrorEventArgs>? ColumnError;
 
-        public DelimitedExecutionContext ExecutionContext { get; set; }
+        public DelimitedExecutionContext ExecutionContext { get; set; } = executionContext;
 
         public int PhysicalRecordNumber { get; set; }
 
@@ -25,7 +20,7 @@ namespace FlatFiles
 
         IExecutionContext IRecordContext.ExecutionContext => ExecutionContext;
 
-        public bool HasHandler => ColumnError != null;
+        public bool HasHandler => ColumnError is not null;
 
         public void ProcessError(object sender, ColumnErrorEventArgs e)
         {

@@ -32,10 +32,7 @@ namespace FlatFiles.TypeMapping
         /// <returns>The configuration object.</returns>
         public static IFixedLengthTypeMapper<TEntity> Define<TEntity>(Func<TEntity> factory)
         {
-            if (factory == null)
-            {
-                throw new ArgumentNullException(nameof(factory));
-            }
+            ArgumentNullException.ThrowIfNull( factory );
             return new FixedLengthTypeMapper<TEntity>(factory);
         }
 
@@ -47,10 +44,7 @@ namespace FlatFiles.TypeMapping
         /// <remarks>The entity type must have a default constructor.</remarks>
         public static IDynamicFixedLengthTypeMapper DefineDynamic(Type entityType)
         {
-            if (entityType == null)
-            {
-                throw new ArgumentNullException(nameof(entityType));
-            }
+            ArgumentNullException.ThrowIfNull( entityType );
             var mapperType = typeof(FixedLengthTypeMapper<>).MakeGenericType(entityType);
             var mapper = Activator.CreateInstance(mapperType)!;
             return (IDynamicFixedLengthTypeMapper)mapper;
@@ -65,14 +59,8 @@ namespace FlatFiles.TypeMapping
         /// <remarks>The entity type must have a default constructor.</remarks>
         public static IDynamicFixedLengthTypeMapper DefineDynamic(Type entityType, Func<object> factory)
         {
-            if (entityType == null)
-            {
-                throw new ArgumentNullException(nameof(entityType));
-            }
-            if (factory == null)
-            {
-                throw new ArgumentNullException(nameof(factory));
-            }
+            ArgumentNullException.ThrowIfNull( entityType );
+            ArgumentNullException.ThrowIfNull( factory );
             var mapperType = typeof(FixedLengthTypeMapper<>).MakeGenericType(entityType);
             var mapper = Activator.CreateInstance(mapperType, factory)!;
             return (IDynamicFixedLengthTypeMapper)mapper;
@@ -100,7 +88,7 @@ namespace FlatFiles.TypeMapping
 
         public FixedLengthTypeMapper(Func<TEntity>? factory)
         {
-            if (factory != null)
+            if (factory is not null)
             {
                 lookup.SetFactory(factory);
             }
@@ -660,30 +648,21 @@ namespace FlatFiles.TypeMapping
 
         public void Write(TextWriter writer, IEnumerable<TEntity> entities, FixedLengthOptions? options = null)
         {
-            if (entities == null)
-            {
-                throw new ArgumentNullException(nameof(entities));
-            }
+            ArgumentNullException.ThrowIfNull( entities );
             var typedWriter = GetWriter(writer, options);
             typedWriter.WriteAll(entities);
         }
 
         public Task WriteAsync(TextWriter writer, IEnumerable<TEntity> entities, FixedLengthOptions? options = null)
         {
-            if (entities == null)
-            {
-                throw new ArgumentNullException(nameof(entities));
-            }
+            ArgumentNullException.ThrowIfNull( entities );
             var typedWriter = GetWriter(writer, options);
             return typedWriter.WriteAllAsync(entities);
         }
 
         public Task WriteAsync(TextWriter writer, IAsyncEnumerable<TEntity> entities, FixedLengthOptions? options = null)
         {
-            if (entities == null)
-            {
-                throw new ArgumentNullException(nameof(entities));
-            }
+            ArgumentNullException.ThrowIfNull( entities );
             var typedWriter = GetWriter(writer, options);
             return typedWriter.WriteAllAsync(entities);
         }
@@ -875,7 +854,7 @@ namespace FlatFiles.TypeMapping
         private static IMemberAccessor GetMember<TProp>(string memberName)
         {
             var member = MemberAccessorBuilder.GetMember<TEntity, TProp>(memberName);
-            if (member == null)
+            if (member is null)
             {
                 throw new ArgumentException(Resources.BadPropertySelector, nameof(member));
             }
@@ -888,7 +867,7 @@ namespace FlatFiles.TypeMapping
             {
                 return true;
             }
-            return Nullable.GetUnderlyingType(accessor.Type) != null;
+            return Nullable.GetUnderlyingType(accessor.Type) is not null;
         }
 
         IEnumerable<object> IDynamicFixedLengthTypeMapper.Read(TextReader reader, FixedLengthOptions? options)

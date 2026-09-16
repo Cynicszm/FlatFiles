@@ -10,7 +10,7 @@ namespace FlatFiles.TypeMapping
     /// </summary>
     public sealed class FixedLengthTypeMapperInjector : ITypeMapperInjector
     {
-        private readonly List<TypeMapperMatcher> matchers = new();
+        private readonly List<TypeMapperMatcher> matchers = [];
         private TypeMapperMatcher? defaultMatcher;
 
         /// <summary>
@@ -33,10 +33,7 @@ namespace FlatFiles.TypeMapping
         /// <remarks>Previously registered schemas will be used if their predicates match.</remarks>
         public IFixedLengthTypeMapperInjectorWhenBuilder When(Func<object, bool> predicate)
         {
-            if (predicate == null)
-            {
-                throw new ArgumentNullException(nameof(predicate));
-            }
+            ArgumentNullException.ThrowIfNull( predicate );
             return new FixedLengthTypeMapperInjectorWhenBuilder(this, predicate);
         }
 
@@ -55,7 +52,7 @@ namespace FlatFiles.TypeMapping
         /// <param name="typeMapper">The default schema to use.</param>
         public void WithDefault(IDynamicFixedLengthTypeMapper? typeMapper)
         {
-            defaultMatcher = typeMapper == null ? null : new TypeMapperMatcher(typeMapper, o => true);
+            defaultMatcher = typeMapper is null ? null : new TypeMapperMatcher(typeMapper, o => true);
         }
 
         /// <summary>
@@ -72,7 +69,7 @@ namespace FlatFiles.TypeMapping
                 var schema = matcher.Reset();
                 injector.When(values => matcher.IsMatch).Use(schema);
             }
-            if (defaultMatcher != null)
+            if (defaultMatcher is not null)
             {
                 var schema = defaultMatcher.Reset();
                 injector.WithDefault(schema);
@@ -94,7 +91,7 @@ namespace FlatFiles.TypeMapping
             ITypeMatcherContext? context = null;
             foreach (var matcher in matchers)
             {
-                if (context == null && matcher.Predicate(entity))
+                if (context is null && matcher.Predicate(entity))
                 {
                     matcher.IsMatch = true;
                     matcher.Initialize();
@@ -105,9 +102,9 @@ namespace FlatFiles.TypeMapping
                     matcher.IsMatch = false;
                 }
             }
-            if (context == null)
+            if (context is null)
             {
-                if (defaultMatcher == null)
+                if (defaultMatcher is null)
                 {
                     throw new FlatFileException(Resources.MissingMatcher);
                 }
@@ -142,7 +139,7 @@ namespace FlatFiles.TypeMapping
 
             public void Initialize()
             {
-                if (Serializer == null)
+                if (Serializer is null)
                 {
                     var source = (IMapperSource)TypeMapper;
                     var mapper = source.GetMapper();
@@ -173,10 +170,7 @@ namespace FlatFiles.TypeMapping
 
             public void Use(IDynamicFixedLengthTypeMapper typeMapper)
             {
-                if (typeMapper == null)
-                {
-                    throw new ArgumentNullException(nameof(typeMapper));
-                }
+                ArgumentNullException.ThrowIfNull( typeMapper );
                 selector.Add(typeMapper, predicate);
             }
         }
@@ -190,15 +184,12 @@ namespace FlatFiles.TypeMapping
             public FixedLengthTypeMapperInjectorWhenBuilder(FixedLengthTypeMapperInjector selector, Func<TEntity, bool>? predicate)
             {
                 this.selector = selector;
-                this.predicate = predicate == null ? typeCheck : o => o is TEntity entity && predicate(entity);
+                this.predicate = predicate is null ? typeCheck : o => o is TEntity entity && predicate(entity);
             }
 
             public void Use(IFixedLengthTypeMapper<TEntity> typeMapper)
             {
-                if (typeMapper == null)
-                {
-                    throw new ArgumentNullException(nameof(typeMapper));
-                }
+                ArgumentNullException.ThrowIfNull( typeMapper );
                 var dynamicMapper = (IDynamicFixedLengthTypeMapper)typeMapper;
                 selector.Add(dynamicMapper, predicate);
             }

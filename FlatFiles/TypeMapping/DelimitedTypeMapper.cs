@@ -1,11 +1,12 @@
-﻿using System;
+﻿using FlatFiles.Properties;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
-using System.Linq;
 using System.Linq.Expressions;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
-using FlatFiles.Properties;
+using System;
 
 namespace FlatFiles.TypeMapping
 {
@@ -74,10 +75,7 @@ namespace FlatFiles.TypeMapping
         /// <returns>The configuration object.</returns>
         public static IDelimitedTypeMapper<TEntity> Define<TEntity>(Func<TEntity> factory)
         {
-            if (factory == null)
-            {
-                throw new ArgumentNullException(nameof(factory));
-            }
+            ArgumentNullException.ThrowIfNull( factory );
             return new DelimitedTypeMapper<TEntity>(factory);
         }
 
@@ -89,10 +87,7 @@ namespace FlatFiles.TypeMapping
         /// <remarks>The entity type must have a default constructor.</remarks>
         public static IDynamicDelimitedTypeMapper DefineDynamic(Type entityType)
         {
-            if (entityType == null)
-            {
-                throw new ArgumentNullException(nameof(entityType));
-            }
+            ArgumentNullException.ThrowIfNull( entityType );
             var mapperType = typeof(DelimitedTypeMapper<>).MakeGenericType(entityType);
             var mapper = Activator.CreateInstance(mapperType)!;
             return (IDynamicDelimitedTypeMapper)mapper;
@@ -107,14 +102,8 @@ namespace FlatFiles.TypeMapping
         /// <remarks>The entity type must have a default constructor.</remarks>
         public static IDynamicDelimitedTypeMapper DefineDynamic(Type entityType, Func<object> factory)
         {
-            if (entityType == null)
-            {
-                throw new ArgumentNullException(nameof(entityType));
-            }
-            if (factory == null)
-            {
-                throw new ArgumentNullException(nameof(factory));
-            }
+            ArgumentNullException.ThrowIfNull( entityType );
+            ArgumentNullException.ThrowIfNull( factory );
             var mapperType = typeof(DelimitedTypeMapper<>).MakeGenericType(entityType);
             var mapper = Activator.CreateInstance(mapperType, factory)!;
             return (IDynamicDelimitedTypeMapper)mapper;
@@ -136,7 +125,7 @@ namespace FlatFiles.TypeMapping
         public static ITypedReader<TEntity> GetAutoMappedReader<TEntity>(TextReader reader, DelimitedOptions? options = null, IAutoMapMatcher? matcher = null)
             where TEntity : new()
         {
-            var optionsCopy = options == null ? new DelimitedOptions() : options.Clone();
+            var optionsCopy = options is null ? new DelimitedOptions() : options.Clone();
             optionsCopy.IsFirstRecordSchema = true;
             var recordReader = new DelimitedReader(reader, optionsCopy);
             var schema = recordReader.GetSchema();
@@ -159,7 +148,7 @@ namespace FlatFiles.TypeMapping
         public static async Task<ITypedReader<TEntity>> GetAutoMappedReaderAsync<TEntity>(TextReader reader, DelimitedOptions? options = null, IAutoMapMatcher? matcher = null)
             where TEntity : new()
         {
-            var optionsCopy = options == null ? new DelimitedOptions() : options.Clone();
+            var optionsCopy = options is null ? new DelimitedOptions() : options.Clone();
             optionsCopy.IsFirstRecordSchema = true;
             var recordReader = new DelimitedReader(reader, optionsCopy);
             var schema = await recordReader.GetSchemaAsync();
@@ -170,7 +159,7 @@ namespace FlatFiles.TypeMapping
             where TEntity : new()
         {
             var typedMapper = new DelimitedTypeMapper<TEntity>();
-            if (schema == null)
+            if (schema is null)
             {
                 // If the schema is null, it means that no header record could be read.
                 // It is probably an empty file. We avoid making any mappings and just exit.
@@ -186,9 +175,9 @@ namespace FlatFiles.TypeMapping
                 var memberExpression = GetMemberExpression(entityParameter, typeof(TEntity), column, actualMatcher);
                 var body = Expression.Assign(memberExpression, Expression.Convert(valueParameter, memberExpression.Type));
                 var columnDefinition = GetColumnDefinition(memberExpression.Type, column.ColumnName!);
-                if (columnDefinition == null)
+                if (columnDefinition is null)
                 {
-                    throw new FlatFileException(String.Format(null, Resources.NoAutoMapPropertyType, column.ColumnName));
+                    throw new FlatFileException(String.Format(CultureInfo.CurrentCulture, Resources.NoAutoMapPropertyType, column.ColumnName));
                 }
                 var lambdaExpression = Expression.Lambda<Action<IColumnContext?, object?, object?>>(body, contextParameter, entityParameter, valueParameter);
                 var compiledSetter = lambdaExpression.Compile();
@@ -201,16 +190,16 @@ namespace FlatFiles.TypeMapping
         private static MemberExpression GetMemberExpression(ParameterExpression entityParameter, Type entityType, IColumnDefinition column, IAutoMapMatcher matcher)
         {
             var propertyInfo = GetProperty(entityType, column, matcher);
-            if (propertyInfo != null)
+            if (propertyInfo is not null)
             {
                 if (!propertyInfo.CanWrite)
                 {
-                    throw new FlatFileException(String.Format(null, Resources.ReadOnlyProperty, column.ColumnName));
+                    throw new FlatFileException(String.Format(CultureInfo.CurrentCulture, Resources.ReadOnlyProperty, column.ColumnName));
                 }
                 return Expression.Property(Expression.Convert(entityParameter, entityType), propertyInfo);
             }
             var fieldInfo = GetField(entityType, column, matcher);
-            if (fieldInfo != null)
+            if (fieldInfo is not null)
             {
                 return Expression.Field(Expression.Convert(entityParameter, entityType), fieldInfo);
             }
@@ -264,7 +253,7 @@ namespace FlatFiles.TypeMapping
         /// <remarks>Unless options are provided, by default this method will write the schema before the first record.</remarks>
         public static ITypedWriter<TEntity> GetAutoMappedWriter<TEntity>(TextWriter writer, DelimitedOptions? options = null, IAutoMapResolver? resolver = null)
         {
-            var optionsCopy = options == null 
+            var optionsCopy = options is null 
                 ? new DelimitedOptions() { IsFirstRecordSchema = true } 
                 : options.Clone();
             var entityType = typeof(TEntity);
@@ -286,7 +275,7 @@ namespace FlatFiles.TypeMapping
                 if (member is PropertyInfo property)
                 {
                     var column = GetColumnDefinition(property.PropertyType, columnName);
-                    if (column == null)
+                    if (column is null)
                     {
                         continue;
                     }
@@ -298,7 +287,7 @@ namespace FlatFiles.TypeMapping
                 else if (member is FieldInfo field)
                 {
                     var column = GetColumnDefinition(field.FieldType, columnName);
-                    if (column == null)
+                    if (column is null)
                     {
                         continue;
                     }
@@ -355,7 +344,7 @@ namespace FlatFiles.TypeMapping
 
         public DelimitedTypeMapper(Func<TEntity>? factory)
         {
-            if (factory != null)
+            if (factory is not null)
             {
                 lookup.SetFactory(factory);
             }
@@ -866,30 +855,21 @@ namespace FlatFiles.TypeMapping
 
         public void Write(TextWriter writer, IEnumerable<TEntity> entities, DelimitedOptions? options = null)
         {
-            if (entities == null)
-            {
-                throw new ArgumentNullException(nameof(entities));
-            }
+            ArgumentNullException.ThrowIfNull( entities );
             var typedWriter = GetWriter(writer, options);
             typedWriter.WriteAll(entities);
         }
 
         public Task WriteAsync(TextWriter writer, IEnumerable<TEntity> entities, DelimitedOptions? options = null)
         {
-            if (entities == null)
-            {
-                throw new ArgumentNullException(nameof(entities));
-            }
+            ArgumentNullException.ThrowIfNull( entities );
             var typedWriter = GetWriter(writer, options);
             return typedWriter.WriteAllAsync(entities);
         }
 
         public Task WriteAsync(TextWriter writer, IAsyncEnumerable<TEntity> entities, DelimitedOptions? options = null)
         {
-            if (entities == null)
-            {
-                throw new ArgumentNullException(nameof(entities));
-            }
+            ArgumentNullException.ThrowIfNull( entities );
             var typedWriter = GetWriter(writer, options);
             return typedWriter.WriteAllAsync(entities);
         }
@@ -1080,7 +1060,7 @@ namespace FlatFiles.TypeMapping
         private static IMemberAccessor GetMember<TProp>(string memberName)
         {
             var member = MemberAccessorBuilder.GetMember<TEntity>(typeof(TProp), memberName);
-            if (member == null)
+            if (member is null)
             {
                 throw new ArgumentException(Resources.BadPropertySelector, nameof(member));
             }
@@ -1093,7 +1073,7 @@ namespace FlatFiles.TypeMapping
             {
                 return true;
             }
-            return Nullable.GetUnderlyingType(accessor.Type) != null;
+            return Nullable.GetUnderlyingType(accessor.Type) is not null;
         }
 
         IEnumerable<object> IDynamicDelimitedTypeMapper.Read(TextReader reader, DelimitedOptions? options)

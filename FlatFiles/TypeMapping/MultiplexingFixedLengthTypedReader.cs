@@ -3,15 +3,9 @@ using System.Threading.Tasks;
 
 namespace FlatFiles.TypeMapping
 {
-    internal sealed class MultiplexingFixedLengthTypedReader : IFixedLengthTypedReader<object>
+    internal sealed class MultiplexingFixedLengthTypedReader(FixedLengthReader reader) : IFixedLengthTypedReader<object>
     {
-        private readonly FixedLengthReader reader;
         private object? current;
-
-        public MultiplexingFixedLengthTypedReader(FixedLengthReader reader)
-        {
-            this.reader = reader;
-        }
 
         public IReader Reader => reader;
 

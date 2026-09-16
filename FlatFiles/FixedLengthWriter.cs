@@ -23,14 +23,8 @@ namespace FlatFiles
         /// <exception cref="ArgumentNullException">The schema is null.</exception>
         public FixedLengthWriter(TextWriter writer, FixedLengthSchema schema, FixedLengthOptions? options = null)
         {
-            if (writer == null)
-            {
-                throw new ArgumentNullException(nameof(writer));
-            }
-            if (schema == null)
-            {
-                throw new ArgumentNullException(nameof(schema));
-            }
+            ArgumentNullException.ThrowIfNull( writer );
+            ArgumentNullException.ThrowIfNull( schema );
             recordWriter = new FixedLengthRecordWriter(writer, schema, options);
         }
 
@@ -44,14 +38,8 @@ namespace FlatFiles
         /// <exception cref="ArgumentNullException">The schema injector is null.</exception>
         public FixedLengthWriter(TextWriter writer, FixedLengthSchemaInjector injector, FixedLengthOptions? options = null)
         {
-            if (writer == null)
-            {
-                throw new ArgumentNullException(nameof(writer));
-            }
-            if (injector == null)
-            {
-                throw new ArgumentNullException(nameof(injector));
-            }
+            ArgumentNullException.ThrowIfNull( writer );
+            ArgumentNullException.ThrowIfNull( injector );
             recordWriter = new FixedLengthRecordWriter(writer, injector, options);
         }
 
@@ -124,10 +112,7 @@ namespace FlatFiles
         /// <exception cref="ArgumentNullException">The values array is null.</exception>
         public void Write(object?[] values)
         {
-            if (values == null)
-            {
-                throw new ArgumentNullException(nameof(values));
-            }
+            ArgumentNullException.ThrowIfNull( values );
             if (!isSchemaWritten)
             {
                 if (recordWriter.Options.IsFirstRecordHeader)
@@ -163,10 +148,7 @@ namespace FlatFiles
         /// <exception cref="ArgumentNullException">The values array is null.</exception>
         public async Task WriteAsync(object?[] values)
         {
-            if (values == null)
-            {
-                throw new ArgumentNullException(nameof(values));
-            }
+            ArgumentNullException.ThrowIfNull( values );
             if (!isSchemaWritten)
             {
                 if (recordWriter.Options.IsFirstRecordHeader)
@@ -227,7 +209,7 @@ namespace FlatFiles
 
         private void ProcessError(RecordProcessingException exception)
         {
-            if (RecordError != null)
+            if (RecordError is not null)
             {
                 var args = new RecordErrorEventArgs(exception);
                 RecordError(this, args);
@@ -241,7 +223,7 @@ namespace FlatFiles
 
         private IRecordContext GetMetadata()
         {
-            if (recordWriter.Metadata != null)
+            if (recordWriter.Metadata is not null)
             {
                 return recordWriter.Metadata;
             }
@@ -250,7 +232,7 @@ namespace FlatFiles
 
         IRecordContext IWriterWithMetadata.GetMetadata()
         {
-            var schema = recordWriter.GetSchema(new object[0]); // Will work for TypedWriters using Schema Injector
+            var schema = recordWriter.GetSchema([]); // Will work for TypedWriters using Schema Injector
             return GetUncachedMetadata(schema);
         }
 
