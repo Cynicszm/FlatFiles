@@ -5,6 +5,10 @@
     Packs Cynicszm.FlatFiles and publishes it to NuGet.
 
 .DESCRIPTION
+    A manual fallback. Publishing normally happens from .github/workflows/publish.yml,
+    which uses trusted publishing and needs no stored key; reach for this only when the
+    workflow cannot run.
+
     Packs the library in Release configuration and pushes exactly the package that was
     produced. The package is left in place if the push fails, so a failed publish can be
     retried or inspected rather than silently discarded.
