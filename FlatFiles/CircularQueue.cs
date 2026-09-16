@@ -15,7 +15,7 @@ namespace FlatFiles
 
         public int Count { get; private set; }
 
-        public ArraySegment<T> PrepareBlock()
+        public Memory<T> PrepareBlock()
         {
             int size = items.Length - Count;
             // The buffer is large enough to hold the new items.
@@ -26,7 +26,7 @@ namespace FlatFiles
                 front = 0;
                 back = Count;
             }
-            return new ArraySegment<T>(items, back, size);
+            return items.AsMemory(back, size);
         }
 
         public void RecordGrowth(int size)
