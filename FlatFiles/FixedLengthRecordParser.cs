@@ -20,7 +20,7 @@ namespace FlatFiles
             {
                 recordReader = new SeparatorRecordReader(reader, options.RecordSeparator);
             }
-            else if (schema == null)
+            else if (schema is null)
             {
                 throw new FlatFileException(Resources.RecordSeparatorRequired);
             }

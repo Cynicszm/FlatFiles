@@ -88,7 +88,7 @@ namespace FlatFiles.TypeMapping
 
         public FixedLengthTypeMapper(Func<TEntity>? factory)
         {
-            if (factory != null)
+            if (factory is not null)
             {
                 lookup.SetFactory(factory);
             }
@@ -854,7 +854,7 @@ namespace FlatFiles.TypeMapping
         private static IMemberAccessor GetMember<TProp>(string memberName)
         {
             var member = MemberAccessorBuilder.GetMember<TEntity, TProp>(memberName);
-            if (member == null)
+            if (member is null)
             {
                 throw new ArgumentException(Resources.BadPropertySelector, nameof(member));
             }
@@ -867,7 +867,7 @@ namespace FlatFiles.TypeMapping
             {
                 return true;
             }
-            return Nullable.GetUnderlyingType(accessor.Type) != null;
+            return Nullable.GetUnderlyingType(accessor.Type) is not null;
         }
 
         IEnumerable<object> IDynamicFixedLengthTypeMapper.Read(TextReader reader, FixedLengthOptions? options)

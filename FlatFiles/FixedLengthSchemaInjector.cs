@@ -39,7 +39,7 @@ namespace FlatFiles
         /// <returns>The current selector to allow for further customization.</returns>
         public void WithDefault(FixedLengthSchema schema)
         {
-            if (schema == null)
+            if (schema is null)
             {
                 defaultMatcher = null;
             }
@@ -64,7 +64,7 @@ namespace FlatFiles
                     return matcher.Schema;
                 }
             }
-            if (defaultMatcher != null && defaultMatcher.Predicate(values))
+            if (defaultMatcher is not null && defaultMatcher.Predicate(values))
             {
                 return defaultMatcher.Schema;
             }

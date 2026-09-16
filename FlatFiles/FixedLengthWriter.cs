@@ -209,7 +209,7 @@ namespace FlatFiles
 
         private void ProcessError(RecordProcessingException exception)
         {
-            if (RecordError != null)
+            if (RecordError is not null)
             {
                 var args = new RecordErrorEventArgs(exception);
                 RecordError(this, args);
@@ -223,7 +223,7 @@ namespace FlatFiles
 
         private IRecordContext GetMetadata()
         {
-            if (recordWriter.Metadata != null)
+            if (recordWriter.Metadata is not null)
             {
                 return recordWriter.Metadata;
             }

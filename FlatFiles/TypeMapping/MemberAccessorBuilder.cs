@@ -17,8 +17,8 @@ namespace FlatFiles.TypeMapping
         {
             string[] memberNames = memberName.Split('.');
             var member = GetMember(typeof(TEntity), memberNames, 0, null);
-            if (propertyType != null 
-                && member != null
+            if (propertyType is not null 
+                && member is not null
                 && member.Type != propertyType 
                 && member.Type != Nullable.GetUnderlyingType(propertyType))
             {
@@ -35,13 +35,13 @@ namespace FlatFiles.TypeMapping
             }
             string memberName = memberNames[nameIndex];
             var propertyInfo = GetProperty(entityType, memberName);
-            if (propertyInfo != null)
+            if (propertyInfo is not null)
             {
                 var accessor = new PropertyAccessor(propertyInfo, parent);
                 return GetMember(propertyInfo.PropertyType, memberNames, nameIndex + 1, accessor);
             }
             var fieldInfo = GetField(entityType, memberName);
-            if (fieldInfo != null)
+            if (fieldInfo is not null)
             {
                 var accessor = new FieldAccessor(fieldInfo, parent);
                 return GetMember(fieldInfo.FieldType, memberNames, nameIndex + 1, accessor);

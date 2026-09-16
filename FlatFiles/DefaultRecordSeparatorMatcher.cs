@@ -24,7 +24,7 @@
                 {
                     --length;
                 }
-                return value.Substring(0, length);
+                return value[..length];
             }
             return value;
         }

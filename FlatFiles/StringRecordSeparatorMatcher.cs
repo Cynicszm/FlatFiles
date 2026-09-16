@@ -13,7 +13,7 @@
         {
             if (value.EndsWith(separator))
             {
-                return value.Substring(0, value.Length - separator.Length);
+                return value[..^separator.Length];
             }
             return value;
         }

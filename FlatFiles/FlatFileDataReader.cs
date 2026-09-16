@@ -426,7 +426,7 @@ namespace FlatFiles
         {
             var values = GetValues();
             var value = (string?)values[i];
-            if (value == null && !Options.IsNullStringAllowed)
+            if (value is null && !Options.IsNullStringAllowed)
             {
                 throw new InvalidCastException();
             }
@@ -486,7 +486,7 @@ namespace FlatFiles
         {
             var values = GetValues();
             var value = values[i];
-            if (value == null && Options.IsDBNullReturned)
+            if (value is null && Options.IsDBNullReturned)
             {
                 value = DBNull.Value;
             }
@@ -507,7 +507,7 @@ namespace FlatFiles
             {
                 for (int index = 0; index != length; ++index)
                 {
-                    if (values[index] == null)
+                    if (values[index] is null)
                     {
                         values[index] = DBNull.Value;
                     }
@@ -524,7 +524,7 @@ namespace FlatFiles
         public bool IsDBNull(int i)
         {
             var values = GetValues();
-            return values[i] == null;
+            return values[i] is null;
         }
 
         /// <summary>
@@ -553,10 +553,10 @@ namespace FlatFiles
 
         private ISchema GetSchema()
         {
-            if (schema == null)
+            if (schema is null)
             {
                 schema = Reader.GetSchema();
-                if (schema == null)
+                if (schema is null)
                 {
                     throw new NullReferenceException();
                 }
@@ -571,7 +571,7 @@ namespace FlatFiles
 
         private ColumnCollection GetColumns(ISchema schema)
         {
-            if (columns == null)
+            if (columns is null)
             {
                 columns = new ColumnCollection();
                 foreach (ColumnDefinition column in schema.ColumnDefinitions)
@@ -587,10 +587,10 @@ namespace FlatFiles
 
         private object?[] GetValues()
         {
-            if (values == null)
+            if (values is null)
             {
                 values = Reader.GetValues();
-                if (values == null)
+                if (values is null)
                 {
                     throw new NullReferenceException();
                 }

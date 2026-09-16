@@ -107,7 +107,7 @@ namespace FlatFiles
         protected override TimeSpan OnParse(IColumnContext? context, string value)
         {
             var provider = GetFormatProvider(context, FormatProvider);
-            if (InputFormat == null)
+            if (InputFormat is null)
             {
                 return TimeSpan.Parse(value, provider);
             }
@@ -117,7 +117,7 @@ namespace FlatFiles
         /// <inheritdoc />
         protected override string OnFormat(IColumnContext? context, TimeSpan value)
         {
-            if (OutputFormat == null)
+            if (OutputFormat is null)
             {
                 return value.ToString();
             }

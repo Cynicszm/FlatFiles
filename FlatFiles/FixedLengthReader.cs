@@ -51,11 +51,11 @@ namespace FlatFiles
         private FixedLengthReader(TextReader reader, FixedLengthSchema? schema, FixedLengthOptions? options = null, bool hasSchema = true)
         {
             ArgumentNullException.ThrowIfNull( reader );
-            if (hasSchema && schema == null)
+            if (hasSchema && schema is null)
             {
                 throw new ArgumentNullException(nameof(schema));
             }
-            this.options = options == null ? new FixedLengthOptions() : options.Clone();
+            this.options = options is null ? new FixedLengthOptions() : options.Clone();
             this.schema = schema;
             this.parser = new FixedLengthRecordParser(reader, this.schema, this.options);
         }
@@ -79,14 +79,14 @@ namespace FlatFiles
         {
             add
             {
-                if (value != null)
+                if (value is not null)
                 {
                     RecordParsed += (sender, e) => value(sender, e);
                 }
             }
             remove
             {
-                if (value != null)
+                if (value is not null)
                 {
                     RecordParsed -= (sender, e) => value(sender, e);
                 }
@@ -148,7 +148,7 @@ namespace FlatFiles
             try
             {
                 values = ParsePartitions();
-                if (values == null)
+                if (values is null)
                 {
                     return false;
                 }
@@ -177,7 +177,7 @@ namespace FlatFiles
             {
                 var record = ReadNextRecord();
                 var values = ProcessRecord(record);
-                if (values != null)
+                if (values is not null)
                 {
                     return values;
                 }
@@ -213,7 +213,7 @@ namespace FlatFiles
             try
             {
                 values = await ParsePartitionsAsync().ConfigureAwait(false);
-                if (values == null)
+                if (values is null)
                 {
                     return false;
                 }
@@ -242,7 +242,7 @@ namespace FlatFiles
             {
                 var record = await ReadNextRecordAsync().ConfigureAwait(false);
                 var values = ProcessRecord(record);
-                if (values != null)
+                if (values is not null)
                 {
                     return values;
                 }
@@ -252,22 +252,22 @@ namespace FlatFiles
 
         private object?[]? ProcessRecord(string? record)
         {
-            if (record == null || IsSkipped(record))
+            if (record is null || IsSkipped(record))
             {
                 return null;
             }
             var schema = GetSchema(record);
-            if (schema == null)
+            if (schema is null)
             {
                 return null;
             }
             var rawValues = PartitionRecord(schema, record);
-            if (rawValues == null || IsSkipped(schema, record, rawValues))
+            if (rawValues is null || IsSkipped(schema, record, rawValues))
             {
                 return null;
             }
             var values = ParseValues(schema, record, rawValues);
-            if (values == null)
+            if (values is null)
             {
                 return null;
             }
@@ -279,7 +279,7 @@ namespace FlatFiles
 
         private bool IsSkipped(string record)
         {
-            if (RecordRead == null)
+            if (RecordRead is null)
             {
                 return false;
             }
@@ -290,7 +290,7 @@ namespace FlatFiles
 
         private bool IsSkipped(FixedLengthSchema schema, string record, string[] values)
         {
-            if (RecordPartitioned == null)
+            if (RecordPartitioned is null)
             {
                 return false;
             }
@@ -333,7 +333,7 @@ namespace FlatFiles
         private bool SkipInternal()
         {
             var record = ReadNextRecord();
-            return record != null;
+            return record is not null;
         }
 
         /// <summary>
@@ -354,7 +354,7 @@ namespace FlatFiles
         private async ValueTask<bool> SkipAsyncInternal()
         {
             var record = await ReadNextRecordAsync().ConfigureAwait(false);
-            return record != null;
+            return record is not null;
         }
 
         private string[]? PartitionRecord(FixedLengthSchema schema, string record)
@@ -375,9 +375,9 @@ namespace FlatFiles
                 {
                     Window? window = columnIndex < windows.Count ? windows[columnIndex] : null;
                     string value;
-                    if (window == null)
+                    if (window is null)
                     {
-                        value = record.Substring(offset);
+                        value = record[offset..];
                     }
                     else
                     {
@@ -400,12 +400,12 @@ namespace FlatFiles
 
         private FixedLengthSchema? GetSchema(string record)
         {
-            if (schemaSelector == null)
+            if (schemaSelector is null)
             {
                 return this.schema;
             }
             FixedLengthSchema? schema = schemaSelector.GetSchema(record);
-            if (schema != null)
+            if (schema is not null)
             {
                 return schema;
             }
@@ -440,7 +440,7 @@ namespace FlatFiles
 
         private void ProcessError(RecordProcessingException exception)
         {
-            if (RecordError != null)
+            if (RecordError is not null)
             {
                 var args = new RecordErrorEventArgs(exception);
                 RecordError(this, args);
@@ -466,7 +466,7 @@ namespace FlatFiles
             {
                 throw new InvalidOperationException(Resources.ReadNotCalled);
             }
-            if (endOfFile || values == null)
+            if (endOfFile || values is null)
             {
                 throw new InvalidOperationException(Resources.NoMoreRecords);
             }
@@ -477,7 +477,7 @@ namespace FlatFiles
 
         private IRecordContext GetMetadata(FixedLengthSchema? schema, string? record)
         {
-            if (this.recordContext != null)
+            if (this.recordContext is not null)
             {
                 return this.recordContext;
             }

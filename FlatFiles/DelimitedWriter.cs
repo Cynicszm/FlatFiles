@@ -40,7 +40,7 @@ namespace FlatFiles
         private DelimitedWriter(TextWriter writer, DelimitedSchema? schema, DelimitedOptions? options, bool hasSchema)
         {
             ArgumentNullException.ThrowIfNull( writer );
-            if (hasSchema && schema == null)
+            if (hasSchema && schema is null)
             {
                 throw new ArgumentNullException(nameof(schema));
             }
@@ -102,7 +102,7 @@ namespace FlatFiles
             {
                 return;
             }
-            if (recordWriter.ActualSchema != null)
+            if (recordWriter.ActualSchema is not null)
             {
                 recordWriter.WriteSchema();
                 recordWriter.WriteRecordSeparator();
@@ -121,7 +121,7 @@ namespace FlatFiles
             {
                 return;
             }
-            if (recordWriter.ActualSchema != null)
+            if (recordWriter.ActualSchema is not null)
             {
                 await recordWriter.WriteSchemaAsync().ConfigureAwait(false);
                 await recordWriter.WriteRecordSeparatorAsync().ConfigureAwait(false);
@@ -140,7 +140,7 @@ namespace FlatFiles
             ArgumentNullException.ThrowIfNull( values );
             if (!isSchemaWritten)
             {
-                if (recordWriter.Options.IsFirstRecordSchema && recordWriter.ActualSchema != null)
+                if (recordWriter.Options.IsFirstRecordSchema && recordWriter.ActualSchema is not null)
                 {
                     recordWriter.WriteSchema();
                     recordWriter.WriteRecordSeparator();
@@ -176,7 +176,7 @@ namespace FlatFiles
             ArgumentNullException.ThrowIfNull( values );
             if (!isSchemaWritten)
             {
-                if (recordWriter.Options.IsFirstRecordSchema && recordWriter.ActualSchema != null)
+                if (recordWriter.Options.IsFirstRecordSchema && recordWriter.ActualSchema is not null)
                 {
                     await recordWriter.WriteSchemaAsync().ConfigureAwait(false);
                     await recordWriter.WriteRecordSeparatorAsync().ConfigureAwait(false);
@@ -234,7 +234,7 @@ namespace FlatFiles
 
         private void ProcessError(RecordProcessingException exception)
         {
-            if (RecordError != null)
+            if (RecordError is not null)
             {
                 var args = new RecordErrorEventArgs(exception);
                 RecordError(this, args);
@@ -248,7 +248,7 @@ namespace FlatFiles
 
         private IRecordContext GetMetadata()
         {
-            if (recordWriter.Metadata != null)
+            if (recordWriter.Metadata is not null)
             {
                 return recordWriter.Metadata;
             }

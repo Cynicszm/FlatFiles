@@ -20,7 +20,7 @@ namespace FlatFiles
 
         IExecutionContext IRecordContext.ExecutionContext => ExecutionContext;
 
-        public bool HasHandler => ColumnError != null;
+        public bool HasHandler => ColumnError is not null;
 
         public void ProcessError(object sender, ColumnErrorEventArgs e)
         {

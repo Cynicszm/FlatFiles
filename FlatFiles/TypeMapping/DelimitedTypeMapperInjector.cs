@@ -59,7 +59,7 @@ namespace FlatFiles.TypeMapping
         /// <param name="typeMapper">The default schema to use.</param>
         public void WithDefault(IDynamicDelimitedTypeMapper? typeMapper)
         {
-            defaultMatcher = typeMapper == null ? null : new TypeMapperMatcher(typeMapper, o => true);
+            defaultMatcher = typeMapper is null ? null : new TypeMapperMatcher(typeMapper, o => true);
         }
 
         /// <summary>
@@ -76,7 +76,7 @@ namespace FlatFiles.TypeMapping
                 var schema = matcher.Reset();
                 injector.When(values => matcher.IsMatch).Use(schema);
             }
-            if (defaultMatcher != null)
+            if (defaultMatcher is not null)
             {
                 var schema = defaultMatcher.Reset();
                 injector.WithDefault(schema);
@@ -97,7 +97,7 @@ namespace FlatFiles.TypeMapping
             ITypeMatcherContext? context = null;
             foreach (var matcher in matchers)
             {
-                if (context == null && matcher.Predicate(entity))
+                if (context is null && matcher.Predicate(entity))
                 {
                     matcher.IsMatch = true;
                     matcher.Initialize();
@@ -108,9 +108,9 @@ namespace FlatFiles.TypeMapping
                     matcher.IsMatch = false;
                 }
             }
-            if (context == null)
+            if (context is null)
             {
-                if (defaultMatcher == null)
+                if (defaultMatcher is null)
                 {
                     throw new FlatFileException(Resources.MissingMatcher);
                 }
@@ -145,7 +145,7 @@ namespace FlatFiles.TypeMapping
 
             public void Initialize()
             {
-                if (Serializer == null)
+                if (Serializer is null)
                 {
                     var source = (IMapperSource)TypeMapper;
                     var mapper = source.GetMapper();
@@ -190,7 +190,7 @@ namespace FlatFiles.TypeMapping
             public DelimitedTypeMapperInjectorWhenBuilder(DelimitedTypeMapperInjector selector, Func<TEntity, bool>? predicate)
             {
                 this.selector = selector;
-                this.predicate = predicate == null ? typeCheck : o => o is TEntity entity && predicate(entity);
+                this.predicate = predicate is null ? typeCheck : o => o is TEntity entity && predicate(entity);
             }
 
             public void Use(IDelimitedTypeMapper<TEntity> typeMapper)
