@@ -110,3 +110,7 @@ UpgradeLog*.XML
 
 .vs/
 .vscode/
+
+# Packages produced by Deployment/publish-flat-files.ps1
+Deployment/artifacts/
+*.nupkg
