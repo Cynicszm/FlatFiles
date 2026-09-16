@@ -68,7 +68,9 @@ namespace FlatFiles
 
             public SeparatorRecordReader(TextReader reader, string? separator)
             {
-                this.reader = new RetryReader(reader);
+                // Fixed-length reads its column values out of the record text, so unlike the
+                // delimited reader it can never skip capturing it.
+                this.reader = new RetryReader(reader, isRecordTextDisabled: false);
                 matcher = RecordSeparatorMatcher.GetMatcher(this.reader, separator);
             }
 
