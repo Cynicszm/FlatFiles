@@ -24,10 +24,7 @@ namespace FlatFiles
         /// <returns>A column for reading/writing <see cref="TimeSpan"/> values.</returns>
         public static IColumnDefinition FromDays(DoubleColumn column)
         {
-            if (column == null)
-            {
-                throw new ArgumentNullException(nameof(column));
-            }
+            ArgumentNullException.ThrowIfNull( column );
             return new ConversionColumn<double, TimeSpan>(column, TimeSpan.FromDays, ts => ts.TotalDays);
         }
 
@@ -39,10 +36,7 @@ namespace FlatFiles
         /// <returns>A column for reading/writing <see cref="TimeSpan"/> values.</returns>
         public static IColumnDefinition FromHours(DoubleColumn column)
         {
-            if (column == null)
-            {
-                throw new ArgumentNullException(nameof(column));
-            }
+            ArgumentNullException.ThrowIfNull( column );
             return new ConversionColumn<double, TimeSpan>(column, TimeSpan.FromHours, ts => ts.TotalHours);
         }
 
@@ -54,10 +48,7 @@ namespace FlatFiles
         /// <returns>A column for reading/writing <see cref="TimeSpan"/> values.</returns>
         public static IColumnDefinition FromMillseconds(DoubleColumn column)
         {
-            if (column == null)
-            {
-                throw new ArgumentNullException(nameof(column));
-            }
+            ArgumentNullException.ThrowIfNull( column );
             return new ConversionColumn<double, TimeSpan>(column, TimeSpan.FromMilliseconds, ts => ts.TotalMilliseconds);
         }
 
@@ -69,10 +60,7 @@ namespace FlatFiles
         /// <returns>A column for reading/writing <see cref="TimeSpan"/> values.</returns>
         public static IColumnDefinition FromMinutes(DoubleColumn column)
         {
-            if (column == null)
-            {
-                throw new ArgumentNullException(nameof(column));
-            }
+            ArgumentNullException.ThrowIfNull( column );
             return new ConversionColumn<double, TimeSpan>(column, TimeSpan.FromMinutes, ts => ts.TotalMinutes);
         }
 
@@ -84,10 +72,7 @@ namespace FlatFiles
         /// <returns>A column for reading/writing <see cref="TimeSpan"/> values.</returns>
         public static IColumnDefinition FromSeconds(DoubleColumn column)
         {
-            if (column == null)
-            {
-                throw new ArgumentNullException(nameof(column));
-            }
+            ArgumentNullException.ThrowIfNull( column );
             return new ConversionColumn<double, TimeSpan>(column, TimeSpan.FromSeconds, ts => ts.TotalSeconds);
         }
 
@@ -99,10 +84,7 @@ namespace FlatFiles
         /// <returns>A column for reading/writing <see cref="TimeSpan"/> values.</returns>
         public static IColumnDefinition FromTicks(Int64Column column)
         {
-            if (column == null)
-            {
-                throw new ArgumentNullException(nameof(column));
-            }
+            ArgumentNullException.ThrowIfNull( column );
             return new ConversionColumn<long, TimeSpan>(column, TimeSpan.FromTicks, ts => ts.Ticks);
         }
 
@@ -125,7 +107,7 @@ namespace FlatFiles
         protected override TimeSpan OnParse(IColumnContext? context, string value)
         {
             var provider = GetFormatProvider(context, FormatProvider);
-            if (InputFormat == null)
+            if (InputFormat is null)
             {
                 return TimeSpan.Parse(value, provider);
             }
@@ -135,7 +117,7 @@ namespace FlatFiles
         /// <inheritdoc />
         protected override string OnFormat(IColumnContext? context, TimeSpan value)
         {
-            if (OutputFormat == null)
+            if (OutputFormat is null)
             {
                 return value.ToString();
             }

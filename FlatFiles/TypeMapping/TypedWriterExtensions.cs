@@ -8,60 +8,57 @@ namespace FlatFiles.TypeMapping
     /// </summary>
     public static class TypedWriterExtensions
     {
-        /// <summary>
-        /// Writes all of the entities to the typed writer.
-        /// </summary>
-        /// <typeparam name="TEntity">The type of the entity the writer is configured to write.</typeparam>
-        /// <param name="writer">The reader to read the entities from.</param>
-        /// <param name="entities">The entities to write to the file.</param>
-        /// <returns>The entities written by the writer.</returns>
-        public static void WriteAll<TEntity>(this ITypedWriter<TEntity> writer, IEnumerable<TEntity> entities)
+        extension<TEntity>(ITypedWriter<TEntity> writer)
         {
-            if (writer.Writer.Options.IsFirstRecordSchema)
+            /// <summary>
+            /// Writes all of the entities to the typed writer.
+            /// </summary>
+            /// <param name="entities">The entities to write to the file.</param>
+            /// <returns>The entities written by the writer.</returns>
+            public void WriteAll(IEnumerable<TEntity> entities)
             {
-                writer.WriteSchema();
+                if (writer.Writer.Options.IsFirstRecordSchema)
+                {
+                    writer.WriteSchema();
+                }
+                foreach (var entity in entities)
+                {
+                    writer.Write(entity);
+                }
             }
-            foreach (var entity in entities)
-            {
-                writer.Write(entity);
-            }
-        }
 
-        /// <summary>
-        /// Writes all of the entities to the typed writer.
-        /// </summary>
-        /// <typeparam name="TEntity">The type of the entity the writer is configured to write.</typeparam>
-        /// <param name="writer">The reader to read the entities from.</param>
-        /// <param name="entities">The entities to write to the file.</param>
-        /// <returns>The entities written by the writer.</returns>
-        public static async Task WriteAllAsync<TEntity>(this ITypedWriter<TEntity> writer, IEnumerable<TEntity> entities)
-        {
-            if (writer.Writer.Options.IsFirstRecordSchema)
+            /// <summary>
+            /// Writes all of the entities to the typed writer.
+            /// </summary>
+            /// <param name="entities">The entities to write to the file.</param>
+            /// <returns>The entities written by the writer.</returns>
+            public async Task WriteAllAsync(IEnumerable<TEntity> entities)
             {
-                await writer.WriteSchemaAsync().ConfigureAwait(false);
+                if (writer.Writer.Options.IsFirstRecordSchema)
+                {
+                    await writer.WriteSchemaAsync().ConfigureAwait(false);
+                }
+                foreach (var entity in entities)
+                {
+                    await writer.WriteAsync(entity).ConfigureAwait(false);
+                }
             }
-            foreach (var entity in entities)
-            {
-                await writer.WriteAsync(entity).ConfigureAwait(false);
-            }
-        }
 
-        /// <summary>
-        /// Writes all of the entities to the typed writer.
-        /// </summary>
-        /// <typeparam name="TEntity">The type of the entity the writer is configured to write.</typeparam>
-        /// <param name="writer">The reader to read the entities from.</param>
-        /// <param name="entities">The entities to write to the file.</param>
-        /// <returns>The entities written by the writer.</returns>
-        public static async Task WriteAllAsync<TEntity>(this ITypedWriter<TEntity> writer, IAsyncEnumerable<TEntity> entities)
-        {
-            if (writer.Writer.Options.IsFirstRecordSchema)
+            /// <summary>
+            /// Writes all of the entities to the typed writer.
+            /// </summary>
+            /// <param name="entities">The entities to write to the file.</param>
+            /// <returns>The entities written by the writer.</returns>
+            public async Task WriteAllAsync(IAsyncEnumerable<TEntity> entities)
             {
-                await writer.WriteSchemaAsync().ConfigureAwait(false);
-            }
-            await foreach (var entity in entities.ConfigureAwait(false))
-            {
-                await writer.WriteAsync(entity).ConfigureAwait(false);
+                if (writer.Writer.Options.IsFirstRecordSchema)
+                {
+                    await writer.WriteSchemaAsync().ConfigureAwait(false);
+                }
+                await foreach (var entity in entities.ConfigureAwait(false))
+                {
+                    await writer.WriteAsync(entity).ConfigureAwait(false);
+                }
             }
         }
     }

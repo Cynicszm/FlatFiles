@@ -3,17 +3,8 @@ using System.Threading.Tasks;
 
 namespace FlatFiles.TypeMapping
 {
-    internal sealed class MultiplexingTypedWriter : ITypedWriter<object>
+    internal sealed class MultiplexingTypedWriter(IWriterWithMetadata writer, ITypeMapperInjector injector) : ITypedWriter<object>
     {
-        private readonly IWriterWithMetadata writer;
-        private readonly ITypeMapperInjector injector;
-
-        public MultiplexingTypedWriter(IWriterWithMetadata writer, ITypeMapperInjector injector)
-        {
-            this.writer = writer;
-            this.injector = injector;
-        }
-
         /// <summary>
         /// Raised when an error occurs while processing a column.
         /// </summary>

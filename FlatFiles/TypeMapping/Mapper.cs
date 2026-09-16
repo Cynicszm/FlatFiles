@@ -28,7 +28,7 @@ namespace FlatFiles.TypeMapping
 
         public Func<IRecordContext, object?[], TEntity> GetReader()
         {
-            if (cachedReader != null)
+            if (cachedReader is not null)
             {
                 return cachedReader;
             }
@@ -37,7 +37,7 @@ namespace FlatFiles.TypeMapping
             var memberMappings = GetReaderMemberMappings(mappings);
             var deserializer = codeGenerator.GetReader<TEntity>(memberMappings);
             var nestedMappers = GetNestedMappers(mappings);
-            if (nestedMappers.Any())
+            if (nestedMappers.Length != 0)
             {
                 cachedReader = (recordContext, values) =>
                 {
@@ -72,7 +72,7 @@ namespace FlatFiles.TypeMapping
 
         public Action<IRecordContext, TEntity, object?[]> GetWriter()
         {
-            if (cachedWriter != null)
+            if (cachedWriter is not null)
             {
                 return cachedWriter;
             }
@@ -80,7 +80,7 @@ namespace FlatFiles.TypeMapping
             var memberMappings = GetWriterMemberMappings(mappings);
             var serializer = codeGenerator.GetWriter<TEntity>(memberMappings);
             var nestedMappers = GetNestedMappers(mappings);
-            if (nestedMappers.Any())
+            if (nestedMappers.Length != 0)
             {
                 cachedWriter = (metadata, entity, values) =>
                 {
@@ -109,7 +109,7 @@ namespace FlatFiles.TypeMapping
         private IMemberMapping[] GetReaderMemberMappings(IMemberMapping[] mappings)
         {
             var memberMappings = mappings
-                .Where(m => m.Member != null || m.Reader != null)
+                .Where(m => m.Member is not null || m.Reader is not null)
                 .Where(m => Member?.Name == m.Member?.ParentAccessor?.Name)
                 .ToArray();
             return memberMappings;
@@ -118,7 +118,7 @@ namespace FlatFiles.TypeMapping
         private IMemberMapping[] GetWriterMemberMappings(IMemberMapping[] mappings)
         {
             var memberMappings = mappings
-                .Where(m => m.Member != null || m.Writer != null)
+                .Where(m => m.Member is not null || m.Writer is not null)
                 .Where(m => Member?.Name == m.Member?.ParentAccessor?.Name)
                 .ToArray();
             return memberMappings;
@@ -127,7 +127,7 @@ namespace FlatFiles.TypeMapping
         private IMapper[] GetNestedMappers(IMemberMapping[] mappings)
         {
             var mappers = mappings
-                .Where(m => m.Member != null)
+                .Where(m => m.Member is not null)
                 .Where(m => Member?.Name != m.Member!.ParentAccessor?.Name)
                 .Where(m => m.Member!.Name.StartsWith(Member?.Name ?? String.Empty))
                 .Select(GetParentAccessor)
@@ -143,7 +143,7 @@ namespace FlatFiles.TypeMapping
             string accessorName = Member?.Name ?? String.Empty;
             var childAccessor = mapping.Member!;
             var parentAccessor = childAccessor.ParentAccessor;
-            while (parentAccessor != null && accessorName != parentAccessor.Name)
+            while (parentAccessor is not null && accessorName != parentAccessor.Name)
             {
                 childAccessor = parentAccessor;
                 parentAccessor = childAccessor.ParentAccessor;

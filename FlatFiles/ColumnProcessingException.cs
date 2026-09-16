@@ -1,5 +1,6 @@
-﻿using System;
-using FlatFiles.Properties;
+﻿using FlatFiles.Properties;
+using System.Globalization;
+using System;
 
 namespace FlatFiles
 {
@@ -24,7 +25,7 @@ namespace FlatFiles
 
         private static string GetErrorMessage(IColumnDefinition definition, int position, object? value)
         {
-            var message = String.Format(null, Resources.InvalidColumnConversion, value, definition.ColumnType.FullName, definition.ColumnName, position);
+            var message = String.Format(CultureInfo.CurrentCulture, Resources.InvalidColumnConversion, value, definition.ColumnType.FullName, definition.ColumnName, position);
             return message;
         }
 

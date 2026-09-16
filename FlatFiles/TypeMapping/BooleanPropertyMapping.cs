@@ -2,18 +2,8 @@
 
 namespace FlatFiles.TypeMapping
 {
-    internal sealed class BooleanPropertyMapping : IBooleanPropertyMapping, IMemberMapping
+    internal sealed class BooleanPropertyMapping(BooleanColumn column, IMemberAccessor member, int physicalIndex, int logicalIndex) : IBooleanPropertyMapping, IMemberMapping
     {
-        private readonly BooleanColumn column;
-
-        public BooleanPropertyMapping(BooleanColumn column, IMemberAccessor member, int physicalIndex, int logicalIndex)
-        {
-            this.column = column;
-            Member = member;
-            PhysicalIndex = physicalIndex;
-            LogicalIndex = logicalIndex;
-        }
-
         public IBooleanPropertyMapping ColumnName(string name)
         {
             column.ColumnName = name;
@@ -82,7 +72,7 @@ namespace FlatFiles.TypeMapping
             return this;
         }
 
-        public IMemberAccessor Member { get; }
+        public IMemberAccessor Member { get; } = member;
 
         public Action<IColumnContext?, object?, object?>? Reader => null;
 
@@ -90,8 +80,8 @@ namespace FlatFiles.TypeMapping
 
         public IColumnDefinition ColumnDefinition => column;
 
-        public int PhysicalIndex { get; }
+        public int PhysicalIndex { get; } = physicalIndex;
 
-        public int LogicalIndex { get; }
+        public int LogicalIndex { get; } = logicalIndex;
     }
 }

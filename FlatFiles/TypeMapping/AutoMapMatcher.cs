@@ -28,10 +28,7 @@ namespace FlatFiles.TypeMapping
         /// <returns>The generated matcher.</returns>
         public static IAutoMapMatcher For(Func<IColumnDefinition, MemberInfo, bool> matcher, bool useFallback = true)
         {
-            if (matcher == null)
-            {
-                throw new ArgumentNullException(nameof(matcher));
-            }
+            ArgumentNullException.ThrowIfNull( matcher );
             return new AutoMapMatcher(matcher, useFallback);
         }
 
@@ -43,10 +40,7 @@ namespace FlatFiles.TypeMapping
         /// <returns>The generated matcher.</returns>
         public static IAutoMapMatcher For(IAutoMapResolver resolver, bool useFallback = true)
         {
-            if (resolver == null)
-            {
-                throw new ArgumentNullException(nameof(resolver));
-            }
+            ArgumentNullException.ThrowIfNull( resolver );
             return new AutoMapMatcher((column, member) => column.ColumnName == resolver.GetColumnName(member), useFallback);
         }
 

@@ -32,10 +32,7 @@ namespace FlatFiles
         /// <returns>An instance of a <see cref="IDefaultValue"/> that returns the result of the delegate.</returns>
         public static IDefaultValue Use(Func<IColumnContext?, object?> factory)
         {
-            if (factory == null)
-            {
-                throw new ArgumentNullException(nameof(factory));
-            }
+            ArgumentNullException.ThrowIfNull( factory );
             return new DefaultValue(factory);
         }
 

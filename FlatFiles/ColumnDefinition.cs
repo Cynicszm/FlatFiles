@@ -9,10 +9,6 @@ namespace FlatFiles
     /// </summary>
     public abstract class ColumnDefinition : IColumnDefinition
     {
-        private string? columnName;
-        private INullFormatter nullHandler = FlatFiles.NullFormatter.Default;
-        private IDefaultValue defaultValue = FlatFiles.DefaultValue.Disabled();
-
         /// <summary>
         /// Initializes a new instance of a ColumnDefinition.
         /// </summary>
@@ -38,7 +34,7 @@ namespace FlatFiles
         /// </summary>
         public string? ColumnName
         {
-            get => columnName;
+            get => field;
             internal set 
             {
                 value = value?.Trim();
@@ -46,7 +42,7 @@ namespace FlatFiles
                 {
                     throw new ArgumentException(Resources.BlankColumnName);
                 }
-                columnName = value;
+                field = value;
             }
         }
 
@@ -68,18 +64,18 @@ namespace FlatFiles
         /// </summary>
         public IDefaultValue DefaultValue
         {
-            get => defaultValue;
-            set => defaultValue = value ?? FlatFiles.DefaultValue.Disabled();
-        }
+            get => field;
+            set => field = value ?? FlatFiles.DefaultValue.Disabled();
+        } = FlatFiles.DefaultValue.Disabled();
 
         /// <summary>
         /// Gets or sets the null formatter instance used to read/write null values.
         /// </summary>
         public INullFormatter NullFormatter
         {
-            get => nullHandler;
-            set => nullHandler = value ?? FlatFiles.NullFormatter.Default;
-        }
+            get => field;
+            set => field = value ?? FlatFiles.NullFormatter.Default;
+        } = FlatFiles.NullFormatter.Default;
 
         /// <summary>
         /// Gets or sets a function used to preprocess input before trying to parse it.
@@ -183,17 +179,17 @@ namespace FlatFiles
         public override object? Parse(IColumnContext? context, string value)
         {
 #pragma warning disable CS0618 // Type or member is obsolete
-            if (Preprocessor != null)
+            if (Preprocessor is not null)
             {
                 value = Preprocessor(value) ?? String.Empty;
             }
 #pragma warning restore CS0618 // Type or member is obsolete
-            if (OnParsing != null)
+            if (OnParsing is not null)
             {
                 value = OnParsing(context, value) ?? String.Empty;
             }
             object? result = ParseValue(context, value);
-            if (OnParsed != null)
+            if (OnParsed is not null)
             {
                 result = OnParsed(context, result);
             }
@@ -202,7 +198,7 @@ namespace FlatFiles
 
         private object? ParseValue(IColumnContext? context, string? value)
         {
-            if (value == null || NullFormatter.IsNullValue(context, value))
+            if (value is null || NullFormatter.IsNullValue(context, value))
             {
                 if (IsNullable)
                 {
@@ -241,12 +237,12 @@ namespace FlatFiles
         /// <returns>The formatted value.</returns>
         public override string Format(IColumnContext? context, object? value)
         {
-            if (OnFormatting != null)
+            if (OnFormatting is not null)
             {
                 value = OnFormatting(context, value);
             }
             string result = FormatValue(context, value);
-            if (OnFormatted != null)
+            if (OnFormatted is not null)
             {
                 result = OnFormatted(context, result) ?? String.Empty;
             }
@@ -255,7 +251,7 @@ namespace FlatFiles
 
         private string FormatValue(IColumnContext? context, object? value)
         {
-            if (value == null)
+            if (value is null)
             {
                 return NullFormatter.FormatNull(context) ?? String.Empty;
             }

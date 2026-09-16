@@ -4,7 +4,7 @@
     {
         public static IRecordSeparatorMatcher GetMatcher(RetryReader reader, string? separator)
         {
-            if (separator == null)
+            if (separator is null)
             {
                 return new DefaultRecordSeparatorMatcher(reader);
             }

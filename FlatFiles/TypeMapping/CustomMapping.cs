@@ -5,26 +5,19 @@ using FlatFiles.Properties;
 
 namespace FlatFiles.TypeMapping
 {
-    internal sealed class CustomMapping<TEntity> : ICustomMapping<TEntity>, ICustomMapping, IMemberMapping
+    internal sealed class CustomMapping<TEntity>(IColumnDefinition column, int physicalIndex, int logicalIndex) : ICustomMapping<TEntity>, ICustomMapping, IMemberMapping
     {
-        public CustomMapping(IColumnDefinition column, int physicalIndex, int logicalIndex)
-        {
-            ColumnDefinition = column;
-            PhysicalIndex = physicalIndex;
-            LogicalIndex = logicalIndex;
-        }
-
         public IMemberAccessor? Member => null;
 
         public Action<IColumnContext?, object?, object?>? Reader { get; private set; }
 
         public Action<IColumnContext?, object?, object?[]>? Writer { get; private set; }
 
-        public IColumnDefinition ColumnDefinition { get; }
+        public IColumnDefinition ColumnDefinition { get; } = column;
 
-        public int PhysicalIndex { get; }
+        public int PhysicalIndex { get; } = physicalIndex;
 
-        public int LogicalIndex { get; }
+        public int LogicalIndex { get; } = logicalIndex;
 
         public ICustomMapping<TEntity> WithReader<TProp>(Expression<Func<TEntity, TProp>>? reader)
         {
@@ -34,7 +27,7 @@ namespace FlatFiles.TypeMapping
 
         private static Action<IColumnContext?, TEntity, object?>? GetReader<TProp>(Expression<Func<TEntity, TProp>>? reader)
         {
-            if (reader == null)
+            if (reader is null)
             {
                 return null;
             }
@@ -53,7 +46,7 @@ namespace FlatFiles.TypeMapping
 
         private static Expression GetMemberExpression(Expression entityParameter, Expression expression)
         {
-            if (expression == null || expression is not MemberExpression memberExpression)
+            if (expression is null || expression is not MemberExpression memberExpression)
             {
                 throw new ArgumentException(Resources.BadPropertySelector, nameof(expression));
             }
@@ -64,6 +57,12 @@ namespace FlatFiles.TypeMapping
                 {
                     return Expression.Property(entityParameter, propertyInfo);
                 }
+                if (memberExpression.Expression is null)
+                {
+                    // A nested member needs an instance to read from. A static member has none, and
+                    // recursing on the null would surface as a NullReferenceException from inside.
+                    throw new ArgumentException(Resources.BadPropertySelector, nameof(expression));
+                }
                 var nestedMember = GetMemberExpression(entityParameter, memberExpression.Expression);
                 return Expression.Property(nestedMember, propertyInfo);
             }
@@ -73,6 +72,12 @@ namespace FlatFiles.TypeMapping
                 {
                     return Expression.Field(entityParameter, fieldInfo);
                 }
+                if (memberExpression.Expression is null)
+                {
+                    // A nested member needs an instance to read from. A static member has none, and
+                    // recursing on the null would surface as a NullReferenceException from inside.
+                    throw new ArgumentException(Resources.BadPropertySelector, nameof(expression));
+                }
                 var nestedMember = GetMemberExpression(entityParameter, memberExpression.Expression);
                 return Expression.Field(nestedMember, fieldInfo);
             }
@@ -81,19 +86,19 @@ namespace FlatFiles.TypeMapping
 
         public ICustomMapping<TEntity> WithReader(Action<TEntity, object?>? reader)
         {
-            Reader = reader == null ? null : (ctx, e, v) => reader((TEntity)e!, v);
+            Reader = reader is null ? null : (ctx, e, v) => reader((TEntity)e!, v);
             return this;
         }
 
         public ICustomMapping<TEntity> WithReader(Action<IColumnContext?, TEntity, object?>? reader)
         {
-            Reader = reader == null ? null : (ctx, e, v) => reader(ctx, (TEntity)e!, v);
+            Reader = reader is null ? null : (ctx, e, v) => reader(ctx, (TEntity)e!, v);
             return this;
         }
 
         ICustomMapping ICustomMapping.WithReader(Action<object?, object?>? reader)
         {
-            Reader = reader == null ? null : (ctx, e, v) => reader(e, v);
+            Reader = reader is null ? null : (ctx, e, v) => reader(e, v);
             return this;
         }
 
@@ -105,19 +110,19 @@ namespace FlatFiles.TypeMapping
 
         public ICustomMapping<TEntity> WithWriter(Action<TEntity, object?[]>? writer)
         {
-            Writer = writer == null ? null : (ctx, e, v) => writer((TEntity)e!, v);
+            Writer = writer is null ? null : (ctx, e, v) => writer((TEntity)e!, v);
             return this;
         }
 
         public ICustomMapping<TEntity> WithWriter(Action<IColumnContext?, TEntity, object?[]>? writer)
         {
-            Writer = writer == null ? null : (ctx, e, v) => writer(ctx, (TEntity)e!, v);
+            Writer = writer is null ? null : (ctx, e, v) => writer(ctx, (TEntity)e!, v);
             return this;
         }
 
         ICustomMapping ICustomMapping.WithWriter(Action<object?, object?[]>? writer)
         {
-            Writer = writer == null ? null : (ctx, e, v) => writer(e, v);
+            Writer = writer is null ? null : (ctx, e, v) => writer(e, v);
             return this;
         }
 
@@ -129,7 +134,7 @@ namespace FlatFiles.TypeMapping
 
         public ICustomMapping<TEntity> WithWriter<TProp>(Func<TEntity, TProp>? writer)
         {
-            Writer = writer == null ? null : (ctx, e, v) =>
+            Writer = writer is null ? null : (ctx, e, v) =>
             {
                 v[LogicalIndex] = writer((TEntity)e!);
             };
@@ -138,7 +143,7 @@ namespace FlatFiles.TypeMapping
 
         public ICustomMapping<TEntity> WithWriter<TProp>(Func<IColumnContext?, TEntity, TProp>? writer)
         {
-            Writer = writer == null ? null : (ctx, e, v) =>
+            Writer = writer is null ? null : (ctx, e, v) =>
             {
                 v[LogicalIndex] = writer(ctx, (TEntity)e!);
             };
@@ -147,7 +152,7 @@ namespace FlatFiles.TypeMapping
 
         ICustomMapping ICustomMapping.WithWriter(Func<object?, object?>? writer)
         {
-            Writer = writer == null ? null : (ctx, e, v) =>
+            Writer = writer is null ? null : (ctx, e, v) =>
             {
                 v[LogicalIndex] = writer(e);
             };
@@ -156,7 +161,7 @@ namespace FlatFiles.TypeMapping
 
         ICustomMapping ICustomMapping.WithWriter(Func<IColumnContext?, object?, object?>? writer)
         {
-            Writer = writer == null ? null : (ctx, e, v) =>
+            Writer = writer is null ? null : (ctx, e, v) =>
             {
                 v[LogicalIndex] = writer(ctx, e);
             };

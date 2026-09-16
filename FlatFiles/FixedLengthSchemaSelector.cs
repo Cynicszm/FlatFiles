@@ -8,7 +8,7 @@ namespace FlatFiles
     /// </summary>
     public sealed class FixedLengthSchemaSelector
     {
-        private readonly List<SchemaMatcher> matchers = new();
+        private readonly List<SchemaMatcher> matchers = [];
         private SchemaMatcher? defaultMatcher;
 
         /// <summary>
@@ -20,10 +20,7 @@ namespace FlatFiles
         /// <remarks>Previously registered schemas will be used if their predicates match.</remarks>
         public IFixedLengthSchemaSelectorWhenBuilder When(Func<string, bool> predicate)
         {
-            if (predicate == null)
-            {
-                throw new ArgumentNullException(nameof(predicate));
-            }
+            ArgumentNullException.ThrowIfNull( predicate );
             return new FixedLengthSchemaSelectorWhenBuilder(this, predicate);
         }
 
@@ -34,7 +31,7 @@ namespace FlatFiles
         /// <returns>The current selector to allow for further customization.</returns>
         public IFixedLengthSchemaSelectorUseBuilder WithDefault(FixedLengthSchema schema)
         {
-            if (schema == null)
+            if (schema is null)
             {
                 defaultMatcher = null;
             }
@@ -62,7 +59,7 @@ namespace FlatFiles
                     return matcher.Schema;
                 }
             }
-            if (defaultMatcher != null && defaultMatcher.Predicate(record))
+            if (defaultMatcher is not null && defaultMatcher.Predicate(record))
             {
                 defaultMatcher.Action?.Invoke();
                 return defaultMatcher.Schema;
@@ -98,10 +95,7 @@ namespace FlatFiles
 
             public IFixedLengthSchemaSelectorUseBuilder Use(FixedLengthSchema schema)
             {
-                if (schema == null)
-                {
-                    throw new ArgumentNullException(nameof(schema));
-                }
+                ArgumentNullException.ThrowIfNull( schema );
                 var matcher = selector.Add(schema, predicate);
                 return new FixedLengthSchemaSelectorUseBuilder(matcher);
             }
@@ -118,7 +112,7 @@ namespace FlatFiles
 
             public void OnMatch(Action? action)
             {
-                if (matcher != null)
+                if (matcher is not null)
                 {
                     matcher.Action = action;
                 }

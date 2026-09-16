@@ -34,7 +34,7 @@ namespace FlatFiles
         /// <returns>The parsed Guid.</returns>
         protected override Guid OnParse(IColumnContext? context, string value)
         {
-            if (InputFormat == null)
+            if (InputFormat is null)
             {
                 return Guid.Parse(value);
             }
@@ -49,7 +49,7 @@ namespace FlatFiles
         /// <returns>The formatted value.</returns>
         protected override string OnFormat(IColumnContext? context, Guid value)
         {
-            if (OutputFormat == null)
+            if (OutputFormat is null)
             {
                 return value.ToString();
             }

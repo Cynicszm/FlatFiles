@@ -61,20 +61,17 @@ namespace FlatFiles
 
         private DelimitedReader(TextReader reader, DelimitedSchema? schema, DelimitedOptions? options, bool hasSchema)
         {
-            if (reader == null)
-            {
-                throw new ArgumentNullException(nameof(reader));
-            }
-            if (hasSchema && schema == null)
+            ArgumentNullException.ThrowIfNull( reader );
+            if (hasSchema && schema is null)
             {
                 throw new ArgumentNullException(nameof(schema));
             }
-            options = options == null ? new DelimitedOptions() : options.Clone();
+            options = options is null ? new DelimitedOptions() : options.Clone();
             if (options.RecordSeparator == options.Separator)
             {
                 throw new ArgumentException(Resources.SameSeparator, nameof(options));
             }
-            var retryReader = new RetryReader(reader);
+            var retryReader = new RetryReader(reader, options.PreserveRecordText);
             this.parser = new DelimitedRecordParser(retryReader, options);
             this.schema = schema;
         }
@@ -93,14 +90,14 @@ namespace FlatFiles
         {
             add
             {
-                if (value != null)
+                if (value is not null)
                 {
                     RecordParsed += (sender, e) => value(sender, e);
                 }
             }
             remove
             {
-                if (value != null)
+                if (value is not null)
                 {
                     RecordParsed -= (sender, e) => value(sender, e);
                 }
@@ -128,7 +125,7 @@ namespace FlatFiles
         /// <returns>The names.</returns>
         public DelimitedSchema? GetSchema()
         {
-            if (schemaSelector != null)
+            if (schemaSelector is not null)
             {
                 return null;
             }
@@ -144,7 +141,7 @@ namespace FlatFiles
         /// <returns>The schema being used by the parser.</returns>
         public async Task<DelimitedSchema?> GetSchemaAsync()
         {
-            if (schemaSelector != null)
+            if (schemaSelector is not null)
             {
                 return null;
             }
@@ -176,7 +173,7 @@ namespace FlatFiles
             try
             {
                 values = ParsePartitions();
-                if (values == null)
+                if (values is null)
                 {
                     return false;
                 }
@@ -206,7 +203,7 @@ namespace FlatFiles
             try
             {
                 values = await ParsePartitionsAsync().ConfigureAwait(false);
-                if (values == null)
+                if (values is null)
                 {
                     return false;
                 }
@@ -231,13 +228,13 @@ namespace FlatFiles
             {
                 return this.schema;
             }
-            if (schemaSelector != null || this.schema != null)
+            if (schemaSelector is not null || this.schema is not null)
             {
                 SkipInternal();
                 return this.schema;
             }
             var (_, columnNames) = ReadNextRecord();
-            if (columnNames == null)
+            if (columnNames is null)
             {
                 // Do not treat a missing schema in an empty file as an error.
                 return null;
@@ -256,13 +253,13 @@ namespace FlatFiles
             {
                 return this.schema;
             }
-            if (schemaSelector != null || this.schema != null)
+            if (schemaSelector is not null || this.schema is not null)
             {
                 await SkipAsyncInternal().ConfigureAwait(false);
                 return this.schema;
             }
             var (_, columnNames) = await ReadNextRecordAsync().ConfigureAwait(false);
-            if (columnNames == null)
+            if (columnNames is null)
             {
                 // Do not treat a missing schema in an empty file as an error.
                 return null;
@@ -291,7 +288,7 @@ namespace FlatFiles
             {
                 var (record, rawValues) = ReadNextRecord();
                 var values = ProcessRecord(record, rawValues);
-                if (values != null)
+                if (values is not null)
                 {
                     return values;
                 }
@@ -305,7 +302,7 @@ namespace FlatFiles
             {
                 var (record, rawValues) = await ReadNextRecordAsync();
                 var values = ProcessRecord(record, rawValues);
-                if (values != null)
+                if (values is not null)
                 {
                     return values;
                 }
@@ -315,12 +312,12 @@ namespace FlatFiles
 
         private object?[]? ProcessRecord(string? record, string[]? rawValues)
         {
-            if (record == null || rawValues == null)
+            if (record is null || rawValues is null)
             {
                 return null;
             }
             var schema = GetSchema(record, rawValues);
-            if (schema == null)
+            if (schema is null)
             {
                 schema = DelimitedSchema.BuildDynamicSchema(parser.Options, rawValues.Length);
             }
@@ -336,7 +333,7 @@ namespace FlatFiles
                 return null;
             }
             object?[]? values = ParseValues(recordContext, rawValues);
-            if (values == null)
+            if (values is null)
             {
                 return null;
             }
@@ -347,12 +344,12 @@ namespace FlatFiles
 
         private DelimitedSchema? GetSchema(string? record, string[] rawValues)
         {
-            if (schemaSelector == null)
+            if (schemaSelector is null)
             {
                 return this.schema;
             }
             var schema = schemaSelector.GetSchema(rawValues);
-            if (schema != null)
+            if (schema is not null)
             {
                 return schema;
             }
@@ -363,7 +360,7 @@ namespace FlatFiles
 
         private bool IsSkipped(DelimitedRecordContext recordContext, string[] values)
         {
-            if (RecordRead == null)
+            if (RecordRead is null)
             {
                 return false;
             }
@@ -442,18 +439,18 @@ namespace FlatFiles
         private bool SkipInternal()
         {
             var (_, rawValues) = ReadNextRecord();
-            return rawValues != null;
+            return rawValues is not null;
         }
 
         private async ValueTask<bool> SkipAsyncInternal()
         {
             var (_, rawValues) = await ReadNextRecordAsync().ConfigureAwait(false);
-            return rawValues != null;
+            return rawValues is not null;
         }
 
         private void ProcessError(RecordProcessingException exception)
         {
-            if (RecordError != null)
+            if (RecordError is not null)
             {
                 var args = new RecordErrorEventArgs(exception);
                 RecordError(this, args);
@@ -523,7 +520,7 @@ namespace FlatFiles
             {
                 throw new InvalidOperationException(Resources.ReadNotCalled);
             }
-            if (endOfFile || values == null)
+            if (endOfFile || values is null)
             {
                 throw new InvalidOperationException(Resources.NoMoreRecords);
             }
@@ -534,7 +531,7 @@ namespace FlatFiles
 
         private IRecordContext GetMetadata(DelimitedSchema? schema, string? record)
         {
-            if (this.recordContext != null)
+            if (this.recordContext is not null)
             {
                 return this.recordContext;
             }

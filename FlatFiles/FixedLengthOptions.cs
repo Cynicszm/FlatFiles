@@ -8,9 +8,6 @@ namespace FlatFiles
     /// </summary>
     public sealed class FixedLengthOptions : IOptions
     {
-        private FixedAlignment alignment = FixedAlignment.LeftAligned;
-        private OverflowTruncationPolicy truncationPolicy = OverflowTruncationPolicy.TruncateLeading;
-
         /// <summary>
         /// Initializes a new instance of a FixedLengthParserOptions.
         /// </summary>
@@ -55,16 +52,16 @@ namespace FlatFiles
         /// <remarks>The alignment can be controlled at the columnm level using the Window class.</remarks>
         public FixedAlignment Alignment
         {
-            get => alignment;
+            get => field;
             set
             {
-                if (!Enum.IsDefined(typeof(FixedAlignment), value))
+                if (!Enum.IsDefined(value))
                 {
                     throw new ArgumentException(Resources.InvalidAlignment, nameof(value));
                 }
-                alignment = value;
+                field = value;
             }
-        }
+        } = FixedAlignment.LeftAligned;
 
         /// <summary>
         /// Gets or sets the default overflow truncation policy to use when a value exceeds the maximum length of its column.
@@ -72,16 +69,16 @@ namespace FlatFiles
         /// <remarks>The trunaction policy can be controlled at the column level using the Window class.</remarks>
         public OverflowTruncationPolicy TruncationPolicy
         {
-            get => truncationPolicy;
+            get => field;
             set
             {
-                if (!Enum.IsDefined(typeof(OverflowTruncationPolicy), value))
+                if (!Enum.IsDefined(value))
                 {
                     throw new ArgumentException(Resources.InvalidTruncationPolicy, nameof(value));
                 }
-                truncationPolicy = value;
+                field = value;
             }
-        }
+        } = OverflowTruncationPolicy.TruncateLeading;
 
         /// <summary>
         /// Gets or sets whether column-level metadata should be disabled for non-metadata columns.

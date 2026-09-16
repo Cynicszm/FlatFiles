@@ -9,7 +9,7 @@ namespace FlatFiles.TypeMapping
     /// </summary>
     public sealed class FixedLengthTypeMapperSelector
     {
-        private readonly List<TypeMapperMatcher> matchers = new();
+        private readonly List<TypeMapperMatcher> matchers = [];
         private IDynamicFixedLengthTypeMapper? defaultMapper;
 
         /// <summary>
@@ -28,10 +28,7 @@ namespace FlatFiles.TypeMapping
         /// <remarks>Previously registered schemas will be used if their predicates match.</remarks>
         public IFixedLengthTypeMapperSelectorWhenBuilder When(Func<string, bool> predicate)
         {
-            if (predicate == null)
-            {
-                throw new ArgumentNullException(nameof(predicate));
-            }
+            ArgumentNullException.ThrowIfNull( predicate );
             return new FixedLengthTypeMapperSelectorWhenBuilder(this, predicate);
         }
 
@@ -71,7 +68,7 @@ namespace FlatFiles.TypeMapping
                 var typedReader = new Lazy<Func<IRecordContext, object?[], object?>>(GetReader(matcher.TypeMapper));
                 selector.When(matcher.Predicate).Use(matcher.TypeMapper.GetSchema()).OnMatch(() => multiReader.Deserializer = typedReader.Value);
             }
-            if (defaultMapper != null)
+            if (defaultMapper is not null)
             {
                 var typeReader = new Lazy<Func<IRecordContext, object?[], object?>>(GetReader (defaultMapper));
                 selector.WithDefault(defaultMapper.GetSchema()).OnMatch(() => multiReader.Deserializer = typeReader.Value);
@@ -123,10 +120,7 @@ namespace FlatFiles.TypeMapping
 
             public void Use(IDynamicFixedLengthTypeMapper typeMapper)
             {
-                if (typeMapper == null)
-                {
-                    throw new ArgumentNullException(nameof(typeMapper));
-                }
+                ArgumentNullException.ThrowIfNull( typeMapper );
                 selector.Add(typeMapper, predicate);
             }
         }

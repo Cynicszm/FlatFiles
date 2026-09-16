@@ -35,7 +35,7 @@ namespace FlatFiles
         private DelimitedComplexColumn(string columnName, DelimitedSchema? schema, DelimitedOptions? options, bool hasSchema)
             : base(columnName)
         {
-            if (hasSchema && schema == null)
+            if (hasSchema && schema is null)
             {
                 throw new ArgumentNullException(nameof(schema));
             }
@@ -75,7 +75,7 @@ namespace FlatFiles
 
         private DelimitedReader GetReader(StringReader stringReader)
         {
-            if (schema == null)
+            if (schema is null)
             {
                 return new DelimitedReader(stringReader, Options);
             }
@@ -90,7 +90,7 @@ namespace FlatFiles
         /// <returns>A formatted string containing the embedded data.</returns>
         protected override string OnFormat(IColumnContext? context, object?[]? values)
         {
-            if (values == null)
+            if (values is null)
             {
                 return String.Empty;
             }
