@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -15,11 +14,6 @@ namespace FlatFiles.Test
     [TestClass]
     public class FixedLengthAsyncReaderTester
     {
-        public FixedLengthAsyncReaderTester()
-        {
-            CultureInfo.CurrentCulture = new CultureInfo("en-US");
-        }
-
         /// <summary>
         /// We should be able to write and read values using a type mappers.
         /// </summary>

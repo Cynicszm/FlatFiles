@@ -653,7 +653,7 @@ namespace FlatFiles.Test
                 Quote = '\''
             };
             var reader = new DelimitedReader(stringReader, options);
-            Assert.ThrowsException<RecordProcessingException>(() => reader.Read());
+            Assert.ThrowsExactly<RecordProcessingException>(() => reader.Read());
         }
 
         [TestMethod]
@@ -667,7 +667,7 @@ namespace FlatFiles.Test
                 Quote = '\''
             };
             var reader = new DelimitedReader(stringReader, options);
-            Assert.ThrowsException<RecordProcessingException>(() => reader.Read());
+            Assert.ThrowsExactly<RecordProcessingException>(() => reader.Read());
         }
 
         [TestMethod]

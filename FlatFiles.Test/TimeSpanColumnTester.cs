@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Globalization;
 using System.IO;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -11,18 +10,13 @@ namespace FlatFiles.Test
     [TestClass]
     public class TimeSpanColumnTester
     {
-        public TimeSpanColumnTester()
-        {
-            CultureInfo.CurrentCulture = new CultureInfo("en-US");
-        }
-
         /// <summary>
         /// An exception should be thrown if name is blank.
         /// </summary>
         [TestMethod]
         public void TestCtor_NameBlank_Throws()
         {
-            Assert.ThrowsException<ArgumentException>(() => new TimeSpanColumn("    "));
+            Assert.ThrowsExactly<ArgumentException>(() => new TimeSpanColumn("    "));
         }
 
         /// <summary>
