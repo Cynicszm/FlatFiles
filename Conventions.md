@@ -137,6 +137,21 @@ sake should pass an explicit `IFormatProvider` rather than lean on the ambient o
 Prefer `Assert.ThrowsExactly<T>` over `Assert.ThrowsException<T>` and over `[ExpectedException]`; both
 older forms are flagged by the MSTest analysers and removed in MSTest 4.
 
+## Coverage
+
+Statement coverage of the library stays at or above 80%. Measure it with dotCover over the full suite,
+scoped to the library module so the tests and benchmarks never count towards their own figure:
+
+    dotCover cover-dotnet --Output=coverage.json --ReportType=JSON --Filters="+:module=FlatFiles" -- test FlatFiles.sln -c Release
+
+The root `CoveragePercent` in the report is the number. dotCover is a global tool
+(`dotnet tool install -g JetBrains.dotCover.CommandLineTools`); nothing in the test project is needed.
+
+The cheapest coverage is rarely the most valuable, so prefer tests that assert behaviour and let coverage
+follow. The exception that proves it: the twenty-one property mapping classes are near-identical fluent
+setters, and one reflective test drives every method on all of them precisely so that a new mapping or
+setter is covered without anyone remembering to extend a test.
+
 ## Analysers
 
 Not yet enforced in this repository — there is no `.editorconfig` or `Directory.Build.props`, so no
