@@ -74,9 +74,11 @@ namespace FlatFiles
             return joined;
         }
 
+        private ExecutionContextCache<DelimitedSchema, DelimitedExecutionContext>? executionContexts;
+
         private DelimitedRecordContext NewRecordContext(DelimitedSchema schema)
         {
-            var executionContext = new DelimitedExecutionContext(schema, Options.Clone());
+            var executionContext = (executionContexts ??= new( s => new DelimitedExecutionContext( s!, Options.Clone() ) )).Get( schema );
             return new DelimitedRecordContext(executionContext)
             {
                 PhysicalRecordNumber = PhysicalRecordNumber,
