@@ -39,10 +39,7 @@ namespace FlatFiles
 
         private DelimitedWriter(TextWriter writer, DelimitedSchema? schema, DelimitedOptions? options, bool hasSchema)
         {
-            if (writer == null)
-            {
-                throw new ArgumentNullException(nameof(writer));
-            }
+            ArgumentNullException.ThrowIfNull( writer );
             if (hasSchema && schema == null)
             {
                 throw new ArgumentNullException(nameof(schema));
@@ -60,14 +57,8 @@ namespace FlatFiles
         /// <exception cref="ArgumentNullException">The schema injector is null.</exception>
         public DelimitedWriter(TextWriter writer, DelimitedSchemaInjector injector, DelimitedOptions? options = null)
         {
-            if (writer == null)
-            {
-                throw new ArgumentNullException(nameof(writer));
-            }
-            if (injector == null)
-            {
-                throw new ArgumentNullException(nameof(injector));
-            }
+            ArgumentNullException.ThrowIfNull( writer );
+            ArgumentNullException.ThrowIfNull( injector );
             recordWriter = new DelimitedRecordWriter(writer, injector, options);
         }
 
@@ -146,10 +137,7 @@ namespace FlatFiles
         /// <exception cref="ArgumentNullException">The values array is null.</exception>
         public void Write(object?[] values)
         {
-            if (values == null)
-            {
-                throw new ArgumentNullException(nameof(values));
-            }
+            ArgumentNullException.ThrowIfNull( values );
             if (!isSchemaWritten)
             {
                 if (recordWriter.Options.IsFirstRecordSchema && recordWriter.ActualSchema != null)
@@ -185,10 +173,7 @@ namespace FlatFiles
         /// <exception cref="ArgumentNullException">The values array is null.</exception>
         public async Task WriteAsync(object?[] values)
         {
-            if (values == null)
-            {
-                throw new ArgumentNullException(nameof(values));
-            }
+            ArgumentNullException.ThrowIfNull( values );
             if (!isSchemaWritten)
             {
                 if (recordWriter.Options.IsFirstRecordSchema && recordWriter.ActualSchema != null)

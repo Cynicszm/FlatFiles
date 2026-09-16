@@ -20,10 +20,7 @@ namespace FlatFiles
         /// <remarks>Previously registered schemas will be used if their predicates match.</remarks>
         public IFixedLengthSchemaSelectorWhenBuilder When(Func<string, bool> predicate)
         {
-            if (predicate == null)
-            {
-                throw new ArgumentNullException(nameof(predicate));
-            }
+            ArgumentNullException.ThrowIfNull( predicate );
             return new FixedLengthSchemaSelectorWhenBuilder(this, predicate);
         }
 
@@ -98,10 +95,7 @@ namespace FlatFiles
 
             public IFixedLengthSchemaSelectorUseBuilder Use(FixedLengthSchema schema)
             {
-                if (schema == null)
-                {
-                    throw new ArgumentNullException(nameof(schema));
-                }
+                ArgumentNullException.ThrowIfNull( schema );
                 var matcher = selector.Add(schema, predicate);
                 return new FixedLengthSchemaSelectorUseBuilder(matcher);
             }

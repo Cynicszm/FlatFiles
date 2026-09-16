@@ -22,14 +22,8 @@ namespace FlatFiles
         /// <exception cref="ArgumentNullException">The reader is null.</exception>
         public static void ReadFlatFile(this DataTable table, IReader reader, LoadOption loadOption = LoadOption.PreserveChanges, FillErrorEventHandler? errorHandler = null)
         {
-            if (table == null)
-            {
-                throw new ArgumentNullException(nameof(table));
-            }
-            if (reader == null)
-            {
-                throw new ArgumentNullException(nameof(reader));
-            }
+            ArgumentNullException.ThrowIfNull( table );
+            ArgumentNullException.ThrowIfNull( reader );
             var fileReader = new FlatFileDataReader(reader);
             table.Load(fileReader, loadOption, errorHandler);
         }
@@ -43,14 +37,8 @@ namespace FlatFiles
         /// <exception cref="ArgumentNullException">The writer is null.</exception>
         public static void WriteFlatFile(this DataTable table, IWriter writer)
         {
-            if (table == null)
-            {
-                throw new ArgumentNullException(nameof(table));
-            }
-            if (writer == null)
-            {
-                throw new ArgumentNullException(nameof(writer));
-            }
+            ArgumentNullException.ThrowIfNull( table );
+            ArgumentNullException.ThrowIfNull( writer );
             var schema = writer.GetSchema();
             if (schema == null)
             {

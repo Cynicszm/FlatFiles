@@ -61,10 +61,7 @@ namespace FlatFiles
 
         private DelimitedReader(TextReader reader, DelimitedSchema? schema, DelimitedOptions? options, bool hasSchema)
         {
-            if (reader == null)
-            {
-                throw new ArgumentNullException(nameof(reader));
-            }
+            ArgumentNullException.ThrowIfNull( reader );
             if (hasSchema && schema == null)
             {
                 throw new ArgumentNullException(nameof(schema));

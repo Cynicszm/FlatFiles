@@ -28,10 +28,7 @@ namespace FlatFiles
         /// <remarks>Previously registered schemas will be used if their predicates match.</remarks>
         public IFixedLengthSchemaInjectorWhenBuilder When(Func<object?[], bool> predicate)
         {
-            if (predicate == null)
-            {
-                throw new ArgumentNullException(nameof(predicate));
-            }
+            ArgumentNullException.ThrowIfNull( predicate );
             return new FixedLengthSchemaInjectorWhenBuilder(this, predicate);
         }
 
@@ -100,10 +97,7 @@ namespace FlatFiles
 
             public void Use(FixedLengthSchema schema)
             {
-                if (schema == null)
-                {
-                    throw new ArgumentNullException(nameof(schema));
-                }
+                ArgumentNullException.ThrowIfNull( schema );
                 injector.Add(schema, predicate);
             }
         }

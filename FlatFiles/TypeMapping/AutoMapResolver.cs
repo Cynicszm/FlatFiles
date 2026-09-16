@@ -30,10 +30,7 @@ namespace FlatFiles.TypeMapping
         /// <returns>The generated resolver.</returns>
         public static IAutoMapResolver For(Func<MemberInfo, string> nameResolver, Func<MemberInfo, int>? positionResolver = null)
         {
-            if (nameResolver == null)
-            {
-                throw new ArgumentNullException(nameof(nameResolver));
-            }
+            ArgumentNullException.ThrowIfNull( nameResolver );
             return new AutoMapResolver(nameResolver, positionResolver);
         }
 

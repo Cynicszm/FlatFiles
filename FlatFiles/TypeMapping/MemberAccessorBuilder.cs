@@ -63,10 +63,7 @@ namespace FlatFiles.TypeMapping
 
         public static IMemberAccessor GetMember<TEntity, TProp>(Expression<Func<TEntity, TProp>> accessor)
         {
-            if (accessor == null)
-            {
-                throw new ArgumentNullException(nameof(accessor));
-            }
+            ArgumentNullException.ThrowIfNull( accessor );
             return GetMember<TEntity>(accessor.Body);
         }
 
