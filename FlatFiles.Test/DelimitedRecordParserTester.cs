@@ -18,7 +18,7 @@ namespace FlatFiles.Test
         private static List<(string Record, string[] Values)> Parse( string text, DelimitedOptions options, int bufferSize )
         {
             var parser = new DelimitedRecordParser( new CharBufferReader( new StringReader( text ), bufferSize ), options );
-            var records = new List<(string, string[])>();
+            List<(string, string[])> records = [];
             while (!parser.IsEndOfStream())
             {
                 records.Add( parser.ReadRecord() );
@@ -29,7 +29,7 @@ namespace FlatFiles.Test
         private static async Task<List<(string Record, string[] Values)>> ParseAsync( string text, DelimitedOptions options, int bufferSize )
         {
             var parser = new DelimitedRecordParser( new CharBufferReader( new StringReader( text ), bufferSize ), options );
-            var records = new List<(string, string[])>();
+            List<(string, string[])> records = [];
             while (!await parser.IsEndOfStreamAsync())
             {
                 records.Add( await parser.ReadRecordAsync() );

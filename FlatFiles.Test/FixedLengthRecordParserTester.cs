@@ -16,7 +16,7 @@ namespace FlatFiles.Test
         private static List<string> Parse( string text, FixedLengthOptions options, int bufferSize )
         {
             var parser = new FixedLengthRecordParser( new StringReader( text ), null, options, bufferSize );
-            var records = new List<string>();
+            List<string> records = [];
             while (!parser.IsEndOfStream())
             {
                 records.Add( parser.ReadRecord() );
@@ -27,7 +27,7 @@ namespace FlatFiles.Test
         private static async Task<List<string>> ParseAsync( string text, FixedLengthOptions options, int bufferSize )
         {
             var parser = new FixedLengthRecordParser( new StringReader( text ), null, options, bufferSize );
-            var records = new List<string>();
+            List<string> records = [];
             while (!await parser.IsEndOfStreamAsync())
             {
                 records.Add( await parser.ReadRecordAsync() );
