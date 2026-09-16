@@ -125,6 +125,15 @@ namespace FlatFiles.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The record was longer than the total width of the windows in the schema. Record {0}..
+        /// </summary>
+        internal static string FixedLengthRecordTooLong {
+            get {
+                return ResourceManager.GetString("FixedLengthRecordTooLong", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to The record did not meet the length requirements specified in the schema. Record {0}..
         /// </summary>
         internal static string FixedLengthRecordTooShort {
