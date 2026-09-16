@@ -255,10 +255,7 @@ namespace FlatFiles
         /// <returns>The number of chars copied to the buffer.</returns>
         public long GetChars(int i, long fieldoffset, char[] buffer, int bufferoffset, int length)
         {
-            if (buffer == null)
-            {
-                throw new ArgumentNullException(nameof(buffer));
-            }
+            ArgumentNullException.ThrowIfNull( buffer );
             var values = GetValues();
             var chars = (char[])values[i]!;
             Array.Copy(chars, (int)fieldoffset, buffer, bufferoffset, length);

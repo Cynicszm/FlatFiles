@@ -50,10 +50,7 @@ namespace FlatFiles
 
         private FixedLengthReader(TextReader reader, FixedLengthSchema? schema, FixedLengthOptions? options = null, bool hasSchema = true)
         {
-            if (reader == null)
-            {
-                throw new ArgumentNullException(nameof(reader));
-            }
+            ArgumentNullException.ThrowIfNull( reader );
             if (hasSchema && schema == null)
             {
                 throw new ArgumentNullException(nameof(schema));

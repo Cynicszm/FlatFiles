@@ -27,10 +27,7 @@ namespace FlatFiles
         /// <returns>The current schema.</returns>
         public FixedLengthSchema AddColumn(IColumnDefinition definition, Window window)
         {
-            if (window == null)
-            {
-                throw new ArgumentNullException(nameof(window));
-            }
+            ArgumentNullException.ThrowIfNull( window );
             if (window == Window.Trailing)
             {
                 trailing = definition;

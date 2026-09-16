@@ -75,10 +75,7 @@ namespace FlatFiles
 
         internal void AddColumn(IColumnDefinition definition)
         {
-            if (definition == null)
-            {
-                throw new ArgumentNullException(nameof(definition));
-            }
+            ArgumentNullException.ThrowIfNull( definition );
             if (!String.IsNullOrEmpty(definition.ColumnName) && ordinals.ContainsKey(definition.ColumnName!))
             {
                 throw new ArgumentException(Resources.DuplicateColumnName, nameof(definition));
