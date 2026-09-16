@@ -1,3 +1,25 @@
+## 7.1.0 (2026-09-16)
+**Summary** - Writers format each record into one reusable buffer and hand it to the `TextWriter` in a single write, removing half to two thirds of the allocation from writing a file and making every writer a little faster.
+
+Until now each value written passed through several strings: the column formatted it to a string, the delimited writer quoted it into another and joined the record into a third, or the fixed-length writer padded it into another, and only then was anything handed to the `TextWriter`. Over 50,000 six-column records that came to 38.7 MB for the delimited writer and 36.3 MB for the fixed-length writer, almost all of it garbage before the record reached the stream.
+
+Each writer now owns a single growable character buffer. Columns format straight into it - the numeric, date, `Guid`, `TimeSpan` and `char` columns through `ISpanFormattable.TryFormat`, so no string is ever created for the value - the delimited writer quotes a value in place once its text is known, the fixed-length writer pads or truncates in place, and the finished record goes to the `TextWriter` as one span. Once the buffer has grown to fit the widest record in the file it allocates nothing further. The measurements below are the best of fifteen runs, the two builds alternated on the same machine:
+
+| 50,000 records, six columns | 7.0.0 | 7.1.0 |
+|---|---|---|
+| delimited | 27.9 ms, 38.7 MB | 24.7 ms, 14.4 MB |
+| delimited, async | 31.6 ms, 38.7 MB | 27.1 ms, 14.4 MB |
+| fixed-length | 28.9 ms, 36.3 MB | 23.3 ms, 19.4 MB |
+| delimited through the type mapper | 60.6 ms, 50.9 MB | 49.1 ms, 26.7 MB |
+
+The text written is identical in every case; a new set of tests formats every built-in column type both ways and asserts the two agree, including custom output formats and non-default cultures.
+
+**New API.** `IColumnDefinition` gains `Format(IColumnContext?, object?, IBufferWriter<char>)` with a default implementation that writes the string the existing `Format` returns, so a class implementing the interface directly keeps compiling and working. `ColumnDefinition` exposes the same overload as a virtual method, `ColumnDefinition<T>` adds a matching `protected virtual OnFormat(IColumnContext?, T, IBufferWriter<char>)`, and a `protected static WriteFormatted<TValue>` helper formats any `ISpanFormattable` into a buffer, growing the request until it fits. A custom column that only overrides the string `OnFormat`, as every existing one does, keeps working unchanged through the fallback; override the buffer overload as well to format without a string.
+
+Two things to know if you have written your own columns. If a `ColumnDefinition<T>` subclass overrides the public `Format(IColumnContext?, object?)` itself rather than `OnFormat`, writers no longer call it - they call the buffer overload, which goes to `OnFormat`. Override the buffer overload too, or move the logic into `OnFormat`. And a column with an `OnFormatted` hook is still formatted to a string first, because the hook takes the whole string; `OnFormatting` is unaffected.
+
+What remains per record is the boxing of each value by the type mapper, one `ColumnContext` per column (which `IsColumnContextDisabled` already switches off) and the record context itself.
+
 ## 7.0.0 (2026-09-16)
 **Summary** - Target .NET 10 exclusively and remove the deprecated compatibility packages, leaving the package with no dependencies of its own.
 

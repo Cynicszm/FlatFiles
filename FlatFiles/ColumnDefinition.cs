@@ -1,36 +1,37 @@
 ﻿using System;
+using System.Buffers;
 using System.Globalization;
 using FlatFiles.Properties;
 
 namespace FlatFiles
 {
     /// <summary>
-    /// Defines a column that is part of a record schema.
+    ///     Defines a column that is part of a record schema.
     /// </summary>
     public abstract class ColumnDefinition : IColumnDefinition
     {
         /// <summary>
-        /// Initializes a new instance of a ColumnDefinition.
+        ///     Initializes a new instance of a ColumnDefinition.
         /// </summary>
         /// <param name="columnName">The name of the column to define.</param>
-        protected ColumnDefinition(string columnName)
-            : this(columnName, false)
+        protected ColumnDefinition( string columnName )
+            : this( columnName, false )
         {
         }
 
         /// <summary>
-        /// Initializes a new instance of a ColumnDefinition.
+        ///     Initializes a new instance of a ColumnDefinition.
         /// </summary>
         /// <param name="columnName">The name of the column to define.</param>
         /// <param name="isIgnored">Specifies whether the value in the column appears in the parsed record.</param>
-        internal ColumnDefinition(string? columnName, bool isIgnored)
+        internal ColumnDefinition( string? columnName, bool isIgnored )
         {
             IsIgnored = isIgnored; // Set ignored first or ColumnName setter fails!
             ColumnName = columnName;
         }
 
         /// <summary>
-        /// Gets the name of the column.
+        ///     Gets the name of the column.
         /// </summary>
         public string? ColumnName
         {
@@ -38,21 +39,21 @@ namespace FlatFiles
             internal set 
             {
                 value = value?.Trim();
-                if (!IsIgnored && String.IsNullOrEmpty(value))
+                if (!IsIgnored && String.IsNullOrEmpty( value ))
                 {
-                    throw new ArgumentException(Resources.BlankColumnName);
+                    throw new ArgumentException( Resources.BlankColumnName );
                 }
                 field = value;
             }
         }
 
         /// <summary>
-        /// Gets whether the value in this column is returned as a result.
+        ///     Gets whether the value in this column is returned as a result.
         /// </summary>
         public bool IsIgnored { get; }
 
         /// <summary>
-        /// Gets or sets whether nulls are allowed for the column.
+        ///     Gets or sets whether nulls are allowed for the column.
         /// </summary>
         public bool IsNullable { get; set; } = true;
 
@@ -60,7 +61,7 @@ namespace FlatFiles
         public virtual bool IsComplex { get; } = false;
 
         /// <summary>
-        /// Gets or sets the default value to use when a null is encountered on a non-nullable column.
+        ///     Gets or sets the default value to use when a null is encountered on a non-nullable column.
         /// </summary>
         public IDefaultValue DefaultValue
         {
@@ -69,7 +70,7 @@ namespace FlatFiles
         } = FlatFiles.DefaultValue.Disabled();
 
         /// <summary>
-        /// Gets or sets the null formatter instance used to read/write null values.
+        ///     Gets or sets the null formatter instance used to read/write null values.
         /// </summary>
         public INullFormatter NullFormatter
         {
@@ -78,71 +79,111 @@ namespace FlatFiles
         } = FlatFiles.NullFormatter.Default;
 
         /// <summary>
-        /// Gets or sets a function used to preprocess input before trying to parse it.
+        ///     Gets or sets a function used to preprocess input before trying to parse it.
         /// </summary>
-        [Obsolete("This property has been superseded by the OnParsing delegate.")]
+        [Obsolete( "This property has been superseded by the OnParsing delegate." )]
         public Func<string, string?>? Preprocessor { get; set; }
 
         /// <summary>
-        /// Gets or sets a function used to pre-process input before trying to parse it.
+        ///     Gets or sets a function used to pre-process input before trying to parse it.
         /// </summary>
         public Func<IColumnContext?, string, string?>? OnParsing { get; set; }
 
         /// <summary>
-        /// Gets or sets a function used to post-process input after parsing it.
+        ///     Gets or sets a function used to post-process input after parsing it.
         /// </summary>
         public Func<IColumnContext?, object?, object?>? OnParsed { get; set; }
 
         /// <summary>
-        /// Gets or sets a function used to pre-process output before trying to format it.
+        ///     Gets or sets a function used to pre-process output before trying to format it.
         /// </summary>
         public Func<IColumnContext?, object?, object?>? OnFormatting { get; set; }
 
         /// <summary>
-        /// Gets or sets a function used to post-process output after formatting it.
+        ///     Gets or sets a function used to post-process output after formatting it.
         /// </summary>
         public Func<IColumnContext?, string, string?>? OnFormatted { get; set; }
 
         /// <summary>
-        /// Gets the type of the values in the column.
+        ///     Gets the type of the values in the column.
         /// </summary>
         public abstract Type ColumnType { get; }
 
         /// <summary>
-        /// Parses the given value and returns the parsed object.
+        ///     Parses the given value and returns the parsed object.
         /// </summary>
         /// <param name="context">Holds information about the column current being processed.</param>
         /// <param name="value">The value to parse.</param>
         /// <returns>The parsed value.</returns>
-        public abstract object? Parse(IColumnContext? context, string value);
+        public abstract object? Parse( IColumnContext? context, string value );
 
         /// <summary>
-        /// Removes any leading or trailing whitespace from the value.
+        ///     Removes any leading or trailing whitespace from the value.
         /// </summary>
         /// <param name="value">The value to trim.</param>
         /// <returns>The trimmed value.</returns>
-        protected internal static string TrimValue(string value)
+        protected internal static string TrimValue( string value )
         {
             return value.Trim();
         }
 
         /// <summary>
-        /// Formats the given object.
+        ///     Formats the given object.
         /// </summary>
         /// <param name="context">Holds information about the column current being processed.</param>
         /// <param name="value">The object to format.</param>
         /// <returns>The formatted value.</returns>
-        public abstract string Format(IColumnContext? context, object? value);
+        public abstract string Format( IColumnContext? context, object? value );
 
         /// <summary>
-        /// Gets the format provider to use. If the given provider is not null, it will be used.
-        /// Otherwise, the format provider set on the options object will be used. As a last resort,
-        /// the current culture specified by the operating system will be used.
+        ///     Formats the given object and appends the result to a buffer instead of returning a string. The default
+        ///     writes the string that <see cref="Format(IColumnContext?, object?)" /> returns; the built-in column
+        ///     types override it to format directly into the buffer.
+        /// </summary>
+        /// <param name="context">Holds information about the column current being processed.</param>
+        /// <param name="value">The object to format.</param>
+        /// <param name="destination">The buffer to append the formatted value to.</param>
+        public virtual void Format( IColumnContext? context, object? value, IBufferWriter<char> destination )
+        {
+            ArgumentNullException.ThrowIfNull( destination );
+            destination.Write( Format( context, value ).AsSpan() );
+        }
+
+        /// <summary>
+        ///     Formats a value that supports span formatting straight into the destination, asking for a larger span
+        ///     and trying again until the formatted text fits.
+        /// </summary>
+        /// <typeparam name="TValue">The type of the value.</typeparam>
+        /// <param name="destination">The buffer to append the formatted value to.</param>
+        /// <param name="value">The value to format.</param>
+        /// <param name="format">The format string, or null for the type's default format.</param>
+        /// <param name="provider">The format provider, or null for the current culture.</param>
+        protected static void WriteFormatted<TValue>( IBufferWriter<char> destination, TValue value, string? format, IFormatProvider? provider )
+            where TValue : ISpanFormattable
+        {
+            ArgumentNullException.ThrowIfNull( destination );
+            var sizeHint = 32;
+            while (true)
+            {
+                var span = destination.GetSpan( sizeHint );
+                if (value.TryFormat( span, out var charsWritten, format, provider ))
+                {
+                    destination.Advance( charsWritten );
+                    return;
+                }
+                sizeHint = span.Length * 2;
+            }
+        }
+
+        /// <summary>
+        ///     Gets the format provider to use. If the given provider is not null, it will be used.
+        ///     Otherwise, the format provider set on the options object will be used. As a last resort,
+        ///     the current culture specified by the operating system will be used.
         /// </summary>
         /// <param name="context">The current column context.</param>
         /// <param name="formatProvider">The format provider set on the column.</param>
         /// <returns>The format provider to use.</returns>
-        protected static IFormatProvider GetFormatProvider(IColumnContext? context, IFormatProvider? formatProvider)
+        protected static IFormatProvider GetFormatProvider( IColumnContext? context, IFormatProvider? formatProvider )
         {
             return formatProvider
                 ?? context?.RecordContext.ExecutionContext.Options.FormatProvider
@@ -151,54 +192,54 @@ namespace FlatFiles
     }
 
     /// <summary>
-    /// Represents the command base class for defining custom column definitions for a class.
+    ///     Represents the command base class for defining custom column definitions for a class.
     /// </summary>
     /// <typeparam name="T">The type of the column.</typeparam>
     public abstract class ColumnDefinition<T> : ColumnDefinition
     {
         /// <summary>
-        /// Initializes a new instance of a ColumnDefinition.
+        ///     Initializes a new instance of a ColumnDefinition.
         /// </summary>
         /// <param name="columnName">The name of the column to define.</param>
-        protected ColumnDefinition(string columnName) 
-            : base(columnName)
+        protected ColumnDefinition( string columnName ) 
+            : base( columnName )
         {
         }
 
         /// <summary>
-        /// Gets the type of the values in the column.
+        ///     Gets the type of the values in the column.
         /// </summary>
-        public override Type ColumnType => typeof(T);
+        public override Type ColumnType => typeof( T );
 
         /// <summary>
-        /// Parses the given value and returns the parsed object.
+        ///     Parses the given value and returns the parsed object.
         /// </summary>
         /// <param name="context">Holds information about the column current being processed.</param>
         /// <param name="value">The value to parse.</param>
         /// <returns>The parsed value.</returns>
-        public override object? Parse(IColumnContext? context, string value)
+        public override object? Parse( IColumnContext? context, string value )
         {
 #pragma warning disable CS0618 // Type or member is obsolete
             if (Preprocessor is not null)
             {
-                value = Preprocessor(value) ?? String.Empty;
+                value = Preprocessor( value ) ?? String.Empty;
             }
 #pragma warning restore CS0618 // Type or member is obsolete
             if (OnParsing is not null)
             {
-                value = OnParsing(context, value) ?? String.Empty;
+                value = OnParsing( context, value ) ?? String.Empty;
             }
-            object? result = ParseValue(context, value);
+            object? result = ParseValue( context, value );
             if (OnParsed is not null)
             {
-                result = OnParsed(context, result);
+                result = OnParsed( context, result );
             }
             return result;
         }
 
-        private object? ParseValue(IColumnContext? context, string? value)
+        private object? ParseValue( IColumnContext? context, string? value )
         {
-            if (value is null || NullFormatter.IsNullValue(context, value))
+            if (value is null || NullFormatter.IsNullValue( context, value ))
             {
                 if (IsNullable)
                 {
@@ -206,67 +247,110 @@ namespace FlatFiles
                 }
                 else
                 {
-                    return DefaultValue.GetDefaultValue(context); // Should we check for the expected type?
+                    return DefaultValue.GetDefaultValue( context ); // Should we check for the expected type?
                 }
             }
             else
             {
-                string trimmed = IsTrimmed ? TrimValue(value) : value;
-                return OnParse(context, trimmed);
+                string trimmed = IsTrimmed ? TrimValue( value ) : value;
+                return OnParse( context, trimmed );
             }
         }
 
         /// <summary>
-        /// Gets whether the value should be trimmed prior to parsing.
+        ///     Gets whether the value should be trimmed prior to parsing.
         /// </summary>
         protected virtual bool IsTrimmed => true;
 
         /// <summary>
-        /// Parses the given value and returns the parsed object.
+        ///     Parses the given value and returns the parsed object.
         /// </summary>
         /// <param name="context">Holds information about the column current being processed.</param>
         /// <param name="value">The value to parse.</param>
         /// <returns>The parsed value.</returns>
-        protected abstract T OnParse(IColumnContext? context, string value);
+        protected abstract T OnParse( IColumnContext? context, string value );
 
         /// <summary>
-        /// Formats the given object.
+        ///     Formats the given object.
         /// </summary>
         /// <param name="context">Holds information about the column current being processed.</param>
         /// <param name="value">The object to format.</param>
         /// <returns>The formatted value.</returns>
-        public override string Format(IColumnContext? context, object? value)
+        public override string Format( IColumnContext? context, object? value )
         {
             if (OnFormatting is not null)
             {
-                value = OnFormatting(context, value);
+                value = OnFormatting( context, value );
             }
-            string result = FormatValue(context, value);
+            string result = FormatValue( context, value );
             if (OnFormatted is not null)
             {
-                result = OnFormatted(context, result) ?? String.Empty;
+                result = OnFormatted( context, result ) ?? String.Empty;
             }
             return result;
         }
 
-        private string FormatValue(IColumnContext? context, object? value)
+        /// <summary>
+        ///     Formats the given object and appends the result to a buffer. A null value is written as the null
+        ///     formatter's text; anything else goes to <see cref="OnFormat(IColumnContext?, T, IBufferWriter{char})" />.
+        ///     When an <see cref="ColumnDefinition.OnFormatted" /> hook is set the value is formatted to a string
+        ///     first, because the hook needs the whole string.
+        /// </summary>
+        /// <param name="context">Holds information about the column current being processed.</param>
+        /// <param name="value">The object to format.</param>
+        /// <param name="destination">The buffer to append the formatted value to.</param>
+        public override void Format( IColumnContext? context, object? value, IBufferWriter<char> destination )
         {
+            ArgumentNullException.ThrowIfNull( destination );
+            if (OnFormatted is not null)
+            {
+                destination.Write( Format( context, value ).AsSpan() );
+                return;
+            }
+            if (OnFormatting is not null)
+            {
+                value = OnFormatting( context, value );
+            }
             if (value is null)
             {
-                return NullFormatter.FormatNull(context) ?? String.Empty;
+                destination.Write( (NullFormatter.FormatNull( context ) ?? String.Empty).AsSpan() );
             }
             else
             {
-                return OnFormat(context, (T)value);
+                OnFormat( context, (T) value, destination );
+            }
+        }
+
+        private string FormatValue( IColumnContext? context, object? value )
+        {
+            if (value is null)
+            {
+                return NullFormatter.FormatNull( context ) ?? String.Empty;
+            }
+            else
+            {
+                return OnFormat( context, (T) value );
             }
         }
 
         /// <summary>
-        /// Formats the given object.
+        ///     Formats the given object.
         /// </summary>
         /// <param name="context">Holds information about the column current being processed.</param>
         /// <param name="value">The object to format.</param>
         /// <returns>The formatted value.</returns>
-        protected abstract string OnFormat(IColumnContext? context, T value);
+        protected abstract string OnFormat( IColumnContext? context, T value );
+
+        /// <summary>
+        ///     Formats the given value and appends the result to a buffer. The default writes the string that
+        ///     <see cref="OnFormat(IColumnContext?, T)" /> returns; override it to format straight into the buffer.
+        /// </summary>
+        /// <param name="context">Holds information about the column current being processed.</param>
+        /// <param name="value">The value to format.</param>
+        /// <param name="destination">The buffer to append the formatted value to.</param>
+        protected virtual void OnFormat( IColumnContext? context, T value, IBufferWriter<char> destination )
+        {
+            destination.Write( OnFormat( context, value ).AsSpan() );
+        }
     }
 }
