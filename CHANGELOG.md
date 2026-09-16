@@ -1,3 +1,25 @@
+## 7.0.0 (2026-09-16)
+**Summary** - Target .NET 10 exclusively and remove the deprecated compatibility packages, leaving the package with no dependencies of its own.
+
+The previous release built for .NET 8 and .NET 9. Both targets are dropped in favour of a single `net10.0` target, and that is the breaking change behind the major version bump. Anyone who still needs to run on .NET 8 or .NET 9 should stay on 6.0.4.
+
+Five .NET Framework-era compatibility packages were still being referenced, every one of which is part of the shared framework on modern .NET: `System.Net.Http`, `System.Text.RegularExpressions`, `System.ValueTuple`, `System.Threading.Tasks.Extensions` and, in the test project, `System.Data.DataSetExtensions`. None of them contributed anything to the build. `System.Net.Http` 4.3.4 is the one worth calling out, because it carries a published advisory that trips package audits in consuming solutions. With all five gone, the NuGet package now declares no dependencies at all.
+
+The `LangVersion 9.0` pin was removed at the same time, so the library compiles at the C# 14 default that comes with `net10.0`. No source was rewritten to use newer language features in this release, and there are no API changes.
+
+## 6.0.4 (2024-12-11)
+**Summary** - Replace the .NET Framework and .NET Standard targets with .NET 8 and .NET 9, and strip out the conditional compilation those older targets needed.
+
+*Backfilled from commit 5905884, which shipped without a changelog entry at the time.*
+
+The `net451`, `netstandard1.6`, `netstandard2.0`, `netstandard2.1` and `netcoreapp3.0` targets were all dropped in favour of `net8` and `net9`. That is the breaking change behind the major version bump. It is also why this release is numbered 6.0.4 rather than 6.0.0: the patch number was carried over from 5.0.4 rather than reset.
+
+With the old targets gone, the `#if` guards written to work around them were removed. No public API changed as a result, but what gets compiled did shift in two places. The `IAsyncEnumerable` overloads on the type mappers and the typed reader and writer extensions had been guarded to exclude `net451`, `netstandard1.6` and `netstandard2.0`, and are now unconditional. The ADO.NET types - `FlatFileDataReader`, `FlatFileDataReaderOptions`, `IFlatFileDataRecord` and the `DataTable` and `IDataRecord` extensions - had been guarded the other way and were left out of the `netstandard1.6` and `netstandard2.1` builds entirely; they are now always compiled. The `net451`-only `Array.Copy` branches in `FlatFileDataReader.GetBytes` and `GetChars` gave way to the implementation every other target already used.
+
+The per-target package references went with them, since `System.Reflection.Emit` and `System.Data.Common` were only ever needed by the .NET Standard and .NET Core App builds. `System.Threading.Tasks.Extensions` was bumped to 4.6.0, and `System.Net.Http` 4.3.4 and `System.Text.RegularExpressions` 4.3.1 were added. All four of those were removed again in 7.0.0.
+
+The package release notes were not updated for this release, so NuGet still shows the 5.0.3 nullability summary against it.
+
 ## 5.0.4 (2022-12-04)
 **Summary** - The delimited and fixed-length writers use a cached record context. The schema information can only be determined after writing a record. This doesn't work well with the type mappers, injectors, and custom mappings since the context is needed prior writing the values. When switching from writing one type to another, the writer's cached context was still referring to the previously written type's schema, leading to the wrong context being passed to the custom mappers. This manifested itself as an `ArgumentOutOfRangeException`, trying to find a column in the wrong schema.
 

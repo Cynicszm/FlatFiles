@@ -1,26 +1,23 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net8;net9</TargetFrameworks>
+    <TargetFramework>net10.0</TargetFramework>
     <NeutralLanguage>en-US</NeutralLanguage>
     <Description>Reads and writes CSV, fixed-length and other flat file formats with a focus on schema definition, configuration and speed. Supports mapping directly between files and classes.</Description>
     <Copyright>Copyright @ 2022</Copyright>
-    <PackageLicenseUrl></PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/jehugaleahsa/FlatFiles</PackageProjectUrl>
     <RepositoryUrl>https://github.com/jehugaleahsa/FlatFiles.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>csv;comma;tab;separated;value;delimited;flat;file;fixed;width;fixed-width;length;fixed-length;parser;parsing;parse</PackageTags>
-    <PackageReleaseNotes>Support specifying nullability using type mappers, so DefaultValue works as expected.</PackageReleaseNotes>
+    <PackageReleaseNotes>Targets .NET 10 exclusively; .NET 8 and .NET 9 are no longer supported, so stay on 6.0.4 if you need them. The deprecated System.* compatibility packages have been removed and the package now declares no dependencies.</PackageReleaseNotes>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>FlatFiles.snk</AssemblyOriginatorKeyFile>
-    <Version>6.0.4</Version>
+    <Version>7.0.0</Version>
   </PropertyGroup>
 
   <PropertyGroup>
-    <LangVersion>9.0</LangVersion>
-    <PackageIconUrl></PackageIconUrl>
-    <AssemblyVersion>6.0.4.0</AssemblyVersion>
-    <FileVersion>6.0.4.0</FileVersion>
+    <AssemblyVersion>7.0.0.0</AssemblyVersion>
+    <FileVersion>7.0.0.0</FileVersion>
     <PackageLicenseFile>UNLICENSE.txt</PackageLicenseFile>
     <PackageIcon>icon.png</PackageIcon>
     <Nullable>enable</Nullable>
@@ -43,13 +40,6 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="System.Net.Http" Version="4.3.4" />
-    <PackageReference Include="System.Text.RegularExpressions" Version="4.3.1" />
-    <PackageReference Include="System.ValueTuple" Version="4.5.0" />
-    <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.6.0" />
   </ItemGroup>
 
   <ItemGroup>

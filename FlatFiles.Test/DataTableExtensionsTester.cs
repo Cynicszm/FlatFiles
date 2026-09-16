@@ -6,7 +6,6 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace FlatFiles.Test
@@ -18,14 +17,6 @@ namespace FlatFiles.Test
     public class DataTableExtensionsTester
     {
         /// <summary>
-        /// Setup for tests.
-        /// </summary>
-        public DataTableExtensionsTester()
-        {
-            Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
-        }
-
-        /// <summary>
         /// An exception should be thrown if the table is null.
         /// </summary>
         [TestMethod]
@@ -34,7 +25,7 @@ namespace FlatFiles.Test
             DataTable table = null;
             StringReader stringReader = new StringReader(String.Empty);
             IReader parser = new DelimitedReader(stringReader);
-            Assert.ThrowsException<ArgumentNullException>(() => DataTableExtensions.ReadFlatFile(table, parser));
+            Assert.ThrowsExactly<ArgumentNullException>(() => DataTableExtensions.ReadFlatFile(table, parser));
         }
 
         /// <summary>
@@ -45,7 +36,7 @@ namespace FlatFiles.Test
         {
             DataTable table = new DataTable();
             IReader parser = null;
-            Assert.ThrowsException<ArgumentNullException>(() => table.ReadFlatFile(parser));
+            Assert.ThrowsExactly<ArgumentNullException>(() => table.ReadFlatFile(parser));
         }
 
         /// <summary>

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using FlatFiles.TypeMapping;
@@ -14,11 +13,6 @@ namespace FlatFiles.Test
     [TestClass]
     public class FixedLengthReaderTester
     {
-        public FixedLengthReaderTester()
-        {
-            CultureInfo.CurrentCulture = new CultureInfo("en-US");
-        }
-
         /// <summary>
         /// If we try to pass null text to the parser, an exception should be thrown.
         /// </summary>
@@ -28,7 +22,7 @@ namespace FlatFiles.Test
             TextReader reader = null;
             FixedLengthSchema schema = new FixedLengthSchema();
             FixedLengthOptions options = new FixedLengthOptions();
-            Assert.ThrowsException<ArgumentNullException>(() => new FixedLengthReader(reader, schema, options));
+            Assert.ThrowsExactly<ArgumentNullException>(() => new FixedLengthReader(reader, schema, options));
         }
 
         /// <summary>
@@ -39,7 +33,7 @@ namespace FlatFiles.Test
         {
             StringReader reader = new StringReader(String.Empty);
             FixedLengthSchema schema = null;
-            Assert.ThrowsException<ArgumentNullException>(() => new FixedLengthReader(reader, schema));
+            Assert.ThrowsExactly<ArgumentNullException>(() => new FixedLengthReader(reader, schema));
         }
 
         /// <summary>
@@ -97,7 +91,7 @@ namespace FlatFiles.Test
 
             StringReader stringReader = new StringReader(text);
             FixedLengthReader parser = new FixedLengthReader(stringReader, schema);
-            Assert.ThrowsException<InvalidOperationException>(() => parser.GetValues());
+            Assert.ThrowsExactly<InvalidOperationException>(() => parser.GetValues());
         }
 
         /// <summary>
@@ -139,7 +133,7 @@ namespace FlatFiles.Test
             FixedLengthReader parser = new FixedLengthReader(stringReader, schema);
             Assert.IsTrue(parser.Read(), "Could not read the record.");
             Assert.IsFalse(parser.Read(), "We should have reached the end of the file.");
-            Assert.ThrowsException<InvalidOperationException>(() => parser.GetValues());
+            Assert.ThrowsExactly<InvalidOperationException>(() => parser.GetValues());
         }
 
         /// <summary>
@@ -200,7 +194,7 @@ namespace FlatFiles.Test
 
             StringReader stringReader = new StringReader(text);
             FixedLengthReader parser = new FixedLengthReader(stringReader, schema);
-            Assert.ThrowsException<RecordProcessingException>(() => parser.Read());
+            Assert.ThrowsExactly<RecordProcessingException>(() => parser.Read());
         }
 
         /// <summary>
@@ -584,7 +578,7 @@ a weird row that should be skipped
             schema.AddColumn(new DecimalColumn("value"));
             
             DelimitedReader reader = new DelimitedReader(new StringReader(data), schema);
-            Assert.ThrowsException<RecordProcessingException>(() => reader.Read());
+            Assert.ThrowsExactly<RecordProcessingException>(() => reader.Read());
         }
 
         [TestMethod]

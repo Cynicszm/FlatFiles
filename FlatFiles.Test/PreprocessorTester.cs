@@ -12,8 +12,6 @@ namespace FlatFiles.Test
         [TestMethod]
         public void ShouldStripNonNumericCharacters_Preprocessor()
         {
-            CultureInfo.CurrentCulture = new CultureInfo("en-US");
-
             const string input = @"=""12345.67"",=""$123""";
 
             var mapper = DelimitedTypeMapper.Define<Numbers>();
@@ -34,8 +32,6 @@ namespace FlatFiles.Test
         [TestMethod]
         public void ShouldStripNonNumericCharacters_OnParsing()
         {
-            CultureInfo.CurrentCulture = new CultureInfo("en-US");
-
             const string input = @"=""12345.67"",=""$123""";
 
             var mapper = DelimitedTypeMapper.Define<Numbers>();

@@ -15,7 +15,7 @@ namespace FlatFiles.Test
         [TestMethod]
         public void TestCtor_NameBlank_Throws()
         {
-            Assert.ThrowsException<ArgumentException>(() => new StringColumn("    "));
+            Assert.ThrowsExactly<ArgumentException>(() => new StringColumn("    "));
         }
 
         /// <summary>
