@@ -84,7 +84,17 @@ jobs:
 
       - name: Push
         if: github.event_name == 'release' || inputs.dry_run == false
-        run: dotnet nuget push artifacts/*.nupkg --api-key ${{ steps.login.outputs.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
+        shell: pwsh
+        # The path is resolved here rather than passed as a wildcard: these steps run in
+        # pwsh, which hands "artifacts/*.nupkg" to the native command literally instead of
+        # expanding it, and dotnet nuget push then reports the file does not exist.
+        run: |
+          $packages = @(Get-ChildItem artifacts -Filter *.nupkg)
+          if ($packages.Count -eq 0) { throw 'Pack produced no package to push.' }
+          if ($packages.Count -gt 1) { throw "Expected one package, found $($packages.Count): $($packages.Name -join ', ')." }
+
+          dotnet nuget push $packages[0].FullName --api-key ${{ steps.login.outputs.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
+          if ($LASTEXITCODE -ne 0) { throw "dotnet nuget push failed with exit code $LASTEXITCODE." }
 
       - name: Dry run finished
         if: github.event_name == 'workflow_dispatch' && inputs.dry_run == true
