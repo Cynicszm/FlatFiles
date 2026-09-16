@@ -928,7 +928,7 @@ namespace FlatFiles
         {
             try
             {
-                if (type.GetCustomAttribute(typeof(FlagsAttribute)) is not null)
+                if (type.GetCustomAttribute<FlagsAttribute>() is not null)
                 {
                     return ToEnum(type, value);
                 }
@@ -986,7 +986,9 @@ namespace FlatFiles
             /// <returns>The number of objects copied to the array.</returns>
             public int GetValues(object?[] values, bool replaceDBNulls = false)
             {
-                int result = record.GetValues(values);
+                // GetValues only writes into the array, so the element nullability it declares is
+                // not something it can observe.
+                int result = record.GetValues(values!);
                 if (replaceDBNulls)
                 {
                     for (int index = 0; index != result; ++index)

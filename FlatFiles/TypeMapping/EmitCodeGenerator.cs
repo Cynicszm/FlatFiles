@@ -48,7 +48,7 @@ namespace FlatFiles.TypeMapping
             generator.Emit(OpCodes.Ret);
             var typeInfo = typeBuilder.CreateTypeInfo()!;
             var createInfo = typeInfo.GetMethod(methodBuilder.Name)!;
-            return (Func<TEntity>)createInfo.CreateDelegate(typeof(Func<TEntity>))!;
+            return createInfo.CreateDelegate<Func<TEntity>>();
         }
 
         public Action<IRecordContext, TEntity, object?[]> GetReader<TEntity>(IMemberMapping[] mappings)
@@ -83,7 +83,7 @@ namespace FlatFiles.TypeMapping
             var typeInfo = typeBuilder.CreateTypeInfo()!;
             var instance = Activator.CreateInstance(typeInfo.AsType(), (object)mappings);
             var readInfo = typeInfo.GetMethod(methodBuilder.Name)!;
-            return (Action<IRecordContext, TEntity, object?[]>)readInfo.CreateDelegate(typeof(Action<IRecordContext, TEntity, object?[]>), instance);
+            return readInfo.CreateDelegate<Action<IRecordContext, TEntity, object?[]>>(instance);
         }
 
         private static void EmitMemberRead(ILGenerator generator, IMemberAccessor member, int logicalIndex)
@@ -199,7 +199,7 @@ namespace FlatFiles.TypeMapping
             var typeInfo = typeBuilder.CreateTypeInfo()!;
             var instance = Activator.CreateInstance(typeInfo.AsType(), (object)mappings);
             var writeMethodInfo = typeInfo.GetMethod(methodBuilder.Name)!;
-            return (Action<IRecordContext, TEntity, object?[]>)writeMethodInfo.CreateDelegate(typeof(Action<IRecordContext, TEntity, object?[]>), instance);
+            return writeMethodInfo.CreateDelegate<Action<IRecordContext, TEntity, object?[]>>(instance);
         }
 
         private static void EmitMemberWrite(ILGenerator generator, IMemberAccessor member, int logicalIndex)
