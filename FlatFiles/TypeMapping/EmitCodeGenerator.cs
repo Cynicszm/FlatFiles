@@ -191,7 +191,7 @@ namespace FlatFiles.TypeMapping
                 }
                 else if (mapping.Writer is not null)
                 {
-                    EmitCustomWrite<TEntity>(methodGenerator, fieldBuilder, index);
+                    EmitCustomWrite(methodGenerator, fieldBuilder, index);
                 }
             }
             methodGenerator.Emit(OpCodes.Ret);
@@ -235,7 +235,7 @@ namespace FlatFiles.TypeMapping
             generator.Emit(OpCodes.Stelem_Ref);
         }
 
-        private static void EmitCustomWrite<TEntity>(ILGenerator generator, FieldInfo fieldInfo, int mappingIndex)
+        private static void EmitCustomWrite(ILGenerator generator, FieldInfo fieldInfo, int mappingIndex)
         {
             var contextBuilder = generator.DeclareLocal(typeof(ColumnContext));
             var mappingBuilder = generator.DeclareLocal(typeof(IMemberMapping));

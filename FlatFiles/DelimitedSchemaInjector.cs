@@ -9,7 +9,7 @@ namespace FlatFiles
     /// </summary>
     public sealed class DelimitedSchemaInjector
     {
-        private readonly List<SchemaMatcher> matchers = new();
+        private readonly List<SchemaMatcher> matchers = [];
         private SchemaMatcher? defaultMatcher;
 
         /// <summary>

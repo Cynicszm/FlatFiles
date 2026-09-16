@@ -10,7 +10,7 @@ namespace FlatFiles.TypeMapping
     /// </summary>
     public sealed class DelimitedTypeMapperInjector : ITypeMapperInjector
     {
-        private readonly List<TypeMapperMatcher> matchers = new();
+        private readonly List<TypeMapperMatcher> matchers = [];
         private TypeMapperMatcher? defaultMatcher = null;
 
         /// <summary>

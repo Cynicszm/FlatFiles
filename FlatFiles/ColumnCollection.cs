@@ -10,7 +10,7 @@ namespace FlatFiles
     /// </summary>
     public sealed class ColumnCollection : IEnumerable<IColumnDefinition>
     {
-        private readonly List<IColumnDefinition> definitions = new();
+        private readonly List<IColumnDefinition> definitions = [];
         private readonly Dictionary<string, int> ordinals = new(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
@@ -129,28 +129,6 @@ namespace FlatFiles
         IEnumerator IEnumerable.GetEnumerator()
         {
             return definitions.GetEnumerator();
-        }
-
-        internal int GetPhysicalIndex(IColumnDefinition definition)
-        {
-            return definitions.IndexOf(definition);
-        }
-
-        internal int GetLogicalIndex(IColumnDefinition definition)
-        {
-            for (int index = 0, logicalIndex = 0; index != definitions.Count; ++index)
-            {
-                var current = definitions[index];
-                if (current == definition)
-                {
-                    return logicalIndex;
-                }
-                if (!current.IsIgnored)
-                {
-                    ++logicalIndex;
-                }
-            }
-            return -1;
         }
     }
 }

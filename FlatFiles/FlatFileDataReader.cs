@@ -38,23 +38,9 @@ namespace FlatFiles
         public FlatFileDataReaderOptions Options { get; }
 
         /// <summary>
-        /// Finalizes the FlatFileReader.
-        /// </summary>
-        ~FlatFileDataReader()
-        {
-            DisposeInternal(false);
-        }
-
-        /// <summary>
         /// Releases any resources being held by the reader.
         /// </summary>
         public void Dispose()
-        {
-            DisposeInternal(true);
-            GC.SuppressFinalize(this);
-        }
-
-        private void DisposeInternal(bool disposing)
         {
             IsClosed = true;
         }
@@ -596,7 +582,7 @@ namespace FlatFiles
             if (columns is null)
             {
                 columns = new ColumnCollection();
-                foreach (ColumnDefinition column in schema.ColumnDefinitions)
+                foreach (var column in schema.ColumnDefinitions)
                 {
                     if (!column.IsIgnored)
                     {

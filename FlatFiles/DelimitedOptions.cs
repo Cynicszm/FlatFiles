@@ -9,9 +9,6 @@ namespace FlatFiles
     /// </summary>
     public sealed class DelimitedOptions : IOptions
     {
-        private string separator = ",";
-        private QuoteBehavior quoteBehavior = QuoteBehavior.Default;
-
         /// <summary>
         /// Initializes a new instance of a DelimitedParserOptions.
         /// </summary>
@@ -24,16 +21,16 @@ namespace FlatFiles
         /// </summary>
         public string Separator
         {
-            get => separator;
+            get => field;
             set
             {
                 if (String.IsNullOrEmpty(value))
                 {
                     throw new ArgumentException(Resources.EmptySeparator);
                 }
-                separator = value;
+                field = value;
             }
-        }
+        } = ",";
 
         /// <summary>
         /// Gets or sets the character or characters used to separate the records.
@@ -55,16 +52,16 @@ namespace FlatFiles
         /// </summary>
         public QuoteBehavior QuoteBehavior 
         {
-            get => quoteBehavior; 
+            get => field; 
             set
             {
                 if (!Enum.IsDefined(value))
                 {
                     throw new ArgumentException(Resources.InvalidAlignment, nameof(value));
                 }
-                quoteBehavior = value;
+                field = value;
             }
-        }
+        } = QuoteBehavior.Default;
 
         /// <summary>
         /// Gets or sets whether the first record is the schema.
