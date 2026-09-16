@@ -11,18 +11,13 @@ namespace FlatFiles.Test
     [TestClass]
     public class DateTimeColumnTester
     {
-        public DateTimeColumnTester()
-        {
-            CultureInfo.CurrentCulture = new CultureInfo("en-US");
-        }
-
         /// <summary>
         /// An exception should be thrown if name is blank.
         /// </summary>
         [TestMethod]
         public void TestCtor_NameBlank_Throws()
         {
-            Assert.ThrowsException<ArgumentException>(() => new DateTimeColumn("    "));
+            Assert.ThrowsExactly<ArgumentException>(() => new DateTimeColumn("    "));
         }
 
         /// <summary>

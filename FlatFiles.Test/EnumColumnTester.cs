@@ -22,7 +22,7 @@ namespace FlatFiles.Test
         //[TestMethod]
         //public void TestCtor_NonEnum_Throws()
         //{
-        //    Assert.ThrowsException<ArgumentException>(() => new EnumColumn<DateTime>("    "));
+        //    Assert.ThrowsExactly<ArgumentException>(() => new EnumColumn<DateTime>("    "));
         //}
 
         /// <summary>
@@ -31,7 +31,7 @@ namespace FlatFiles.Test
         [TestMethod]
         public void TestCtor_NameBlank_Throws()
         {
-            Assert.ThrowsException<ArgumentException>(() => new EnumColumn<MyEnum>("    "));
+            Assert.ThrowsExactly<ArgumentException>(() => new EnumColumn<MyEnum>("    "));
         }
 
         /// <summary>

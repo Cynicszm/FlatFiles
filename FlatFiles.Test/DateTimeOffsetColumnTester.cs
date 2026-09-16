@@ -10,11 +10,6 @@ namespace FlatFiles.Test
     [TestClass]
     public class DateTimeOffsetColumnTester
     {
-        public DateTimeOffsetColumnTester()
-        {
-            CultureInfo.CurrentCulture = new CultureInfo("en-US");
-        }
-
         /// <summary>
         /// Gets the time difference between the current time zone&amp;#39;s standard time and Coordinated Universal Time (UTC).
         /// </summary>
@@ -26,7 +21,7 @@ namespace FlatFiles.Test
         [TestMethod]
         public void TestCtor_NameBlank_Throws()
         {
-            Assert.ThrowsException<ArgumentException>(() => new DateTimeOffsetColumn("    "));
+            Assert.ThrowsExactly<ArgumentException>(() => new DateTimeOffsetColumn("    "));
         }
 
         /// <summary>
