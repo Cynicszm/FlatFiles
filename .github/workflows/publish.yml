@@ -78,8 +78,9 @@ jobs:
         id: login
         uses: NuGet/login@v1
         with:
-          # The nuget.org profile name, not an email address.
-          user: ${{ secrets.NUGET_USER }}
+          # The nuget.org profile name, not an email address. Hardcoded rather than held as
+          # a secret because a profile name is public: it appears on every package page.
+          user: Cynicszm
 
       - name: Push
         if: github.event_name == 'release' || inputs.dry_run == false
