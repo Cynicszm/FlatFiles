@@ -38,8 +38,8 @@ namespace FlatFiles.Test
             mapper.DecimalProperty( "TopSpeed", 10 ).ColumnName( "TopSpeed" );
 
             Person[] people = [
-                new Person() { Name = "John", IQ = null, BirthDate = new DateTime( 1954, 10, 29 ), TopSpeed = 3.4m },
-                new Person() { Name = "Susan", IQ = 132, BirthDate = new DateTime( 1984, 3, 15 ), TopSpeed = 10.1m }
+                new Person { Name = "John", IQ = null, BirthDate = new DateTime( 1954, 10, 29 ), TopSpeed = 3.4m },
+                new Person { Name = "Susan", IQ = 132, BirthDate = new DateTime( 1984, 3, 15 ), TopSpeed = 10.1m }
             ];
 
             StringWriter writer = new StringWriter();
@@ -51,8 +51,8 @@ namespace FlatFiles.Test
             Assert.AreEqual( 2, parsed.Length );
             Assert.IsInstanceOfType( parsed[0], typeof( Person ) );
             Assert.IsInstanceOfType( parsed[1], typeof( Person ) );
-            assertEqual( people[0], (Person) parsed[0] );
-            assertEqual( people[1], (Person) parsed[1] );
+            AssertEqual( people[0], (Person) parsed[0] );
+            AssertEqual( people[1], (Person) parsed[1] );
         }
 
         [TestMethod]
@@ -65,8 +65,8 @@ namespace FlatFiles.Test
             mapper.DecimalProperty( "TopSpeed", 10 ).ColumnName( "TopSpeed" );
 
             Person[] people = [
-                new Person() { Name = "John", IQ = null, BirthDate = new DateTime( 1954, 10, 29 ), TopSpeed = 3.4m },
-                new Person() { Name = "Susan", IQ = 132, BirthDate = new DateTime( 1984, 3, 15 ), TopSpeed = 10.1m }
+                new Person { Name = "John", IQ = null, BirthDate = new DateTime( 1954, 10, 29 ), TopSpeed = 3.4m },
+                new Person { Name = "Susan", IQ = 132, BirthDate = new DateTime( 1984, 3, 15 ), TopSpeed = 10.1m }
             ];
 
             StringWriter writer = new StringWriter();
@@ -87,11 +87,11 @@ namespace FlatFiles.Test
             Assert.AreEqual( 2, parsed.Count );
             Assert.IsInstanceOfType( parsed[0], typeof( Person ) );
             Assert.IsInstanceOfType( parsed[1], typeof( Person ) );
-            assertEqual( people[0], (Person) parsed[0] );
-            assertEqual( people[1], (Person) parsed[1] );
+            AssertEqual( people[0], (Person) parsed[0] );
+            AssertEqual( people[1], (Person) parsed[1] );
         }
 
-        private void assertEqual( Person person1, Person person2 )
+        private void AssertEqual( Person person1, Person person2 )
         {
             Assert.AreEqual( person1.Name, person2.Name );
             Assert.AreEqual( person1.IQ, person2.IQ );

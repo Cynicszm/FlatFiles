@@ -96,11 +96,7 @@ namespace FlatFiles
 
         internal DelimitedSchema? GetSchema( object?[] values )
         {
-            if (injector is null)
-            {
-                return schema;
-            }
-            return injector.GetSchema( values );
+            return injector is null ? schema : injector.GetSchema( values );
         }
 
         /// <summary>

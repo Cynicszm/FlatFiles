@@ -21,7 +21,7 @@ namespace FlatFiles.TypeMapping
             IFixedLengthTypeMapper<TEntity> mapper, 
             IMemberAccessor member, 
             int physicalIndex, 
-            int logicalIndex)
+            int logicalIndex )
         {
             this.mapper = mapper;
             Member = member;
@@ -35,7 +35,7 @@ namespace FlatFiles.TypeMapping
             get
             {
                 FixedLengthSchema schema = mapper.GetSchema();
-                var column = new FixedLengthComplexColumn(columnName, schema)
+                var column = new FixedLengthComplexColumn( columnName, schema )
                 {
                     Options = options,
                     NullFormatter = nullFormatter,
@@ -49,9 +49,9 @@ namespace FlatFiles.TypeMapping
                     OnFormatting = onFormatting,
                     OnFormatted = onFormatted
                 };
-                var mapperSource = (IMapperSource<TEntity>)mapper;
+                var mapperSource = (IMapperSource<TEntity>) mapper;
                 var recordMapper = mapperSource.GetMapper();
-                return new ComplexMapperColumn<TEntity>(schema, options ?? new FixedLengthOptions(), column, recordMapper);
+                return new ComplexMapperColumn<TEntity>( schema, options ?? new FixedLengthOptions(), column, recordMapper );
             }
         }
 
@@ -65,67 +65,68 @@ namespace FlatFiles.TypeMapping
 
         public int LogicalIndex { get; }
 
-        public IFixedLengthComplexPropertyMapping ColumnName(string name)
+        public IFixedLengthComplexPropertyMapping ColumnName( string name )
         {
-            if (String.IsNullOrWhiteSpace(name))
+            if (String.IsNullOrWhiteSpace( name ))
             {
-                throw new ArgumentException(Resources.BlankColumnName);
+                throw new ArgumentException( Resources.BlankColumnName );
             }
             columnName = name;
             return this;
         }
 
-        public IFixedLengthComplexPropertyMapping WithOptions(FixedLengthOptions? options)
+        public IFixedLengthComplexPropertyMapping WithOptions( FixedLengthOptions? options )
         {
             this.options = options;
             return this;
         }
 
-        public IFixedLengthComplexPropertyMapping NullFormatter(INullFormatter formatter)
+        public IFixedLengthComplexPropertyMapping NullFormatter( INullFormatter formatter )
         {
-            nullFormatter = formatter ?? FlatFiles.NullFormatter.Default;
+            // A null here means the default, which the column's own setter applies.
+            nullFormatter = formatter;
             return this;
         }
 
-        public IFixedLengthComplexPropertyMapping DefaultValue(IDefaultValue defaultValue)
+        public IFixedLengthComplexPropertyMapping DefaultValue( IDefaultValue defaultValue )
         {
-            this.defaultValue = defaultValue ?? FlatFiles.DefaultValue.Disabled();
+            this.defaultValue = defaultValue;
             return this;
         }
 
-        public IFixedLengthComplexPropertyMapping Nullable(bool isNullable)
+        public IFixedLengthComplexPropertyMapping Nullable( bool isNullable )
         {
             this.isNullable = isNullable;
             return this;
         }
 
-        public IFixedLengthComplexPropertyMapping Preprocessor(Func<string, string?>? preprocessor)
+        public IFixedLengthComplexPropertyMapping Preprocessor( Func<string, string?>? preprocessor )
         {
             this.preprocessor = preprocessor;
             return this;
         }
 
-        public IFixedLengthComplexPropertyMapping OnParsing(Func<IColumnContext?, string, string?>? handler)
+        public IFixedLengthComplexPropertyMapping OnParsing( Func<IColumnContext?, string, string?>? handler )
         {
-            this.onParsing = handler;
+            onParsing = handler;
             return this;
         }
 
-        public IFixedLengthComplexPropertyMapping OnParsed(Func<IColumnContext?, object?, object?>? handler)
+        public IFixedLengthComplexPropertyMapping OnParsed( Func<IColumnContext?, object?, object?>? handler )
         {
-            this.onParsed = handler;
+            onParsed = handler;
             return this;
         }
 
-        public IFixedLengthComplexPropertyMapping OnFormatting(Func<IColumnContext?, object?, object?>? handler)
+        public IFixedLengthComplexPropertyMapping OnFormatting( Func<IColumnContext?, object?, object?>? handler )
         {
-            this.onFormatting = handler;
+            onFormatting = handler;
             return this;
         }
 
-        public IFixedLengthComplexPropertyMapping OnFormatted(Func<IColumnContext?, string, string?>? handler)
+        public IFixedLengthComplexPropertyMapping OnFormatted( Func<IColumnContext?, string, string?>? handler )
         {
-            this.onFormatted = handler;
+            onFormatted = handler;
             return this;
         }
     }

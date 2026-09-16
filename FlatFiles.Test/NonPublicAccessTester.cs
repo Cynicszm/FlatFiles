@@ -22,7 +22,7 @@ namespace FlatFiles.Test
 
             string rawData = @"ABC123,Doing Fine,20180115,20180115145100,true";
             StringReader reader = new StringReader( rawData );
-            InternalClass[] data = [.. mapper.Read( reader, new DelimitedOptions()
+            InternalClass[] data = [.. mapper.Read( reader, new DelimitedOptions
             {
                 IsFirstRecordSchema = false,
                 RecordSeparator = "\n",
@@ -52,7 +52,7 @@ namespace FlatFiles.Test
 
             string rawData = @"ABC123,Doing Fine,20180115,20180115145100,true";
             StringReader reader = new StringReader( rawData );
-            object[] data = [.. mapper.Read( reader, new DelimitedOptions()
+            object[] data = [.. mapper.Read( reader, new DelimitedOptions
             {
                 IsFirstRecordSchema = false,
                 RecordSeparator = "\n",

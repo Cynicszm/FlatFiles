@@ -29,11 +29,11 @@ namespace FlatFiles.Test
             Assert.AreEqual( 1, results.Length );
             var result = results[0];
 
-            var expected = new Person()
+            var expected = new Person
             {
                 Id = 123,
                 Name = "Bob",
-                Address1 = new Address()
+                Address1 = new Address
                 {
                     Street = "Test Street 1",
                     City = "Test City",
@@ -43,8 +43,8 @@ namespace FlatFiles.Test
                 IsActive = true,
                 CreatedOn = new DateTime( 2017, 11, 05 )
             };
-            assertEqual( expected, result );
-            assertEqual( expected.Address1, result.Address1 );
+            AssertEqual( expected, result );
+            AssertEqual( expected.Address1, result.Address1 );
         }
 
         [TestMethod]
@@ -68,11 +68,11 @@ namespace FlatFiles.Test
             var result = results[0];
             Assert.IsInstanceOfType( result, typeof( Person ) );
 
-            var expected = new Person()
+            var expected = new Person
             {
                 Id = 123,
                 Name = "Bob",
-                Address1 = new Address()
+                Address1 = new Address
                 {
                     Street = "Test Street 1",
                     City = "Test City",
@@ -82,8 +82,8 @@ namespace FlatFiles.Test
                 IsActive = true,
                 CreatedOn = new DateTime( 2017, 11, 05 )
             };
-            assertEqual( expected, (Person) result );
-            assertEqual( expected.Address1, ((Person) result).Address1 );
+            AssertEqual( expected, (Person) result );
+            AssertEqual( expected.Address1, ((Person) result).Address1 );
         }
 
         [TestMethod]
@@ -100,11 +100,11 @@ namespace FlatFiles.Test
             mapper.Property( x => x.CreatedOn, 10 ).ColumnName( "CreatedOn" ).InputFormat( "yyyyMMdd" ).OutputFormat( "yyyyMMdd" );
             mapper.UseFactory( () => new Address() );
 
-            var expected = new Person()
+            var expected = new Person
             {
                 Id = 123,
                 Name = "Bob",
-                Address1 = new Address()
+                Address1 = new Address
                 {
                     Street = "Test Street 1",
                     City = "Test City",
@@ -123,8 +123,8 @@ namespace FlatFiles.Test
             Assert.AreEqual( 1, results.Length );
             var result = results[0];
 
-            assertEqual( expected, result );
-            assertEqual( expected.Address1, result.Address1 );
+            AssertEqual( expected, result );
+            AssertEqual( expected.Address1, result.Address1 );
         }
 
         [TestMethod]
@@ -141,11 +141,11 @@ namespace FlatFiles.Test
             mapper.DateTimeProperty( "CreatedOn", 10 ).ColumnName( "CreatedOn" ).InputFormat( "yyyyMMdd" ).OutputFormat( "yyyyMMdd" );
             mapper.UseFactory( typeof( Address ), () => new Address() );
 
-            var expected = new Person()
+            var expected = new Person
             {
                 Id = 123,
                 Name = "Bob",
-                Address1 = new Address()
+                Address1 = new Address
                 {
                     Street = "Test Street 1",
                     City = "Test City",
@@ -165,8 +165,8 @@ namespace FlatFiles.Test
             var result = results[0];
             Assert.IsInstanceOfType( result, typeof( Person ) );
 
-            assertEqual( expected, (Person) result );
-            assertEqual( expected.Address1, ((Person) result).Address1 );
+            AssertEqual( expected, (Person) result );
+            AssertEqual( expected.Address1, ((Person) result).Address1 );
         }
 
         [TestMethod]
@@ -186,18 +186,18 @@ namespace FlatFiles.Test
             mapper.Property( x => x.IsActive ).ColumnName( "IsActive" );
             mapper.Property( x => x.CreatedOn ).ColumnName( "CreatedOn" );
 
-            var expected = new Person()
+            var expected = new Person
             {
                 Id = 123,
                 Name = "Bob",
-                Address1 = new Address()
+                Address1 = new Address
                 {
                     Street = "Test Street 1",
                     City = "Test City",
                     State = "PA",
                     Zip = "55555"
                 },
-                Address2 = new Address()
+                Address2 = new Address
                 {
                     Street = "Test Street 2",
                     City = "Test City 2",
@@ -216,12 +216,12 @@ namespace FlatFiles.Test
             Assert.AreEqual( 1, results.Length );
             var result = results[0];
 
-            assertEqual( expected, result );
-            assertEqual( expected.Address1, result.Address1 );
-            assertEqual( expected.Address2, result.Address2 );
+            AssertEqual( expected, result );
+            AssertEqual( expected.Address1, result.Address1 );
+            AssertEqual( expected.Address2, result.Address2 );
         }
 
-        private static void assertEqual( Person expected, Person actual )
+        private static void AssertEqual( Person expected, Person actual )
         {
             Assert.IsNotNull( actual );
             Assert.IsNotNull( actual.Address1 );
@@ -231,7 +231,7 @@ namespace FlatFiles.Test
             Assert.AreEqual( expected.CreatedOn, actual.CreatedOn );
         }
 
-        private static void assertEqual( Address expected, Address actual )
+        private static void AssertEqual( Address expected, Address actual )
         {
             Assert.AreEqual( expected.Street, actual.Street );
             Assert.AreEqual( expected.City, actual.City );
@@ -278,19 +278,19 @@ namespace FlatFiles.Test
             mapper.Property( x => x.Level2.Level3.Level4.IsActive ).ColumnName( "IsActive" );
             mapper.Property( x => x.Level2.Level3.CreatedOn ).ColumnName( "CreatedOn" );
 
-            var expected = new Level1()
+            var expected = new Level1
             {
                 Id = 123,
-                Level2 = new Level2()
+                Level2 = new Level2
                 {
                     Name = "Bob",
-                    Level3 = new Level3()
+                    Level3 = new Level3
                     {
                         CreatedOn = new DateTime( 2017, 11, 05 ),
-                        Level4 = new Level4()
+                        Level4 = new Level4
                         {
                             IsActive = true,
-                            Address = new Address()
+                            Address = new Address
                             {
                                 Street = "Test Street 1",
                                 City = "Test City",
@@ -315,7 +315,7 @@ namespace FlatFiles.Test
             Assert.AreEqual( expected.Level2.Name, result.Level2.Name );
             Assert.AreEqual( expected.Level2.Level3.Level4.IsActive, result.Level2.Level3.Level4.IsActive );
             Assert.AreEqual( expected.Level2.Level3.CreatedOn, result.Level2.Level3.CreatedOn );
-            assertEqual( expected.Level2.Level3.Level4.Address, result.Level2.Level3.Level4.Address );
+            AssertEqual( expected.Level2.Level3.Level4.Address, result.Level2.Level3.Level4.Address );
         }
 
         [TestMethod]
@@ -335,26 +335,26 @@ namespace FlatFiles.Test
             mapper.Property( x => x.Level2.Level3.Level4.IsActive ).ColumnName( "IsActive" );
             mapper.Property( x => x.Level2.Level3.CreatedOn ).ColumnName( "CreatedOn" );
 
-            var expected = new Level1()
+            var expected = new Level1
             {
                 Id = 123,
-                Address = new Address()
+                Address = new Address
                 {
                     Street = "Test Street 2",
                     City = "Test City 2",
                     State = "WA",
                     Zip = "44444"
                 },
-                Level2 = new Level2()
+                Level2 = new Level2
                 {
                     Name = "Bob",
-                    Level3 = new Level3()
+                    Level3 = new Level3
                     {
                         CreatedOn = new DateTime( 2017, 11, 05 ),
-                        Level4 = new Level4()
+                        Level4 = new Level4
                         {
                             IsActive = true,
-                            Address = new Address()
+                            Address = new Address
                             {
                                 Street = "Test Street 1",
                                 City = "Test City",
@@ -379,8 +379,8 @@ namespace FlatFiles.Test
             Assert.AreEqual( expected.Level2.Name, result.Level2.Name );
             Assert.AreEqual( expected.Level2.Level3.Level4.IsActive, result.Level2.Level3.Level4.IsActive );
             Assert.AreEqual( expected.Level2.Level3.CreatedOn, result.Level2.Level3.CreatedOn );
-            assertEqual( expected.Address, result.Address );
-            assertEqual( expected.Level2.Level3.Level4.Address, result.Level2.Level3.Level4.Address );
+            AssertEqual( expected.Address, result.Address );
+            AssertEqual( expected.Level2.Level3.Level4.Address, result.Level2.Level3.Level4.Address );
         }
 
 

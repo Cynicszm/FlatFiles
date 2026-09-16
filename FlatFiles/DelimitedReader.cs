@@ -5,11 +5,10 @@ using FlatFiles.Properties;
 
 namespace FlatFiles
 {
-    /// <inheritdoc />
     /// <summary>
     ///     Extracts records from a file containing delimited values.
     /// </summary>
-    public sealed class DelimitedReader : IReader, IReaderWithMetadata
+    public sealed class DelimitedReader : IReaderWithMetadata
     {
         private readonly DelimitedRecordParser parser;
         private readonly DelimitedSchemaSelector? schemaSelector;
@@ -71,7 +70,7 @@ namespace FlatFiles
             {
                 throw new ArgumentException( Resources.SameSeparator, nameof( options ) );
             }
-            this.parser = new DelimitedRecordParser( reader, options );
+            parser = new DelimitedRecordParser( reader, options );
             this.schema = schema;
         }
 
@@ -87,20 +86,10 @@ namespace FlatFiles
 
         event EventHandler<IRecordParsedEventArgs>? IReader.RecordParsed
         {
-            add
-            {
-                if (value is not null)
-                {
-                    RecordParsed += ( sender, e ) => value( sender, e );
-                }
-            }
-            remove
-            {
-                if (value is not null)
-                {
-                    RecordParsed -= ( sender, e ) => value( sender, e );
-                }
-            }
+            // EventHandler<T> is contravariant, so the interface handler subscribes to the typed event as it is and can
+            // be removed again. Wrapping it in a lambda made every removal a silent no-op.
+            add => RecordParsed += value;
+            remove => RecordParsed -= value;
         }
 
         /// <summary>
@@ -124,11 +113,7 @@ namespace FlatFiles
         /// <returns>The names.</returns>
         public DelimitedSchema? GetSchema()
         {
-            if (schemaSelector is not null)
-            {
-                return null;
-            }
-            return HandleSchema();
+            return schemaSelector is not null ? null : HandleSchema();
         }
 
         /// <summary>
@@ -221,16 +206,16 @@ namespace FlatFiles
         {
             if (physicalRecordNumber != 0)
             {
-                return this.schema;
+                return schema;
             }
             if (!parser.Options.IsFirstRecordSchema)
             {
-                return this.schema;
+                return schema;
             }
-            if (schemaSelector is not null || this.schema is not null)
+            if (schemaSelector is not null || schema is not null)
             {
                 SkipInternal();
-                return this.schema;
+                return schema;
             }
             var (_, columnNames) = ReadNextRecord();
             if (columnNames is null)
@@ -238,24 +223,24 @@ namespace FlatFiles
                 // Do not treat a missing schema in an empty file as an error.
                 return null;
             }
-            this.schema = CreateSchemaFromHeader( columnNames );
-            return this.schema;
+            schema = CreateSchemaFromHeader( columnNames );
+            return schema;
         }
 
         private async Task<DelimitedSchema?> HandleSchemaAsync()
         {
             if (physicalRecordNumber != 0)
             {
-                return this.schema;
+                return schema;
             }
             if (!parser.Options.IsFirstRecordSchema)
             {
-                return this.schema;
+                return schema;
             }
-            if (schemaSelector is not null || this.schema is not null)
+            if (schemaSelector is not null || schema is not null)
             {
                 await SkipAsyncInternal().ConfigureAwait( false );
-                return this.schema;
+                return schema;
             }
             var (_, columnNames) = await ReadNextRecordAsync().ConfigureAwait( false );
             if (columnNames is null)
@@ -263,8 +248,8 @@ namespace FlatFiles
                 // Do not treat a missing schema in an empty file as an error.
                 return null;
             }
-            this.schema = CreateSchemaFromHeader( columnNames );
-            return this.schema;
+            schema = CreateSchemaFromHeader( columnNames );
+            return schema;
         }
 
         private DelimitedSchema CreateSchemaFromHeader( string[] columnNames )
@@ -315,11 +300,7 @@ namespace FlatFiles
             {
                 return null;
             }
-            var schema = GetSchema( record, rawValues );
-            if (schema is null)
-            {
-                schema = DelimitedSchema.BuildDynamicSchema( parser.Options, rawValues.Length );
-            }
+            var schema = GetSchema( record, rawValues ) ?? DelimitedSchema.BuildDynamicSchema( parser.Options, rawValues.Length );
             var recordContext = NewRecordContext( schema, record, rawValues );
             this.recordContext = recordContext;
             if (IsSkipped( recordContext, rawValues ))

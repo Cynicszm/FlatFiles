@@ -86,11 +86,8 @@ namespace FlatFiles
                 var definition = ColumnDefinitions[columnIndex];
                 return ParseWithoutContext( definition, destinationIndex, rawValue );
             }
-            else
-            {
-                var columnContext = NewColumnContext( context, columnIndex, destinationIndex );
-                return ParseWithContext( columnContext, rawValue );
-            }
+            var columnContext = NewColumnContext( context, columnIndex, destinationIndex );
+            return ParseWithContext( columnContext, rawValue );
         }
 
         private object? ParseWithContext( IColumnContext columnContext, string rawValue )
@@ -104,7 +101,7 @@ namespace FlatFiles
             catch (Exception exception)
             {
                 var columnException = new ColumnProcessingException( columnContext, rawValue, exception );
-                if (columnContext.RecordContext is IRecoverableRecordContext recordContext && recordContext.HasHandler)
+                if (columnContext.RecordContext is IRecoverableRecordContext { HasHandler: true } recordContext)
                 {
                     var e = new ColumnErrorEventArgs( columnException );
                     recordContext.ProcessError( this, e );
@@ -191,7 +188,7 @@ namespace FlatFiles
                 // Whatever the column managed to write before it failed must not leak into the record.
                 destination.Truncate( start );
                 var columnException = new ColumnProcessingException( columnContext, value, exception );
-                if (columnContext.RecordContext is IRecoverableRecordContext recordContext && recordContext.HasHandler)
+                if (columnContext.RecordContext is IRecoverableRecordContext { HasHandler: true } recordContext)
                 {
                     var e = new ColumnErrorEventArgs( columnException );
                     recordContext.ProcessError( this, e );

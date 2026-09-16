@@ -25,385 +25,385 @@ namespace FlatFiles.Benchmark
             {
                 "John", "Smith", "29", "West Street Rd", "Apt 23", "Lexington", "DE", "001569", "Blue", "Cheese and Crackers", "Soccer", "2017-01-01", "true"
             };
-            string header = String.Join(",", headers);
-            string record = String.Join(",", values);
-            data = String.Join(Environment.NewLine, (new[] { header }).Concat(Enumerable.Repeat(0, 10000).Select(i => record)));
+            string header = String.Join( ",", headers );
+            string record = String.Join( ",", values );
+            data = String.Join( Environment.NewLine, (new[] { header }).Concat( Enumerable.Repeat( 0, 10000 ).Select( i => record ) ) );
 
             string[] quotedValues = new string[]
             {
                 "Joe", "Smith", "29", "\"West Street Rd, Apt. 23\"", "ATTN: Will Smith", "Lexington", "DE", "001569", "Blue", "\"Cheese, and Crackers\"", "Soccer", "2017-01-01", "true"
             };
-            string quotedRecord = String.Join(",", quotedValues);
-            quotedData = String.Join(Environment.NewLine, (new[] { header }).Concat(Enumerable.Repeat(0, 10000).Select(i => record)));
+            string quotedRecord = String.Join( ",", quotedValues );
+            quotedData = String.Join( Environment.NewLine, (new[] { header }).Concat( Enumerable.Repeat( 0, 10000 ).Select( i => record ) ) );
         }
 
         [Benchmark]
         public void RunFlatFiles_NoSchema()
         {
-            var reader = new StringReader(data);
-            var csvReader = new DelimitedReader(reader);
+            var reader = new StringReader( data );
+            var csvReader = new DelimitedReader( reader );
             var people = new List<object[]>();
             while (csvReader.Read())
             {
-                people.Add(csvReader.GetValues());
+                people.Add( csvReader.GetValues() );
             }
         }
 
         [Benchmark]
         public void RunFlatFiles_TypeMapper()
         {
-            var mapper = DelimitedTypeMapper.Define(() => new Person());
-            mapper.Property(x => x.FirstName);
-            mapper.Property(x => x.LastName);
-            mapper.Property(x => x.Age);
-            mapper.Property(x => x.Street1);
-            mapper.Property(x => x.Street2);
-            mapper.Property(x => x.City);
-            mapper.Property(x => x.State);
-            mapper.Property(x => x.Zip);
-            mapper.Property(x => x.FavoriteColor);
-            mapper.Property(x => x.FavoriteFood);
-            mapper.Property(x => x.FavoriteSport);
-            mapper.Property(x => x.CreatedOn);
-            mapper.Property(x => x.IsActive);
+            var mapper = DelimitedTypeMapper.Define( () => new Person() );
+            mapper.Property( x => x.FirstName );
+            mapper.Property( x => x.LastName );
+            mapper.Property( x => x.Age );
+            mapper.Property( x => x.Street1 );
+            mapper.Property( x => x.Street2 );
+            mapper.Property( x => x.City );
+            mapper.Property( x => x.State );
+            mapper.Property( x => x.Zip );
+            mapper.Property( x => x.FavoriteColor );
+            mapper.Property( x => x.FavoriteFood );
+            mapper.Property( x => x.FavoriteSport );
+            mapper.Property( x => x.CreatedOn );
+            mapper.Property( x => x.IsActive );
 
-            var reader = new StringReader(data);
-            var people = mapper.Read(reader, new DelimitedOptions() { IsFirstRecordSchema = true }).ToArray();
+            var reader = new StringReader( data );
+            var people = mapper.Read( reader, new DelimitedOptions { IsFirstRecordSchema = true } ).ToArray();
         }
 
         [Benchmark]
         public async Task RunFlatFiles_TypeMapper_Async()
         {
-            var mapper = DelimitedTypeMapper.Define<Person>(() => new Person());
-            mapper.Property(x => x.FirstName);
-            mapper.Property(x => x.LastName);
-            mapper.Property(x => x.Age);
-            mapper.Property(x => x.Street1);
-            mapper.Property(x => x.Street2);
-            mapper.Property(x => x.City);
-            mapper.Property(x => x.State);
-            mapper.Property(x => x.Zip);
-            mapper.Property(x => x.FavoriteColor);
-            mapper.Property(x => x.FavoriteFood);
-            mapper.Property(x => x.FavoriteSport);
-            mapper.Property(x => x.CreatedOn);
-            mapper.Property(x => x.IsActive);
+            var mapper = DelimitedTypeMapper.Define<Person>( () => new Person() );
+            mapper.Property( x => x.FirstName );
+            mapper.Property( x => x.LastName );
+            mapper.Property( x => x.Age );
+            mapper.Property( x => x.Street1 );
+            mapper.Property( x => x.Street2 );
+            mapper.Property( x => x.City );
+            mapper.Property( x => x.State );
+            mapper.Property( x => x.Zip );
+            mapper.Property( x => x.FavoriteColor );
+            mapper.Property( x => x.FavoriteFood );
+            mapper.Property( x => x.FavoriteSport );
+            mapper.Property( x => x.CreatedOn );
+            mapper.Property( x => x.IsActive );
 
-            var textReader = new StringReader(data);
-            var reader = mapper.GetReader(textReader, new DelimitedOptions() { IsFirstRecordSchema = true });
+            var textReader = new StringReader( data );
+            var reader = mapper.GetReader( textReader, new DelimitedOptions { IsFirstRecordSchema = true } );
             var people = new List<Person>();
-            await foreach (var person in reader.ReadAllAsync().ConfigureAwait(false))
+            await foreach (var person in reader.ReadAllAsync().ConfigureAwait( false ))
             {
-                people.Add(person);
+                people.Add( person );
             }
         }
 
         [Benchmark]
         public void RunFlatFiles_TypeMapper_Quoted()
         {
-            var mapper = DelimitedTypeMapper.Define(() => new Person());
-            mapper.Property(x => x.FirstName);
-            mapper.Property(x => x.LastName);
-            mapper.Property(x => x.Age);
-            mapper.Property(x => x.Street1);
-            mapper.Property(x => x.Street2);
-            mapper.Property(x => x.City);
-            mapper.Property(x => x.State);
-            mapper.Property(x => x.Zip);
-            mapper.Property(x => x.FavoriteColor);
-            mapper.Property(x => x.FavoriteFood);
-            mapper.Property(x => x.FavoriteSport);
-            mapper.Property(x => x.CreatedOn);
-            mapper.Property(x => x.IsActive);
+            var mapper = DelimitedTypeMapper.Define( () => new Person() );
+            mapper.Property( x => x.FirstName );
+            mapper.Property( x => x.LastName );
+            mapper.Property( x => x.Age );
+            mapper.Property( x => x.Street1 );
+            mapper.Property( x => x.Street2 );
+            mapper.Property( x => x.City );
+            mapper.Property( x => x.State );
+            mapper.Property( x => x.Zip );
+            mapper.Property( x => x.FavoriteColor );
+            mapper.Property( x => x.FavoriteFood );
+            mapper.Property( x => x.FavoriteSport );
+            mapper.Property( x => x.CreatedOn );
+            mapper.Property( x => x.IsActive );
 
-            var reader = new StringReader(quotedData);
-            var people = mapper.Read(reader, new DelimitedOptions() { IsFirstRecordSchema = true }).ToArray();
+            var reader = new StringReader( quotedData );
+            var people = mapper.Read( reader, new DelimitedOptions { IsFirstRecordSchema = true } ).ToArray();
         }
 
         [Benchmark]
         public void RunFlatFiles_TypeMapper_Fields()
         {
-            var mapper = DelimitedTypeMapper.Define(() => new FieldPerson());
-            mapper.Property(x => x.FirstName);
-            mapper.Property(x => x.LastName);
-            mapper.Property(x => x.Age);
-            mapper.Property(x => x.Street1);
-            mapper.Property(x => x.Street2);
-            mapper.Property(x => x.City);
-            mapper.Property(x => x.State);
-            mapper.Property(x => x.Zip);
-            mapper.Property(x => x.FavoriteColor);
-            mapper.Property(x => x.FavoriteFood);
-            mapper.Property(x => x.FavoriteSport);
-            mapper.Property(x => x.CreatedOn);
-            mapper.Property(x => x.IsActive);
+            var mapper = DelimitedTypeMapper.Define( () => new FieldPerson() );
+            mapper.Property( x => x.FirstName );
+            mapper.Property( x => x.LastName );
+            mapper.Property( x => x.Age );
+            mapper.Property( x => x.Street1 );
+            mapper.Property( x => x.Street2 );
+            mapper.Property( x => x.City );
+            mapper.Property( x => x.State );
+            mapper.Property( x => x.Zip );
+            mapper.Property( x => x.FavoriteColor );
+            mapper.Property( x => x.FavoriteFood );
+            mapper.Property( x => x.FavoriteSport );
+            mapper.Property( x => x.CreatedOn );
+            mapper.Property( x => x.IsActive );
 
-            var reader = new StringReader(data);
-            var people = mapper.Read(reader, new DelimitedOptions() { IsFirstRecordSchema = true }).ToArray();
+            var reader = new StringReader( data );
+            var people = mapper.Read( reader, new DelimitedOptions { IsFirstRecordSchema = true } ).ToArray();
         }
 
         [Benchmark]
         public void RunFlatFiles_TypeMapper_Unoptimized()
         {
-            var mapper = DelimitedTypeMapper.Define(() => new Person());
-            mapper.OptimizeMapping(false);
-            mapper.Property(x => x.FirstName);
-            mapper.Property(x => x.LastName);
-            mapper.Property(x => x.Age);
-            mapper.Property(x => x.Street1);
-            mapper.Property(x => x.Street2);
-            mapper.Property(x => x.City);
-            mapper.Property(x => x.State);
-            mapper.Property(x => x.Zip);
-            mapper.Property(x => x.FavoriteColor);
-            mapper.Property(x => x.FavoriteFood);
-            mapper.Property(x => x.FavoriteSport);
-            mapper.Property(x => x.CreatedOn);
-            mapper.Property(x => x.IsActive);
+            var mapper = DelimitedTypeMapper.Define( () => new Person() );
+            mapper.OptimizeMapping( false );
+            mapper.Property( x => x.FirstName );
+            mapper.Property( x => x.LastName );
+            mapper.Property( x => x.Age );
+            mapper.Property( x => x.Street1 );
+            mapper.Property( x => x.Street2 );
+            mapper.Property( x => x.City );
+            mapper.Property( x => x.State );
+            mapper.Property( x => x.Zip );
+            mapper.Property( x => x.FavoriteColor );
+            mapper.Property( x => x.FavoriteFood );
+            mapper.Property( x => x.FavoriteSport );
+            mapper.Property( x => x.CreatedOn );
+            mapper.Property( x => x.IsActive );
 
-            var reader = new StringReader(data);
-            var people = mapper.Read(reader, new DelimitedOptions() { IsFirstRecordSchema = true }).ToArray();
+            var reader = new StringReader( data );
+            var people = mapper.Read( reader, new DelimitedOptions { IsFirstRecordSchema = true } ).ToArray();
         }
 
         [Benchmark]
         public void RunFlatFiles_TypeMapper_CustomMapping()
         {
-            var mapper = DelimitedTypeMapper.Define(() => new Person());
-            mapper.CustomMapping(new StringColumn("FirstName")).WithReader(p => p.FirstName);
-            mapper.CustomMapping(new StringColumn("LastName")).WithReader(p => p.LastName);
-            mapper.CustomMapping(new Int32Column("Age")).WithReader(p => p.Age);
-            mapper.CustomMapping(new StringColumn("Street1")).WithReader(p => p.Street1);
-            mapper.CustomMapping(new StringColumn("Street2")).WithReader(p => p.Street2);
-            mapper.CustomMapping(new StringColumn("City")).WithReader(p => p.City);
-            mapper.CustomMapping(new StringColumn("State")).WithReader(p => p.State);
-            mapper.CustomMapping(new StringColumn("Zip")).WithReader(p => p.Zip);
-            mapper.CustomMapping(new StringColumn("FavoriteColor")).WithReader(p => p.FavoriteColor);
-            mapper.CustomMapping(new StringColumn("FavoriteFood)")).WithReader(p => p.FavoriteFood);
-            mapper.CustomMapping(new StringColumn("FavoriteSport")).WithReader(p => p.FavoriteSport);
-            mapper.CustomMapping(new DateTimeColumn("CreatedOn")).WithReader(p => p.CreatedOn);
-            mapper.CustomMapping(new BooleanColumn("IsActive")).WithReader(p => p.IsActive);
+            var mapper = DelimitedTypeMapper.Define( () => new Person() );
+            mapper.CustomMapping( new StringColumn( "FirstName" ) ).WithReader( p => p.FirstName );
+            mapper.CustomMapping( new StringColumn( "LastName" ) ).WithReader( p => p.LastName );
+            mapper.CustomMapping( new Int32Column( "Age" ) ).WithReader( p => p.Age );
+            mapper.CustomMapping( new StringColumn( "Street1" ) ).WithReader( p => p.Street1 );
+            mapper.CustomMapping( new StringColumn( "Street2" ) ).WithReader( p => p.Street2 );
+            mapper.CustomMapping( new StringColumn( "City" ) ).WithReader( p => p.City );
+            mapper.CustomMapping( new StringColumn( "State" ) ).WithReader( p => p.State );
+            mapper.CustomMapping( new StringColumn( "Zip" ) ).WithReader( p => p.Zip );
+            mapper.CustomMapping( new StringColumn( "FavoriteColor" ) ).WithReader( p => p.FavoriteColor );
+            mapper.CustomMapping( new StringColumn( "FavoriteFood)" ) ).WithReader( p => p.FavoriteFood );
+            mapper.CustomMapping( new StringColumn( "FavoriteSport" ) ).WithReader( p => p.FavoriteSport );
+            mapper.CustomMapping( new DateTimeColumn( "CreatedOn" ) ).WithReader( p => p.CreatedOn );
+            mapper.CustomMapping( new BooleanColumn( "IsActive" ) ).WithReader( p => p.IsActive );
 
-            var reader = new StringReader(data);
-            var people = mapper.Read(reader, new DelimitedOptions() { IsFirstRecordSchema = true }).ToArray();
+            var reader = new StringReader( data );
+            var people = mapper.Read( reader, new DelimitedOptions { IsFirstRecordSchema = true } ).ToArray();
         }
 
         [Benchmark]
         public void RunFlatFiles_TypeMapper_CustomMapping_Unoptimized()
         {
-            var mapper = DelimitedTypeMapper.Define(() => new Person());
-            mapper.OptimizeMapping(false);
-            mapper.CustomMapping(new StringColumn("FirstName")).WithReader(p => p.FirstName);
-            mapper.CustomMapping(new StringColumn("LastName")).WithReader(p => p.LastName);
-            mapper.CustomMapping(new Int32Column("Age")).WithReader(p => p.Age);
-            mapper.CustomMapping(new StringColumn("Street1")).WithReader(p => p.Street1);
-            mapper.CustomMapping(new StringColumn("Street2")).WithReader(p => p.Street2);
-            mapper.CustomMapping(new StringColumn("City")).WithReader(p => p.City);
-            mapper.CustomMapping(new StringColumn("State")).WithReader(p => p.State);
-            mapper.CustomMapping(new StringColumn("Zip")).WithReader(p => p.Zip);
-            mapper.CustomMapping(new StringColumn("FavoriteColor")).WithReader(p => p.FavoriteColor);
-            mapper.CustomMapping(new StringColumn("FavoriteFood)")).WithReader(p => p.FavoriteFood);
-            mapper.CustomMapping(new StringColumn("FavoriteSport")).WithReader(p => p.FavoriteSport);
-            mapper.CustomMapping(new DateTimeColumn("CreatedOn")).WithReader(p => p.CreatedOn);
-            mapper.CustomMapping(new BooleanColumn("IsActive")).WithReader(p => p.IsActive);
+            var mapper = DelimitedTypeMapper.Define( () => new Person() );
+            mapper.OptimizeMapping( false );
+            mapper.CustomMapping( new StringColumn( "FirstName" ) ).WithReader( p => p.FirstName );
+            mapper.CustomMapping( new StringColumn( "LastName" ) ).WithReader( p => p.LastName );
+            mapper.CustomMapping( new Int32Column( "Age" ) ).WithReader( p => p.Age );
+            mapper.CustomMapping( new StringColumn( "Street1" ) ).WithReader( p => p.Street1 );
+            mapper.CustomMapping( new StringColumn( "Street2" ) ).WithReader( p => p.Street2 );
+            mapper.CustomMapping( new StringColumn( "City" ) ).WithReader( p => p.City );
+            mapper.CustomMapping( new StringColumn( "State" ) ).WithReader( p => p.State );
+            mapper.CustomMapping( new StringColumn( "Zip" ) ).WithReader( p => p.Zip );
+            mapper.CustomMapping( new StringColumn( "FavoriteColor" ) ).WithReader( p => p.FavoriteColor );
+            mapper.CustomMapping( new StringColumn( "FavoriteFood)" ) ).WithReader( p => p.FavoriteFood );
+            mapper.CustomMapping( new StringColumn( "FavoriteSport" ) ).WithReader( p => p.FavoriteSport );
+            mapper.CustomMapping( new DateTimeColumn( "CreatedOn" ) ).WithReader( p => p.CreatedOn );
+            mapper.CustomMapping( new BooleanColumn( "IsActive" ) ).WithReader( p => p.IsActive );
 
-            var reader = new StringReader(data);
-            var people = mapper.Read(reader, new DelimitedOptions() { IsFirstRecordSchema = true }).ToArray();
+            var reader = new StringReader( data );
+            var people = mapper.Read( reader, new DelimitedOptions { IsFirstRecordSchema = true } ).ToArray();
         }
 
         [Benchmark]
         public void RunFlatFiles_AutoMapped()
         {
-            var reader = new StringReader(data);
-            var csvReader = DelimitedTypeMapper.GetAutoMappedReader<Person>(reader);
+            var reader = new StringReader( data );
+            var csvReader = DelimitedTypeMapper.GetAutoMappedReader<Person>( reader );
             var people = new List<Person>();
             foreach (var person in csvReader.ReadAll())
             {
-                people.Add(person);
+                people.Add( person );
             }
         }
 
         [Benchmark]
         public async Task RunFlatFiles_AutoMapped_Async()
         {
-            var reader = new StringReader(data);
-            var csvReader = await DelimitedTypeMapper.GetAutoMappedReaderAsync<Person>(reader);
+            var reader = new StringReader( data );
+            var csvReader = await DelimitedTypeMapper.GetAutoMappedReaderAsync<Person>( reader );
             var people = new List<Person>();
-            while (await csvReader.ReadAsync().ConfigureAwait(false))
+            while (await csvReader.ReadAsync().ConfigureAwait( false ))
             {
-                people.Add(csvReader.Current);
+                people.Add( csvReader.Current );
             }
         }
 
         [Benchmark]
         public void RunFlatFiles_FlatFileDataReader_ByPosition()
         {
-            var reader = new StringReader(data);
+            var reader = new StringReader( data );
             var schema = GetSchema();
-            var csvReader = new DelimitedReader(reader, schema, new DelimitedOptions() { IsFirstRecordSchema = true });
-            var dataReader = new FlatFileDataReader(csvReader);
+            var csvReader = new DelimitedReader( reader, schema, new DelimitedOptions { IsFirstRecordSchema = true } );
+            var dataReader = new FlatFileDataReader( csvReader );
             var people = new List<Person>();
             while (dataReader.Read())
             {
-                var person = new Person()
+                var person = new Person
                 {
-                    FirstName = dataReader.GetString(0),
-                    LastName = dataReader.GetString(1),
-                    Age = dataReader.GetInt32(2),
-                    Street1 = dataReader.GetString(3),
-                    Street2 = dataReader.GetString(4),
-                    City = dataReader.GetString(5),
-                    State = dataReader.GetString(6),
-                    Zip = dataReader.GetString(7),
-                    FavoriteColor = dataReader.GetString(8),
-                    FavoriteFood = dataReader.GetString(9),
-                    FavoriteSport = dataReader.GetString(10),
-                    CreatedOn = dataReader.GetDateTime(11),
-                    IsActive = dataReader.GetBoolean(12)
+                    FirstName = dataReader.GetString( 0 ),
+                    LastName = dataReader.GetString( 1 ),
+                    Age = dataReader.GetInt32( 2 ),
+                    Street1 = dataReader.GetString( 3 ),
+                    Street2 = dataReader.GetString( 4 ),
+                    City = dataReader.GetString( 5 ),
+                    State = dataReader.GetString( 6 ),
+                    Zip = dataReader.GetString( 7 ),
+                    FavoriteColor = dataReader.GetString( 8 ),
+                    FavoriteFood = dataReader.GetString( 9 ),
+                    FavoriteSport = dataReader.GetString( 10 ),
+                    CreatedOn = dataReader.GetDateTime( 11 ),
+                    IsActive = dataReader.GetBoolean( 12 )
                 };
-                people.Add(person);
+                people.Add( person );
             }
         }
 
         [Benchmark]
         public void RunFlatFiles_FlatFileDataReader_ByName()
         {
-            var reader = new StringReader(data);
+            var reader = new StringReader( data );
             var schema = GetSchema();
-            var csvReader = new DelimitedReader(reader, schema, new DelimitedOptions() { IsFirstRecordSchema = true });
-            var dataReader = new FlatFileDataReader(csvReader);
+            var csvReader = new DelimitedReader( reader, schema, new DelimitedOptions { IsFirstRecordSchema = true } );
+            var dataReader = new FlatFileDataReader( csvReader );
             var people = new List<Person>();
             while (dataReader.Read())
             {
-                var person = new Person()
+                var person = new Person
                 {
-                    FirstName = dataReader.GetString("FirstName"),
-                    LastName = dataReader.GetString("LastName"),
-                    Age = dataReader.GetInt32("Age"),
-                    Street1 = dataReader.GetString("Street1"),
-                    Street2 = dataReader.GetString("Street2"),
-                    City = dataReader.GetString("City"),
-                    State = dataReader.GetString("State"),
-                    Zip = dataReader.GetString("Zip"),
-                    FavoriteColor = dataReader.GetString("FavoriteColor"),
-                    FavoriteFood = dataReader.GetString("FavoriteFood"),
-                    FavoriteSport = dataReader.GetString("FavoriteSport"),
-                    CreatedOn = dataReader.GetDateTime("CreatedOn"),
-                    IsActive = dataReader.GetBoolean("IsActive")
+                    FirstName = dataReader.GetString( "FirstName" ),
+                    LastName = dataReader.GetString( "LastName" ),
+                    Age = dataReader.GetInt32( "Age" ),
+                    Street1 = dataReader.GetString( "Street1" ),
+                    Street2 = dataReader.GetString( "Street2" ),
+                    City = dataReader.GetString( "City" ),
+                    State = dataReader.GetString( "State" ),
+                    Zip = dataReader.GetString( "Zip" ),
+                    FavoriteColor = dataReader.GetString( "FavoriteColor" ),
+                    FavoriteFood = dataReader.GetString( "FavoriteFood" ),
+                    FavoriteSport = dataReader.GetString( "FavoriteSport" ),
+                    CreatedOn = dataReader.GetDateTime( "CreatedOn" ),
+                    IsActive = dataReader.GetBoolean( "IsActive" )
                 };
-                people.Add(person);
+                people.Add( person );
             }
         }
 
         [Benchmark]
         public void RunFlatFiles_FlatFileDataReader_GetValue()
         {
-            var reader = new StringReader(data);
+            var reader = new StringReader( data );
             var schema = GetSchema();
-            var csvReader = new DelimitedReader(reader, schema, new DelimitedOptions() { IsFirstRecordSchema = true });
-            var dataReader = new FlatFileDataReader(csvReader);
+            var csvReader = new DelimitedReader( reader, schema, new DelimitedOptions { IsFirstRecordSchema = true } );
+            var dataReader = new FlatFileDataReader( csvReader );
             var people = new List<Person>();
             while (dataReader.Read())
             {
-                var person = new Person()
+                var person = new Person
                 {
-                    FirstName = dataReader.GetValue<string>(0),
-                    LastName = dataReader.GetValue<string>(1),
-                    Age = dataReader.GetValue<int>(2),
-                    Street1 = dataReader.GetValue<string>(3),
-                    Street2 = dataReader.GetValue<string>(4),
-                    City = dataReader.GetValue<string>(5),
-                    State = dataReader.GetValue<string>(6),
-                    Zip = dataReader.GetValue<string>(7),
-                    FavoriteColor = dataReader.GetValue<string>(8),
-                    FavoriteFood = dataReader.GetValue<string>(9),
-                    FavoriteSport = dataReader.GetValue<string>(10),
-                    CreatedOn = dataReader.GetValue<DateTime?>(11),
-                    IsActive = dataReader.GetValue<bool>(12)
+                    FirstName = dataReader.GetValue<string>( 0 ),
+                    LastName = dataReader.GetValue<string>( 1 ),
+                    Age = dataReader.GetValue<int>( 2 ),
+                    Street1 = dataReader.GetValue<string>( 3 ),
+                    Street2 = dataReader.GetValue<string>( 4 ),
+                    City = dataReader.GetValue<string>( 5 ),
+                    State = dataReader.GetValue<string>( 6 ),
+                    Zip = dataReader.GetValue<string>( 7 ),
+                    FavoriteColor = dataReader.GetValue<string>( 8 ),
+                    FavoriteFood = dataReader.GetValue<string>( 9 ),
+                    FavoriteSport = dataReader.GetValue<string>( 10 ),
+                    CreatedOn = dataReader.GetValue<DateTime?>( 11 ),
+                    IsActive = dataReader.GetValue<bool>( 12 )
                 };
-                people.Add(person);
+                people.Add( person );
             }
         }
 
         [Benchmark]
         public void RunFlatFiles_DataTable()
         {
-            var reader = new StringReader(data);
+            var reader = new StringReader( data );
             var schema = GetSchema();
-            var csvReader = new DelimitedReader(reader, schema, new DelimitedOptions() { IsFirstRecordSchema = true });
+            var csvReader = new DelimitedReader( reader, schema, new DelimitedOptions { IsFirstRecordSchema = true } );
             var dataTable = new DataTable();
-            dataTable.ReadFlatFile(csvReader);
+            dataTable.ReadFlatFile( csvReader );
         }
 
         private static DelimitedSchema GetSchema()
         {
             var schema = new DelimitedSchema();
-            schema.AddColumn(new StringColumn("FirstName"));
-            schema.AddColumn(new StringColumn("LastName"));
-            schema.AddColumn(new Int32Column("Age"));
-            schema.AddColumn(new StringColumn("Street1"));
-            schema.AddColumn(new StringColumn("Street2"));
-            schema.AddColumn(new StringColumn("City"));
-            schema.AddColumn(new StringColumn("State"));
-            schema.AddColumn(new StringColumn("Zip"));
-            schema.AddColumn(new StringColumn("FavoriteColor"));
-            schema.AddColumn(new StringColumn("FavoriteFood"));
-            schema.AddColumn(new StringColumn("FavoriteSport"));
-            schema.AddColumn(new DateTimeColumn("CreatedOn"));
-            schema.AddColumn(new BooleanColumn("IsActive"));
+            schema.AddColumn( new StringColumn( "FirstName" ) );
+            schema.AddColumn( new StringColumn( "LastName" ) );
+            schema.AddColumn( new Int32Column( "Age" ) );
+            schema.AddColumn( new StringColumn( "Street1" ) );
+            schema.AddColumn( new StringColumn( "Street2" ) );
+            schema.AddColumn( new StringColumn( "City" ) );
+            schema.AddColumn( new StringColumn( "State" ) );
+            schema.AddColumn( new StringColumn( "Zip" ) );
+            schema.AddColumn( new StringColumn( "FavoriteColor" ) );
+            schema.AddColumn( new StringColumn( "FavoriteFood" ) );
+            schema.AddColumn( new StringColumn( "FavoriteSport" ) );
+            schema.AddColumn( new DateTimeColumn( "CreatedOn" ) );
+            schema.AddColumn( new BooleanColumn( "IsActive" ) );
             return schema;
         }
 
         [Benchmark]
         public void RunCsvHelper()
         {
-            var reader = new StringReader(data);
-            var csvReader = new CsvHelper.CsvReader(reader, CultureInfo.InvariantCulture);
+            var reader = new StringReader( data );
+            var csvReader = new CsvHelper.CsvReader( reader, CultureInfo.InvariantCulture );
             var people = new List<Person>();
             foreach (var person in csvReader.GetRecords<Person>())
             {
-                people.Add(person);
+                people.Add( person );
             }
         }
 
         [Benchmark]
         public async Task RunCsvHelper_Async()
         {
-            var reader = new StringReader(data);
-            var csvReader = new CsvHelper.CsvReader(reader, CultureInfo.InvariantCulture);
+            var reader = new StringReader( data );
+            var csvReader = new CsvHelper.CsvReader( reader, CultureInfo.InvariantCulture );
             var people = new List<Person>();
-            await csvReader.ReadAsync().ConfigureAwait(false);
+            await csvReader.ReadAsync().ConfigureAwait( false );
             csvReader.ReadHeader();
-            while (await csvReader.ReadAsync().ConfigureAwait(false))
+            while (await csvReader.ReadAsync().ConfigureAwait( false ))
             {
-                people.Add(csvReader.GetRecord<Person>());
+                people.Add( csvReader.GetRecord<Person>() );
             }
         }
 
         [Benchmark]
         public void RunCsvHelper_Quoted()
         {
-            var reader = new StringReader(quotedData);
-            var csvReader = new CsvHelper.CsvReader(reader, CultureInfo.InvariantCulture);
+            var reader = new StringReader( quotedData );
+            var csvReader = new CsvHelper.CsvReader( reader, CultureInfo.InvariantCulture );
             var people = new List<Person>();
             foreach (var person in csvReader.GetRecords<Person>())
             {
-                people.Add(person);
+                people.Add( person );
             }
         }
 
         [Benchmark]
         public void RunStringSplit()
         {
-            var lines = data.Split(Environment.NewLine);
-            var records = lines.Skip(1).Select(l => l.Split(",").ToArray());
+            var lines = data.Split( Environment.NewLine );
+            var records = lines.Skip( 1 ).Select( l => l.Split( "," ).ToArray() );
             var people = new List<Person>();
             foreach (var record in records)
             {
-                var person = new Person()
+                var person = new Person
                 {
                     FirstName = record[0],
                     LastName = record[1],
-                    Age = Int32.Parse(record[2]),
+                    Age = Int32.Parse( record[2] ),
                     Street1 = record[3],
                     Street2 = record[4],
                     City = record[5],
@@ -412,10 +412,10 @@ namespace FlatFiles.Benchmark
                     FavoriteColor = record[8],
                     FavoriteFood = record[9],
                     FavoriteSport = record[10],
-                    CreatedOn = DateTime.Parse(record[11]),
-                    IsActive = Boolean.Parse(record[12])
+                    CreatedOn = DateTime.Parse( record[11] ),
+                    IsActive = Boolean.Parse( record[12] )
                 };
-                people.Add(person);
+                people.Add( person );
             }
         }
         
