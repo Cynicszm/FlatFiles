@@ -265,7 +265,9 @@ This is not a real record
 
             const string text = @"123,""Bob Smith"",4/21/2017";
             StringReader stringReader = new StringReader(text);
-            var reader = new DelimitedReader(stringReader, schema);
+            // The raw text is discarded by default, so this test has to ask for it back.
+            var options = new DelimitedOptions() { IsRecordTextDisabled = false };
+            var reader = new DelimitedReader(stringReader, schema, options);
             reader.RecordRead += (sender, e) => {
                 Assert.AreEqual(@"123,""Bob Smith"",4/21/2017", e.RecordContext.Record);
                 CollectionAssert.AreEqual(new[] { "123", "Bob Smith", "4/21/2017" }, e.RecordContext.Values);
