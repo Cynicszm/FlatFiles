@@ -5,22 +5,24 @@ using FlatFiles.Properties;
 
 namespace FlatFiles
 {
-    internal sealed class FixedLengthRecordWriter
+    internal sealed class FixedLengthRecordWriter : IFormattedColumnHandler
     {
         private readonly TextWriter writer;
         private readonly FixedLengthSchema? schema;
         private readonly FixedLengthSchemaInjector? injector;
+        private readonly RecordBuffer buffer = new();
         private FixedLengthRecordContext? recordContext;
+        private ExecutionContextCache<FixedLengthSchema, FixedLengthExecutionContext>? executionContexts;
 
-        public FixedLengthRecordWriter(TextWriter writer, FixedLengthSchema? schema, FixedLengthOptions? options)
+        public FixedLengthRecordWriter( TextWriter writer, FixedLengthSchema? schema, FixedLengthOptions? options )
         {
             this.writer = writer;
             this.schema = schema;
             Options = options is null ? new FixedLengthOptions() : options.Clone();
         }
 
-        public FixedLengthRecordWriter(TextWriter writer, FixedLengthSchemaInjector injector, FixedLengthOptions? options)
-            : this(writer, (FixedLengthSchema?)null, options)
+        public FixedLengthRecordWriter( TextWriter writer, FixedLengthSchemaInjector injector, FixedLengthOptions? options )
+            : this( writer, (FixedLengthSchema?) null, options )
         {
             this.injector = injector;
         }
@@ -31,57 +33,66 @@ namespace FlatFiles
 
         public FixedLengthOptions Options { get; }
 
-        public int PhysicalRecordNumber { get; set;  }
+        public int PhysicalRecordNumber { get; set; }
 
         public int LogicalRecordNumber { get; set; }
 
         public event EventHandler<ColumnErrorEventArgs>? ColumnError;
 
-        public void WriteRecord(object?[] values)
+        public void WriteRecord( object?[] values )
         {
-            this.recordContext = null;
-            var formattedColumns = FormatAndFitValues(values);
-            foreach (string column in formattedColumns)
-            {
-                writer.Write(column);
-            }
+            recordContext = null;
+            FormatRecord( values );
+            writer.Write( buffer.WrittenSpan );
         }
 
-        public async Task WriteRecordAsync(object?[] values)
+        public async Task WriteRecordAsync( object?[] values )
         {
-            this.recordContext = null;
-            var formattedColumns = FormatAndFitValues(values);
-            foreach (string column in formattedColumns)
-            {
-                await writer.WriteAsync(column).ConfigureAwait(false);
-            }
+            recordContext = null;
+            FormatRecord( values );
+            await writer.WriteAsync( buffer.WrittenMemory ).ConfigureAwait( false );
         }
 
-        private string[] FormatAndFitValues(object?[] values)
+        /// <summary>
+        ///     Formats the record into the buffer: each value is formatted by its column straight into the buffer and
+        ///     then padded or truncated in place to its window. The record is then written in one go.
+        /// </summary>
+        private void FormatRecord( object?[] values )
         {
-            var schema = GetSchema(values);
-            var metadata = NewRecordContext(schema, null, null);
-            this.recordContext = metadata;
+            var schema = GetSchema( values );
+            var metadata = NewRecordContext( schema, null, null );
+            recordContext = metadata;
             if (values.Length != schema.ColumnDefinitions.PhysicalCount)
             {
-                throw new RecordProcessingException(metadata, Resources.WrongNumberOfValues);
+                throw new RecordProcessingException( metadata, Resources.WrongNumberOfValues );
             }
-            var formattedColumns = FormatValues(metadata, values);
-            FitWindows(schema, formattedColumns);
-            return formattedColumns;
+            metadata.ColumnError += ColumnError;
+            buffer.Clear();
+            schema.FormatValues( metadata, values, buffer, this );
         }
 
-        public FixedLengthSchema GetSchema(object?[] values)
+        void IFormattedColumnHandler.ColumnStarting( int columnIndex, RecordBuffer destination )
         {
-            return injector is null ? schema! : injector.GetSchema(values);
         }
 
-        private ExecutionContextCache<FixedLengthSchema, FixedLengthExecutionContext>? executionContexts;
+        void IFormattedColumnHandler.ColumnFormatted( int columnIndex, int start, RecordBuffer destination )
+        {
+            var windows = recordContext?.ExecutionContext.Schema.Windows;
+            if (windows is not null && columnIndex < windows.Count)
+            {
+                FitWindow( windows[columnIndex], start );
+            }
+        }
 
-        private FixedLengthRecordContext NewRecordContext(FixedLengthSchema schema, string? record, string[]? values)
+        public FixedLengthSchema GetSchema( object?[] values )
+        {
+            return injector is null ? schema! : injector.GetSchema( values );
+        }
+
+        private FixedLengthRecordContext NewRecordContext( FixedLengthSchema schema, string? record, string[]? values )
         {
             var executionContext = (executionContexts ??= new( s => new FixedLengthExecutionContext( s!, Options.Clone() ) )).Get( schema );
-            var recordContext = new FixedLengthRecordContext(executionContext)
+            var recordContext = new FixedLengthRecordContext( executionContext )
             {
                 PhysicalRecordNumber = PhysicalRecordNumber,
                 LogicalRecordNumber = LogicalRecordNumber,
@@ -91,48 +102,14 @@ namespace FlatFiles
             return recordContext;
         }
 
-        private string[] FormatValues(FixedLengthRecordContext metadata, object?[] values)
-        {
-            var schema = metadata.ExecutionContext.Schema;
-            metadata.ColumnError += ColumnError;
-            return schema.FormatValues(metadata, values);
-        }
-
-        private void FitWindows(FixedLengthSchema schema, string[] values)
-        {
-            var windows = schema.Windows;
-            for (int index = 0; index != values.Length; ++index)
-            {
-                string value = values[index];
-                if (index < windows.Count)
-                {
-                    var window = windows[index];
-                    values[index] = FitWidth(window, value);
-                }
-                else
-                {
-                    values[index] = value ?? String.Empty;
-                }
-            }
-        }
-
         public void WriteSchema()
         {
             if (schema is null)
             {
                 return;
             }
-            var definitions = schema.ColumnDefinitions;
-            var windows = schema.Windows;
-            int columnCount = definitions.Count;
-            for (int columnIndex = 0; columnIndex != columnCount; ++columnIndex)
-            {
-                var window = windows[columnIndex];
-                var column = definitions[columnIndex];
-                var columnName = column.ColumnName;
-                var fittedValue = FitWidth(window, columnName);
-                writer.Write(fittedValue);
-            }
+            FormatSchema( schema );
+            writer.Write( buffer.WrittenSpan );
         }
 
         public async Task WriteSchemaAsync()
@@ -141,59 +118,76 @@ namespace FlatFiles
             {
                 return;
             }
+            FormatSchema( schema );
+            await writer.WriteAsync( buffer.WrittenMemory ).ConfigureAwait( false );
+        }
+
+        private void FormatSchema( FixedLengthSchema schema )
+        {
+            buffer.Clear();
             var definitions = schema.ColumnDefinitions;
             var windows = schema.Windows;
-            int columnCount = definitions.Count;
-            for (int columnIndex = 0; columnIndex != columnCount; ++columnIndex)
+            for (int columnIndex = 0, columnCount = definitions.Count; columnIndex != columnCount; ++columnIndex)
             {
-                var window = windows[columnIndex];
-                var column = definitions[columnIndex];
-                var columnName = column.ColumnName;
-                var fittedValue = FitWidth(window, columnName);
-                await writer.WriteAsync(fittedValue).ConfigureAwait(false);
+                var start = buffer.Length;
+                buffer.Write( definitions[columnIndex].ColumnName.AsSpan() );
+                FitWindow( windows[columnIndex], start );
             }
         }
 
-        private string FitWidth(Window window, string? value)
+        /// <summary>
+        ///     Pads or truncates the value that begins at <paramref name="start" /> and runs to the end of the buffer so
+        ///     that it exactly fills the window.
+        /// </summary>
+        private void FitWindow( Window window, int start )
         {
-            if (value is null)
+            var length = buffer.Length - start;
+            if (length > window.Width)
             {
-                value = String.Empty;
+                TruncateValue( window, start, length );
             }
-            if (value.Length > window.Width)
+            else if (length < window.Width)
             {
-                return GetTruncatedValue(value, window);
+                PadValue( window, start, length );
             }
-            if (value.Length < window.Width)
-            {
-                return GetPaddedValue(value, window);
-            }
-            return value;
         }
 
-        private string GetTruncatedValue(string value, Window window)
+        private void TruncateValue( Window window, int start, int length )
         {
             var policy = window.TruncationPolicy ?? Options.TruncationPolicy;
-            return policy switch
+            switch (policy)
             {
-                OverflowTruncationPolicy.TruncateLeading => value[^window.Width..],
-                OverflowTruncationPolicy.TruncateTrailing => value[..window.Width],
-                OverflowTruncationPolicy.ThrowException => throw new FlatFileException(Resources.ValueExceedsWindowWidth),
-                _ => throw new FlatFileException(Resources.InvalidTruncationPolicy)
-            };
+                case OverflowTruncationPolicy.TruncateLeading:
+                {
+                    var value = buffer.WrittenSpan.Slice( start, length );
+                    value[^window.Width..].CopyTo( value );
+                    buffer.Truncate( start + window.Width );
+                    break;
+                }
+                case OverflowTruncationPolicy.TruncateTrailing:
+                    buffer.Truncate( start + window.Width );
+                    break;
+                case OverflowTruncationPolicy.ThrowException:
+                    throw new FlatFileException( Resources.ValueExceedsWindowWidth );
+                default:
+                    throw new FlatFileException( Resources.InvalidTruncationPolicy );
+            }
         }
 
-        private string GetPaddedValue(string value, Window window)
+        private void PadValue( Window window, int start, int length )
         {
             var alignment = window.Alignment ?? Options.Alignment;
             var fillCharacter = window.FillCharacter ?? Options.FillCharacter;
+            var padding = window.Width - length;
+            var value = buffer.Extend( start, window.Width );
             if (alignment == FixedAlignment.LeftAligned)
             {
-                return value.PadRight(window.Width, fillCharacter);
+                value[length..].Fill( fillCharacter );
             }
             else
             {
-                return value.PadLeft(window.Width, fillCharacter);
+                value[..length].CopyTo( value[padding..] );
+                value[..padding].Fill( fillCharacter );
             }
         }
 
@@ -202,7 +196,7 @@ namespace FlatFiles
             if (Options.HasRecordSeparator)
             {
                 var separator = Options.RecordSeparator ?? Environment.NewLine;
-                writer.Write(separator);
+                writer.Write( separator );
             }
         }
 
@@ -211,18 +205,18 @@ namespace FlatFiles
             if (Options.HasRecordSeparator)
             {
                 var separator = Options.RecordSeparator ?? Environment.NewLine;
-                await writer.WriteAsync(separator).ConfigureAwait(false);
+                await writer.WriteAsync( separator ).ConfigureAwait( false );
             }
         }
 
-        public void WriteRaw(string data)
+        public void WriteRaw( string data )
         {
-            writer.Write(data);
+            writer.Write( data );
         }
 
-        public Task WriteRawAsync(string data)
+        public Task WriteRawAsync( string data )
         {
-            return writer.WriteAsync(data);
+            return writer.WriteAsync( data );
         }
     }
 }
