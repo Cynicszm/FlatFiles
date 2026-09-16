@@ -14,59 +14,59 @@ namespace FlatFiles.Test
         {
             var mapper = DelimitedTypeMapper.Define<InternalClass>();
 
-            mapper.Property(x => x.Identifier);
-            mapper.Property(x => x.Status);
-            mapper.Property(x => x.EffectiveDate).InputFormat("yyyyMMdd");
-            mapper.Property(x => x.ModificationDate).InputFormat("yyyyMMddHHmmss");
-            mapper.Property(x => x.IsInternal);
+            mapper.Property( x => x.Identifier );
+            mapper.Property( x => x.Status );
+            mapper.Property( x => x.EffectiveDate ).InputFormat( "yyyyMMdd" );
+            mapper.Property( x => x.ModificationDate ).InputFormat( "yyyyMMddHHmmss" );
+            mapper.Property( x => x.IsInternal );
 
             string rawData = @"ABC123,Doing Fine,20180115,20180115145100,true";
-            StringReader reader = new StringReader(rawData);
-            var data = mapper.Read(reader, new DelimitedOptions()
+            StringReader reader = new StringReader( rawData );
+            InternalClass[] data = [.. mapper.Read( reader, new DelimitedOptions()
             {
                 IsFirstRecordSchema = false,
                 RecordSeparator = "\n",
                 Separator = ",",
                 Quote = '"'
-            }).ToArray();
+            } )];
 
-            Assert.AreEqual(1, data.Length);
+            Assert.AreEqual( 1, data.Length );
             var result = data[0];
-            Assert.AreEqual("ABC123", result.Identifier);
-            Assert.AreEqual("Doing Fine", result.Status);
-            Assert.AreEqual(new DateTime(2018, 1, 15), result.EffectiveDate);
-            Assert.AreEqual(new DateTime(2018, 1, 15, 14, 51, 00), result.ModificationDate);
-            Assert.IsTrue(result.IsInternal);
+            Assert.AreEqual( "ABC123", result.Identifier );
+            Assert.AreEqual( "Doing Fine", result.Status );
+            Assert.AreEqual( new DateTime( 2018, 1, 15 ), result.EffectiveDate );
+            Assert.AreEqual( new DateTime( 2018, 1, 15, 14, 51, 00 ), result.ModificationDate );
+            Assert.IsTrue( result.IsInternal );
         }
 
         [TestMethod]
         public void MapInternalClass_Dynamic()
         {
-            var mapper = DelimitedTypeMapper.DefineDynamic(typeof(InternalClass));
+            var mapper = DelimitedTypeMapper.DefineDynamic( typeof( InternalClass ) );
 
-            mapper.StringProperty("Identifier");
-            mapper.StringProperty("Status");
-            mapper.DateTimeProperty("EffectiveDate").InputFormat("yyyyMMdd");
-            mapper.DateTimeProperty("ModificationDate").InputFormat("yyyyMMddHHmmss");
-            mapper.BooleanProperty("IsInternal");
+            mapper.StringProperty( "Identifier" );
+            mapper.StringProperty( "Status" );
+            mapper.DateTimeProperty( "EffectiveDate" ).InputFormat( "yyyyMMdd" );
+            mapper.DateTimeProperty( "ModificationDate" ).InputFormat( "yyyyMMddHHmmss" );
+            mapper.BooleanProperty( "IsInternal" );
 
             string rawData = @"ABC123,Doing Fine,20180115,20180115145100,true";
-            StringReader reader = new StringReader(rawData);
-            var data = mapper.Read(reader, new DelimitedOptions()
+            StringReader reader = new StringReader( rawData );
+            object[] data = [.. mapper.Read( reader, new DelimitedOptions()
             {
                 IsFirstRecordSchema = false,
                 RecordSeparator = "\n",
                 Separator = ",",
                 Quote = '"'
-            }).ToArray();
+            } )];
 
-            Assert.AreEqual(1, data.Length);
+            Assert.AreEqual( 1, data.Length );
             dynamic result = data[0];
-            Assert.AreEqual("ABC123", result.Identifier);
-            Assert.AreEqual("Doing Fine", result.Status);
-            Assert.AreEqual(new DateTime(2018, 1, 15), result.EffectiveDate);
-            Assert.AreEqual(new DateTime(2018, 1, 15, 14, 51, 00), result.ModificationDate);
-            Assert.AreEqual(true, result.IsInternal);
+            Assert.AreEqual( "ABC123", result.Identifier );
+            Assert.AreEqual( "Doing Fine", result.Status );
+            Assert.AreEqual( new DateTime( 2018, 1, 15 ), result.EffectiveDate );
+            Assert.AreEqual( new DateTime( 2018, 1, 15, 14, 51, 00 ), result.ModificationDate );
+            Assert.IsTrue( result.IsInternal );
         }
 
         //[TestMethod]

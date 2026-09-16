@@ -16,17 +16,17 @@ namespace FlatFiles.Test
 
             var mapper = DelimitedTypeMapper.Define<Numbers>();
 #pragma warning disable CS0618 // Type or member is obsolete
-            mapper.Property(x => x.Value).ColumnName("value").Preprocessor(x => x.Trim('"', '=')).NumberStyles(NumberStyles.AllowDecimalPoint);
-            mapper.Property(x => x.Money).ColumnName("money").Preprocessor(x => x.Trim('"', '=')).NumberStyles(NumberStyles.Currency);
+            mapper.Property( x => x.Value ).ColumnName( "value" ).Preprocessor( x => x.Trim( '"', '=' ) ).NumberStyles( NumberStyles.AllowDecimalPoint );
+            mapper.Property( x => x.Money ).ColumnName( "money" ).Preprocessor( x => x.Trim( '"', '=' ) ).NumberStyles( NumberStyles.Currency );
 #pragma warning restore CS0618 // Type or member is obsolete
 
-            StringReader reader = new StringReader(input);
-            var results = mapper.Read(reader).ToArray();
+            StringReader reader = new StringReader( input );
+            Numbers[] results = [.. mapper.Read( reader )];
 
-            Assert.AreEqual(1, results.Length);
+            Assert.AreEqual( 1, results.Length );
             var result = results.Single();
-            Assert.AreEqual(12345.67m, result.Value);
-            Assert.AreEqual(123m, result.Money);
+            Assert.AreEqual( 12345.67m, result.Value );
+            Assert.AreEqual( 123m, result.Money );
         }
 
         [TestMethod]
@@ -35,16 +35,16 @@ namespace FlatFiles.Test
             const string input = @"=""12345.67"",=""$123""";
 
             var mapper = DelimitedTypeMapper.Define<Numbers>();
-            mapper.Property(x => x.Value).ColumnName("value").OnParsing((ctx, x) => x.Trim('"', '=')).NumberStyles(NumberStyles.AllowDecimalPoint);
-            mapper.Property(x => x.Money).ColumnName("money").OnParsing((ctx, x) => x.Trim('"', '=')).NumberStyles(NumberStyles.Currency);
+            mapper.Property( x => x.Value ).ColumnName( "value" ).OnParsing( ( ctx, x ) => x.Trim( '"', '=' ) ).NumberStyles( NumberStyles.AllowDecimalPoint );
+            mapper.Property( x => x.Money ).ColumnName( "money" ).OnParsing( ( ctx, x ) => x.Trim( '"', '=' ) ).NumberStyles( NumberStyles.Currency );
 
-            StringReader reader = new StringReader(input);
-            var results = mapper.Read(reader).ToArray();
+            StringReader reader = new StringReader( input );
+            Numbers[] results = [.. mapper.Read( reader )];
 
-            Assert.AreEqual(1, results.Length);
+            Assert.AreEqual( 1, results.Length );
             var result = results.Single();
-            Assert.AreEqual(12345.67m, result.Value);
-            Assert.AreEqual(123m, result.Money);
+            Assert.AreEqual( 12345.67m, result.Value );
+            Assert.AreEqual( 123m, result.Money );
         }
 
         public class Numbers
