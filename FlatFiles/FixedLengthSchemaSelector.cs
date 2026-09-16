@@ -29,7 +29,7 @@ namespace FlatFiles
         /// </summary>
         /// <param name="schema">The default schema to use.</param>
         /// <returns>The current selector to allow for further customization.</returns>
-        public IFixedLengthSchemaSelectorUseBuilder WithDefault( FixedLengthSchema schema )
+        public IFixedLengthSchemaSelectorUseBuilder WithDefault( FixedLengthSchema? schema )
         {
             if (schema is null)
             {

@@ -108,11 +108,7 @@ namespace FlatFiles
         protected override TimeSpan OnParse( IColumnContext? context, string value )
         {
             var provider = GetFormatProvider( context, FormatProvider );
-            if (InputFormat is null)
-            {
-                return TimeSpan.Parse( value, provider );
-            }
-            return TimeSpan.ParseExact( value, InputFormat, provider );
+            return InputFormat is null ? TimeSpan.Parse( value, provider ) : TimeSpan.ParseExact( value, InputFormat, provider );
         }
 
         /// <inheritdoc />

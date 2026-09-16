@@ -6,45 +6,45 @@ using FlatFiles.Properties;
 namespace FlatFiles
 {
     /// <summary>
-    /// Builds textual representations of data by giving each field a fixed width.
+    ///     Builds textual representations of data by giving each field a fixed width.
     /// </summary>
-    public sealed class FixedLengthWriter : IWriter, IWriterWithMetadata
+    public sealed class FixedLengthWriter : IWriterWithMetadata
     {
         private readonly FixedLengthRecordWriter recordWriter;
         private bool isSchemaWritten;
 
         /// <summary>
-        /// Initializes a new FixedLengthBuilder with the given schema.
+        ///     Initializes a new FixedLengthBuilder with the given schema.
         /// </summary>
         /// <param name="writer">A writer over the fixed-length document.</param>
         /// <param name="schema">The schema of the fixed-length document.</param>
         /// <param name="options">The options used to format the output.</param>
         /// <exception cref="ArgumentNullException">The writer is null.</exception>
         /// <exception cref="ArgumentNullException">The schema is null.</exception>
-        public FixedLengthWriter(TextWriter writer, FixedLengthSchema schema, FixedLengthOptions? options = null)
+        public FixedLengthWriter( TextWriter writer, FixedLengthSchema schema, FixedLengthOptions? options = null )
         {
             ArgumentNullException.ThrowIfNull( writer );
             ArgumentNullException.ThrowIfNull( schema );
-            recordWriter = new FixedLengthRecordWriter(writer, schema, options);
+            recordWriter = new FixedLengthRecordWriter( writer, schema, options );
         }
 
         /// <summary>
-        /// Initializes a new FixedLengthBuilder with the given schema.
+        ///     Initializes a new FixedLengthBuilder with the given schema.
         /// </summary>
         /// <param name="writer">A writer over the fixed-length document.</param>
         /// <param name="injector">The schema injector to use to determine the schema.</param>
         /// <param name="options">The options used to format the output.</param>
         /// <exception cref="ArgumentNullException">The writer is null.</exception>
         /// <exception cref="ArgumentNullException">The schema injector is null.</exception>
-        public FixedLengthWriter(TextWriter writer, FixedLengthSchemaInjector injector, FixedLengthOptions? options = null)
+        public FixedLengthWriter( TextWriter writer, FixedLengthSchemaInjector injector, FixedLengthOptions? options = null )
         {
             ArgumentNullException.ThrowIfNull( writer );
             ArgumentNullException.ThrowIfNull( injector );
-            recordWriter = new FixedLengthRecordWriter(writer, injector, options);
+            recordWriter = new FixedLengthRecordWriter( writer, injector, options );
         }
 
         /// <summary>
-        /// Raised when an error occurs while processing a column.
+        ///     Raised when an error occurs while processing a column.
         /// </summary>
         public event EventHandler<ColumnErrorEventArgs>? ColumnError
         {
@@ -53,14 +53,14 @@ namespace FlatFiles
         }
 
         /// <summary>
-        /// Raised when an error occurs while processing a record.
+        ///     Raised when an error occurs while processing a record.
         /// </summary>
         public event EventHandler<RecordErrorEventArgs>? RecordError;
 
         IOptions IWriter.Options => recordWriter.Options;
 
         /// <summary>
-        /// Gets the schema used to build the output.
+        ///     Gets the schema used to build the output.
         /// </summary>
         /// <returns>The schema used to build the output.</returns>
         public FixedLengthSchema? GetSchema()
@@ -74,7 +74,7 @@ namespace FlatFiles
         }
 
         /// <summary>
-        /// Write the textual representation of the record schema to the writer.
+        ///     Write the textual representation of the record schema to the writer.
         /// </summary>
         /// <remarks>If the header or records have already been written, this call is ignored.</remarks>
         public void WriteSchema()
@@ -90,7 +90,7 @@ namespace FlatFiles
         }
 
         /// <summary>
-        /// Write the textual representation of the record schema to the writer.
+        ///     Write the textual representation of the record schema to the writer.
         /// </summary>
         /// <remarks>If the header or records have already been written, this call is ignored.</remarks>
         public async Task WriteSchemaAsync()
@@ -99,18 +99,18 @@ namespace FlatFiles
             {
                 return;
             }
-            await recordWriter.WriteSchemaAsync().ConfigureAwait(false);
-            await recordWriter.WriteRecordSeparatorAsync().ConfigureAwait(false);
+            await recordWriter.WriteSchemaAsync().ConfigureAwait( false );
+            await recordWriter.WriteRecordSeparatorAsync().ConfigureAwait( false );
             ++recordWriter.PhysicalRecordNumber;
             isSchemaWritten = true;
         }
 
         /// <summary>
-        /// Writes the textual representation of the given values to the writer.
+        ///     Writes the textual representation of the given values to the writer.
         /// </summary>
         /// <param name="values">The values to write.</param>
         /// <exception cref="ArgumentNullException">The values array is null.</exception>
-        public void Write(object?[] values)
+        public void Write( object?[] values )
         {
             ArgumentNullException.ThrowIfNull( values );
             if (!isSchemaWritten)
@@ -125,67 +125,67 @@ namespace FlatFiles
             }
             try
             {
-                recordWriter.WriteRecord(values);
+                recordWriter.WriteRecord( values );
                 recordWriter.WriteRecordSeparator();
                 ++recordWriter.PhysicalRecordNumber;
                 ++recordWriter.LogicalRecordNumber;
             }
             catch (RecordProcessingException exception)
             {
-                ProcessError(exception);
+                ProcessError( exception );
             }
             catch (FlatFileException exception)
             {
                 var recordContext = GetMetadata();
-                ProcessError(new RecordProcessingException(recordContext, Resources.InvalidRecordConversion, exception));
+                ProcessError( new RecordProcessingException( recordContext, Resources.InvalidRecordConversion, exception ) );
             }
         }
 
         /// <summary>
-        /// Writes the textual representation of the given values to the writer.
+        ///     Writes the textual representation of the given values to the writer.
         /// </summary>
         /// <param name="values">The values to write.</param>
         /// <exception cref="ArgumentNullException">The values array is null.</exception>
-        public async Task WriteAsync(object?[] values)
+        public async Task WriteAsync( object?[] values )
         {
             ArgumentNullException.ThrowIfNull( values );
             if (!isSchemaWritten)
             {
                 if (recordWriter.Options.IsFirstRecordHeader)
                 {
-                    await recordWriter.WriteSchemaAsync().ConfigureAwait(false);
-                    await recordWriter.WriteRecordSeparatorAsync().ConfigureAwait(false);
+                    await recordWriter.WriteSchemaAsync().ConfigureAwait( false );
+                    await recordWriter.WriteRecordSeparatorAsync().ConfigureAwait( false );
                     ++recordWriter.PhysicalRecordNumber;
                 }
                 isSchemaWritten = true;
             }
             try
             {
-                await recordWriter.WriteRecordAsync(values).ConfigureAwait(false);
-                await recordWriter.WriteRecordSeparatorAsync().ConfigureAwait(false);
+                await recordWriter.WriteRecordAsync( values ).ConfigureAwait( false );
+                await recordWriter.WriteRecordSeparatorAsync().ConfigureAwait( false );
                 ++recordWriter.PhysicalRecordNumber;
                 ++recordWriter.LogicalRecordNumber;
             }
             catch (RecordProcessingException exception)
             {
-                ProcessError(exception);
+                ProcessError( exception );
             }
             catch (FlatFileException exception)
             {
                 var recordContext = GetMetadata();
-                ProcessError(new RecordProcessingException(recordContext, Resources.InvalidRecordConversion, exception));
+                ProcessError( new RecordProcessingException( recordContext, Resources.InvalidRecordConversion, exception ) );
             }
         }
 
         /// <summary>
-        /// Write the given data directly to the output. By default, this will
-        /// not include a newline.
+        ///     Write the given data directly to the output. By default, this will
+        ///     not include a newline.
         /// </summary>
         /// <param name="data">The data to write to the output.</param>
         /// <param name="writeRecordSeparator">Indicates whether a newline should be written after the data.</param>
-        public void WriteRaw(String data, bool writeRecordSeparator = false)
+        public void WriteRaw( String data, bool writeRecordSeparator = false )
         {
-            recordWriter.WriteRaw(data);
+            recordWriter.WriteRaw( data );
             if (writeRecordSeparator)
             {
                 recordWriter.WriteRecordSeparator();
@@ -193,26 +193,26 @@ namespace FlatFiles
         }
 
         /// <summary>
-        /// Write the given data directly to the output. By default, this will
-        /// not include a newline.
+        ///     Write the given data directly to the output. By default, this will
+        ///     not include a newline.
         /// </summary>
         /// <param name="data">The data to write to the output.</param>
         /// <param name="writeRecordSeparator">Indicates whether a record separator should be written after the data.</param>
-        public async Task WriteRawAsync(String data, bool writeRecordSeparator = false)
+        public async Task WriteRawAsync( String data, bool writeRecordSeparator = false )
         {
-            await recordWriter.WriteRawAsync(data);
+            await recordWriter.WriteRawAsync( data );
             if (writeRecordSeparator)
             {
                 await recordWriter.WriteRecordSeparatorAsync();
             }
         }
 
-        private void ProcessError(RecordProcessingException exception)
+        private void ProcessError( RecordProcessingException exception )
         {
             if (RecordError is not null)
             {
-                var args = new RecordErrorEventArgs(exception);
-                RecordError(this, args);
+                var args = new RecordErrorEventArgs( exception );
+                RecordError( this, args );
                 if (args.IsHandled)
                 {
                     return;
@@ -227,21 +227,21 @@ namespace FlatFiles
             {
                 return recordWriter.Metadata;
             }
-            return GetUncachedMetadata(recordWriter.ActualSchema);
+            return GetUncachedMetadata( recordWriter.ActualSchema );
         }
 
         IRecordContext IWriterWithMetadata.GetMetadata()
         {
-            var schema = recordWriter.GetSchema([]); // Will work for TypedWriters using Schema Injector
-            return GetUncachedMetadata(schema);
+            var schema = recordWriter.GetSchema( [] ); // Will work for TypedWriters using Schema Injector
+            return GetUncachedMetadata( schema );
         }
 
         private ExecutionContextCache<FixedLengthSchema, GenericExecutionContext>? metadataExecutionContexts;
 
-        private IRecordContext GetUncachedMetadata(FixedLengthSchema? schema)
+        private IRecordContext GetUncachedMetadata( FixedLengthSchema? schema )
         {
             var executionContext = (metadataExecutionContexts ??= new( s => new GenericExecutionContext( s, recordWriter.Options.Clone() ) )).Get( schema );
-            var recordContext = new GenericRecordContext(executionContext)
+            var recordContext = new GenericRecordContext( executionContext )
             {
                 PhysicalRecordNumber = recordWriter.PhysicalRecordNumber,
                 LogicalRecordNumber = recordWriter.LogicalRecordNumber

@@ -19,7 +19,7 @@ namespace FlatFiles
         public RecordNumberColumn( string columnName )
             : base( columnName )
         {
-            this.column = new Int32Column( columnName );
+            column = new Int32Column( columnName );
         }
 
         /// <summary>
@@ -122,7 +122,7 @@ namespace FlatFiles
 
             // We only incrememnt the logical count after we are sure the record is not filtered out.
             // Since the value for the column is generated beforehand, we must increase it by one.
-            int offset = (IncludeSchema && options.IsFirstRecordSchema) ? 2 : 1;
+            int offset = IncludeSchema && options.IsFirstRecordSchema ? 2 : 1;
             return recordContext.LogicalRecordNumber + offset;
         }
     }

@@ -47,11 +47,7 @@ namespace FlatFiles
         {
             var stringReader = new StringReader( value );
             var reader = new FixedLengthReader( stringReader, schema, Options );
-            if (reader.Read())
-            {
-                return reader.GetValues();
-            }
-            return null;
+            return reader.Read() ? reader.GetValues() : null;
         }
 
         /// <summary>

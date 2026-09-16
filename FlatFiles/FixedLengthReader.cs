@@ -8,7 +8,7 @@ namespace FlatFiles
     /// <summary>
     ///     Extracts records from a file that has value in fixed-length columns.
     /// </summary>
-    public sealed class FixedLengthReader : IReader, IReaderWithMetadata
+    public sealed class FixedLengthReader : IReaderWithMetadata
     {
         private readonly FixedLengthRecordParser parser;
         private readonly FixedLengthSchemaSelector? schemaSelector;
@@ -57,7 +57,7 @@ namespace FlatFiles
             }
             this.options = options is null ? new FixedLengthOptions() : options.Clone();
             this.schema = schema;
-            this.parser = new FixedLengthRecordParser( reader, this.schema, this.options );
+            parser = new FixedLengthRecordParser( reader, this.schema, this.options );
         }
 
         /// <summary>
@@ -77,20 +77,10 @@ namespace FlatFiles
 
         event EventHandler<IRecordParsedEventArgs>? IReader.RecordParsed
         {
-            add
-            {
-                if (value is not null)
-                {
-                    RecordParsed += ( sender, e ) => value( sender, e );
-                }
-            }
-            remove
-            {
-                if (value is not null)
-                {
-                    RecordParsed -= ( sender, e ) => value( sender, e );
-                }
-            }
+            // EventHandler<T> is contravariant, so the interface handler subscribes to the typed event as it is and can
+            // be removed again. Wrapping it in a lambda made every removal a silent no-op.
+            add => RecordParsed += value;
+            remove => RecordParsed -= value;
         }
 
         /// <summary>
@@ -143,7 +133,7 @@ namespace FlatFiles
             {
                 throw new InvalidOperationException( Resources.ReadingWithErrors );
             }
-            this.recordContext = null;
+            recordContext = null;
             HandleHeader();
             try
             {
@@ -210,7 +200,7 @@ namespace FlatFiles
             {
                 throw new InvalidOperationException( Resources.ReadingWithErrors );
             }
-            this.recordContext = null;
+            recordContext = null;
             await HandleHeaderAsync().ConfigureAwait( false );
             try
             {
@@ -274,7 +264,7 @@ namespace FlatFiles
                 return null;
             }
             var metadata = NewRecordContext( schema, record, rawValues );
-            this.recordContext = metadata;
+            recordContext = metadata;
             RecordParsed?.Invoke( this, new FixedLengthRecordParsedEventArgs( metadata, values ) );
             return values;
         }

@@ -116,8 +116,8 @@ namespace FlatFiles
                 Locale = CultureInfo.InvariantCulture,
                 MinimumCapacity = schema.ColumnDefinitions.PhysicalCount
             };
-            schemaTable.Columns.AddRange( new[]
-            {
+            schemaTable.Columns.AddRange(
+            [
                 new DataColumn( SchemaTableColumn.AllowDBNull, typeof( bool ) ),
                 new DataColumn( SchemaTableOptionalColumn.BaseCatalogName, typeof( string ) ),
                 new DataColumn( SchemaTableColumn.BaseColumnName, typeof( string ) ),
@@ -143,7 +143,7 @@ namespace FlatFiles
                 new DataColumn( SchemaTableColumn.NumericPrecision, typeof( int ) ),
                 new DataColumn( SchemaTableColumn.NumericScale, typeof( int ) ),
                 new DataColumn( SchemaTableColumn.ProviderType, typeof( Type ) )
-            } );
+            ] );
             return schemaTable;
         }
 
@@ -168,10 +168,7 @@ namespace FlatFiles
                 values = null;  // reset cache
                 return true;
             }
-            else
-            {
-                return false;
-            }
+            return false;
         }
 
         int IDataReader.RecordsAffected => 0;
@@ -493,10 +490,7 @@ namespace FlatFiles
             {
                 for (int index = 0; index != length; ++index)
                 {
-                    if (values[index] is null)
-                    {
-                        values[index] = DBNull.Value;
-                    }
+                    values[index] ??= DBNull.Value;
                 }
             }
             return length;

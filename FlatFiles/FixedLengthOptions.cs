@@ -65,7 +65,7 @@ namespace FlatFiles
         /// <remarks>The alignment can be controlled at the columnm level using the Window class.</remarks>
         public FixedAlignment Alignment
         {
-            get => field;
+            get;
             set
             {
                 if (!Enum.IsDefined( value ))
@@ -82,7 +82,7 @@ namespace FlatFiles
         /// <remarks>The trunaction policy can be controlled at the column level using the Window class.</remarks>
         public OverflowTruncationPolicy TruncationPolicy
         {
-            get => field;
+            get;
             set
             {
                 if (!Enum.IsDefined( value ))

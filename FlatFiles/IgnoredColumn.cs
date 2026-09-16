@@ -3,75 +3,75 @@
 namespace FlatFiles
 {
     /// <summary>
-    /// Represents a column that should be ignored when reading a document and used as a placeholder
-    /// when writing a document.
+    ///     Represents a column that should be ignored when reading a document and used as a placeholder
+    ///     when writing a document.
     /// </summary>
     public sealed class IgnoredColumn : ColumnDefinition
     {
         /// <summary>
-        /// Initializes a new IgnoredColumn.
+        ///     Initializes a new IgnoredColumn.
         /// </summary>
         public IgnoredColumn() 
-            : base(String.Empty, true)
+            : base( String.Empty, true )
         {
         }
 
         /// <summary>
-        /// Initializes a new IgnoredColumn with a header name.
+        ///     Initializes a new IgnoredColumn with a header name.
         /// </summary>
         /// <param name="columnName"></param>
-        public IgnoredColumn(string columnName)
-            : base(columnName, true)
+        public IgnoredColumn( string columnName )
+            : base( columnName, true )
         {
         }
 
         /// <summary>
-        /// Gets the type of data in the column.
+        ///     Gets the type of data in the column.
         /// </summary>
-        public override Type ColumnType => typeof(string);
+        public override Type ColumnType => typeof( string );
 
         /// <summary>
-        /// Ignores the values that was parsed from the document.
+        ///     Ignores the values that was parsed from the document.
         /// </summary>
         /// <param name="context">Holds information about the column current being processed.</param>
         /// <param name="value">The value that was parsed from the document.</param>
         /// <returns>A null.</returns>
-        public override object? Parse(IColumnContext? context, string value)
+        public override object? Parse( IColumnContext? context, string value )
         {
 #pragma warning disable CS0618 // Type or member is obsolete
             if (Preprocessor is not null)
             {
-                value = Preprocessor(value) ?? String.Empty;
+                value = Preprocessor( value ) ?? String.Empty;
             }
 #pragma warning restore CS0618 // Type or member is obsolete
             if (OnParsing is not null)
             {
-                value = OnParsing(context, value) ?? String.Empty;
+                _ = OnParsing( context, value );
             }
             object? result = null;
             if (OnParsed is not null)
             {
-                result = OnParsed(context, result);
+                result = OnParsed( context, result );
             }
             return result;
         }
 
         /// <summary>
-        /// Returns null so nothing is written to the document.
+        ///     Returns null so nothing is written to the document.
         /// </summary>
         /// <param name="context">Holds information about the column current being processed.</param>
         /// <param name="value">The value that needs written to the document.</param>
         /// <returns>A null.</returns>
-        public override string Format(IColumnContext? context, object? value)
+        public override string Format( IColumnContext? context, object? value )
         {
             if (OnFormatting is not null)
             {
-                value = OnFormatting(context, value);
+                _ = OnFormatting( context, value );
             }
-            string result = NullFormatter.FormatNull(context) ?? String.Empty;
+            string result = NullFormatter.FormatNull( context ) ?? String.Empty;
             if (OnFormatted is not null)
             {
-                result = OnFormatted(context, result) ?? String.Empty;
+                result = OnFormatted( context, result ) ?? String.Empty;
             }
             return result;
         }
