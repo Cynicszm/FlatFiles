@@ -257,7 +257,7 @@ namespace FlatFiles
 
         IRecordContext IWriterWithMetadata.GetMetadata()
         {
-            var schema = recordWriter.GetSchema(new object[0]); // Will work for TypedWriters using Schema Injector
+            var schema = recordWriter.GetSchema([]); // Will work for TypedWriters using Schema Injector
             return GetUncachedMetadata(schema);
         }
 

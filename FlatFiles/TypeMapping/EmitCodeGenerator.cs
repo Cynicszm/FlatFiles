@@ -56,14 +56,14 @@ namespace FlatFiles.TypeMapping
             var typeName = GetUniqueTypeName($"{entityType.Name}Reader");
             var typeBuilder = moduleBuilder.DefineType(typeName, TypeAttributes.Public | TypeAttributes.Sealed);
             var fieldBuilder = typeBuilder.DefineField("mappings", typeof(IMemberMapping[]), FieldAttributes.Private);
-            var ctorBuilder = typeBuilder.DefineConstructor(MethodAttributes.Public, CallingConventions.Standard, new[] { typeof(IMemberMapping[]) });
+            var ctorBuilder = typeBuilder.DefineConstructor(MethodAttributes.Public, CallingConventions.Standard, [typeof(IMemberMapping[])]);
             var ctorGenerator = ctorBuilder.GetILGenerator();
             ctorGenerator.Emit(OpCodes.Ldarg_0);
             ctorGenerator.Emit(OpCodes.Ldarg_1);
             ctorGenerator.Emit(OpCodes.Stfld, fieldBuilder);
             ctorGenerator.Emit(OpCodes.Ret);
 
-            var methodBuilder = typeBuilder.DefineMethod("Read", MethodAttributes.Public, null, new[] { typeof(IRecordContext), entityType, typeof(object[]) });
+            var methodBuilder = typeBuilder.DefineMethod("Read", MethodAttributes.Public, null, [typeof(IRecordContext), entityType, typeof(object[])]);
             var methodGenerator = methodBuilder.GetILGenerator();
             for (int index = 0; index != mappings.Length; ++index)
             {
@@ -172,14 +172,14 @@ namespace FlatFiles.TypeMapping
             var typeName = GetUniqueTypeName($"{entityType.Name}Writer");
             var typeBuilder = moduleBuilder.DefineType(typeName, TypeAttributes.Public | TypeAttributes.Sealed);
             var fieldBuilder = typeBuilder.DefineField("mappings", typeof(IMemberMapping[]), FieldAttributes.Private);
-            var ctorBuilder = typeBuilder.DefineConstructor(MethodAttributes.Public, CallingConventions.Standard, new[] { typeof(IMemberMapping[]) });
+            var ctorBuilder = typeBuilder.DefineConstructor(MethodAttributes.Public, CallingConventions.Standard, [typeof(IMemberMapping[])]);
             var ctorGenerator = ctorBuilder.GetILGenerator();
             ctorGenerator.Emit(OpCodes.Ldarg_0);
             ctorGenerator.Emit(OpCodes.Ldarg_1);
             ctorGenerator.Emit(OpCodes.Stfld, fieldBuilder);
             ctorGenerator.Emit(OpCodes.Ret);
 
-            var methodBuilder = typeBuilder.DefineMethod("Write", MethodAttributes.Public, null, new[] { typeof(IRecordContext), entityType, typeof(object[]) });
+            var methodBuilder = typeBuilder.DefineMethod("Write", MethodAttributes.Public, null, [typeof(IRecordContext), entityType, typeof(object[])]);
             var methodGenerator = methodBuilder.GetILGenerator();
             for (int index = 0; index != mappings.Length; ++index)
             {
