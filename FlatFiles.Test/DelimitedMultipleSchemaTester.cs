@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Globalization;
 using System.IO;
 using FlatFiles.TypeMapping;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -9,11 +8,6 @@ namespace FlatFiles.Test
     [TestClass]
     public class DelimitedMultipleSchemaTester
     {
-        public DelimitedMultipleSchemaTester()
-        {
-            CultureInfo.CurrentCulture = new CultureInfo("en-US");
-        }
-
         [TestMethod]
         public void TestReader_ReadThreeTypes()
         {
@@ -202,14 +196,13 @@ namespace FlatFiles.Test
         }
 
         [TestMethod]
-        [ExpectedException(typeof(RecordProcessingException))]
         public void TestReader_UnknownType()
         {
             var stringReader = new StringReader("What's this weird thing?");
             var selector = GetSchemaSelector();
             var reader = new DelimitedReader(stringReader, selector);
 
-            reader.Read();
+            Assert.ThrowsExactly<RecordProcessingException>(() => reader.Read());
         }
 
         [TestMethod]

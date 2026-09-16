@@ -1,7 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
-using System.Globalization;
 using FlatFiles.TypeMapping;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Generic;
@@ -15,21 +14,13 @@ namespace FlatFiles.Test
     public class DelimitedReaderTester
     {
         /// <summary>
-        /// Setup for tests.
-        /// </summary>
-        public DelimitedReaderTester()
-        {
-            CultureInfo.CurrentCulture = new CultureInfo("en-US");
-        }
-
-        /// <summary>
         /// If we try to pass null text to the parser, an exception should be thrown.
         /// </summary>
         [TestMethod]
         public void TestCtor_NullWriter_NoSchema_Throws()
         {
             TextReader reader = null;
-            Assert.ThrowsException<ArgumentNullException>(() => new DelimitedReader(reader));
+            Assert.ThrowsExactly<ArgumentNullException>(() => new DelimitedReader(reader));
         }
 
         /// <summary>
@@ -40,7 +31,7 @@ namespace FlatFiles.Test
         {
             TextReader reader = null;
             DelimitedSchema schema = new DelimitedSchema();
-            Assert.ThrowsException<ArgumentNullException>(() => new DelimitedReader(reader, schema));
+            Assert.ThrowsExactly<ArgumentNullException>(() => new DelimitedReader(reader, schema));
         }
 
         /// <summary>
@@ -51,7 +42,7 @@ namespace FlatFiles.Test
         {
             TextReader reader = new StringReader(String.Empty);
             DelimitedSchema schema = null;
-            Assert.ThrowsException<ArgumentNullException>(() => new DelimitedReader(reader, schema));
+            Assert.ThrowsExactly<ArgumentNullException>(() => new DelimitedReader(reader, schema));
         }
 
         /// <summary>
@@ -80,7 +71,7 @@ namespace FlatFiles.Test
             DelimitedSchema schema = new DelimitedSchema();
             schema.AddColumn(new Int32Column("First"));
             DelimitedReader parser = new DelimitedReader(stringReader, schema);
-            Assert.ThrowsException<RecordProcessingException>(() => parser.Read());
+            Assert.ThrowsExactly<RecordProcessingException>(() => parser.Read());
         }
 
         /// <summary>
@@ -112,7 +103,7 @@ namespace FlatFiles.Test
             string text = "a,b,c";
             StringReader stringReader = new StringReader(text);
             DelimitedReader parser = new DelimitedReader(stringReader);
-            Assert.ThrowsException<InvalidOperationException>(() => parser.GetValues());
+            Assert.ThrowsExactly<InvalidOperationException>(() => parser.GetValues());
         }
 
         /// <summary>
@@ -146,7 +137,7 @@ namespace FlatFiles.Test
             Assert.IsTrue(canRead, "Could not read the record.");
             canRead = parser.Read();
             Assert.IsFalse(canRead, "We should have reached the end of the file.");
-            Assert.ThrowsException<InvalidOperationException>(() => parser.GetValues());
+            Assert.ThrowsExactly<InvalidOperationException>(() => parser.GetValues());
         }
 
         /// <summary>
@@ -354,7 +345,7 @@ This is not a real record
 
             StringReader stringReader = new StringReader(text);
             DelimitedReader parser = new DelimitedReader(stringReader, schema);
-            Assert.ThrowsException<RecordProcessingException>(() => parser.Read());
+            Assert.ThrowsExactly<RecordProcessingException>(() => parser.Read());
         }
 
         /// <summary>
@@ -369,7 +360,7 @@ This is not a real record
             StringReader stringReader = new StringReader(text);
             DelimitedOptions options = new DelimitedOptions() { IsFirstRecordSchema = true };
             DelimitedReader parser = new DelimitedReader(stringReader, options);
-            Assert.ThrowsException<RecordProcessingException>(() => parser.Read());
+            Assert.ThrowsExactly<RecordProcessingException>(() => parser.Read());
         }
 
         /// <summary>

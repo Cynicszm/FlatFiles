@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -12,11 +11,6 @@ namespace FlatFiles.Test
     [TestClass]
     public class DelimitedAsyncReaderTester
     {
-        public DelimitedAsyncReaderTester()
-        {
-            CultureInfo.CurrentCulture = new CultureInfo("en-US");
-        }
-
         [TestMethod]
         public async Task TestTypeMapper_Roundtrip()
         {
