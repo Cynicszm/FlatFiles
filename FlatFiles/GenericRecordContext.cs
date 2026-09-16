@@ -1,6 +1,6 @@
 ﻿namespace FlatFiles
 {
-    internal class GenericRecordContext(IExecutionContext context) : IRecordContext
+    internal sealed class GenericRecordContext( IExecutionContext context ) : IRecordContext
     {
         public IExecutionContext ExecutionContext { get; } = context;
 
