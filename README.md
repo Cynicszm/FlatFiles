@@ -2,9 +2,11 @@
 
 Reads and writes CSV, fixed-length and other flat file formats with a focus on schema definition, configuration and speed. Supports mapping directly between files and classes.
 
-Download using NuGet: [FlatFiles](http://nuget.org/packages/FlatFiles)
+Download using NuGet: [Cynicszm.FlatFiles](https://nuget.org/packages/Cynicszm.FlatFiles)
 
-You can check out all of the awesome enhancements and new features in the [CHANGELOG](https://github.com/jehugaleahsa/FlatFiles/blob/master/CHANGELOG.md). 
+This is a fork of [FlatFiles](https://github.com/jehugaleahsa/FlatFiles) by Travis Parks, continued for .NET 10 after the original was archived. The assembly is still `FlatFiles.dll` and every namespace and type name is unchanged, so only the package reference differs.
+
+You can check out all of the awesome enhancements and new features in the [CHANGELOG](https://github.com/Cynicszm/FlatFiles/blob/master/CHANGELOG.md). 
 
 ## Overview
 Plain-text formats primarily come in two variations: delimited (CSV, TSV, etc.) and fixed-width. FlatFiles comes with support for working with both formats. Unlike most other libraries, FlatFiles puts a focus on schema definition. You build and pass a schema to a reader or writer and it will use the schema to extract or write out your values.
