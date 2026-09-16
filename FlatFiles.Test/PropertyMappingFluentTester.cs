@@ -281,7 +281,7 @@ namespace FlatFiles.Test
                 {
                     continue;
                 }
-                var arguments = method.GetParameters().Select( Argument ).ToArray();
+                object[] arguments = [.. method.GetParameters().Select( Argument )];
                 var result = method.Invoke( mapping, arguments );
                 Assert.IsTrue( ReferenceEquals( mapping, result ), $"{type.Name}.{method.Name} should return the mapping for chaining." );
                 ++invoked;
