@@ -31,7 +31,7 @@ namespace FlatFiles
 
         public DelimitedSchema? ActualSchema => schema;
 
-        public DelimitedSchema? Schema => GetSchema(new object[0]);
+        public DelimitedSchema? Schema => GetSchema([]);
 
         public DelimitedOptions Options { get; }
 
