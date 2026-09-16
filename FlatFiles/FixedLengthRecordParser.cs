@@ -144,7 +144,7 @@ namespace FlatFiles
                 {
                     return true;
                 }
-                length = reader.ReadBlock(buffer, 0, buffer.Length);
+                length = reader.ReadBlock(buffer);
                 if (length == 0)
                 {
                     isEndOfStream = true;
@@ -159,7 +159,7 @@ namespace FlatFiles
                 {
                     return true;
                 }
-                length = await reader.ReadBlockAsync(buffer, 0, buffer.Length).ConfigureAwait(false);
+                length = await reader.ReadBlockAsync(buffer).ConfigureAwait(false);
                 if (length == 0)
                 {
                     isEndOfStream = true;

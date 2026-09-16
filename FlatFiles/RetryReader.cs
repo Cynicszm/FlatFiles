@@ -42,24 +42,24 @@ namespace FlatFiles
             {
                 return;
             }
-            var segment = queue.PrepareBlock();
-            int length = reader.ReadBlock(segment.Array!, segment.Offset, segment.Count);
-            if (length < segment.Count)
+            var block = queue.PrepareBlock();
+            int length = reader.ReadBlock(block.Span);
+            if (length < block.Length)
             {
                 isEndOfStreamFound = true;
             }
             queue.RecordGrowth(length);
         }
 
-        public async Task LoadBufferAsync()
+        public async ValueTask LoadBufferAsync()
         {
             if (isEndOfStreamFound)
             {
                 return;
             }
-            var segment = queue.PrepareBlock();
-            int length = await reader.ReadBlockAsync(segment.Array!, segment.Offset, segment.Count).ConfigureAwait(false);
-            if (length < segment.Count)
+            var block = queue.PrepareBlock();
+            int length = await reader.ReadBlockAsync(block).ConfigureAwait(false);
+            if (length < block.Length)
             {
                 isEndOfStreamFound = true;
             }
