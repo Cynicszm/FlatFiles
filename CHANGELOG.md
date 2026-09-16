@@ -7,7 +7,11 @@ Five .NET Framework-era compatibility packages were still being referenced, ever
 
 The `LangVersion 9.0` pin was removed at the same time, so the library compiles at the C# 14 default that comes with `net10.0`.
 
-One addition to the API: `DelimitedOptions.IsRecordTextDisabled`. The reader builds a string of each record's original text so it can be handed to you through `IRecordContext.Record`, and nothing in parsing needs it - the column values are tokenised separately, and a schema selector is given those values rather than the text. For a caller who never reads it, that string is the single largest avoidable cost of reading a file. Over 50,000 records it measured as 9.5 MB of the 49.2 MB the reader allocated, a fifth of the total, and skipping it read the same file about a quarter faster. Set the option to true and `IRecordContext.Record` becomes an empty string; it defaults to false, so nothing changes unless you ask. There is no equivalent for fixed-length files because that reader takes its column values out of the record text itself and cannot skip building it.
+**Breaking:** `IRecordContext.Record` is now an empty string for delimited files unless you ask for it. The reader was building a string of each record's original text so it could be handed to you through that property, and nothing in parsing needs it - the column values are tokenised separately, and a schema selector is given those values rather than the text. For a caller who never read it, that string was the single largest avoidable cost of reading a file: over 50,000 records it measured as 9.5 MB of the 49.2 MB the reader allocated, a fifth of the total. The new `DelimitedOptions.IsRecordTextDisabled` defaults to `true` and skips it.
+
+If you read `IRecordContext.Record` on a delimited file, set `IsRecordTextDisabled = false` and you get the old behaviour back exactly. Nothing else changes: the parsed values are identical either way, and throughput is the same to within a millisecond or two on a 50,000 record read - what this buys is allocation and the GC pressure that comes with it, not wall-clock time.
+
+Fixed-length files are unaffected and have no such option. That reader takes its column values out of the record text with `Substring`, so it always has the text and always reports it.
 
 ## 6.0.4 (2024-12-11)
 **Summary** - Replace the .NET Framework and .NET Standard targets with .NET 8 and .NET 9, and strip out the conditional compilation those older targets needed.

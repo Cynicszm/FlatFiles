@@ -7,7 +7,8 @@ namespace FlatFiles.Test
 {
     /// <summary>
     ///     Tests DelimitedOptions.IsRecordTextDisabled, which trades IRecordContext.Record away for the
-    ///     per-record string it costs to build.
+    ///     per-record string it costs to build. It defaults to true, so the text is discarded unless a
+    ///     caller asks for it.
     /// </summary>
     [TestClass]
     public class RecordTextCaptureTester
@@ -39,28 +40,29 @@ namespace FlatFiles.Test
         }
 
         /// <summary>
-        ///     The default has to stay as it was: the raw text is captured unless asked otherwise.
+        ///     The default discards the text, because reading a file is the common case and paying for a
+        ///     string nobody reads is not.
         /// </summary>
         [TestMethod]
-        public void TestRecordText_EnabledByDefault_CapturesTheRawText()
+        public void TestRecordText_DisabledByDefault_ReturnsEmptyString()
         {
-            Assert.IsFalse( new DelimitedOptions().IsRecordTextDisabled, "The option should default to off." );
+            Assert.IsTrue( new DelimitedOptions().IsRecordTextDisabled, "The option should default to on." );
 
-            var captured = ReadCapturingRecordText( isRecordTextDisabled: false );
-
-            CollectionAssert.AreEqual( new[] { "1,Bob", "2,Jane" }, captured, "The raw record text was not captured." );
-        }
-
-        /// <summary>
-        ///     With the option on, the text is gone but nothing else about the read changes.
-        /// </summary>
-        [TestMethod]
-        public void TestRecordText_Disabled_ReturnsEmptyString()
-        {
             var captured = ReadCapturingRecordText( isRecordTextDisabled: true );
 
             CollectionAssert.AreEqual( new[] { String.Empty, String.Empty }, captured,
                 "The raw record text should be empty when capture is disabled." );
+        }
+
+        /// <summary>
+        ///     Turning it off gets the text back, so the capture itself still works.
+        /// </summary>
+        [TestMethod]
+        public void TestRecordText_Enabled_CapturesTheRawText()
+        {
+            var captured = ReadCapturingRecordText( isRecordTextDisabled: false );
+
+            CollectionAssert.AreEqual( new[] { "1,Bob", "2,Jane" }, captured, "The raw record text was not captured." );
         }
 
         /// <summary>
@@ -128,7 +130,8 @@ namespace FlatFiles.Test
         {
             var schema = new DelimitedSchema();
             schema.AddColumn( new StringColumn( "value" ) );
-            var reader = new DelimitedReader( new StringReader( "a\r\n\r\nb\r\n" ), schema );
+            var options = new DelimitedOptions { IsRecordTextDisabled = false };
+            var reader = new DelimitedReader( new StringReader( "a\r\n\r\nb\r\n" ), schema, options );
             List<string> captured = [];
             reader.RecordRead += ( sender, e ) => captured.Add( e.RecordContext.Record );
             while (reader.Read())
