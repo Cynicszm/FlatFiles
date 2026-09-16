@@ -369,9 +369,11 @@ namespace FlatFiles
             return e.IsSkipped;
         }
 
+        private ExecutionContextCache<DelimitedSchema, DelimitedExecutionContext>? executionContexts;
+
         private DelimitedRecordContext NewRecordContext(DelimitedSchema schema, string record, string[] values)
         {
-            var executionContext = new DelimitedExecutionContext(schema, parser.Options.Clone());
+            var executionContext = (executionContexts ??= new( s => new DelimitedExecutionContext( s!, parser.Options.Clone() ) )).Get( schema );
             var recordContext = new DelimitedRecordContext(executionContext)
             {
                 PhysicalRecordNumber = physicalRecordNumber,
@@ -529,13 +531,15 @@ namespace FlatFiles
             return copy;
         }
 
+        private ExecutionContextCache<DelimitedSchema, GenericExecutionContext>? metadataExecutionContexts;
+
         private IRecordContext GetMetadata(DelimitedSchema? schema, string? record)
         {
             if (this.recordContext is not null)
             {
                 return this.recordContext;
             }
-            var executionContext = new GenericExecutionContext(schema, parser.Options.Clone());
+            var executionContext = (metadataExecutionContexts ??= new( s => new GenericExecutionContext( s, parser.Options.Clone() ) )).Get( schema );
             var recordContext = new GenericRecordContext(executionContext)
             {
                 PhysicalRecordNumber = physicalRecordNumber,

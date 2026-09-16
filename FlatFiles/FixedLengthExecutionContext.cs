@@ -8,7 +8,7 @@
             Options = options;
         }
 
-        public FixedLengthSchema Schema { get; set; }
+        public FixedLengthSchema Schema { get; }
 
         public FixedLengthOptions Options { get; }
 

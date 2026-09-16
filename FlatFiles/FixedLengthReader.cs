@@ -185,9 +185,11 @@ namespace FlatFiles
             return null;
         }
 
+        private ExecutionContextCache<FixedLengthSchema, FixedLengthExecutionContext>? executionContexts;
+
         private FixedLengthRecordContext NewRecordContext(FixedLengthSchema schema, string record, string[]? values)
         {
-            var executionContext = new FixedLengthExecutionContext(schema, options.Clone());
+            var executionContext = (executionContexts ??= new( s => new FixedLengthExecutionContext( s!, options.Clone() ) )).Get( schema );
             var recordContext = new FixedLengthRecordContext(executionContext)
             {
                 PhysicalRecordNumber = physicalRecordNumber,
@@ -475,13 +477,15 @@ namespace FlatFiles
             return copy;
         }
 
+        private ExecutionContextCache<FixedLengthSchema, GenericExecutionContext>? metadataExecutionContexts;
+
         private IRecordContext GetMetadata(FixedLengthSchema? schema, string? record)
         {
             if (this.recordContext is not null)
             {
                 return this.recordContext;
             }
-            var executionContext = new GenericExecutionContext(schema, options.Clone());
+            var executionContext = (metadataExecutionContexts ??= new( s => new GenericExecutionContext( s, options.Clone() ) )).Get( schema );
             var recordContext = new GenericRecordContext(executionContext)
             {
                 PhysicalRecordNumber = physicalRecordNumber,
