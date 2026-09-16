@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace FlatFiles
 {
     /// <summary>
-    /// Defines the expected format of a fixed-length file record.
+    ///     Defines the expected format of a fixed-length file record.
     /// </summary>
     public sealed class FixedLengthSchema : Schema
     {
@@ -13,19 +13,19 @@ namespace FlatFiles
         private IColumnDefinition? trailing;
 
         /// <summary>
-        /// Initializes a new instance of a FixedLengthSchema.
+        ///     Initializes a new instance of a FixedLengthSchema.
         /// </summary>
         public FixedLengthSchema()
         {
         }
         
         /// <summary>
-        /// Adds a column to the schema, using the given definition to define it.
+        ///     Adds a column to the schema, using the given definition to define it.
         /// </summary>
         /// <param name="definition">The definition of the column to add.</param>
         /// <param name="window">Describes the column</param>
         /// <returns>The current schema.</returns>
-        public FixedLengthSchema AddColumn(IColumnDefinition definition, Window window)
+        public FixedLengthSchema AddColumn( IColumnDefinition definition, Window window )
         {
             ArgumentNullException.ThrowIfNull( window );
             if (window == Window.Trailing)
@@ -34,9 +34,9 @@ namespace FlatFiles
             }
             else
             {
-                AddColumnBase(definition);
-                windows.Add(window);
-                if (!(definition is IMetadataColumn))
+                AddColumnBase( definition );
+                windows.Add( window );
+                if (definition is not IMetadataColumn)
                 {
                     TotalWidth += window.Width;
                 }
@@ -56,8 +56,8 @@ namespace FlatFiles
                 }
                 else if (cachedColumns is null)
                 {
-                    var copy = new ColumnCollection(base.ColumnDefinitions);
-                    copy.AddColumn(trailing);
+                    var copy = new ColumnCollection( base.ColumnDefinitions );
+                    copy.AddColumn( trailing );
                     this.cachedColumns = copy;
                     return copy;
                 }
@@ -69,12 +69,12 @@ namespace FlatFiles
         }
 
         /// <summary>
-        /// Gets the column widths.
+        ///     Gets the column widths.
         /// </summary>
-        public WindowCollection Windows => new(windows);
+        public WindowCollection Windows => new( windows );
 
         /// <summary>
-        /// Gets the total width of all columns.
+        ///     Gets the total width of all columns.
         /// </summary>
         internal int TotalWidth { get; private set; }
     }

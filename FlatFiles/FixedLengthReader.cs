@@ -379,7 +379,7 @@ namespace FlatFiles
             for (int valueIndex = 0, columnIndex = 0; valueIndex != values.Length; ++columnIndex)
             {
                 var definition = schema.ColumnDefinitions[columnIndex];
-                if (!(definition is IMetadataColumn))
+                if (definition is not IMetadataColumn)
                 {
                     Window? window = columnIndex < windows.Count ? windows[columnIndex] : null;
                     string value;
