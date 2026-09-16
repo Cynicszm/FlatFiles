@@ -82,12 +82,13 @@ namespace FlatFiles
         public bool IsColumnContextDisabled { get; set; }
 
         /// <summary>
-        /// Gets or sets whether the raw text of each record should be discarded rather than captured.
+        /// Gets or sets whether the raw text of each record should be kept and reported through
+        /// <see cref="IRecordContext.Record" />.
         /// </summary>
         /// <remarks>
         /// <para>
-        /// This defaults to <c>true</c>, so the raw text is discarded and
-        /// <see cref="IRecordContext.Record" /> reports an empty string. Set it to <c>false</c> to
+        /// This defaults to <c>false</c>, so the raw text is discarded and
+        /// <see cref="IRecordContext.Record" /> reports an empty string. Set it to <c>true</c> to
         /// get the text back.
         /// </para>
         /// <para>
@@ -105,7 +106,7 @@ namespace FlatFiles
         /// text, so it always has the text and always reports it.
         /// </para>
         /// </remarks>
-        public bool IsRecordTextDisabled { get; set; } = true;
+        public bool PreserveRecordText { get; set; }
 
         /// <summary>
         /// Gets or sets the global, default format provider.

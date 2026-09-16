@@ -70,7 +70,7 @@ namespace FlatFiles
             {
                 // Fixed-length reads its column values out of the record text, so unlike the
                 // delimited reader it can never skip capturing it.
-                this.reader = new RetryReader(reader, isRecordTextDisabled: false);
+                this.reader = new RetryReader(reader, preserveRecordText: true);
                 matcher = RecordSeparatorMatcher.GetMatcher(this.reader, separator);
             }
 
