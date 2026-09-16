@@ -1,6 +1,14 @@
 ## 7.0.0 (2026-09-16)
 **Summary** - Target .NET 10 exclusively and remove the deprecated compatibility packages, leaving the package with no dependencies of its own.
 
+**The package is now published as `Cynicszm.FlatFiles`.** It was previously `FlatFiles`, which is the upstream project this is forked from and not ours to publish under. The assembly is still `FlatFiles.dll` and every namespace and type name is unchanged, so nothing in your code changes - only the `PackageReference`:
+
+```xml
+<PackageReference Include="Cynicszm.FlatFiles" Version="7.0.0" />
+```
+
+Note that `FlatFiles` on nuget.org stops at 5.0.4; 6.0.4 was never published there.
+
 The previous release built for .NET 8 and .NET 9. Both targets are dropped in favour of a single `net10.0` target, and that is the breaking change behind the major version bump. Anyone who still needs to run on .NET 8 or .NET 9 should stay on 6.0.4.
 
 Five .NET Framework-era compatibility packages were still being referenced, every one of which is part of the shared framework on modern .NET: `System.Net.Http`, `System.Text.RegularExpressions`, `System.ValueTuple`, `System.Threading.Tasks.Extensions` and, in the test project, `System.Data.DataSetExtensions`. None of them contributed anything to the build. `System.Net.Http` 4.3.4 is the one worth calling out, because it carries a published advisory that trips package audits in consuming solutions. With all five gone, the NuGet package now declares no dependencies at all.
@@ -217,8 +225,8 @@ Old versions of `WriteFlatFile` were inefficient, repeatedly getting and setting
 **Summary** - Introducing custom mapping support and more contextual information.
 
 ### New Features
-* The new type mapper method, `CustomMapping`, grants full control over the way values are mapped between raw `object[]` values and entities. See the [readme](https://github.com/jehugaleahsa/FlatFiles/blob/master/README.md#custom-mapping).
-* Automatic column-to-property mapping for delimited file formats, via `GetAutoMappedReader` and `GetAutoMappedWriter` methods. See the [readme](https://github.com/jehugaleahsa/FlatFiles/blob/master/README.md#automatic-mapping-for-delimited-files).
+* The new type mapper method, `CustomMapping`, grants full control over the way values are mapped between raw `object[]` values and entities. See the [readme](https://github.com/Cynicszm/FlatFiles/blob/master/README.md#custom-mapping).
+* Automatic column-to-property mapping for delimited file formats, via `GetAutoMappedReader` and `GetAutoMappedWriter` methods. See the [readme](https://github.com/Cynicszm/FlatFiles/blob/master/README.md#automatic-mapping-for-delimited-files).
 
 ### Enhancements
 * All exceptions, events and custom mapping features now provide access to column, record and/or execution context.
@@ -232,7 +240,7 @@ Old versions of `WriteFlatFile` were inefficient, repeatedly getting and setting
 * The `ProcessingErrorEventArgs` class has been replaced by the `ExecutionErrorEventArgs` class.
 * The `IncludeFilteredRecords` property of `RecordNumberColumn` has been renamed to `IncludeSkippedRecords`.
 * The `IColumnDefinition` interface methods `Parse` and `Format` now accept `IColumnContext` objects.
-* The `IMetadataColumn` interface no longer has the `GetValue` method. Use the `MetadataColumn` base class instead. See the updated [readme](https://github.com/jehugaleahsa/FlatFiles/blob/master/README.md#metadata).
+* The `IMetadataColumn` interface no longer has the `GetValue` method. Use the `MetadataColumn` base class instead. See the updated [readme](https://github.com/Cynicszm/FlatFiles/blob/master/README.md#metadata).
 * Rename `FlatFileReader` to `FlatFileDataReader`.
 
 Most significantly of all, previous versions of FlatFiles used `DynamicMethod` to generate code at runtime. A `DynamicMethod` can be configured to allow the generated code to access non-public classes and members from other assemblies. However, this additional access requires the code to be running in a trusted environment, meaning FlatFiles could not be used in a sandboxed environment.
@@ -245,7 +253,7 @@ The new custom mapping functionality required the creation of types at runtime, 
 
 Otherwise, you can disable runtime optimization by calling `OptimizeMapping(false)` on your mapping, which will cause FlatFiles to fallback on reflection which can access private members at the cost of runtime overhead. Another alternative is to pass a delegate that accesses the internal member to the `CustomMapping` method.
 
-Forcing users to add the `[InternalsVisibleTo]` attribute is in-line with what other .NET libraries involving runtime generation of types are doing (e.g., Moq and Castle.DynamicProxy). While this is may be inconvenient to some users, it makes the library more portable. It also mean, FlatFiles no longer depends on the [System.Reflection.Emit.Lightweight](https://www.nuget.org/packages/System.Reflection.Emit.Lightweight) NuGet package which is now considered [obsolete](https://github.com/dotnet/source-build/issues/532). You can read more in the [readme](https://github.com/jehugaleahsa/FlatFiles/blob/master/README.md#accessing-non-public-classes-and-members).
+Forcing users to add the `[InternalsVisibleTo]` attribute is in-line with what other .NET libraries involving runtime generation of types are doing (e.g., Moq and Castle.DynamicProxy). While this is may be inconvenient to some users, it makes the library more portable. It also mean, FlatFiles no longer depends on the [System.Reflection.Emit.Lightweight](https://www.nuget.org/packages/System.Reflection.Emit.Lightweight) NuGet package which is now considered [obsolete](https://github.com/dotnet/source-build/issues/532). You can read more in the [readme](https://github.com/Cynicszm/FlatFiles/blob/master/README.md#accessing-non-public-classes-and-members).
 
 ## 2.1.3 (2018-06-16)
 **Summary** - Use `ConfigureAwait(false)` for all async operations.
@@ -297,4 +305,4 @@ reader.RecordRead += (sender, e) =>
 var results = reader.ReadAll().ToArray();
 ```
 
-The properties on the options object have been removed in favor of the new events. Read the [README](https://github.com/jehugaleahsa/FlatFiles/blob/master/README.md#skipping-records) for more details.
+The properties on the options object have been removed in favor of the new events. Read the [README](https://github.com/Cynicszm/FlatFiles/blob/master/README.md#skipping-records) for more details.
