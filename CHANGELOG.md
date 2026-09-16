@@ -1,5 +1,5 @@
 ## 7.1.0 (2026-09-16)
-**Summary** - Writers format each record into one reusable buffer and hand it to the `TextWriter` in a single write, removing half to two thirds of the allocation from writing a file and making every writer a little faster.
+**Summary** - Writers format each record into one reusable buffer and hand it to the `TextWriter` in a single write, removing half to two thirds of the allocation from writing a file, and the readers scan their input as a span instead of one character at a time, cutting read time by a third to two fifths.
 
 Until now each value written passed through several strings: the column formatted it to a string, the delimited writer quoted it into another and joined the record into a third, or the fixed-length writer padded it into another, and only then was anything handed to the `TextWriter`. Over 50,000 six-column records that came to 38.7 MB for the delimited writer and 36.3 MB for the fixed-length writer, almost all of it garbage before the record reached the stream.
 
@@ -19,6 +19,17 @@ The text written is identical in every case; a new set of tests formats every bu
 Two things to know if you have written your own columns. If a `ColumnDefinition<T>` subclass overrides the public `Format(IColumnContext?, object?)` itself rather than `OnFormat`, writers no longer call it - they call the buffer overload, which goes to `OnFormat`. Override the buffer overload too, or move the logic into `OnFormat`. And a column with an `OnFormatted` hook is still formatted to a string first, because the hook takes the whole string; `OnFormatting` is unaffected.
 
 What remains per record is the boxing of each value by the type mapper, one `ColumnContext` per column (which `IsColumnContextDisabled` already switches off) and the record context itself.
+
+**The readers scan their input as a span.** The tokeniser that split delimited text into values walked the input one character at a time through a circular queue, appending each character to a `StringBuilder` for the current value and to another for the record text, with the whole state machine written twice - once for synchronous reading and once for asynchronous. It now buffers the input as one contiguous block, jumps from one candidate separator or quote to the next with a vectorised `SearchValues` search, and copies each value out once. A record that runs off the end of the buffer is scanned again from its start once more text has arrived, which is what lets one state machine serve both readers, and the buffer grows if a single record outgrows it. The fixed-length reader finds its record separators the same way.
+
+| 50,000 records, six columns | 7.0.0 | 7.1.0 |
+|---|---|---|
+| delimited | 83 ms, 42.2 MB | 47 ms, 42.3 MB |
+| delimited, record text kept | 85 ms, 61.5 MB | 50 ms, 51.7 MB |
+| delimited, async | 96 ms, 56.7 MB | 54 ms, 56.8 MB |
+| fixed-length | 81 ms, 73.7 MB | 55 ms, 63.0 MB |
+
+Allocation barely moves for a plain delimited read because what remains is the value strings themselves; where the record text is kept, or for fixed-length files, the double copy through a `StringBuilder` is gone. The values and record text produced are identical, including how leading whitespace is dropped, doubled quotes inside a quoted value, a separator that is a prefix of the record separator, and a lone carriage return as a line break. A new set of tests drives the tokeniser with buffers as small as one character so that every record straddles a refill. The initial read buffer is 16,384 characters, up from 4,096.
 
 ## 7.0.0 (2026-09-16)
 **Summary** - Target .NET 10 exclusively and remove the deprecated compatibility packages, leaving the package with no dependencies of its own.
