@@ -76,9 +76,11 @@ namespace FlatFiles
             return injector is null ? schema! : injector.GetSchema(values);
         }
 
+        private ExecutionContextCache<FixedLengthSchema, FixedLengthExecutionContext>? executionContexts;
+
         private FixedLengthRecordContext NewRecordContext(FixedLengthSchema schema, string? record, string[]? values)
         {
-            var executionContext = new FixedLengthExecutionContext(schema, Options.Clone());
+            var executionContext = (executionContexts ??= new( s => new FixedLengthExecutionContext( s!, Options.Clone() ) )).Get( schema );
             var recordContext = new FixedLengthRecordContext(executionContext)
             {
                 PhysicalRecordNumber = PhysicalRecordNumber,

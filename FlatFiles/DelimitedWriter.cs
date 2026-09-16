@@ -261,9 +261,11 @@ namespace FlatFiles
             return GetUncachedMetadata(schema);
         }
 
+        private ExecutionContextCache<DelimitedSchema, GenericExecutionContext>? metadataExecutionContexts;
+
         private IRecordContext GetUncachedMetadata(DelimitedSchema? schema)
         {
-            var executionContext = new GenericExecutionContext(schema, recordWriter.Options.Clone());
+            var executionContext = (metadataExecutionContexts ??= new( s => new GenericExecutionContext( s, recordWriter.Options.Clone() ) )).Get( schema );
             var recordContext = new GenericRecordContext(executionContext)
             {
                 PhysicalRecordNumber = recordWriter.PhysicalRecordNumber,
