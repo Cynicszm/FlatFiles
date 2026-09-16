@@ -6,7 +6,7 @@ using FlatFiles.Properties;
 namespace FlatFiles
 {
     /// <summary>
-    /// Extracts records from a file that has value in fixed-length columns.
+    ///     Extracts records from a file that has value in fixed-length columns.
     /// </summary>
     public sealed class FixedLengthReader : IReader, IReaderWithMetadata
     {
@@ -22,56 +22,56 @@ namespace FlatFiles
         private bool hasError;
 
         /// <summary>
-        /// Initializes a new FixedLengthReader with the given schema.
+        ///     Initializes a new FixedLengthReader with the given schema.
         /// </summary>
         /// <param name="reader">A reader over the fixed-length document.</param>
         /// <param name="schema">The schema of the fixed-length document.</param>
         /// <param name="options">The options controlling how the fixed-length document is read.</param>
         /// <exception cref="ArgumentNullException">The reader is null.</exception>
         /// <exception cref="ArgumentNullException">The schema is null.</exception>
-        public FixedLengthReader(TextReader reader, FixedLengthSchema schema, FixedLengthOptions? options = null)
-            : this(reader, schema, options, true)
+        public FixedLengthReader( TextReader reader, FixedLengthSchema schema, FixedLengthOptions? options = null )
+            : this( reader, schema, options, true )
         {
         }
 
         /// <summary>
-        /// Initializes a new FixedLengthReader with the given schema.
+        ///     Initializes a new FixedLengthReader with the given schema.
         /// </summary>
         /// <param name="reader">A reader over the fixed-length document.</param>
         /// <param name="schemaSelector">The schema selector configured to determine the schema dynamically.</param>
         /// <param name="options">The options controlling how the fixed-length document is read.</param>
         /// <exception cref="ArgumentNullException">The reader is null.</exception>
         /// <exception cref="ArgumentNullException">The schema selector is null.</exception>
-        public FixedLengthReader(TextReader reader, FixedLengthSchemaSelector schemaSelector, FixedLengthOptions? options = null)
-            : this(reader, null, options, false)
+        public FixedLengthReader( TextReader reader, FixedLengthSchemaSelector schemaSelector, FixedLengthOptions? options = null )
+            : this( reader, null, options, false )
         {
-            this.schemaSelector = schemaSelector ?? throw new ArgumentNullException(nameof(schemaSelector));
+            this.schemaSelector = schemaSelector ?? throw new ArgumentNullException( nameof( schemaSelector ) );
         }
 
-        private FixedLengthReader(TextReader reader, FixedLengthSchema? schema, FixedLengthOptions? options = null, bool hasSchema = true)
+        private FixedLengthReader( TextReader reader, FixedLengthSchema? schema, FixedLengthOptions? options = null, bool hasSchema = true )
         {
             ArgumentNullException.ThrowIfNull( reader );
             if (hasSchema && schema is null)
             {
-                throw new ArgumentNullException(nameof(schema));
+                throw new ArgumentNullException( nameof( schema ) );
             }
             this.options = options is null ? new FixedLengthOptions() : options.Clone();
             this.schema = schema;
-            this.parser = new FixedLengthRecordParser(reader, this.schema, this.options);
+            this.parser = new FixedLengthRecordParser( reader, this.schema, this.options );
         }
 
         /// <summary>
-        /// Raised when a record is read from the source file, before it is partitioned.
+        ///     Raised when a record is read from the source file, before it is partitioned.
         /// </summary>
         public event EventHandler<FixedLengthRecordReadEventArgs>? RecordRead;
 
         /// <summary>
-        /// Raised after a record is partitioned, before it is parsed.
+        ///     Raised after a record is partitioned, before it is parsed.
         /// </summary>
         public event EventHandler<FixedLengthRecordPartitionedEventArgs>? RecordPartitioned;
 
         /// <summary>
-        /// Raised after a record is parsed.
+        ///     Raised after a record is parsed.
         /// </summary>
         public event EventHandler<FixedLengthRecordParsedEventArgs>? RecordParsed;
 
@@ -81,32 +81,32 @@ namespace FlatFiles
             {
                 if (value is not null)
                 {
-                    RecordParsed += (sender, e) => value(sender, e);
+                    RecordParsed += ( sender, e ) => value( sender, e );
                 }
             }
             remove
             {
                 if (value is not null)
                 {
-                    RecordParsed -= (sender, e) => value(sender, e);
+                    RecordParsed -= ( sender, e ) => value( sender, e );
                 }
             }
         }
 
         /// <summary>
-        /// Raised when an error occurs while processing a record.
+        ///     Raised when an error occurs while processing a record.
         /// </summary>
         public event EventHandler<RecordErrorEventArgs>? RecordError;
 
         /// <summary>
-        /// Raised when an error occurs while processing a column.
+        ///     Raised when an error occurs while processing a column.
         /// </summary>
         public event EventHandler<ColumnErrorEventArgs>? ColumnError;
 
         IOptions IReader.Options => options;
 
         /// <summary>
-        /// Gets the schema being used by the parser.
+        ///     Gets the schema being used by the parser.
         /// </summary>
         /// <returns>The schema being used by the parser.</returns>
         public FixedLengthSchema? GetSchema()
@@ -120,28 +120,28 @@ namespace FlatFiles
         }
 
         /// <summary>
-        /// Gets the schema being used by the parser.
+        ///     Gets the schema being used by the parser.
         /// </summary>
         /// <returns>The schema being used by the parser.</returns>
         public Task<FixedLengthSchema?> GetSchemaAsync()
         {
-            return Task.FromResult(schema);
+            return Task.FromResult( schema );
         }
 
         Task<ISchema?> IReader.GetSchemaAsync()
         {
-            return Task.FromResult<ISchema?>(schema);
+            return Task.FromResult<ISchema?>( schema );
         }
 
         /// <summary>
-        /// Reads the next record from the file.
+        ///     Reads the next record from the file.
         /// </summary>
         /// <returns>True if the next record was parsed; otherwise, false if all files are read.</returns>
         public bool Read()
         {
             if (hasError)
             {
-                throw new InvalidOperationException(Resources.ReadingWithErrors);
+                throw new InvalidOperationException( Resources.ReadingWithErrors );
             }
             this.recordContext = null;
             HandleHeader();
@@ -176,7 +176,7 @@ namespace FlatFiles
             while (!endOfFile)
             {
                 var record = ReadNextRecord();
-                var values = ProcessRecord(record);
+                var values = ProcessRecord( record );
                 if (values is not null)
                 {
                     return values;
@@ -187,10 +187,10 @@ namespace FlatFiles
 
         private ExecutionContextCache<FixedLengthSchema, FixedLengthExecutionContext>? executionContexts;
 
-        private FixedLengthRecordContext NewRecordContext(FixedLengthSchema schema, string record, string[]? values)
+        private FixedLengthRecordContext NewRecordContext( FixedLengthSchema schema, string record, string[]? values )
         {
             var executionContext = (executionContexts ??= new( s => new FixedLengthExecutionContext( s!, options.Clone() ) )).Get( schema );
-            var recordContext = new FixedLengthRecordContext(executionContext)
+            var recordContext = new FixedLengthRecordContext( executionContext )
             {
                 PhysicalRecordNumber = physicalRecordNumber,
                 LogicalRecordNumber = logicalRecordNumber,
@@ -201,20 +201,20 @@ namespace FlatFiles
         }
 
         /// <summary>
-        /// Reads the next record from the file.
+        ///     Reads the next record from the file.
         /// </summary>
         /// <returns>True if the next record was parsed; otherwise, false if all files are read.</returns>
         public async ValueTask<bool> ReadAsync()
         {
             if (hasError)
             {
-                throw new InvalidOperationException(Resources.ReadingWithErrors);
+                throw new InvalidOperationException( Resources.ReadingWithErrors );
             }
             this.recordContext = null;
-            await HandleHeaderAsync().ConfigureAwait(false);
+            await HandleHeaderAsync().ConfigureAwait( false );
             try
             {
-                values = await ParsePartitionsAsync().ConfigureAwait(false);
+                values = await ParsePartitionsAsync().ConfigureAwait( false );
                 if (values is null)
                 {
                     return false;
@@ -234,7 +234,7 @@ namespace FlatFiles
         {
             if (physicalRecordNumber == 0 && options.IsFirstRecordHeader)
             {
-                await SkipAsyncInternal().ConfigureAwait(false);
+                await SkipAsyncInternal().ConfigureAwait( false );
             }
         }
 
@@ -242,8 +242,8 @@ namespace FlatFiles
         {
             while (!endOfFile)
             {
-                var record = await ReadNextRecordAsync().ConfigureAwait(false);
-                var values = ProcessRecord(record);
+                var record = await ReadNextRecordAsync().ConfigureAwait( false );
+                var values = ProcessRecord( record );
                 if (values is not null)
                 {
                     return values;
@@ -252,73 +252,73 @@ namespace FlatFiles
             return null;
         }
 
-        private object?[]? ProcessRecord(string? record)
+        private object?[]? ProcessRecord( string? record )
         {
-            if (record is null || IsSkipped(record))
+            if (record is null || IsSkipped( record ))
             {
                 return null;
             }
-            var schema = GetSchema(record);
+            var schema = GetSchema( record );
             if (schema is null)
             {
                 return null;
             }
-            var rawValues = PartitionRecord(schema, record);
-            if (rawValues is null || IsSkipped(schema, record, rawValues))
+            var rawValues = PartitionRecord( schema, record );
+            if (rawValues is null || IsSkipped( schema, record, rawValues ))
             {
                 return null;
             }
-            var values = ParseValues(schema, record, rawValues);
+            var values = ParseValues( schema, record, rawValues );
             if (values is null)
             {
                 return null;
             }
-            var metadata = NewRecordContext(schema, record, rawValues);
+            var metadata = NewRecordContext( schema, record, rawValues );
             this.recordContext = metadata;
-            RecordParsed?.Invoke(this, new FixedLengthRecordParsedEventArgs(metadata, values));
+            RecordParsed?.Invoke( this, new FixedLengthRecordParsedEventArgs( metadata, values ) );
             return values;
         }
 
-        private bool IsSkipped(string record)
+        private bool IsSkipped( string record )
         {
             if (RecordRead is null)
             {
                 return false;
             }
-            var e = new FixedLengthRecordReadEventArgs(record);
-            RecordRead(this, e);
+            var e = new FixedLengthRecordReadEventArgs( record );
+            RecordRead( this, e );
             return e.IsSkipped;
         }
 
-        private bool IsSkipped(FixedLengthSchema schema, string record, string[] values)
+        private bool IsSkipped( FixedLengthSchema schema, string record, string[] values )
         {
             if (RecordPartitioned is null)
             {
                 return false;
             }
-            var metadata = NewRecordContext(schema, record, values);
-            var e = new FixedLengthRecordPartitionedEventArgs(metadata, values);
-            RecordPartitioned(this, e);
+            var metadata = NewRecordContext( schema, record, values );
+            var e = new FixedLengthRecordPartitionedEventArgs( metadata, values );
+            RecordPartitioned( this, e );
             return e.IsSkipped;
         }
 
-        private object?[]? ParseValues(FixedLengthSchema schema, string record, string[] rawValues)
+        private object?[]? ParseValues( FixedLengthSchema schema, string record, string[] rawValues )
         {
-            var metadata = NewRecordContext(schema, record, rawValues);
+            var metadata = NewRecordContext( schema, record, rawValues );
             metadata.ColumnError += ColumnError;
             try
             {
-                return schema.ParseValues(metadata, rawValues);
+                return schema.ParseValues( metadata, rawValues );
             }
             catch (FlatFileException exception)
             {
-                ProcessError(new RecordProcessingException(metadata, Resources.InvalidRecordConversion, exception));
+                ProcessError( new RecordProcessingException( metadata, Resources.InvalidRecordConversion, exception ) );
                 return null;
             }
         }
 
         /// <summary>
-        /// Skips the next record from the file.
+        ///     Skips the next record from the file.
         /// </summary>
         /// <returns>True if the next record was skipped; otherwise, false if all records are read.</returns>
         /// <remarks>The previously parsed values remain available.</remarks>
@@ -326,7 +326,7 @@ namespace FlatFiles
         {
             if (hasError)
             {
-                throw new InvalidOperationException(Resources.ReadingWithErrors);
+                throw new InvalidOperationException( Resources.ReadingWithErrors );
             }
             HandleHeader();
             return SkipInternal();
@@ -339,7 +339,7 @@ namespace FlatFiles
         }
 
         /// <summary>
-        /// Skips the next record from the file.
+        ///     Skips the next record from the file.
         /// </summary>
         /// <returns>True if the next record was skipped; otherwise, false if all records are read.</returns>
         /// <remarks>The previously parsed values remain available.</remarks>
@@ -347,24 +347,30 @@ namespace FlatFiles
         {
             if (hasError)
             {
-                throw new InvalidOperationException(Resources.ReadingWithErrors);
+                throw new InvalidOperationException( Resources.ReadingWithErrors );
             }
-            await HandleHeaderAsync().ConfigureAwait(false);
-            return await SkipAsyncInternal().ConfigureAwait(false);
+            await HandleHeaderAsync().ConfigureAwait( false );
+            return await SkipAsyncInternal().ConfigureAwait( false );
         }
 
         private async ValueTask<bool> SkipAsyncInternal()
         {
-            var record = await ReadNextRecordAsync().ConfigureAwait(false);
+            var record = await ReadNextRecordAsync().ConfigureAwait( false );
             return record is not null;
         }
 
-        private string[]? PartitionRecord(FixedLengthSchema schema, string record)
+        private string[]? PartitionRecord( FixedLengthSchema schema, string record )
         {
             if (record.Length < schema.TotalWidth)
             {
-                var metadata = NewRecordContext(schema, record, null);
-                ProcessError(new RecordProcessingException(metadata, Resources.FixedLengthRecordTooShort));
+                var metadata = NewRecordContext( schema, record, null );
+                ProcessError( new RecordProcessingException( metadata, Resources.FixedLengthRecordTooShort ) );
+                return null;
+            }
+            if (options.IsLongRecordRejected && record.Length > schema.TotalWidth)
+            {
+                var metadata = NewRecordContext( schema, record, null );
+                ProcessError( new RecordProcessingException( metadata, Resources.FixedLengthRecordTooLong ) );
                 return null;
             }
             var windows = schema.Windows;
@@ -383,13 +389,13 @@ namespace FlatFiles
                     }
                     else
                     {
-                        value = record.Substring(offset, window.Width);
+                        value = record.Substring( offset, window.Width );
                         if (!definition.IsComplex)
                         {
                             var alignment = window.Alignment ?? options.Alignment;
                             value = alignment == FixedAlignment.LeftAligned
-                                ? value.TrimEnd(window.FillCharacter ?? options.FillCharacter)
-                                : value.TrimStart(window.FillCharacter ?? options.FillCharacter);
+                                ? value.TrimEnd( window.FillCharacter ?? options.FillCharacter )
+                                : value.TrimStart( window.FillCharacter ?? options.FillCharacter );
                         }
                         offset += window.Width;
                     }
@@ -400,19 +406,19 @@ namespace FlatFiles
             return values;
         }
 
-        private FixedLengthSchema? GetSchema(string record)
+        private FixedLengthSchema? GetSchema( string record )
         {
             if (schemaSelector is null)
             {
                 return this.schema;
             }
-            FixedLengthSchema? schema = schemaSelector.GetSchema(record);
+            FixedLengthSchema? schema = schemaSelector.GetSchema( record );
             if (schema is not null)
             {
                 return schema;
             }
-            var recordContext = GetMetadata(null, record);
-            ProcessError(new RecordProcessingException(recordContext, Resources.MissingMatcher));
+            var recordContext = GetMetadata( null, record );
+            ProcessError( new RecordProcessingException( recordContext, Resources.MissingMatcher ) );
             return null;
         }
 
@@ -430,22 +436,22 @@ namespace FlatFiles
 
         private async Task<string?> ReadNextRecordAsync()
         {
-            if (await parser.IsEndOfStreamAsync().ConfigureAwait(false))
+            if (await parser.IsEndOfStreamAsync().ConfigureAwait( false ))
             {
                 endOfFile = true;
                 return null;
             }
-            var record = await parser.ReadRecordAsync().ConfigureAwait(false);
+            var record = await parser.ReadRecordAsync().ConfigureAwait( false );
             ++physicalRecordNumber;
             return record;
         }
 
-        private void ProcessError(RecordProcessingException exception)
+        private void ProcessError( RecordProcessingException exception )
         {
             if (RecordError is not null)
             {
-                var args = new RecordErrorEventArgs(exception);
-                RecordError(this, args);
+                var args = new RecordErrorEventArgs( exception );
+                RecordError( this, args );
                 if (args.IsHandled)
                 {
                     return;
@@ -455,38 +461,38 @@ namespace FlatFiles
         }
 
         /// <summary>
-        /// Gets the values for the current record.
+        ///     Gets the values for the current record.
         /// </summary>
         /// <returns>The values of the current record.</returns>
         public object?[] GetValues()
         {
             if (hasError)
             {
-                throw new InvalidOperationException(Resources.ReadingWithErrors);
+                throw new InvalidOperationException( Resources.ReadingWithErrors );
             }
             if (physicalRecordNumber == 0)
             {
-                throw new InvalidOperationException(Resources.ReadNotCalled);
+                throw new InvalidOperationException( Resources.ReadNotCalled );
             }
             if (endOfFile || values is null)
             {
-                throw new InvalidOperationException(Resources.NoMoreRecords);
+                throw new InvalidOperationException( Resources.NoMoreRecords );
             }
             var copy = new object[values.Length];
-            Array.Copy(values, copy, values.Length);
+            Array.Copy( values, copy, values.Length );
             return copy;
         }
 
         private ExecutionContextCache<FixedLengthSchema, GenericExecutionContext>? metadataExecutionContexts;
 
-        private IRecordContext GetMetadata(FixedLengthSchema? schema, string? record)
+        private IRecordContext GetMetadata( FixedLengthSchema? schema, string? record )
         {
             if (this.recordContext is not null)
             {
                 return this.recordContext;
             }
             var executionContext = (metadataExecutionContexts ??= new( s => new GenericExecutionContext( s, options.Clone() ) )).Get( schema );
-            var recordContext = new GenericRecordContext(executionContext)
+            var recordContext = new GenericRecordContext( executionContext )
             {
                 PhysicalRecordNumber = physicalRecordNumber,
                 LogicalRecordNumber = logicalRecordNumber,
@@ -497,7 +503,7 @@ namespace FlatFiles
 
         IRecordContext IReaderWithMetadata.GetMetadata()
         {
-            return GetMetadata(null, null);
+            return GetMetadata( null, null );
         }
     }
 }

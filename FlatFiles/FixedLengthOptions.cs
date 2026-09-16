@@ -4,50 +4,63 @@ using FlatFiles.Properties;
 namespace FlatFiles
 {
     /// <summary>
-    /// Holds configuration settings for the FixedLengthParser class.
+    ///     Holds configuration settings for the FixedLengthParser class.
     /// </summary>
     public sealed class FixedLengthOptions : IOptions
     {
         /// <summary>
-        /// Initializes a new instance of a FixedLengthParserOptions.
+        ///     Initializes a new instance of a FixedLengthParserOptions.
         /// </summary>
         public FixedLengthOptions()
         {
         }
         
         /// <summary>
-        /// Gets or sets the character used to buffer values in a column.
+        ///     Gets or sets the character used to buffer values in a column.
         /// </summary>
         /// <remarks>The fill character can be controlled at the column level using the Window class.</remarks>
         public char FillCharacter { get; set; } = ' ';
 
         /// <summary>
-        /// Gets or sets whether a separator is present between records.
+        ///     Gets or sets whether a separator is present between records.
         /// </summary>
         /// <remarks>
-        /// By default, FlatFiles assumes records are separated by a newline. If set to false,
-        /// FlatFiles will attempt to start reading the next record immediately after the end of
-        /// the previous record.
+        ///     By default, FlatFiles assumes records are separated by a newline. If set to false,
+        ///     FlatFiles will attempt to start reading the next record immediately after the end of
+        ///     the previous record.
         /// </remarks>
         public bool HasRecordSeparator { get; set; } = true;
 
         /// <summary>
-        /// Gets or sets the string that indicates the end of a record.
+        ///     Gets or sets the string that indicates the end of a record.
         /// </summary>
         public string? RecordSeparator { get; set; }
 
         /// <summary>
-        /// Gets or sets whether the first record in the source holds header information and should be skipped.
+        ///     Gets or sets whether the first record in the source holds header information and should be skipped.
         /// </summary>
         public bool IsFirstRecordHeader { get; set; }
 
         /// <summary>
-        /// Gets whether the first record in the source holds header information and should be skipped.
+        ///     Gets whether the first record in the source holds header information and should be skipped.
         /// </summary>
         bool IOptions.IsFirstRecordSchema => IsFirstRecordHeader;
 
         /// <summary>
-        /// Gets or sets the default alignment for the values in the fixed length file.
+        ///     Gets or sets whether a record longer than the total width of the schema's windows is treated as an
+        ///     error, as a record shorter than it already is.
+        /// </summary>
+        /// <remarks>
+        ///     By default the characters after the last window are ignored, so a layout declared too narrow reads
+        ///     every later column from the wrong offset and reports nothing. Setting this to true raises a
+        ///     <see cref="RecordProcessingException" /> for the record instead, with the same record context a short
+        ///     record gets, so both can be handled in the same way. It defaults to false because a file whose records
+        ///     carry trailing content that was always ignored would otherwise stop reading.
+        /// </remarks>
+        public bool IsLongRecordRejected { get; set; }
+
+        /// <summary>
+        ///     Gets or sets the default alignment for the values in the fixed length file.
         /// </summary>
         /// <remarks>The alignment can be controlled at the columnm level using the Window class.</remarks>
         public FixedAlignment Alignment
@@ -55,16 +68,16 @@ namespace FlatFiles
             get => field;
             set
             {
-                if (!Enum.IsDefined(value))
+                if (!Enum.IsDefined( value ))
                 {
-                    throw new ArgumentException(Resources.InvalidAlignment, nameof(value));
+                    throw new ArgumentException( Resources.InvalidAlignment, nameof( value ) );
                 }
                 field = value;
             }
         } = FixedAlignment.LeftAligned;
 
         /// <summary>
-        /// Gets or sets the default overflow truncation policy to use when a value exceeds the maximum length of its column.
+        ///     Gets or sets the default overflow truncation policy to use when a value exceeds the maximum length of its column.
         /// </summary>
         /// <remarks>The trunaction policy can be controlled at the column level using the Window class.</remarks>
         public OverflowTruncationPolicy TruncationPolicy
@@ -72,31 +85,31 @@ namespace FlatFiles
             get => field;
             set
             {
-                if (!Enum.IsDefined(value))
+                if (!Enum.IsDefined( value ))
                 {
-                    throw new ArgumentException(Resources.InvalidTruncationPolicy, nameof(value));
+                    throw new ArgumentException( Resources.InvalidTruncationPolicy, nameof( value ) );
                 }
                 field = value;
             }
         } = OverflowTruncationPolicy.TruncateLeading;
 
         /// <summary>
-        /// Gets or sets whether column-level metadata should be disabled for non-metadata columns.
+        ///     Gets or sets whether column-level metadata should be disabled for non-metadata columns.
         /// </summary>
         public bool IsColumnContextDisabled { get; set; }
 
         /// <summary>
-        /// Gets or sets the global, default format provider.
+        ///     Gets or sets the global, default format provider.
         /// </summary>
         public IFormatProvider? FormatProvider { get; set; }
 
         /// <summary>
-        /// Duplicates the options.
+        ///     Duplicates the options.
         /// </summary>
         /// <returns>The new options.</returns>
         public FixedLengthOptions Clone()
         {
-            return (FixedLengthOptions)MemberwiseClone();
+            return (FixedLengthOptions) MemberwiseClone();
         }
     }
 }
