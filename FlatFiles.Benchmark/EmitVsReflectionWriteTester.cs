@@ -13,37 +13,37 @@ namespace FlatFiles.Benchmark
 
         public EmitVsReflectionWriteTester()
         {
-            var mapper = DelimitedTypeMapper.Define<Person>(() => new Person());
-            mapper.Property(x => x.Name).ColumnName("Name");
-            mapper.Property(x => x.IQ).ColumnName("IQ");
-            mapper.Property(x => x.BirthDate).ColumnName("BirthDate");
-            mapper.Property(x => x.TopSpeed).ColumnName("TopSpeed");
+            var mapper = DelimitedTypeMapper.Define<Person>( () => new Person() );
+            mapper.Property( x => x.Name ).ColumnName( "Name" );
+            mapper.Property( x => x.IQ ).ColumnName( "IQ" );
+            mapper.Property( x => x.BirthDate ).ColumnName( "BirthDate" );
+            mapper.Property( x => x.TopSpeed ).ColumnName( "TopSpeed" );
             this.mapper = mapper;
 
-            people = Enumerable.Range(0, 10000).Select(i => new Person()
+            people = Enumerable.Range( 0, 10000 ).Select( i => new Person
             {
                 Name = "Susan",
                 IQ = 132,
-                BirthDate = new DateTime(1984, 3, 15),
+                BirthDate = new DateTime( 1984, 3, 15 ),
                 TopSpeed = 10.1m
-            }).ToArray();
+            } ).ToArray();
         }
 
-        [Benchmark(Description = "SerializeEmit")]
+        [Benchmark( Description = "SerializeEmit" )]
         public string SerializeEmit()
         {
-            mapper.OptimizeMapping(true);
+            mapper.OptimizeMapping( true );
             StringWriter writer = new StringWriter();
-            mapper.Write(writer, people);
+            mapper.Write( writer, people );
             return writer.ToString();
         }
 
-        [Benchmark(Description = "SerializeReflection")]
+        [Benchmark( Description = "SerializeReflection" )]
         public string SerializeReflection()
         {
-            mapper.OptimizeMapping(false);
+            mapper.OptimizeMapping( false );
             StringWriter writer = new StringWriter();
-            mapper.Write(writer, people);
+            mapper.Write( writer, people );
             return writer.ToString();
         }
 

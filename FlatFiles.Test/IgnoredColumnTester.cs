@@ -9,69 +9,69 @@ namespace FlatFiles.Test
         [TestMethod]
         public void TestIgnoredColumn_HandlePreAndPostProcessing()
         {
-            var ignored = new IgnoredColumn()
+            var ignored = new IgnoredColumn
             {
                 ColumnName = "Ignored",
-                NullFormatter = NullFormatter.ForValue("NULL"),
-                OnParsing = (ctx, value) => 
+                NullFormatter = NullFormatter.ForValue( "NULL" ),
+                OnParsing = ( ctx, value ) => 
                 {
-                    Assert.AreEqual("NULL", value);
+                    Assert.AreEqual( "NULL", value );
                     return value;
                 },
-                OnParsed = (ctx, value) =>
+                OnParsed = ( ctx, value ) =>
                 {
-                    Assert.IsNull(value);
+                    Assert.IsNull( value );
                     return value;
                 },
-                OnFormatting = (ctx, value) =>
+                OnFormatting = ( ctx, value ) =>
                 {
-                    Assert.IsNull(value);
+                    Assert.IsNull( value );
                     return value;
                 },
-                OnFormatted = (ctx, value) =>
+                OnFormatted = ( ctx, value ) =>
                 {
-                    Assert.AreEqual("NULL", value);
+                    Assert.AreEqual( "NULL", value );
                     return value;
                 }
             };
-            object value = ignored.Parse(null, "NULL");
-            Assert.IsNull(value);
-            string formatted = ignored.Format(null, value);
-            Assert.AreEqual("NULL", formatted);
+            object value = ignored.Parse( null, "NULL" );
+            Assert.IsNull( value );
+            string formatted = ignored.Format( null, value );
+            Assert.AreEqual( "NULL", formatted );
         }
 
         [TestMethod]
         public void TestIgnoredMapping_HandlePreAndPostProcessing()
         {
-            IDelimitedTypeMapper<IgnoredOnly> mapper = DelimitedTypeMapper.Define(() => new IgnoredOnly());
+            IDelimitedTypeMapper<IgnoredOnly> mapper = DelimitedTypeMapper.Define( () => new IgnoredOnly() );
             mapper.Ignored()
-                .ColumnName("Ignored")
-                .NullFormatter(NullFormatter.ForValue("NULL"))
-                .OnParsing((ctx, value) =>
+                .ColumnName( "Ignored" )
+                .NullFormatter( NullFormatter.ForValue( "NULL" ) )
+                .OnParsing( ( ctx, value ) =>
                 {
-                    Assert.AreEqual("NULL", value);
+                    Assert.AreEqual( "NULL", value );
                     return value;
-                })
-                .OnParsed((ctx, value) =>
+                } )
+                .OnParsed( ( ctx, value ) =>
                 {
-                    Assert.IsNull(value);
+                    Assert.IsNull( value );
                     return value;
-                })
-                .OnFormatting((ctx, value) =>
+                } )
+                .OnFormatting( ( ctx, value ) =>
                 {
-                    Assert.IsNull(value);
+                    Assert.IsNull( value );
                     return value;
-                })
-                .OnFormatted((ctx, value) =>
+                } )
+                .OnFormatted( ( ctx, value ) =>
                 {
-                    Assert.AreEqual("NULL", value);
+                    Assert.AreEqual( "NULL", value );
                     return value;
-                });
+                } );
             var ignored = mapper.GetSchema().ColumnDefinitions["Ignored"];
-            object value = ignored.Parse(null, "NULL");
-            Assert.IsNull(value);
-            string formatted = ignored.Format(null, value);
-            Assert.AreEqual("NULL", formatted);
+            object value = ignored.Parse( null, "NULL" );
+            Assert.IsNull( value );
+            string formatted = ignored.Format( null, value );
+            Assert.AreEqual( "NULL", formatted );
         }
 
         private class IgnoredOnly
