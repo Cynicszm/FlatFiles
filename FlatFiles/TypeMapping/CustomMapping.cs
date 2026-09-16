@@ -5,26 +5,19 @@ using FlatFiles.Properties;
 
 namespace FlatFiles.TypeMapping
 {
-    internal sealed class CustomMapping<TEntity> : ICustomMapping<TEntity>, ICustomMapping, IMemberMapping
+    internal sealed class CustomMapping<TEntity>(IColumnDefinition column, int physicalIndex, int logicalIndex) : ICustomMapping<TEntity>, ICustomMapping, IMemberMapping
     {
-        public CustomMapping(IColumnDefinition column, int physicalIndex, int logicalIndex)
-        {
-            ColumnDefinition = column;
-            PhysicalIndex = physicalIndex;
-            LogicalIndex = logicalIndex;
-        }
-
         public IMemberAccessor? Member => null;
 
         public Action<IColumnContext?, object?, object?>? Reader { get; private set; }
 
         public Action<IColumnContext?, object?, object?[]>? Writer { get; private set; }
 
-        public IColumnDefinition ColumnDefinition { get; }
+        public IColumnDefinition ColumnDefinition { get; } = column;
 
-        public int PhysicalIndex { get; }
+        public int PhysicalIndex { get; } = physicalIndex;
 
-        public int LogicalIndex { get; }
+        public int LogicalIndex { get; } = logicalIndex;
 
         public ICustomMapping<TEntity> WithReader<TProp>(Expression<Func<TEntity, TProp>>? reader)
         {

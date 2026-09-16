@@ -3,15 +3,8 @@ using System.Threading.Tasks;
 
 namespace FlatFiles.TypeMapping
 {
-    internal sealed class UntypedWriter<TEntity> : ITypedWriter<object>
+    internal sealed class UntypedWriter<TEntity>(ITypedWriter<TEntity> writer) : ITypedWriter<object>
     {
-        private readonly ITypedWriter<TEntity> writer;
-
-        public UntypedWriter(ITypedWriter<TEntity> writer)
-        {
-            this.writer = writer;
-        }
-
         /// <summary>
         /// Raised when an error occurs while processing a column.
         /// </summary>

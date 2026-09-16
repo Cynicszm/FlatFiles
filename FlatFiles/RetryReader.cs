@@ -5,17 +5,11 @@ using System.Threading.Tasks;
 
 namespace FlatFiles
 {
-    internal sealed class RetryReader
+    internal sealed class RetryReader(TextReader reader)
     {
         private readonly StringBuilder record = new();
         private readonly CircularQueue<char> queue = new(4096);
-        private readonly TextReader reader;
         private bool isEndOfStreamFound;
-
-        public RetryReader(TextReader reader)
-        {
-            this.reader = reader;
-        }
 
         public bool IsEndOfStream()
         {

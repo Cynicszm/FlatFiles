@@ -2,16 +2,8 @@
 
 namespace FlatFiles.TypeMapping
 {
-    internal sealed class IgnoredMapping : IIgnoredMapping, IMemberMapping
+    internal sealed class IgnoredMapping(IgnoredColumn column, int physicalIndex) : IIgnoredMapping, IMemberMapping
     {
-        private readonly IgnoredColumn column;
-
-        public IgnoredMapping(IgnoredColumn column, int physicalIndex)
-        {
-            this.column = column;
-            PhysicalIndex = physicalIndex;
-        }
-
         public IIgnoredMapping ColumnName(string name)
         {
             column.ColumnName = name;
@@ -64,7 +56,7 @@ namespace FlatFiles.TypeMapping
 
         public IColumnDefinition ColumnDefinition => column;
 
-        public int PhysicalIndex { get; }
+        public int PhysicalIndex { get; } = physicalIndex;
 
         public int LogicalIndex => -1;
     }
