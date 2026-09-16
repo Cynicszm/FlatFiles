@@ -6,8 +6,8 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace FlatFiles.Test
 {
     /// <summary>
-    ///     Tests DelimitedOptions.IsRecordTextDisabled, which trades IRecordContext.Record away for the
-    ///     per-record string it costs to build. It defaults to true, so the text is discarded unless a
+    ///     Tests DelimitedOptions.PreserveRecordText, which trades IRecordContext.Record against the
+    ///     per-record string it costs to build. It defaults to false, so the text is discarded unless a
     ///     caller asks for it.
     /// </summary>
     [TestClass]
@@ -23,12 +23,12 @@ namespace FlatFiles.Test
             return schema;
         }
 
-        private static List<string> ReadCapturingRecordText( bool isRecordTextDisabled )
+        private static List<string> ReadCapturingRecordText( bool preserveRecordText )
         {
             var options = new DelimitedOptions
             {
                 IsFirstRecordSchema = true,
-                IsRecordTextDisabled = isRecordTextDisabled
+                PreserveRecordText = preserveRecordText
             };
             var reader = new DelimitedReader( new StringReader( Data ), GetSchema(), options );
             List<string> captured = [];
@@ -44,23 +44,23 @@ namespace FlatFiles.Test
         ///     string nobody reads is not.
         /// </summary>
         [TestMethod]
-        public void TestRecordText_DisabledByDefault_ReturnsEmptyString()
+        public void TestRecordText_NotPreservedByDefault_ReturnsEmptyString()
         {
-            Assert.IsTrue( new DelimitedOptions().IsRecordTextDisabled, "The option should default to on." );
+            Assert.IsFalse( new DelimitedOptions().PreserveRecordText, "The option should default to off." );
 
-            var captured = ReadCapturingRecordText( isRecordTextDisabled: true );
+            var captured = ReadCapturingRecordText( preserveRecordText: false );
 
             CollectionAssert.AreEqual( new[] { String.Empty, String.Empty }, captured,
                 "The raw record text should be empty when capture is disabled." );
         }
 
         /// <summary>
-        ///     Turning it off gets the text back, so the capture itself still works.
+        ///     Turning it on gets the text back, so the capture itself still works.
         /// </summary>
         [TestMethod]
-        public void TestRecordText_Enabled_CapturesTheRawText()
+        public void TestRecordText_Preserved_CapturesTheRawText()
         {
-            var captured = ReadCapturingRecordText( isRecordTextDisabled: false );
+            var captured = ReadCapturingRecordText( preserveRecordText: true );
 
             CollectionAssert.AreEqual( new[] { "1,Bob", "2,Jane" }, captured, "The raw record text was not captured." );
         }
@@ -70,14 +70,14 @@ namespace FlatFiles.Test
         ///     change a single parsed value.
         /// </summary>
         [TestMethod]
-        public void TestRecordText_Disabled_ParsesIdenticalValues()
+        public void TestRecordText_NotPreserved_ParsesIdenticalValues()
         {
-            static object[][] Read( bool disabled )
+            static object[][] Read( bool preserve )
             {
                 var options = new DelimitedOptions
                 {
                     IsFirstRecordSchema = true,
-                    IsRecordTextDisabled = disabled
+                    PreserveRecordText = preserve
                 };
                 var reader = new DelimitedReader( new StringReader( Data ), GetSchema(), options );
                 List<object[]> rows = [];
@@ -88,14 +88,14 @@ namespace FlatFiles.Test
                 return [.. rows];
             }
 
-            var enabled = Read( false );
-            var disabled = Read( true );
+            var preserved = Read( true );
+            var discarded = Read( false );
 
-            Assert.AreEqual( enabled.Length, disabled.Length, "A different number of records was read." );
-            for (int index = 0; index != enabled.Length; ++index)
+            Assert.AreEqual( preserved.Length, discarded.Length, "A different number of records was read." );
+            for (int index = 0; index != preserved.Length; ++index)
             {
-                CollectionAssert.AreEqual( enabled[index], disabled[index],
-                    $"Record {index} parsed differently when the record text was disabled." );
+                CollectionAssert.AreEqual( preserved[index], discarded[index],
+                    $"Record {index} parsed differently when the record text was discarded." );
             }
         }
 
@@ -104,12 +104,12 @@ namespace FlatFiles.Test
         ///     text must not be mistaken for the end of the stream and cut the read short.
         /// </summary>
         [TestMethod]
-        public void TestRecordText_Disabled_ReadsEveryRecord()
+        public void TestRecordText_NotPreserved_ReadsEveryRecord()
         {
             var options = new DelimitedOptions
             {
                 IsFirstRecordSchema = true,
-                IsRecordTextDisabled = true
+                PreserveRecordText = false
             };
             var reader = new DelimitedReader( new StringReader( Data ), GetSchema(), options );
             int count = 0;
@@ -123,14 +123,14 @@ namespace FlatFiles.Test
 
         /// <summary>
         ///     A blank line is a record whose text is genuinely empty. It has to survive the option being
-        ///     off, so that an empty text is never load-bearing.
+        ///     on, so that an empty text is never load-bearing.
         /// </summary>
         [TestMethod]
-        public void TestRecordText_EmptyRecord_StillCapturedWhenEnabled()
+        public void TestRecordText_EmptyRecord_StillCapturedWhenPreserved()
         {
             var schema = new DelimitedSchema();
             schema.AddColumn( new StringColumn( "value" ) );
-            var options = new DelimitedOptions { IsRecordTextDisabled = false };
+            var options = new DelimitedOptions { PreserveRecordText = true };
             var reader = new DelimitedReader( new StringReader( "a\r\n\r\nb\r\n" ), schema, options );
             List<string> captured = [];
             reader.RecordRead += ( sender, e ) => captured.Add( e.RecordContext.Record );
