@@ -1,0 +1,91 @@
+# Publishes Cynicszm.FlatFiles to NuGet using trusted publishing, so no API key is
+# stored in this repository. The job asks GitHub for a short-lived OIDC token, nuget.org
+# checks it against the publishing policy registered there and hands back a temporary
+# key that expires in an hour.
+#
+# The matching policy on nuget.org must name this workflow file by name - publish.yml -
+# along with the repository owner and repository, and its scope must allow pushing a new
+# package, not only new versions of an existing one.
+name: Publish to NuGet
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Build, test and pack without publishing
+        type: boolean
+        default: true
+
+jobs:
+  publish:
+    # Matches where the suite is verified locally. The tests pin the culture to en-US, but
+    # Linux resolves those formats through ICU rather than Windows NLS, and a release is a
+    # poor moment to discover a difference.
+    runs-on: windows-latest
+
+    permissions:
+      # Required: lets this job request the OIDC token that is exchanged for the key.
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Build
+        run: dotnet build FlatFiles.sln --configuration Release
+
+      - name: Test
+        run: dotnet test FlatFiles.sln --configuration Release --no-build
+
+      - name: Pack
+        run: dotnet pack FlatFiles/FlatFiles.csproj --configuration Release --output artifacts
+
+      - name: Check the package version matches the release tag
+        if: github.event_name == 'release'
+        shell: pwsh
+        run: |
+          $package = Get-ChildItem artifacts -Filter *.nupkg | Select-Object -First 1
+          if ($null -eq $package) { throw 'Pack produced no package.' }
+
+          # Cynicszm.FlatFiles.7.0.0.nupkg -> 7.0.0
+          $packed = $package.BaseName -replace '^.*?\.(\d+\.\d+\.\d+.*)$', '$1'
+          $tagged = '${{ github.event.release.tag_name }}' -replace '^v', ''
+
+          Write-Host "packed: $packed   tag: $tagged"
+          if ($packed -ne $tagged)
+          {
+              throw "The release is tagged $tagged but the project packs $packed. Update the version in FlatFiles.csproj, or retag."
+          }
+
+      - name: Upload the package
+        uses: actions/upload-artifact@v4
+        with:
+          name: nupkg
+          path: artifacts/*.nupkg
+
+      - name: Get a short-lived NuGet key
+        # Requested immediately before the push: the key expires after an hour, and each
+        # OIDC token buys exactly one key.
+        if: github.event_name == 'release' || inputs.dry_run == false
+        id: login
+        uses: NuGet/login@v1
+        with:
+          # The nuget.org profile name, not an email address. Hardcoded rather than held as
+          # a secret because a profile name is public: it appears on every package page.
+          user: Cynicszm
+
+      - name: Push
+        if: github.event_name == 'release' || inputs.dry_run == false
+        run: dotnet nuget push artifacts/*.nupkg --api-key ${{ steps.login.outputs.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
+
+      - name: Dry run finished
+        if: github.event_name == 'workflow_dispatch' && inputs.dry_run == true
+        run: echo "Built, tested and packed. Nothing published - re-run with dry_run false, or publish a release."
