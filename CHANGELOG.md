@@ -1,5 +1,5 @@
 ## 7.1.0 (2026-09-16)
-**Summary** - Writers format each record into one reusable buffer and hand it to the `TextWriter` in a single write, removing half to two thirds of the allocation from writing a file, and the readers scan their input as a span instead of one character at a time, cutting read time by a third to two fifths.
+**Summary** - Writers format each record into one reusable buffer and readers scan their input as a span, for half to two thirds less allocation on write and a third to two fifths less time on read with unchanged output; a fixed-length record longer than the schema can be rejected; the numeric columns share one public base; and unsubscribing from `IReader.RecordParsed` now works.
 
 Until now each value written passed through several strings: the column formatted it to a string, the delimited writer quoted it into another and joined the record into a third, or the fixed-length writer padded it into another, and only then was anything handed to the `TextWriter`. Over 50,000 six-column records that came to 38.7 MB for the delimited writer and 36.3 MB for the fixed-length writer, almost all of it garbage before the record reached the stream.
 
