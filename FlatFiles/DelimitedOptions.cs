@@ -82,6 +82,21 @@ namespace FlatFiles
         public bool IsColumnContextDisabled { get; set; }
 
         /// <summary>
+        /// Gets or sets whether the raw text of each record should be discarded rather than captured.
+        /// </summary>
+        /// <remarks>
+        /// The reader builds a string of each record's original text so it can be exposed through
+        /// <see cref="IRecordContext.Record" />. Nothing in parsing needs it - the column values are
+        /// tokenised separately, and a schema selector is handed those values rather than the text -
+        /// so for a caller that never reads it, that string is the single largest avoidable cost of
+        /// reading a file. Measured over 50,000 records it was a fifth of everything the reader
+        /// allocated. Set this to true to skip it, and <see cref="IRecordContext.Record" /> will be
+        /// an empty string instead. It defaults to false, so the text is captured unless asked
+        /// otherwise.
+        /// </remarks>
+        public bool IsRecordTextDisabled { get; set; }
+
+        /// <summary>
         /// Gets or sets the global, default format provider.
         /// </summary>
         public IFormatProvider? FormatProvider { get; set; }

@@ -71,7 +71,7 @@ namespace FlatFiles
             {
                 throw new ArgumentException(Resources.SameSeparator, nameof(options));
             }
-            var retryReader = new RetryReader(reader);
+            var retryReader = new RetryReader(reader, options.IsRecordTextDisabled);
             this.parser = new DelimitedRecordParser(retryReader, options);
             this.schema = schema;
         }

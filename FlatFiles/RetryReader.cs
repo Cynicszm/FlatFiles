@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace FlatFiles
 {
-    internal sealed class RetryReader(TextReader reader)
+    internal sealed class RetryReader(TextReader reader, bool isRecordTextDisabled = false)
     {
         private readonly StringBuilder record = new();
         private readonly CircularQueue<char> queue = new(4096);
@@ -120,6 +120,14 @@ namespace FlatFiles
 
         public string GetRecord()
         {
+            // The characters are appended either way: the appends themselves cost nothing, because
+            // the builder reuses its chunk after Clear. Materialising the string is the whole cost,
+            // so that is what gets skipped.
+            if (isRecordTextDisabled)
+            {
+                this.record.Clear();
+                return String.Empty;
+            }
             string record = this.record.ToString();
             this.record.Clear();
             return record;
