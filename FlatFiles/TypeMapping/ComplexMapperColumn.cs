@@ -2,7 +2,7 @@
 
 namespace FlatFiles.TypeMapping
 {
-    internal class ComplexMapperColumn<TEntity> : IColumnDefinition
+    internal sealed class ComplexMapperColumn<TEntity> : IColumnDefinition
     {
         private readonly GenericExecutionContext executionContext;
         private readonly IColumnDefinition column;
@@ -10,9 +10,9 @@ namespace FlatFiles.TypeMapping
         private readonly Action<IRecordContext, TEntity, object?[]> writer;
         private readonly int logicalCount;
 
-        public ComplexMapperColumn(ISchema? schema, IOptions options, IColumnDefinition column, IMapper<TEntity> mapper)
+        public ComplexMapperColumn( ISchema? schema, IOptions options, IColumnDefinition column, IMapper<TEntity> mapper )
         {
-            this.executionContext = new GenericExecutionContext(schema, options);
+            this.executionContext = new GenericExecutionContext( schema, options );
             this.column = column;
             reader = mapper.GetReader();
             writer = mapper.GetWriter();
@@ -21,7 +21,7 @@ namespace FlatFiles.TypeMapping
 
         public string ColumnName => column.ColumnName!; // Uses the reflected member's name, so cannot be null
 
-        public Type ColumnType => typeof(TEntity);
+        public Type ColumnType => typeof( TEntity );
 
         public bool IsIgnored => column.IsIgnored;
 
@@ -72,25 +72,25 @@ namespace FlatFiles.TypeMapping
             set => column.OnFormatted = value;
         }
 
-        public object? Parse(IColumnContext? context, string value)
+        public object? Parse( IColumnContext? context, string value )
         {
-            var parsed = column.Parse(context, value);
+            var parsed = column.Parse( context, value );
             if (parsed is null)
             {
                 return null;
             }
             var values = (object?[]) parsed;
-            var recordContext = new GenericRecordContext(executionContext);
-            var result = reader(recordContext, values); // Complex columns should never return nulls
+            var recordContext = new GenericRecordContext( executionContext );
+            var result = reader( recordContext, values ); // Complex columns should never return nulls
             return result;
         }
 
-        public string Format(IColumnContext? context, object? value)
+        public string Format( IColumnContext? context, object? value )
         {
             var values = new object?[logicalCount];
-            var recordContext = new GenericRecordContext(executionContext);
-            writer(recordContext, (TEntity)value!, values);
-            var formatted = column.Format(context, values);
+            var recordContext = new GenericRecordContext( executionContext );
+            writer( recordContext, (TEntity) value!, values );
+            var formatted = column.Format( context, values );
             return formatted;
         }
     }
