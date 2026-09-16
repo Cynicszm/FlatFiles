@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -122,6 +122,9 @@
   </data>
   <data name="DuplicateColumnName" xml:space="preserve">
     <value>An attempt was made to add a column to a schema where the same name already exists.</value>
+  </data>
+  <data name="FixedLengthRecordTooLong" xml:space="preserve">
+    <value>The record was longer than the total width of the windows in the schema. Record {0}.</value>
   </data>
   <data name="FixedLengthRecordTooShort" xml:space="preserve">
     <value>The record did not meet the length requirements specified in the schema. Record {0}.</value>
