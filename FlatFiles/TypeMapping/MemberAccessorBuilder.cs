@@ -73,6 +73,11 @@ namespace FlatFiles.TypeMapping
             {
                 throw new ArgumentException(Resources.BadPropertySelector, nameof(expression));
             }
+            if (member.Expression is null)
+            {
+                // A static member has no instance to read from, so it cannot be mapped to an entity.
+                throw new ArgumentException(Resources.BadPropertySelector, nameof(expression));
+            }
             if (member.Member is PropertyInfo propertyInfo)
             {
                 if (propertyInfo.DeclaringType!.GetTypeInfo().IsAssignableFrom(typeof(TEntity)))

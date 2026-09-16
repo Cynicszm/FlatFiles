@@ -58,7 +58,7 @@ namespace FlatFiles
             get => quoteBehavior; 
             set
             {
-                if (!Enum.IsDefined(typeof(QuoteBehavior), value))
+                if (!Enum.IsDefined(value))
                 {
                     throw new ArgumentException(Resources.InvalidAlignment, nameof(value));
                 }

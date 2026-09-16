@@ -37,7 +37,7 @@ namespace FlatFiles.TypeMapping
             var memberMappings = GetReaderMemberMappings(mappings);
             var deserializer = codeGenerator.GetReader<TEntity>(memberMappings);
             var nestedMappers = GetNestedMappers(mappings);
-            if (nestedMappers.Any())
+            if (nestedMappers.Length != 0)
             {
                 cachedReader = (recordContext, values) =>
                 {
@@ -80,7 +80,7 @@ namespace FlatFiles.TypeMapping
             var memberMappings = GetWriterMemberMappings(mappings);
             var serializer = codeGenerator.GetWriter<TEntity>(memberMappings);
             var nestedMappers = GetNestedMappers(mappings);
-            if (nestedMappers.Any())
+            if (nestedMappers.Length != 0)
             {
                 cachedWriter = (metadata, entity, values) =>
                 {

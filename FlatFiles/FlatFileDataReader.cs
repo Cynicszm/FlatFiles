@@ -225,8 +225,9 @@ namespace FlatFiles
         /// <param name="bufferoffset">The offset into the given buffer to start copying.</param>
         /// <param name="length">The maximum number of items to copy into the given buffer.</param>
         /// <returns>The number of bytes copied to the buffer.</returns>
-        public long GetBytes(int i, long fieldOffset, byte[] buffer, int bufferoffset, int length)
+        public long GetBytes(int i, long fieldOffset, byte[]? buffer, int bufferoffset, int length)
         {
+            ArgumentNullException.ThrowIfNull( buffer );
             var values = GetValues();
             var bytes = (byte[])values[i]!;
             Array.Copy(bytes, (int)fieldOffset, buffer, bufferoffset, length);
@@ -253,7 +254,7 @@ namespace FlatFiles
         /// <param name="bufferoffset">The offset into the given buffer to start copying.</param>
         /// <param name="length">The maximum number of items to copy into the given buffer.</param>
         /// <returns>The number of chars copied to the buffer.</returns>
-        public long GetChars(int i, long fieldoffset, char[] buffer, int bufferoffset, int length)
+        public long GetChars(int i, long fieldoffset, char[]? buffer, int bufferoffset, int length)
         {
             ArgumentNullException.ThrowIfNull( buffer );
             var values = GetValues();
@@ -391,10 +392,23 @@ namespace FlatFiles
         /// </summary>
         /// <param name="i">The index of the column.</param>
         /// <returns>The name of the column at the given index.</returns>
+        // IDataRecord annotates GetName, GetString, GetValue and both indexers as never returning
+        // null. This reader can return null from all five, but only when the caller has explicitly
+        // asked for it: GetValue and the indexers hand back null instead of DBNull.Value when
+        // FlatFileDataReaderOptions.IsDBNullReturned is turned off, and GetString returns null
+        // rather than throwing when IsNullStringAllowed is turned on. Both default to the ADO.NET
+        // behaviour, so the deviation only exists for callers who opted out of it.
+        //
+        // The nullable return types are therefore the honest ones and are kept, with CS8766
+        // suppressed at each of the five members rather than papering over the mismatch with a
+        // null-forgiving operator that would claim these never return null.
+
+#pragma warning disable CS8766 // see the note on IDataRecord nullability above
         public string? GetName(int i)
         {
             return GetColumns()[i].ColumnName;
         }
+#pragma warning restore CS8766
 
         /// <summary>
         /// Gets the index of the column with the given name.
@@ -422,6 +436,7 @@ namespace FlatFiles
         /// </summary>
         /// <param name="i">The index of the value.</param>
         /// <returns>The string at the given index.</returns>
+#pragma warning disable CS8766 // see the note on IDataRecord nullability above
         public string? GetString(int i)
         {
             var values = GetValues();
@@ -432,6 +447,7 @@ namespace FlatFiles
             }
             return value;
         }
+#pragma warning restore CS8766
 
         /// <summary>
         /// Gets the <see cref="TimeSpan"/> from the current record at the given index.
@@ -482,6 +498,7 @@ namespace FlatFiles
         /// </summary>
         /// <param name="i">The index of the value.</param>
         /// <returns>The value as an object at the given index.</returns>
+#pragma warning disable CS8766 // see the note on IDataRecord nullability above
         public object? GetValue(int i)
         {
             var values = GetValues();
@@ -492,6 +509,7 @@ namespace FlatFiles
             }
             return value;
         }
+#pragma warning restore CS8766
 
         /// <summary>
         /// Copies the values from the current record to the given array.
@@ -532,6 +550,7 @@ namespace FlatFiles
         /// </summary>
         /// <param name="name">The name of the column.</param>
         /// <returns>The value in the column with the given name.</returns>
+#pragma warning disable CS8766 // see the note on IDataRecord nullability above
         public object? this[string name]
         {
             get 
@@ -540,16 +559,19 @@ namespace FlatFiles
                 return GetValue(index);
             }
         }
+#pragma warning restore CS8766
 
         /// <summary>
         /// Gets the value from the current record at the given index.
         /// </summary>
         /// <param name="i">The index of the value.</param>
         /// <returns>The value at the given index.</returns>
+#pragma warning disable CS8766 // see the note on IDataRecord nullability above
         public object? this[int i]
         {
             get { return GetValue(i); }
         }
+#pragma warning restore CS8766
 
         private ISchema GetSchema()
         {

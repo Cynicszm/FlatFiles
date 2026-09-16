@@ -51,7 +51,7 @@ namespace FlatFiles
             get => alignment;
             set
             {
-                if (value is not null && !Enum.IsDefined(typeof(FixedAlignment), value.Value))
+                if (value is not null && !Enum.IsDefined(value.Value))
                 {
                     throw new ArgumentException(Resources.InvalidAlignment, nameof(value));
                 }
@@ -73,7 +73,7 @@ namespace FlatFiles
             get => truncationPolicy;
             set
             {
-                if (value is not null && !Enum.IsDefined(typeof(OverflowTruncationPolicy), value.Value))
+                if (value is not null && !Enum.IsDefined(value.Value))
                 {
                     throw new ArgumentException(Resources.InvalidTruncationPolicy, nameof(value));
                 }
