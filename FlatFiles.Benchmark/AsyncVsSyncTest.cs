@@ -9,7 +9,7 @@ namespace FlatFiles.Benchmark
 {
     public class AsyncVsSyncTest
     {
-        private const string SampleDataUrl = "https://raw.githubusercontent.com/jehugaleahsa/FlatFiles/master/FlatFiles.Benchmark/TestFiles/SampleData.csv";
+        private const string SampleDataUrl = "https://raw.githubusercontent.com/Cynicszm/FlatFiles/master/FlatFiles.Benchmark/TestFiles/SampleData.csv";
 
         // One client for the process: HttpClient is meant to be shared, and a new one per call
         // leaves sockets in TIME_WAIT, which would show up as noise in the benchmark itself.
