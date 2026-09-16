@@ -49,7 +49,7 @@ namespace FlatFiles
         public DelimitedOptions? Options { get; set; }
 
         /// <inheritdoc/>
-        public override bool IsComplex { get; } = true;
+        public override bool IsComplex => true;
 
         /// <inheritdoc/>
         protected override bool IsTrimmed => false;
@@ -66,20 +66,12 @@ namespace FlatFiles
         {
             var stringReader = new StringReader( value );
             var reader = GetReader( stringReader );
-            if (reader.Read())
-            {
-                return reader.GetValues();
-            }
-            return null;
+            return reader.Read() ? reader.GetValues() : null;
         }
 
         private DelimitedReader GetReader( StringReader stringReader )
         {
-            if (schema is null)
-            {
-                return new DelimitedReader( stringReader, Options );
-            }
-            return new DelimitedReader( stringReader, schema, Options );
+            return schema is null ? new DelimitedReader( stringReader, Options ) : new DelimitedReader( stringReader, schema, Options );
         }
 
         /// <summary>

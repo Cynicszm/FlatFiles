@@ -35,11 +35,7 @@ namespace FlatFiles
         /// <returns>The parsed Guid.</returns>
         protected override Guid OnParse( IColumnContext? context, string value )
         {
-            if (InputFormat is null)
-            {
-                return Guid.Parse( value );
-            }
-            return Guid.ParseExact( value, InputFormat );
+            return InputFormat is null ? Guid.Parse( value ) : Guid.ParseExact( value, InputFormat );
         }
 
         /// <summary>
@@ -50,10 +46,6 @@ namespace FlatFiles
         /// <returns>The formatted value.</returns>
         protected override string OnFormat( IColumnContext? context, Guid value )
         {
-            if (OutputFormat is null)
-            {
-                return value.ToString();
-            }
             return value.ToString( OutputFormat );
         }
 

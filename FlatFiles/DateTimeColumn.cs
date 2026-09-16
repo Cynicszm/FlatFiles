@@ -42,11 +42,7 @@ namespace FlatFiles
         protected override DateTime OnParse( IColumnContext? context, string value )
         {
             var provider = FormatProvider ?? CultureInfo.CurrentCulture;
-            if (InputFormat is null)
-            {
-                return DateTime.Parse( value, provider );
-            }
-            return DateTime.ParseExact( value, InputFormat, provider );
+            return InputFormat is null ? DateTime.Parse( value, provider ) : DateTime.ParseExact( value, InputFormat, provider );
         }
 
         /// <summary>
@@ -58,10 +54,6 @@ namespace FlatFiles
         protected override string OnFormat( IColumnContext? context, DateTime value )
         {
             var provider = GetFormatProvider( context, FormatProvider );
-            if (OutputFormat is null)
-            {
-                return value.ToString( provider );
-            }
             return value.ToString( OutputFormat, provider );
         }
 

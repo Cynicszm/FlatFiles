@@ -3,10 +3,10 @@ using System.Threading.Tasks;
 
 namespace FlatFiles.TypeMapping
 {
-    internal sealed class MultiplexingTypedWriter(IWriterWithMetadata writer, ITypeMapperInjector injector) : ITypedWriter<object>
+    internal sealed class MultiplexingTypedWriter( IWriterWithMetadata writer, ITypeMapperInjector injector ) : ITypedWriter<object>
     {
         /// <summary>
-        /// Raised when an error occurs while processing a column.
+        ///     Raised when an error occurs while processing a column.
         /// </summary>
         public event EventHandler<ColumnErrorEventArgs>? ColumnError
         {
@@ -15,7 +15,7 @@ namespace FlatFiles.TypeMapping
         }
 
         /// <summary>
-        /// Raised when an error occurs while processing a record.
+        ///     Raised when an error occurs while processing a record.
         /// </summary>
         public event EventHandler<RecordErrorEventArgs>? RecordError
         {
@@ -37,28 +37,27 @@ namespace FlatFiles.TypeMapping
 
         public async Task WriteSchemaAsync()
         {
-            await writer.WriteSchemaAsync().ConfigureAwait(false);
+            await writer.WriteSchemaAsync().ConfigureAwait( false );
         }
 
-        public void Write(object entity)
+        public void Write( object entity )
         {
-            var values = Serialize(entity);
-            writer.Write(values);
+            var values = Serialize( entity );
+            writer.Write( values );
         }
 
-        public async Task WriteAsync(object entity)
+        public async Task WriteAsync( object entity )
         {
-            var values = Serialize(entity);
-            await writer.WriteAsync(values).ConfigureAwait(false);
+            var values = Serialize( entity );
+            await writer.WriteAsync( values ).ConfigureAwait( false );
         }
 
-        private object?[] Serialize(object entity)
+        private object?[] Serialize( object entity )
         {
-            var context = injector.SetMatcher(entity);
+            var context = injector.SetMatcher( entity );
             var values = new object?[context.LogicalCount];
-            var metadataWriter = writer;
-            var recordContext = metadataWriter.GetMetadata();
-            context.Serialize(recordContext, entity, values);
+            var recordContext = writer.GetMetadata();
+            context.Serialize( recordContext, entity, values );
             return values;
         }
     }

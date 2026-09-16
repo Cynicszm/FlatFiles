@@ -59,20 +59,20 @@ namespace FlatFiles
 
         public bool IsEndOfStream()
         {
-            if (reader.Available == 0 && !reader.IsEndOfStream)
+            if (reader is { Available: 0, IsEndOfStream: false })
             {
                 reader.Fill();
             }
-            return reader.IsEndOfStream && reader.Available == 0;
+            return reader is { IsEndOfStream: true, Available: 0 };
         }
 
         public async ValueTask<bool> IsEndOfStreamAsync()
         {
-            if (reader.Available == 0 && !reader.IsEndOfStream)
+            if (reader is { Available: 0, IsEndOfStream: false })
             {
                 await reader.FillAsync().ConfigureAwait( false );
             }
-            return reader.IsEndOfStream && reader.Available == 0;
+            return reader is { IsEndOfStream: true, Available: 0 };
         }
 
         public (string, string[]) ReadRecord()
@@ -117,7 +117,7 @@ namespace FlatFiles
                     continue;
                 }
                 var recordText = preserveRecordText ? new string( text[..separatorStart] ) : String.Empty;
-                record = (recordText, tokens.ToArray());
+                record = (recordText, [.. tokens]);
                 tokens.Clear();
                 reader.Consume( position );
                 return true;

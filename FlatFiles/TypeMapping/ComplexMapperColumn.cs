@@ -12,7 +12,7 @@ namespace FlatFiles.TypeMapping
 
         public ComplexMapperColumn( ISchema? schema, IOptions options, IColumnDefinition column, IMapper<TEntity> mapper )
         {
-            this.executionContext = new GenericExecutionContext( schema, options );
+            executionContext = new GenericExecutionContext( schema, options );
             this.column = column;
             reader = mapper.GetReader();
             writer = mapper.GetWriter();

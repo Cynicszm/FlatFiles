@@ -18,9 +18,9 @@ namespace FlatFiles.Test
 
             StringWriter writer = new StringWriter();
             Person[] data = [
-                new Person() { Id = 1, Name = "Bob", CreatedOn = new DateTime( 2018, 6, 28 ), Amount = 12.34m },
-                new Person() { Id = 2, Name = "John", CreatedOn = new DateTime( 2018, 6, 29 ), Amount = 23.45m },
-                new Person() { Id = 3, Name = "Susan", CreatedOn= new DateTime( 2018, 6, 30 ), Amount  = null }
+                new Person { Id = 1, Name = "Bob", CreatedOn = new DateTime( 2018, 6, 28 ), Amount = 12.34m },
+                new Person { Id = 2, Name = "John", CreatedOn = new DateTime( 2018, 6, 29 ), Amount = 23.45m },
+                new Person { Id = 3, Name = "Susan", CreatedOn= new DateTime( 2018, 6, 30 ), Amount  = null }
             ];
             mapper.Write( writer, data );
             string output = writer.ToString();
@@ -39,9 +39,9 @@ namespace FlatFiles.Test
 
             StringWriter writer = new StringWriter();
             Person[] data = [
-                new Person() { Id = 1, Name = "Bob", CreatedOn = new DateTime( 2018, 6, 28 ), Amount = 12.34m },
-                new Person() { Id = 2, Name = "John", CreatedOn = new DateTime( 2018, 6, 29 ), Amount = 23.45m },
-                new Person() { Id = 3, Name = "Susan", CreatedOn= new DateTime( 2018, 6, 30 ), Amount  = null }
+                new Person { Id = 1, Name = "Bob", CreatedOn = new DateTime( 2018, 6, 28 ), Amount = 12.34m },
+                new Person { Id = 2, Name = "John", CreatedOn = new DateTime( 2018, 6, 29 ), Amount = 23.45m },
+                new Person { Id = 3, Name = "Susan", CreatedOn= new DateTime( 2018, 6, 30 ), Amount  = null }
             ];
             mapper.Write( writer, data );
             string output = writer.ToString();
@@ -147,26 +147,26 @@ namespace FlatFiles.Test
         private static Contact[] GetContacts()
         {
             Contact[] data = [
-                new Contact()
+                new Contact
                 {
                     Id = 1,
                     Name = "Bob",
-                    PhoneNumbers = new List<string>() { "555-1111", "555-2222" },
-                    Emails = new List<string>() { "bob@x.com" }
+                    PhoneNumbers = [ "555-1111", "555-2222" ],
+                    Emails = [ "bob@x.com" ]
                 },
-                new Contact()
+                new Contact
                 {
                     Id = 2,
                     Name = "John",
-                    PhoneNumbers = new List<string>() { "555-3333" },
-                    Emails = new List<string>() { "john@x.com", "john@y.com" }
+                    PhoneNumbers = [ "555-3333" ],
+                    Emails = [ "john@x.com", "john@y.com" ]
                 },
-                new Contact()
+                new Contact
                 {
                     Id = 3,
                     Name = "Susan",
-                    PhoneNumbers = new List<string>(),
-                    Emails = new List<string>() { "Susan@x.com", "Susan@y.com", "susan@z.com" }
+                    PhoneNumbers = [],
+                    Emails = [ "Susan@x.com", "Susan@y.com", "susan@z.com" ]
                 }
             ];
             return data;
@@ -267,7 +267,7 @@ namespace FlatFiles.Test
 
         private static IDelimitedTypeMapper<RealtyProperty> GetNestedTypeMapper()
         {
-            var mapper = DelimitedTypeMapper.Define( () => new RealtyProperty()
+            var mapper = DelimitedTypeMapper.Define( () => new RealtyProperty
             {
                 Address = new Address(),
                 Coordinates = new Geolocation()
@@ -298,15 +298,15 @@ namespace FlatFiles.Test
         {
             return new[]
             {
-                new RealtyProperty()
+                new RealtyProperty
                 {
                     Id = 1,
-                    Coordinates = new Geolocation()
+                    Coordinates = new Geolocation
                     {
                         Latitude = 90,
                         Longitude = 120
                     },
-                    Address = new Address()
+                    Address = new Address
                     {
                         Street = "123 Ardvark Ln",
                         City = "Los Alimos",
@@ -314,15 +314,15 @@ namespace FlatFiles.Test
                         Zip = "55555"
                     }
                 },
-                new RealtyProperty()
+                new RealtyProperty
                 {
                     Id = 2,
-                    Coordinates = new Geolocation()
+                    Coordinates = new Geolocation
                     {
                         Latitude = 33,
                         Longitude = 80
                     },
-                    Address = new Address()
+                    Address = new Address
                     {
                         Street = "23 Hamburger Rd",
                         City = "Greenwich",

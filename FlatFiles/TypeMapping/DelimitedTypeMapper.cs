@@ -16,7 +16,7 @@ namespace FlatFiles.TypeMapping
     /// </summary>
     public static class DelimitedTypeMapper
     {
-        private static readonly FrozenDictionary<Type, Func<string, IColumnDefinition>> columnLookup = new Dictionary<Type, Func<string, IColumnDefinition>>()
+        private static readonly FrozenDictionary<Type, Func<string, IColumnDefinition>> ColumnLookup = new Dictionary<Type, Func<string, IColumnDefinition>>()
         {
             { typeof( bool ), n => new BooleanColumn( n ) },
             { typeof( bool? ), n => new BooleanColumn( n ) },
@@ -306,7 +306,7 @@ namespace FlatFiles.TypeMapping
         {
             var bindingFlags = BindingFlags.GetProperty | BindingFlags.GetField | BindingFlags.Instance | BindingFlags.Public;
             var members = entityType.GetTypeInfo().GetMembers( bindingFlags )
-                .Where( m => m.MemberType == MemberTypes.Property || m.MemberType == MemberTypes.Field )
+                .Where( m => m.MemberType is MemberTypes.Property or MemberTypes.Field )
                 .Select( ( m, i ) => (member: m, positions: (user: resolver.GetPosition( m ), builtin: i)) )
                 .Where( x => x.positions.user != -1 )
                 .OrderBy( x => x.positions )
@@ -317,11 +317,7 @@ namespace FlatFiles.TypeMapping
 
         private static IColumnDefinition? GetColumnDefinition( Type type, string columnName )
         {
-            if (columnLookup.TryGetValue( type, out var factory ))
-            {
-                return factory( columnName );
-            }
-            return null;
+            return ColumnLookup.TryGetValue( type, out var factory ) ? factory( columnName ) : null;
         }
     }
 
@@ -811,10 +807,7 @@ namespace FlatFiles.TypeMapping
             {
                 throw new ArgumentException( Resources.BlankColumnName, nameof( column ) );
             }
-            var mapping = lookup.GetOrAddCustomMapping( columnName, ( fileIndex, workIndex ) =>
-            {
-                return new CustomMapping<TEntity>( column, fileIndex, workIndex );
-            } );
+            var mapping = lookup.GetOrAddCustomMapping( columnName, ( fileIndex, workIndex ) => new CustomMapping<TEntity>( column, fileIndex, workIndex ) );
             return mapping;
         }
 
@@ -1061,11 +1054,7 @@ namespace FlatFiles.TypeMapping
         private static IMemberAccessor GetMember<TProp>( string memberName )
         {
             var member = MemberAccessorBuilder.GetMember<TEntity>( typeof( TProp ), memberName );
-            if (member is null)
-            {
-                throw new ArgumentException( Resources.BadPropertySelector, nameof( member ) );
-            }
-            return member;
+            return member ?? throw new ArgumentException( Resources.BadPropertySelector, nameof( member ) );
         }
 
         private static bool IsNullable( IMemberAccessor accessor )

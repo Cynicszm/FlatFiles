@@ -50,11 +50,11 @@ namespace FlatFiles.Test
                 .AddColumn( new StringColumn( "name" ) )
                 .AddColumn( new DateTimeColumn( "created" ) { InputFormat = "MM/dd/yyyy", OutputFormat = "MM/dd/yyyy" } )
                 .AddColumn( new DecimalColumn( "avg" ) );
-            DelimitedOptions options = new DelimitedOptions() { IsFirstRecordSchema = true };
+            DelimitedOptions options = new DelimitedOptions { IsFirstRecordSchema = true };
 
             StringWriter stringWriter = new StringWriter();
             DelimitedWriter builder = new DelimitedWriter( stringWriter, schema, options );
-            var data = new object[] { 123, "Bob", new DateTime( 2012, 12, 31 ), 3.14159m };
+            object[] data = [ 123, "Bob", new DateTime( 2012, 12, 31 ), 3.14159m ];
             builder.Write( data );
 
             StringReader stringReader = new StringReader( stringWriter.ToString() );
@@ -85,13 +85,13 @@ namespace FlatFiles.Test
             DataColumn createdColumn = table.Columns.Add( "created", typeof( DateTime ) );
             DataColumn avgColumn = table.Columns.Add( "avg", typeof( decimal ) );
             table.Constraints.Add( "PK_blah", idColumn, true );
-            DataRow row = table.Rows.Add( new object[] { 1, "Bob", new DateTime( 2018, 07, 16 ), 12.34m } );
+            DataRow row = table.Rows.Add( 1, "Bob", new DateTime( 2018, 07, 16 ), 12.34m );
             row.AcceptChanges();
 
             const string text = @"id,name,created,avg
 2,John,07/17/2018,23.45
 3,Susan,07/18/2018,34.56";
-            DelimitedOptions options = new DelimitedOptions() { IsFirstRecordSchema = true };
+            DelimitedOptions options = new DelimitedOptions { IsFirstRecordSchema = true };
             StringReader stringReader = new StringReader( text );
             IReader csvReader = new DelimitedReader( stringReader, options );
             table.ReadFlatFile( csvReader );
@@ -121,13 +121,13 @@ namespace FlatFiles.Test
             DataColumn createdColumn = table.Columns.Add( "created", typeof( DateTime ) );
             DataColumn avgColumn = table.Columns.Add( "avg", typeof( string ) );
             table.Constraints.Add( "PK_blah", idColumn, true );
-            DataRow row = table.Rows.Add( new object[] { 1, "Bob", new DateTime( 2018, 07, 16 ), "12.34" } );
+            DataRow row = table.Rows.Add( 1, "Bob", new DateTime( 2018, 07, 16 ), "12.34" );
             row.AcceptChanges();
 
             const string text = @"id,name,created
 2,John,07/17/2018
 3,Susan,07/18/2018";
-            DelimitedOptions options = new DelimitedOptions() { IsFirstRecordSchema = true };
+            DelimitedOptions options = new DelimitedOptions { IsFirstRecordSchema = true };
             StringReader stringReader = new StringReader( text );
             var schema = new DelimitedSchema();
             schema.AddColumn( new Int32Column( "id" ) );
@@ -161,7 +161,7 @@ namespace FlatFiles.Test
             DataColumn createdColumn = table.Columns.Add( "created", typeof( DateTime ) );
             DataColumn avgColumn = table.Columns.Add( "avg", typeof( decimal ) );
             table.Constraints.Add( "PK_blah", idColumn, true );
-            DataRow row = table.Rows.Add( new object[] { 1, "Bob", new DateTime( 2018, 07, 16 ), 12.34m } );
+            DataRow row = table.Rows.Add( 1, "Bob", new DateTime( 2018, 07, 16 ), 12.34m );
             row.AcceptChanges();
 
             row.SetField( avgColumn, 99.99m );  // Change but do not accept
@@ -170,7 +170,7 @@ namespace FlatFiles.Test
 1,Robert,07/19/2018,78.90
 2,John,07/17/2018,23.45
 3,Susan,07/18/2018,34.56";
-            DelimitedOptions options = new DelimitedOptions() { IsFirstRecordSchema = true };
+            DelimitedOptions options = new DelimitedOptions { IsFirstRecordSchema = true };
             StringReader stringReader = new StringReader( text );
             var schema = new DelimitedSchema();
             schema.AddColumn( new Int32Column( "id" ) );
@@ -212,7 +212,7 @@ namespace FlatFiles.Test
             DataColumn createdColumn = table.Columns.Add( "created", typeof( DateTime ) );
             DataColumn avgColumn = table.Columns.Add( "avg", typeof( decimal ) );
             table.Constraints.Add( "PK_blah", idColumn, true );
-            DataRow row = table.Rows.Add( new object[] { 1, "Bob", new DateTime( 2018, 07, 16 ), 12.34m } );
+            DataRow row = table.Rows.Add( 1, "Bob", new DateTime( 2018, 07, 16 ), 12.34m );
             row.AcceptChanges();
 
             row.SetField( avgColumn, 99.99m );  // Change but do not accept
@@ -221,7 +221,7 @@ namespace FlatFiles.Test
 1,Robert,07/19/2018,78.90
 2,John,07/17/2018,23.45
 3,Susan,07/18/2018,34.56";
-            DelimitedOptions options = new DelimitedOptions() { IsFirstRecordSchema = true };
+            DelimitedOptions options = new DelimitedOptions { IsFirstRecordSchema = true };
             StringReader stringReader = new StringReader( text );
             var schema = new DelimitedSchema();
             schema.AddColumn( new Int32Column( "id" ) );
@@ -264,7 +264,7 @@ namespace FlatFiles.Test
             DataColumn createdColumn = table.Columns.Add( "created", typeof( DateTime ) );
             DataColumn avgColumn = table.Columns.Add( "avg", typeof( decimal ) );
             table.Constraints.Add( "PK_blah", idColumn, true );
-            DataRow row = table.Rows.Add( new object[] { 1, "Bob", new DateTime( 2018, 07, 16 ), 12.34m } );
+            DataRow row = table.Rows.Add( 1, "Bob", new DateTime( 2018, 07, 16 ), 12.34m );
             row.AcceptChanges();
 
             row.SetField( avgColumn, 99.99m );  // Change but do not accept
@@ -273,7 +273,7 @@ namespace FlatFiles.Test
 1,Robert,07/19/2018,78.90
 2,John,07/17/2018,23.45
 3,Susan,07/18/2018,34.56";
-            DelimitedOptions options = new DelimitedOptions() { IsFirstRecordSchema = true };
+            DelimitedOptions options = new DelimitedOptions { IsFirstRecordSchema = true };
             StringReader stringReader = new StringReader( text );
             var schema = new DelimitedSchema();
             schema.AddColumn( new Int32Column( "id" ) );
@@ -312,12 +312,12 @@ namespace FlatFiles.Test
             table.Columns.Add( "avg", typeof( decimal ) );
             table.Constraints.Add( "PK_blah", idColumn, true );
 
-            table.Rows.Add( new object[] { 1, "Bob", new DateTime( 2018, 07, 16 ), 12.34m } );
-            table.Rows.Add( new object[] { 2, "John", new DateTime( 2018, 07, 17 ), 23.45m } );
-            table.Rows.Add( new object[] { 3, "Susan", new DateTime( 2018, 07, 18 ), 34.56m } );
-            table.Rows.Add( new object[] { 4, null, null, null } );
+            table.Rows.Add( 1, "Bob", new DateTime( 2018, 07, 16 ), 12.34m );
+            table.Rows.Add( 2, "John", new DateTime( 2018, 07, 17 ), 23.45m );
+            table.Rows.Add( 3, "Susan", new DateTime( 2018, 07, 18 ), 34.56m );
+            table.Rows.Add( 4, null, null, null );
 
-            var options = new DelimitedOptions()
+            var options = new DelimitedOptions
             {
                 IsFirstRecordSchema = true,
                 RecordSeparator = "\r\n",
@@ -351,11 +351,11 @@ namespace FlatFiles.Test
             table.Columns.Add( "avg", typeof( decimal ) );
             table.Constraints.Add( "PK_blah", idColumn, true );
 
-            table.Rows.Add( new object[] { 1, "Bob", 12.34m } );
-            table.Rows.Add( new object[] { 2, "John", 23.45m } );
-            table.Rows.Add( new object[] { 3, "Susan", 34.56m } );
+            table.Rows.Add( 1, "Bob", 12.34m );
+            table.Rows.Add( 2, "John", 23.45m );
+            table.Rows.Add( 3, "Susan", 34.56m );
 
-            var options = new DelimitedOptions() { IsFirstRecordSchema = true };
+            var options = new DelimitedOptions { IsFirstRecordSchema = true };
             var stringWriter = new StringWriter();
             var schema = new DelimitedSchema();
             schema.AddColumn( new Int32Column( "id" ) );
@@ -384,11 +384,11 @@ namespace FlatFiles.Test
             table.Columns.Add( "avg", typeof( decimal ) );
             table.Constraints.Add( "PK_blah", idColumn, true );
 
-            table.Rows.Add( new object[] { 1, "Bob", new DateTime( 2018, 07, 16 ), 12.34m } );
-            table.Rows.Add( new object[] { 2, "John", new DateTime( 2018, 07, 17 ), 23.45m } );
-            table.Rows.Add( new object[] { 3, "Susan", new DateTime( 2018, 07, 18 ), 34.56m } );
+            table.Rows.Add( 1, "Bob", new DateTime( 2018, 07, 16 ), 12.34m );
+            table.Rows.Add( 2, "John", new DateTime( 2018, 07, 17 ), 23.45m );
+            table.Rows.Add( 3, "Susan", new DateTime( 2018, 07, 18 ), 34.56m );
 
-            var options = new DelimitedOptions() { IsFirstRecordSchema = true };
+            var options = new DelimitedOptions { IsFirstRecordSchema = true };
             var stringWriter = new StringWriter();
             var schema = new DelimitedSchema();
             schema.AddColumn( new Int32Column( "id" ) );
@@ -418,7 +418,7 @@ namespace FlatFiles.Test
             schema.AddColumn( new IgnoredColumn( "Ignored" ) );
             schema.AddColumn( new StringColumn( "C" ) );
 
-            var options = new DelimitedOptions()
+            var options = new DelimitedOptions
             {
                 IsFirstRecordSchema = true
             };
@@ -447,11 +447,11 @@ namespace FlatFiles.Test
             table.Columns.Add( "avg", typeof( decimal ) );
             table.Constraints.Add( "PK_blah", idColumn, true );
 
-            table.Rows.Add( new object[] { 1, "Bob", new DateTime( 2018, 07, 16 ), 12.34m } );
-            table.Rows.Add( new object[] { 2, "John", new DateTime( 2018, 07, 17 ), 23.45m } );
-            table.Rows.Add( new object[] { 3, "Susan", new DateTime( 2018, 07, 18 ), 34.56m } );
+            table.Rows.Add( 1, "Bob", new DateTime( 2018, 07, 16 ), 12.34m );
+            table.Rows.Add( 2, "John", new DateTime( 2018, 07, 17 ), 23.45m );
+            table.Rows.Add( 3, "Susan", new DateTime( 2018, 07, 18 ), 34.56m );
 
-            var options = new DelimitedOptions()
+            var options = new DelimitedOptions
             {
                 IsFirstRecordSchema = true,
                 RecordSeparator = "\r\n",
@@ -502,7 +502,7 @@ namespace FlatFiles.Test
                 NumberStyles = NumberStyles.Currency
             } );
 
-            var options = new DelimitedOptions()
+            var options = new DelimitedOptions
             {
                 IsFirstRecordSchema = true
             };

@@ -8,7 +8,7 @@ namespace FlatFiles
     /// <summary>
     ///     Builds textual representations of data by separating fields with a delimiter.
     /// </summary>
-    public sealed class DelimitedWriter : IWriter, IWriterWithMetadata
+    public sealed class DelimitedWriter : IWriterWithMetadata
     {
         private readonly DelimitedRecordWriter recordWriter;
         private bool isSchemaWritten;

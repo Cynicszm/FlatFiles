@@ -54,11 +54,11 @@ namespace FlatFiles.Test
             var typedReader = mapper.GetReader( reader );
             Person[] results = [.. typedReader.ReadAll()];
 
-            var expectedPhysicalIndexes = new int[] { 0, 2, 4, 6 };
+            int[] expectedPhysicalIndexes = [ 0, 2, 4, 6 ];
             CollectionAssert.AreEqual( expectedPhysicalIndexes, colPhysicalIndexes );
             CollectionAssert.AreEqual( expectedPhysicalIndexes, propPhysicalIndexes );
 
-            var expectedLogicalIndexes = new int[] { 0, 1, 2, 3 };
+            int[] expectedLogicalIndexes = [ 0, 1, 2, 3 ];
             CollectionAssert.AreEqual( expectedLogicalIndexes, colLogicalIndexes );
             CollectionAssert.AreEqual( expectedLogicalIndexes, propLogicalIndexes );
         }
@@ -66,7 +66,7 @@ namespace FlatFiles.Test
         [TestMethod]
         public void ShouldPassCorrectIndexesWhenWriting()
         {
-            Person[] data = [ new Person() { Id = 1, Name = "Bob", CreatedOn = new DateTime( 2018, 06, 30 ), IsActive = true } ];
+            Person[] data = [ new Person { Id = 1, Name = "Bob", CreatedOn = new DateTime( 2018, 06, 30 ), IsActive = true } ];
             var mapper = DelimitedTypeMapper.Define( () => new Person() );
             List<int> colPhysicalIndexes = [];
             List<int> colLogicalIndexes = [];
@@ -107,11 +107,11 @@ namespace FlatFiles.Test
             var typedWriter = mapper.GetWriter( writer );
             typedWriter.WriteAll( data );
 
-            var expectedPhysicalIndexes = new int[] { 0, 2, 4, 6 };
+            int[] expectedPhysicalIndexes = [ 0, 2, 4, 6 ];
             CollectionAssert.AreEqual( expectedPhysicalIndexes, colPhysicalIndexes );
             CollectionAssert.AreEqual( expectedPhysicalIndexes, propPhysicalIndexes );
 
-            var expectedLogicalIndexes = new int[] { 0, 1, 2, 3 };
+            int[] expectedLogicalIndexes = [ 0, 1, 2, 3 ];
             CollectionAssert.AreEqual( expectedLogicalIndexes, colLogicalIndexes );
             CollectionAssert.AreEqual( expectedLogicalIndexes, propLogicalIndexes );
         }
