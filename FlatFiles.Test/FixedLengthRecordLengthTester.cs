@@ -36,7 +36,7 @@ namespace FlatFiles.Test
 
         private static List<int> Quantities( FixedLengthReader reader )
         {
-            var quantities = new List<int>();
+            List<int> quantities = [];
             while (reader.Read())
             {
                 quantities.Add( (int) reader.GetValues()[2] );
@@ -70,7 +70,7 @@ namespace FlatFiles.Test
         public void TestRead_LongRecordWhenRejected_IsSkippedWhenTheErrorIsHandled()
         {
             var reader = Reader( 4, new FixedLengthOptions { IsLongRecordRejected = true } );
-            var rejected = new List<int>();
+            List<int> rejected = [];
             reader.RecordError += ( sender, e ) =>
             {
                 rejected.Add( ((RecordProcessingException) e.Exception).RecordContext.PhysicalRecordNumber );
