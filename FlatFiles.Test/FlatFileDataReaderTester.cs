@@ -61,7 +61,7 @@ namespace FlatFiles.Test
 2,Susan,2018-07-04,false,,{24C250EB-87C9-45DE-B01F-71A7754C6AAD},5
 ";
             var reader = new StringReader( data );
-            var csvReader = new DelimitedReader( reader, new DelimitedOptions() { IsFirstRecordSchema = true } );
+            var csvReader = new DelimitedReader( reader, new DelimitedOptions { IsFirstRecordSchema = true } );
             var dataReader = new FlatFileDataReader( csvReader );
             return dataReader;
         }
@@ -159,33 +159,31 @@ namespace FlatFiles.Test
             schema.AddColumn( new IgnoredColumn( "Ignored" ) );
             schema.AddColumn( new StringColumn( "C" ) );
 
-            var options = new DelimitedOptions()
+            var options = new DelimitedOptions
             {
                 IsFirstRecordSchema = true
             };
 
             var textReader = new StringReader( data );
             var csvReader = new DelimitedReader( textReader, schema, options );
-            using (var dataReader = new FlatFileDataReader( csvReader ))
-            {
-                Assert.AreEqual( "A", dataReader.GetName( 0 ) );
-                Assert.AreEqual( "C", dataReader.GetName( 1 ) );
-                Assert.AreEqual( 0, dataReader.GetOrdinal( "A" ) );
-                Assert.AreEqual( -1, dataReader.GetOrdinal( "B" ) );
-                Assert.AreEqual( 1, dataReader.GetOrdinal( "C" ) );
+            using var dataReader = new FlatFileDataReader( csvReader );
+            Assert.AreEqual( "A", dataReader.GetName( 0 ) );
+            Assert.AreEqual( "C", dataReader.GetName( 1 ) );
+            Assert.AreEqual( 0, dataReader.GetOrdinal( "A" ) );
+            Assert.AreEqual( -1, dataReader.GetOrdinal( "B" ) );
+            Assert.AreEqual( 1, dataReader.GetOrdinal( "C" ) );
 
-                var schemaTable = dataReader.GetSchemaTable();
-                string[] columnNames = [.. schemaTable.Rows.OfType<DataRow>().Select( r => r.Field<string>( "ColumnName" ) )];
-                CollectionAssert.AreEqual( new[] { "A", "C" }, columnNames );
+            var schemaTable = dataReader.GetSchemaTable();
+            string[] columnNames = [.. schemaTable.Rows.OfType<DataRow>().Select( r => r.Field<string>( "ColumnName" ) )];
+            CollectionAssert.AreEqual( new[] { "A", "C" }, columnNames );
 
-                Assert.IsTrue( dataReader.Read() );
-                object[] values1 = dataReader.GetValues();
-                CollectionAssert.AreEqual( new[] { "1", "3" }, values1 );
-                Assert.IsTrue( dataReader.Read() );
-                object[] values2 = dataReader.GetValues();
-                CollectionAssert.AreEqual( new[] { "4", "6" }, values2 );
-                Assert.IsFalse( dataReader.Read() );
-            }
+            Assert.IsTrue( dataReader.Read() );
+            object[] values1 = dataReader.GetValues();
+            CollectionAssert.AreEqual( new[] { "1", "3" }, values1 );
+            Assert.IsTrue( dataReader.Read() );
+            object[] values2 = dataReader.GetValues();
+            CollectionAssert.AreEqual( new[] { "4", "6" }, values2 );
+            Assert.IsFalse( dataReader.Read() );
         }
     }
 }

@@ -17,9 +17,9 @@ namespace FlatFiles.Test
             var stringWriter = new StringWriter();
             var writer = DelimitedTypeMapper.GetAutoMappedWriter<Person>( stringWriter );
             Person[] expected = [
-                new Person() { Id = 1, Name = "Bob", CreatedOn = new DateTime( 2018, 07, 01 ), IsActive = true, VisitCount = 1 },
-                new Person() { Id = 2, Name = "John", CreatedOn = new DateTime( 2018, 07, 02 ), IsActive = false, VisitCount = null },
-                new Person() { Id = 3, Name = "Susan", CreatedOn = new DateTime( 2018, 07, 03 ), IsActive = false, VisitCount = 10 }
+                new Person { Id = 1, Name = "Bob", CreatedOn = new DateTime( 2018, 07, 01 ), IsActive = true, VisitCount = 1 },
+                new Person { Id = 2, Name = "John", CreatedOn = new DateTime( 2018, 07, 02 ), IsActive = false, VisitCount = null },
+                new Person { Id = 3, Name = "Susan", CreatedOn = new DateTime( 2018, 07, 03 ), IsActive = false, VisitCount = 10 }
             ];
             writer.WriteAll( expected );
             string output = stringWriter.ToString();
@@ -40,9 +40,9 @@ namespace FlatFiles.Test
             var stringWriter = new StringWriter();
             var writer = DelimitedTypeMapper.GetAutoMappedWriter<Person>( stringWriter );
             Person[] expected = [
-                new Person() { Id = 1, Name = "Bob", CreatedOn = new DateTime( 2018, 07, 01 ), IsActive = true, VisitCount = 1 },
-                new Person() { Id = 2, Name = "John", CreatedOn = new DateTime( 2018, 07, 02 ), IsActive = false, VisitCount = null },
-                new Person() { Id = 3, Name = "Susan", CreatedOn = new DateTime( 2018, 07, 03 ), IsActive = false, VisitCount = 10 }
+                new Person { Id = 1, Name = "Bob", CreatedOn = new DateTime( 2018, 07, 01 ), IsActive = true, VisitCount = 1 },
+                new Person { Id = 2, Name = "John", CreatedOn = new DateTime( 2018, 07, 02 ), IsActive = false, VisitCount = null },
+                new Person { Id = 3, Name = "Susan", CreatedOn = new DateTime( 2018, 07, 03 ), IsActive = false, VisitCount = 10 }
             ];
             await writer.WriteAllAsync( expected );
             string output = stringWriter.ToString();
@@ -68,9 +68,9 @@ namespace FlatFiles.Test
             var nameResolver = AutoMapResolver.For( m => $"Prefix_{m.Name}_Postfix" );
             var writer = DelimitedTypeMapper.GetAutoMappedWriter<Person>( stringWriter, null, nameResolver );
             Person[] expected = [
-                new Person() { Id = 1, Name = "Bob", CreatedOn = new DateTime( 2018, 07, 01 ), IsActive = true, VisitCount = 1 },
-                new Person() { Id = 2, Name = "John", CreatedOn = new DateTime( 2018, 07, 02 ), IsActive = false, VisitCount = null },
-                new Person() { Id = 3, Name = "Susan", CreatedOn = new DateTime( 2018, 07, 03 ), IsActive = false, VisitCount = 10 }
+                new Person { Id = 1, Name = "Bob", CreatedOn = new DateTime( 2018, 07, 01 ), IsActive = true, VisitCount = 1 },
+                new Person { Id = 2, Name = "John", CreatedOn = new DateTime( 2018, 07, 02 ), IsActive = false, VisitCount = null },
+                new Person { Id = 3, Name = "Susan", CreatedOn = new DateTime( 2018, 07, 03 ), IsActive = false, VisitCount = 10 }
             ];
             writer.WriteAll( expected );
             string output = stringWriter.ToString();
@@ -94,13 +94,13 @@ namespace FlatFiles.Test
             mapper.Property( x => x.CreatedOn );
             mapper.Property( x => x.IsActive );
             var stringWriter = new StringWriter();
-            var options = new DelimitedOptions()
+            var options = new DelimitedOptions
             {
                 IsFirstRecordSchema = true
             };
             var writer = mapper.GetWriter( stringWriter, options );
-            writer.WriteAll( new Person[0] );
-            writer.WriteAll( new Person[0] ); // Test we don't double write headers
+            writer.WriteAll( [] );
+            writer.WriteAll( [] ); // Test we don't double write headers
             var output = stringWriter.ToString();
 
             var stringReader = new StringReader( output );
@@ -123,11 +123,11 @@ namespace FlatFiles.Test
             mapper.Property( x => x.CreatedOn );
             mapper.Property( x => x.IsActive );
             var stringWriter = new StringWriter();
-            var options = new DelimitedOptions()
+            var options = new DelimitedOptions
             {
                 IsFirstRecordSchema = true
             };
-            mapper.Write( stringWriter, new Person[0], options );
+            mapper.Write( stringWriter, [], options );
             var output = stringWriter.ToString();
 
             var stringReader = new StringReader( output );
@@ -150,13 +150,13 @@ namespace FlatFiles.Test
             mapper.Property( x => x.CreatedOn );
             mapper.Property( x => x.IsActive );
             var stringWriter = new StringWriter();
-            var options = new DelimitedOptions()
+            var options = new DelimitedOptions
             {
                 IsFirstRecordSchema = false
             };
             var people = new Person[]
             {
-                new Person()
+                new Person
                 {
                     Id = 1,
                     Name = "Tom",

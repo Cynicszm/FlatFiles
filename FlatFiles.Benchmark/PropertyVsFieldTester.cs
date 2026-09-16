@@ -13,7 +13,7 @@ namespace FlatFiles.Benchmark
 
         public PropertyVsFieldTester()
         {
-            PropertyPerson propertyPerson = new PropertyPerson()
+            PropertyPerson propertyPerson = new PropertyPerson
             {
                 FirstName = "John",
                 LastName = "Smith",
@@ -26,12 +26,12 @@ namespace FlatFiles.Benchmark
                 FavoriteColor = "Blue",
                 FavoriteFood = "Cheese and Crackers",
                 FavoriteSport = "Soccer",
-                CreatedOn = new DateTime(2017, 01, 01),
+                CreatedOn = new DateTime( 2017, 01, 01 ),
                 IsActive = true
             };
-            propertyPeople = Enumerable.Repeat(0, 10000).Select(i => propertyPerson).ToArray();
+            propertyPeople = Enumerable.Repeat( 0, 10000 ).Select( i => propertyPerson ).ToArray();
 
-            FieldPerson fieldPerson = new FieldPerson()
+            FieldPerson fieldPerson = new FieldPerson
             {
                 FirstName = "John",
                 LastName = "Smith",
@@ -44,62 +44,62 @@ namespace FlatFiles.Benchmark
                 FavoriteColor = "Blue",
                 FavoriteFood = "Cheese and Crackers",
                 FavoriteSport = "Soccer",
-                CreatedOn = new DateTime(2017, 01, 01),
+                CreatedOn = new DateTime( 2017, 01, 01 ),
                 IsActive = true
             };
-            fieldPeople = Enumerable.Repeat(0, 10000).Select(i => fieldPerson).ToArray();
+            fieldPeople = Enumerable.Repeat( 0, 10000 ).Select( i => fieldPerson ).ToArray();
         }
 
         [Benchmark]
         public void RunPropertyTest()
         {
-            var mapper = DelimitedTypeMapper.Define<PropertyPerson>(() => new PropertyPerson());
-            mapper.Property(x => x.FirstName);
-            mapper.Property(x => x.LastName);
-            mapper.Property(x => x.Age);
-            mapper.Property(x => x.Street1);
-            mapper.Property(x => x.Street2);
-            mapper.Property(x => x.City);
-            mapper.Property(x => x.State);
-            mapper.Property(x => x.Zip);
-            mapper.Property(x => x.FavoriteColor);
-            mapper.Property(x => x.FavoriteFood);
-            mapper.Property(x => x.FavoriteSport);
-            mapper.Property(x => x.CreatedOn);
-            mapper.Property(x => x.IsActive);
+            var mapper = DelimitedTypeMapper.Define<PropertyPerson>( () => new PropertyPerson() );
+            mapper.Property( x => x.FirstName );
+            mapper.Property( x => x.LastName );
+            mapper.Property( x => x.Age );
+            mapper.Property( x => x.Street1 );
+            mapper.Property( x => x.Street2 );
+            mapper.Property( x => x.City );
+            mapper.Property( x => x.State );
+            mapper.Property( x => x.Zip );
+            mapper.Property( x => x.FavoriteColor );
+            mapper.Property( x => x.FavoriteFood );
+            mapper.Property( x => x.FavoriteSport );
+            mapper.Property( x => x.CreatedOn );
+            mapper.Property( x => x.IsActive );
 
             StringWriter writer = new StringWriter();
-            mapper.Write(writer, propertyPeople);
+            mapper.Write( writer, propertyPeople );
             string serialized = writer.ToString();
 
-            StringReader reader = new StringReader(serialized);
-            var deserialized = mapper.Read(reader).ToArray();
+            StringReader reader = new StringReader( serialized );
+            var deserialized = mapper.Read( reader ).ToArray();
         }
 
         [Benchmark]
         public void RunFieldTest()
         {
-            var mapper = DelimitedTypeMapper.Define<FieldPerson>(() => new FieldPerson());
-            mapper.Property(x => x.FirstName);
-            mapper.Property(x => x.LastName);
-            mapper.Property(x => x.Age);
-            mapper.Property(x => x.Street1);
-            mapper.Property(x => x.Street2);
-            mapper.Property(x => x.City);
-            mapper.Property(x => x.State);
-            mapper.Property(x => x.Zip);
-            mapper.Property(x => x.FavoriteColor);
-            mapper.Property(x => x.FavoriteFood);
-            mapper.Property(x => x.FavoriteSport);
-            mapper.Property(x => x.CreatedOn);
-            mapper.Property(x => x.IsActive);
+            var mapper = DelimitedTypeMapper.Define<FieldPerson>( () => new FieldPerson() );
+            mapper.Property( x => x.FirstName );
+            mapper.Property( x => x.LastName );
+            mapper.Property( x => x.Age );
+            mapper.Property( x => x.Street1 );
+            mapper.Property( x => x.Street2 );
+            mapper.Property( x => x.City );
+            mapper.Property( x => x.State );
+            mapper.Property( x => x.Zip );
+            mapper.Property( x => x.FavoriteColor );
+            mapper.Property( x => x.FavoriteFood );
+            mapper.Property( x => x.FavoriteSport );
+            mapper.Property( x => x.CreatedOn );
+            mapper.Property( x => x.IsActive );
 
             StringWriter writer = new StringWriter();
-            mapper.Write(writer, fieldPeople);
+            mapper.Write( writer, fieldPeople );
             string serialized = writer.ToString();
 
-            StringReader reader = new StringReader(serialized);
-            var deserialized = mapper.Read(reader).ToArray();
+            StringReader reader = new StringReader( serialized );
+            var deserialized = mapper.Read( reader ).ToArray();
         }
         
         public class PropertyPerson
