@@ -73,11 +73,6 @@ namespace FlatFiles.TypeMapping
             {
                 throw new ArgumentException(Resources.BadPropertySelector, nameof(expression));
             }
-            if (member.Expression is null)
-            {
-                // A static member has no instance to read from, so it cannot be mapped to an entity.
-                throw new ArgumentException(Resources.BadPropertySelector, nameof(expression));
-            }
             if (member.Member is PropertyInfo propertyInfo)
             {
                 if (propertyInfo.DeclaringType!.GetTypeInfo().IsAssignableFrom(typeof(TEntity)))
@@ -85,6 +80,12 @@ namespace FlatFiles.TypeMapping
                     return new PropertyAccessor(propertyInfo, null);
                 }
 
+                if (member.Expression is null)
+                {
+                    // A nested member needs an instance to read from. A static member has none, and
+                    // recursing on the null would surface as a NullReferenceException from inside.
+                    throw new ArgumentException(Resources.BadPropertySelector, nameof(expression));
+                }
                 IMemberAccessor parentAccessor = GetMember<TEntity>(member.Expression);
                 return new PropertyAccessor(propertyInfo, parentAccessor);
             }
@@ -96,6 +97,12 @@ namespace FlatFiles.TypeMapping
                     return new FieldAccessor(fieldInfo, null);
                 }
 
+                if (member.Expression is null)
+                {
+                    // A nested member needs an instance to read from. A static member has none, and
+                    // recursing on the null would surface as a NullReferenceException from inside.
+                    throw new ArgumentException(Resources.BadPropertySelector, nameof(expression));
+                }
                 IMemberAccessor parentAccessor = GetMember<TEntity>(member.Expression);
                 return new FieldAccessor(fieldInfo, parentAccessor);
             }

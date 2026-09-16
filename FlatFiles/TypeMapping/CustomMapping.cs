@@ -50,17 +50,18 @@ namespace FlatFiles.TypeMapping
             {
                 throw new ArgumentException(Resources.BadPropertySelector, nameof(expression));
             }
-            if (memberExpression.Expression is null)
-            {
-                // A static member has no instance to read from, so it cannot be mapped to an entity.
-                throw new ArgumentException(Resources.BadPropertySelector, nameof(expression));
-            }
             var memberInfo = memberExpression.Member;
             if (memberInfo is PropertyInfo propertyInfo)
             {
                 if (memberInfo.DeclaringType!.GetTypeInfo().IsAssignableFrom(typeof(TEntity)))
                 {
                     return Expression.Property(entityParameter, propertyInfo);
+                }
+                if (memberExpression.Expression is null)
+                {
+                    // A nested member needs an instance to read from. A static member has none, and
+                    // recursing on the null would surface as a NullReferenceException from inside.
+                    throw new ArgumentException(Resources.BadPropertySelector, nameof(expression));
                 }
                 var nestedMember = GetMemberExpression(entityParameter, memberExpression.Expression);
                 return Expression.Property(nestedMember, propertyInfo);
@@ -70,6 +71,12 @@ namespace FlatFiles.TypeMapping
                 if (memberInfo.DeclaringType!.GetTypeInfo().IsAssignableFrom(typeof(TEntity)))
                 {
                     return Expression.Field(entityParameter, fieldInfo);
+                }
+                if (memberExpression.Expression is null)
+                {
+                    // A nested member needs an instance to read from. A static member has none, and
+                    // recursing on the null would surface as a NullReferenceException from inside.
+                    throw new ArgumentException(Resources.BadPropertySelector, nameof(expression));
                 }
                 var nestedMember = GetMemberExpression(entityParameter, memberExpression.Expression);
                 return Expression.Field(nestedMember, fieldInfo);
