@@ -9,10 +9,6 @@ namespace FlatFiles
     /// </summary>
     public abstract class ColumnDefinition : IColumnDefinition
     {
-        private string? columnName;
-        private INullFormatter nullHandler = FlatFiles.NullFormatter.Default;
-        private IDefaultValue defaultValue = FlatFiles.DefaultValue.Disabled();
-
         /// <summary>
         /// Initializes a new instance of a ColumnDefinition.
         /// </summary>
@@ -38,7 +34,7 @@ namespace FlatFiles
         /// </summary>
         public string? ColumnName
         {
-            get => columnName;
+            get => field;
             internal set 
             {
                 value = value?.Trim();
@@ -46,7 +42,7 @@ namespace FlatFiles
                 {
                     throw new ArgumentException(Resources.BlankColumnName);
                 }
-                columnName = value;
+                field = value;
             }
         }
 
@@ -68,18 +64,18 @@ namespace FlatFiles
         /// </summary>
         public IDefaultValue DefaultValue
         {
-            get => defaultValue;
-            set => defaultValue = value ?? FlatFiles.DefaultValue.Disabled();
-        }
+            get => field;
+            set => field = value ?? FlatFiles.DefaultValue.Disabled();
+        } = FlatFiles.DefaultValue.Disabled();
 
         /// <summary>
         /// Gets or sets the null formatter instance used to read/write null values.
         /// </summary>
         public INullFormatter NullFormatter
         {
-            get => nullHandler;
-            set => nullHandler = value ?? FlatFiles.NullFormatter.Default;
-        }
+            get => field;
+            set => field = value ?? FlatFiles.NullFormatter.Default;
+        } = FlatFiles.NullFormatter.Default;
 
         /// <summary>
         /// Gets or sets a function used to preprocess input before trying to parse it.

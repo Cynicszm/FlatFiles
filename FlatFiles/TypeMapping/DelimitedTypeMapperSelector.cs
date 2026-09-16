@@ -9,7 +9,7 @@ namespace FlatFiles.TypeMapping
     /// </summary>
     public sealed class DelimitedTypeMapperSelector
     {
-        private readonly List<TypeMapperMatcher> matchers = new();
+        private readonly List<TypeMapperMatcher> matchers = [];
         private IDynamicDelimitedTypeMapper? defaultMapper;
 
         /// <summary>

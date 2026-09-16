@@ -8,7 +8,7 @@ namespace FlatFiles
     /// </summary>
     public sealed class FixedLengthSchema : Schema
     {
-        private readonly List<Window> windows = new();
+        private readonly List<Window> windows = [];
         private ColumnCollection? cachedColumns;
         private IColumnDefinition? trailing;
 

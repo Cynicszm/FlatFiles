@@ -9,7 +9,7 @@ namespace FlatFiles
     public sealed class DelimitedSchemaSelector
     {
         private static readonly SchemaMatcher nonMatcher = new(null, values => false);
-        private readonly List<SchemaMatcher> matchers = new();
+        private readonly List<SchemaMatcher> matchers = [];
         private SchemaMatcher defaultMatcher = nonMatcher;
 
         /// <summary>

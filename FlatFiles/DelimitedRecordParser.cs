@@ -8,7 +8,7 @@ namespace FlatFiles
 {
     internal sealed class DelimitedRecordParser
     {
-        private readonly List<string> tokens = new();
+        private readonly List<string> tokens = [];
         private readonly StringBuilder token = new();
         private readonly RetryReader reader;
         private readonly IRecordSeparatorMatcher separatorMatcher;

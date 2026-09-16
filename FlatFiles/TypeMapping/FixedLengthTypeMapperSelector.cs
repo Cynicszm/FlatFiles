@@ -9,7 +9,7 @@ namespace FlatFiles.TypeMapping
     /// </summary>
     public sealed class FixedLengthTypeMapperSelector
     {
-        private readonly List<TypeMapperMatcher> matchers = new();
+        private readonly List<TypeMapperMatcher> matchers = [];
         private IDynamicFixedLengthTypeMapper? defaultMapper;
 
         /// <summary>
