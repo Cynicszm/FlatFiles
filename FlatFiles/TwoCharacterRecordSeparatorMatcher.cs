@@ -1,18 +1,7 @@
 ﻿namespace FlatFiles
 {
-    internal sealed class TwoCharacterRecordSeparatorMatcher : IRecordSeparatorMatcher
+    internal sealed class TwoCharacterRecordSeparatorMatcher(RetryReader reader, char first, char second) : IRecordSeparatorMatcher
     {
-        private readonly RetryReader reader;
-        private readonly char first;
-        private readonly char second;
-
-        public TwoCharacterRecordSeparatorMatcher(RetryReader reader, char first, char second)
-        {
-            this.reader = reader;
-            this.first = first;
-            this.second = second;
-        }
-
         public int Size => 2;
 
         public bool IsMatch()

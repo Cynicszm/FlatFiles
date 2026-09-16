@@ -1,14 +1,7 @@
 ﻿namespace FlatFiles
 {
-    internal sealed class DefaultRecordSeparatorMatcher : IRecordSeparatorMatcher
+    internal sealed class DefaultRecordSeparatorMatcher(RetryReader reader) : IRecordSeparatorMatcher
     {
-        private readonly RetryReader reader;
-
-        public DefaultRecordSeparatorMatcher(RetryReader reader)
-        {
-            this.reader = reader;
-        }
-
         public int Size => 2;
 
         public bool IsMatch()

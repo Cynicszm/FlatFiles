@@ -3,19 +3,11 @@ using System.Reflection;
 
 namespace FlatFiles.TypeMapping
 {
-    internal sealed class PropertyAccessor : IMemberAccessor
+    internal sealed class PropertyAccessor(PropertyInfo propertyInfo, IMemberAccessor? parent) : IMemberAccessor
     {
-        private readonly PropertyInfo propertyInfo;
-
-        public PropertyAccessor(PropertyInfo propertyInfo, IMemberAccessor? parent)
-        {
-            this.propertyInfo = propertyInfo;
-            ParentAccessor = parent;
-        }
-
         public MemberInfo MemberInfo => propertyInfo;
 
-        public IMemberAccessor? ParentAccessor { get; }
+        public IMemberAccessor? ParentAccessor { get; } = parent;
 
         public string Name => ParentAccessor == null ? propertyInfo.Name : $"{ParentAccessor.Name}.{propertyInfo.Name}";
 

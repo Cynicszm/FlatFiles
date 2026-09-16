@@ -3,18 +3,8 @@ using System.Globalization;
 
 namespace FlatFiles.TypeMapping
 {
-    internal sealed class Int16PropertyMapping : IInt16PropertyMapping, IMemberMapping
+    internal sealed class Int16PropertyMapping(Int16Column column, IMemberAccessor member, int physicalIndex, int logicalIndex) : IInt16PropertyMapping, IMemberMapping
     {
-        private readonly Int16Column column;
-
-        public Int16PropertyMapping(Int16Column column, IMemberAccessor member, int physicalIndex, int logicalIndex)
-        {
-            this.column = column;
-            Member = member;
-            PhysicalIndex = physicalIndex;
-            LogicalIndex = logicalIndex;
-        }
-
         public IInt16PropertyMapping ColumnName(string name)
         {
             column.ColumnName = name;
@@ -89,7 +79,7 @@ namespace FlatFiles.TypeMapping
             return this;
         }
 
-        public IMemberAccessor Member { get; }
+        public IMemberAccessor Member { get; } = member;
 
         public Action<IColumnContext?, object?, object?>? Reader => null;
 
@@ -97,8 +87,8 @@ namespace FlatFiles.TypeMapping
 
         public IColumnDefinition ColumnDefinition => column;
 
-        public int PhysicalIndex { get; }
+        public int PhysicalIndex { get; } = physicalIndex;
 
-        public int LogicalIndex { get; }
+        public int LogicalIndex { get; } = logicalIndex;
     }
 }
