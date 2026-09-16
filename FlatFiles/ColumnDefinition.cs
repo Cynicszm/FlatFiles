@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Buffers;
 using System.Globalization;
 using FlatFiles.Properties;
@@ -35,7 +36,7 @@ namespace FlatFiles
         /// </summary>
         public string? ColumnName
         {
-            get => field;
+            get;
             internal set 
             {
                 value = value?.Trim();
@@ -58,23 +59,25 @@ namespace FlatFiles
         public bool IsNullable { get; set; } = true;
 
         /// <inheritdoc/>
-        public virtual bool IsComplex { get; } = false;
+        public virtual bool IsComplex => false;
 
         /// <summary>
         ///     Gets or sets the default value to use when a null is encountered on a non-nullable column.
         /// </summary>
+        [AllowNull]
         public IDefaultValue DefaultValue
         {
-            get => field;
+            get;
             set => field = value ?? FlatFiles.DefaultValue.Disabled();
         } = FlatFiles.DefaultValue.Disabled();
 
         /// <summary>
         ///     Gets or sets the null formatter instance used to read/write null values.
         /// </summary>
+        [AllowNull]
         public INullFormatter NullFormatter
         {
-            get => field;
+            get;
             set => field = value ?? FlatFiles.NullFormatter.Default;
         } = FlatFiles.NullFormatter.Default;
 
@@ -241,20 +244,10 @@ namespace FlatFiles
         {
             if (value is null || NullFormatter.IsNullValue( context, value ))
             {
-                if (IsNullable)
-                {
-                    return null;
-                }
-                else
-                {
-                    return DefaultValue.GetDefaultValue( context ); // Should we check for the expected type?
-                }
+                return IsNullable ? null : DefaultValue.GetDefaultValue( context ); // Should we check for the expected type?
             }
-            else
-            {
-                string trimmed = IsTrimmed ? TrimValue( value ) : value;
-                return OnParse( context, trimmed );
-            }
+            string trimmed = IsTrimmed ? TrimValue( value ) : value;
+            return OnParse( context, trimmed );
         }
 
         /// <summary>
@@ -327,10 +320,7 @@ namespace FlatFiles
             {
                 return NullFormatter.FormatNull( context ) ?? String.Empty;
             }
-            else
-            {
-                return OnFormat( context, (T) value );
-            }
+            return OnFormat( context, (T) value );
         }
 
         /// <summary>

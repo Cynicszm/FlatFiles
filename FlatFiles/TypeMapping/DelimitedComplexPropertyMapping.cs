@@ -21,7 +21,7 @@ namespace FlatFiles.TypeMapping
             IDelimitedTypeMapper<TEntity> mapper, 
             IMemberAccessor member, 
             int physicalIndex, 
-            int logicalIndex)
+            int logicalIndex )
         {
             this.mapper = mapper;
             Member = member;
@@ -35,7 +35,7 @@ namespace FlatFiles.TypeMapping
             get
             {
                 DelimitedSchema schema = mapper.GetSchema();
-                var column = new DelimitedComplexColumn(columnName, schema)
+                var column = new DelimitedComplexColumn( columnName, schema )
                 {
                     Options = options,
                     NullFormatter = nullFormatter,
@@ -50,9 +50,9 @@ namespace FlatFiles.TypeMapping
                     OnFormatted = onFormatted
                 };
 
-                var mapperSource = (IMapperSource<TEntity>)mapper;
+                var mapperSource = (IMapperSource<TEntity>) mapper;
                 var recordMapper = mapperSource.GetMapper();
-                return new ComplexMapperColumn<TEntity>(schema, options ?? new DelimitedOptions(), column, recordMapper);
+                return new ComplexMapperColumn<TEntity>( schema, options ?? new DelimitedOptions(), column, recordMapper );
             }
         }
 
@@ -66,67 +66,68 @@ namespace FlatFiles.TypeMapping
 
         public int LogicalIndex { get; }
 
-        public IDelimitedComplexPropertyMapping ColumnName(string name)
+        public IDelimitedComplexPropertyMapping ColumnName( string name )
         {
-            if (String.IsNullOrWhiteSpace(name))
+            if (String.IsNullOrWhiteSpace( name ))
             {
-                throw new ArgumentException(Resources.BlankColumnName);
+                throw new ArgumentException( Resources.BlankColumnName );
             }
             columnName = name;
             return this;
         }
 
-        public IDelimitedComplexPropertyMapping WithOptions(DelimitedOptions? options)
+        public IDelimitedComplexPropertyMapping WithOptions( DelimitedOptions? options )
         {
             this.options = options;
             return this;
         }
 
-        public IDelimitedComplexPropertyMapping NullFormatter(INullFormatter formatter)
+        public IDelimitedComplexPropertyMapping NullFormatter( INullFormatter formatter )
         {
-            nullFormatter = formatter ?? FlatFiles.NullFormatter.Default;
+            // A null here means the default, which the column's own setter applies.
+            nullFormatter = formatter;
             return this;
         }
 
-        public IDelimitedComplexPropertyMapping DefaultValue(IDefaultValue defaultValue)
+        public IDelimitedComplexPropertyMapping DefaultValue( IDefaultValue defaultValue )
         {
-            this.defaultValue = defaultValue ?? FlatFiles.DefaultValue.Disabled();
+            this.defaultValue = defaultValue;
             return this;
         }
 
-        public IDelimitedComplexPropertyMapping Nullable(bool isNullable)
+        public IDelimitedComplexPropertyMapping Nullable( bool isNullable )
         {
             this.isNullable = isNullable;
             return this;
         }
 
-        public IDelimitedComplexPropertyMapping Preprocessor(Func<string, string?>? preprocessor)
+        public IDelimitedComplexPropertyMapping Preprocessor( Func<string, string?>? preprocessor )
         {
             this.preprocessor = preprocessor;
             return this;
         }
 
-        public IDelimitedComplexPropertyMapping OnParsing(Func<IColumnContext?, string, string?>? handler)
+        public IDelimitedComplexPropertyMapping OnParsing( Func<IColumnContext?, string, string?>? handler )
         {
-            this.onParsing = handler;
+            onParsing = handler;
             return this;
         }
 
-        public IDelimitedComplexPropertyMapping OnParsed(Func<IColumnContext?, object?, object?>? handler)
+        public IDelimitedComplexPropertyMapping OnParsed( Func<IColumnContext?, object?, object?>? handler )
         {
-            this.onParsed = handler;
+            onParsed = handler;
             return this;
         }
 
-        public IDelimitedComplexPropertyMapping OnFormatting(Func<IColumnContext?, object?, object?>? handler)
+        public IDelimitedComplexPropertyMapping OnFormatting( Func<IColumnContext?, object?, object?>? handler )
         {
-            this.onFormatting = handler;
+            onFormatting = handler;
             return this;
         }
 
-        public IDelimitedComplexPropertyMapping OnFormatted(Func<IColumnContext?, string, string?>? handler)
+        public IDelimitedComplexPropertyMapping OnFormatted( Func<IColumnContext?, string, string?>? handler )
         {
-            this.onFormatted = handler;
+            onFormatted = handler;
             return this;
         }
     }

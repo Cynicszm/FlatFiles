@@ -76,20 +76,20 @@ namespace FlatFiles
 
             public bool IsEndOfStream()
             {
-                if (buffer.Available == 0 && !buffer.IsEndOfStream)
+                if (buffer is { Available: 0, IsEndOfStream: false })
                 {
                     buffer.Fill();
                 }
-                return buffer.IsEndOfStream && buffer.Available == 0;
+                return buffer is { IsEndOfStream: true, Available: 0 };
             }
 
             public async ValueTask<bool> IsEndOfStreamAsync()
             {
-                if (buffer.Available == 0 && !buffer.IsEndOfStream)
+                if (buffer is { Available: 0, IsEndOfStream: false })
                 {
                     await buffer.FillAsync().ConfigureAwait( false );
                 }
-                return buffer.IsEndOfStream && buffer.Available == 0;
+                return buffer is { IsEndOfStream: true, Available: 0 };
             }
 
             public string ReadRecord()

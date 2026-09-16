@@ -25,7 +25,7 @@ namespace FlatFiles
         [AllowNull]
         public Func<string, TEnum> Parser
         {
-            get => field;
+            get;
             set => field = value ?? DefaultParser;
         } = DefaultParser;
 
@@ -36,7 +36,7 @@ namespace FlatFiles
         [AllowNull]
         public Func<TEnum, string?> Formatter
         {
-            get => field;
+            get;
             set => field = value ?? DefaultFormatter;
         } = DefaultFormatter;
 
@@ -47,7 +47,7 @@ namespace FlatFiles
             return (TEnum) Enum.Parse( typeof( TEnum ), value, true );
         }
 
-        private static string? DefaultFormatter( TEnum value )
+        private static string DefaultFormatter( TEnum value )
         {
             return Convert.ToInt32( value ).ToString();
         }

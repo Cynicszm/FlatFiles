@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Buffers;
-using System.Globalization;
 
 namespace FlatFiles
 {
@@ -37,21 +36,13 @@ namespace FlatFiles
         protected override DateTimeOffset OnParse( IColumnContext? context, string value )
         {
             var provider = GetFormatProvider( context, FormatProvider );
-            if (InputFormat is null)
-            {
-                return DateTimeOffset.Parse( value, provider );
-            }
-            return DateTimeOffset.ParseExact( value, InputFormat, provider );
+            return InputFormat is null ? DateTimeOffset.Parse( value, provider ) : DateTimeOffset.ParseExact( value, InputFormat, provider );
         }
 
         /// <inheritdoc />
         protected override string OnFormat( IColumnContext? context, DateTimeOffset value )
         {
             var provider = GetFormatProvider( context, FormatProvider );
-            if (OutputFormat is null)
-            {
-                return value.ToString( provider );
-            }
             return value.ToString( OutputFormat, provider );
         }
 
