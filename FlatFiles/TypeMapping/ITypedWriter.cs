@@ -41,21 +41,21 @@ namespace FlatFiles.TypeMapping
         ///     Write the textual representation of the record schema to the writer.
         /// </summary>
         /// <remarks>If the header or records have already been written, this call is ignored.</remarks>
-        Task WriteSchemaAsync();
+        /// <remarks>
+        ///     The default implementation forwards to the overload that takes a token, passing
+        ///     <see cref="CancellationToken.None"/>.
+        /// </remarks>
+        Task WriteSchemaAsync()
+        {
+            return WriteSchemaAsync( CancellationToken.None );
+        }
 
         /// <summary>
         ///     Write the textual representation of the record schema to the writer.
         /// </summary>
         /// <remarks>If the header or records have already been written, this call is ignored.</remarks>
         /// <param name="cancellationToken">The token to observe while waiting for the operation to complete.</param>
-        /// <remarks>
-        ///     The default implementation forwards to the overload without a token and so cannot observe
-        ///     cancellation; an implementation that can should override it.
-        /// </remarks>
-        Task WriteSchemaAsync( CancellationToken cancellationToken )
-        {
-            return WriteSchemaAsync();
-        }
+        Task WriteSchemaAsync( CancellationToken cancellationToken );
 
         /// <summary>
         ///     Writes the given entity to the underlying document.
@@ -67,20 +67,20 @@ namespace FlatFiles.TypeMapping
         ///     Writes the given entity to the underlying document.
         /// </summary>
         /// <param name="entity">The entity to write.</param>
-        Task WriteAsync( TEntity entity );
+        /// <remarks>
+        ///     The default implementation forwards to the overload that takes a token, passing
+        ///     <see cref="CancellationToken.None"/>.
+        /// </remarks>
+        Task WriteAsync( TEntity entity )
+        {
+            return WriteAsync( entity, CancellationToken.None );
+        }
 
         /// <summary>
         ///     Writes the given entity to the underlying document.
         /// </summary>
         /// <param name="entity">The entity to write.</param>
         /// <param name="cancellationToken">The token to observe while waiting for the operation to complete.</param>
-        /// <remarks>
-        ///     The default implementation forwards to the overload without a token and so cannot observe
-        ///     cancellation; an implementation that can should override it.
-        /// </remarks>
-        Task WriteAsync( TEntity entity, CancellationToken cancellationToken )
-        {
-            return WriteAsync( entity );
-        }
+        Task WriteAsync( TEntity entity, CancellationToken cancellationToken );
     }
 }
