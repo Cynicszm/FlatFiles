@@ -13,7 +13,7 @@ namespace FlatFiles.Benchmark
 
         public PropertyVsFieldTester()
         {
-            PropertyPerson propertyPerson = new PropertyPerson
+            var propertyPerson = new PropertyPerson
             {
                 FirstName = "John",
                 LastName = "Smith",
@@ -29,9 +29,9 @@ namespace FlatFiles.Benchmark
                 CreatedOn = new DateTime( 2017, 01, 01 ),
                 IsActive = true
             };
-            propertyPeople = Enumerable.Repeat( 0, 10000 ).Select( i => propertyPerson ).ToArray();
+            propertyPeople = [.. Enumerable.Repeat( 0, 10000 ).Select( _ => propertyPerson )];
 
-            FieldPerson fieldPerson = new FieldPerson
+            var fieldPerson = new FieldPerson
             {
                 FirstName = "John",
                 LastName = "Smith",
@@ -47,13 +47,13 @@ namespace FlatFiles.Benchmark
                 CreatedOn = new DateTime( 2017, 01, 01 ),
                 IsActive = true
             };
-            fieldPeople = Enumerable.Repeat( 0, 10000 ).Select( i => fieldPerson ).ToArray();
+            fieldPeople = [.. Enumerable.Repeat( 0, 10000 ).Select( _ => fieldPerson )];
         }
 
         [Benchmark]
         public void RunPropertyTest()
         {
-            var mapper = DelimitedTypeMapper.Define<PropertyPerson>( () => new PropertyPerson() );
+            var mapper = DelimitedTypeMapper.Define( () => new PropertyPerson() );
             mapper.Property( x => x.FirstName );
             mapper.Property( x => x.LastName );
             mapper.Property( x => x.Age );
@@ -68,18 +68,18 @@ namespace FlatFiles.Benchmark
             mapper.Property( x => x.CreatedOn );
             mapper.Property( x => x.IsActive );
 
-            StringWriter writer = new StringWriter();
+            var writer = new StringWriter();
             mapper.Write( writer, propertyPeople );
-            string serialized = writer.ToString();
+            var serialized = writer.ToString();
 
-            StringReader reader = new StringReader( serialized );
-            var deserialized = mapper.Read( reader ).ToArray();
+            var reader = new StringReader( serialized );
+            _ = mapper.Read( reader ).ToArray();
         }
 
         [Benchmark]
         public void RunFieldTest()
         {
-            var mapper = DelimitedTypeMapper.Define<FieldPerson>( () => new FieldPerson() );
+            var mapper = DelimitedTypeMapper.Define( () => new FieldPerson() );
             mapper.Property( x => x.FirstName );
             mapper.Property( x => x.LastName );
             mapper.Property( x => x.Age );
@@ -94,12 +94,12 @@ namespace FlatFiles.Benchmark
             mapper.Property( x => x.CreatedOn );
             mapper.Property( x => x.IsActive );
 
-            StringWriter writer = new StringWriter();
+            var writer = new StringWriter();
             mapper.Write( writer, fieldPeople );
-            string serialized = writer.ToString();
+            var serialized = writer.ToString();
 
-            StringReader reader = new StringReader( serialized );
-            var deserialized = mapper.Read( reader ).ToArray();
+            var reader = new StringReader( serialized );
+            _ = mapper.Read( reader ).ToArray();
         }
         
         public class PropertyPerson

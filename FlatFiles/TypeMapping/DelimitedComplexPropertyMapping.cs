@@ -3,10 +3,13 @@ using FlatFiles.Properties;
 
 namespace FlatFiles.TypeMapping
 {
-    internal sealed class DelimitedComplexPropertyMapping<TEntity> : IDelimitedComplexPropertyMapping, IMemberMapping
+    internal sealed class DelimitedComplexPropertyMapping<TEntity>(
+        IDelimitedTypeMapper<TEntity> mapper,
+        IMemberAccessor member,
+        int physicalIndex,
+        int logicalIndex ) : IDelimitedComplexPropertyMapping, IMemberMapping
     {
-        private readonly IDelimitedTypeMapper<TEntity> mapper;
-        private string columnName;
+        private string columnName = member.Name;
         private DelimitedOptions? options;
         private INullFormatter nullFormatter = FlatFiles.NullFormatter.Default;
         private IDefaultValue defaultValue = FlatFiles.DefaultValue.Disabled();
@@ -17,24 +20,11 @@ namespace FlatFiles.TypeMapping
         private Func<IColumnContext?, object?, object?>? onFormatting;
         private Func<IColumnContext?, string, string?>? onFormatted;
 
-        public DelimitedComplexPropertyMapping(
-            IDelimitedTypeMapper<TEntity> mapper, 
-            IMemberAccessor member, 
-            int physicalIndex, 
-            int logicalIndex )
-        {
-            this.mapper = mapper;
-            Member = member;
-            columnName = member.Name;
-            PhysicalIndex = physicalIndex;
-            LogicalIndex = logicalIndex;
-        }
-
         public IColumnDefinition ColumnDefinition
         {
             get
             {
-                DelimitedSchema schema = mapper.GetSchema();
+                var schema = mapper.GetSchema();
                 var column = new DelimitedComplexColumn( columnName, schema )
                 {
                     Options = options,
@@ -56,19 +46,19 @@ namespace FlatFiles.TypeMapping
             }
         }
 
-        public IMemberAccessor Member { get; }
+        public IMemberAccessor Member { get; } = member;
 
         public Action<IColumnContext?, object?, object?>? Reader => null;
 
         public Action<IColumnContext?, object?, object?[]>? Writer => null;
 
-        public int PhysicalIndex { get; }
+        public int PhysicalIndex { get; } = physicalIndex;
 
-        public int LogicalIndex { get; }
+        public int LogicalIndex { get; } = logicalIndex;
 
         public IDelimitedComplexPropertyMapping ColumnName( string name )
         {
-            if (String.IsNullOrWhiteSpace( name ))
+            if (string.IsNullOrWhiteSpace( name ))
             {
                 throw new ArgumentException( Resources.BlankColumnName );
             }

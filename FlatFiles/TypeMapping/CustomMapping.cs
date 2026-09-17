@@ -51,42 +51,25 @@ namespace FlatFiles.TypeMapping
                 throw new ArgumentException( Resources.BadPropertySelector, nameof( expression ) );
             }
             var memberInfo = memberExpression.Member;
-            if (memberInfo is PropertyInfo propertyInfo)
+            var declaredOnEntity = memberInfo.DeclaringType!.GetTypeInfo().IsAssignableFrom( typeof( TEntity ) );
+            if (!declaredOnEntity && memberExpression.Expression is null)
             {
-                if (memberInfo.DeclaringType!.GetTypeInfo().IsAssignableFrom( typeof( TEntity ) ))
-                {
-                    return Expression.Property( entityParameter, propertyInfo );
-                }
-                if (memberExpression.Expression is null)
-                {
-                    // A nested member needs an instance to read from. A static member has none, and
-                    // recursing on the null would surface as a NullReferenceException from inside.
-                    throw new ArgumentException( Resources.BadPropertySelector, nameof( expression ) );
-                }
-                var nestedMember = GetMemberExpression( entityParameter, memberExpression.Expression );
-                return Expression.Property( nestedMember, propertyInfo );
+                // A nested member needs an instance to read from. A static member has none, and
+                // recursing on the null would surface as a NullReferenceException from inside.
+                throw new ArgumentException( Resources.BadPropertySelector, nameof( expression ) );
             }
-            if (memberInfo is FieldInfo fieldInfo)
+            var instance = declaredOnEntity ? entityParameter : GetMemberExpression( entityParameter, memberExpression.Expression! );
+            return memberInfo switch
             {
-                if (memberInfo.DeclaringType!.GetTypeInfo().IsAssignableFrom( typeof( TEntity ) ))
-                {
-                    return Expression.Field( entityParameter, fieldInfo );
-                }
-                if (memberExpression.Expression is null)
-                {
-                    // A nested member needs an instance to read from. A static member has none, and
-                    // recursing on the null would surface as a NullReferenceException from inside.
-                    throw new ArgumentException( Resources.BadPropertySelector, nameof( expression ) );
-                }
-                var nestedMember = GetMemberExpression( entityParameter, memberExpression.Expression );
-                return Expression.Field( nestedMember, fieldInfo );
-            }
-            throw new FlatFileException( Resources.BadPropertySelector );
+                PropertyInfo propertyInfo => Expression.Property( instance, propertyInfo ),
+                FieldInfo fieldInfo => Expression.Field( instance, fieldInfo ),
+                _ => throw new FlatFileException( Resources.BadPropertySelector )
+            };
         }
 
         public ICustomMapping<TEntity> WithReader( Action<TEntity, object?>? reader )
         {
-            Reader = reader is null ? null : ( ctx, e, v ) => reader( (TEntity) e!, v );
+            Reader = reader is null ? null : ( _, e, v ) => reader( (TEntity) e!, v );
             return this;
         }
 
@@ -98,7 +81,7 @@ namespace FlatFiles.TypeMapping
 
         ICustomMapping ICustomMapping.WithReader( Action<object?, object?>? reader )
         {
-            Reader = reader is null ? null : ( ctx, e, v ) => reader( e, v );
+            Reader = reader is null ? null : ( _, e, v ) => reader( e, v );
             return this;
         }
 
@@ -110,7 +93,7 @@ namespace FlatFiles.TypeMapping
 
         public ICustomMapping<TEntity> WithWriter( Action<TEntity, object?[]>? writer )
         {
-            Writer = writer is null ? null : ( ctx, e, v ) => writer( (TEntity) e!, v );
+            Writer = writer is null ? null : ( _, e, v ) => writer( (TEntity) e!, v );
             return this;
         }
 
@@ -122,7 +105,7 @@ namespace FlatFiles.TypeMapping
 
         ICustomMapping ICustomMapping.WithWriter( Action<object?, object?[]>? writer )
         {
-            Writer = writer is null ? null : ( ctx, e, v ) => writer( e, v );
+            Writer = writer is null ? null : ( _, e, v ) => writer( e, v );
             return this;
         }
 
@@ -134,7 +117,7 @@ namespace FlatFiles.TypeMapping
 
         public ICustomMapping<TEntity> WithWriter<TProp>( Func<TEntity, TProp>? writer )
         {
-            Writer = writer is null ? null : ( ctx, e, v ) =>
+            Writer = writer is null ? null : ( _, e, v ) =>
             {
                 v[LogicalIndex] = writer( (TEntity) e! );
             };
@@ -152,7 +135,7 @@ namespace FlatFiles.TypeMapping
 
         ICustomMapping ICustomMapping.WithWriter( Func<object?, object?>? writer )
         {
-            Writer = writer is null ? null : ( ctx, e, v ) =>
+            Writer = writer is null ? null : ( _, e, v ) =>
             {
                 v[LogicalIndex] = writer( e );
             };

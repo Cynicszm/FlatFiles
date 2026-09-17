@@ -1,5 +1,4 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using System.Linq;
 using FlatFiles.TypeMapping;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -15,10 +14,10 @@ namespace FlatFiles.Test
             var mapper = GetWeirdMapper();
             var thing = new WeirdThing
             {
-                Small = SByte.MaxValue,
-                Big = UInt16.MaxValue,
-                Bigger = UInt32.MaxValue,
-                Huge = UInt64.MaxValue
+                Small = sbyte.MaxValue,
+                Big = ushort.MaxValue,
+                Bigger = uint.MaxValue,
+                Huge = ulong.MaxValue
             };
             var deserialized = RoundTrip( mapper, thing );
             AssertEqual( thing, deserialized );
@@ -30,10 +29,10 @@ namespace FlatFiles.Test
             var mapper = GetWeirdMapper();
             var thing = new WeirdThing
             {
-                Small = SByte.MinValue,
-                Big = UInt16.MinValue,
-                Bigger = UInt32.MinValue,
-                Huge = UInt64.MinValue
+                Small = sbyte.MinValue,
+                Big = ushort.MinValue,
+                Bigger = uint.MinValue,
+                Huge = ulong.MinValue
             };
             var deserialized = RoundTrip( mapper, thing );
             AssertEqual( thing, deserialized );
@@ -41,7 +40,7 @@ namespace FlatFiles.Test
 
         private static IDelimitedTypeMapper<WeirdThing> GetWeirdMapper()
         {
-            var mapper = DelimitedTypeMapper.Define<WeirdThing>( () => new WeirdThing() );
+            var mapper = DelimitedTypeMapper.Define( () => new WeirdThing() );
             mapper.Property( x => x.Small );
             mapper.Property( x => x.Big );
             mapper.Property( x => x.Bigger );
@@ -52,7 +51,7 @@ namespace FlatFiles.Test
         private static WeirdThing RoundTrip( IDelimitedTypeMapper<WeirdThing> mapper, WeirdThing thing )
         {
             using var writer = new StringWriter();
-            mapper.Write( writer, new WeirdThing[] { thing } );
+            mapper.Write( writer, [ thing ] );
             var output = writer.ToString();
             using var reader = new StringReader( output );
             WeirdThing[] things = [.. mapper.Read( reader )];

@@ -71,7 +71,7 @@ namespace FlatFiles
         /// <returns>The formatted value.</returns>
         protected override string OnFormat( IColumnContext? context, TEnum value )
         {
-            return Formatter( value ) ?? String.Empty;
+            return Formatter( value ) ?? string.Empty;
         }
     }
 }

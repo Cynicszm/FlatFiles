@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.Data;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace FlatFiles.Test
@@ -23,7 +20,7 @@ namespace FlatFiles.Test
         public void TestReadFlatFile_DataTableNull_Throws()
         {
             DataTable table = null;
-            StringReader stringReader = new StringReader( String.Empty );
+            var stringReader = new StringReader( string.Empty );
             IReader parser = new DelimitedReader( stringReader );
             Assert.ThrowsExactly<ArgumentNullException>( () => DataTableExtensions.ReadFlatFile( table, parser ) );
         }
@@ -34,7 +31,7 @@ namespace FlatFiles.Test
         [TestMethod]
         public void TestReadFlatFile_ParserNull_Throws()
         {
-            DataTable table = new DataTable();
+            var table = new DataTable();
             IReader parser = null;
             Assert.ThrowsExactly<ArgumentNullException>( () => table.ReadFlatFile( parser ) );
         }
@@ -45,20 +42,20 @@ namespace FlatFiles.Test
         [TestMethod]
         public void TestReadFlatFile_ExtractsSchema_PopulatesTable()
         {
-            DelimitedSchema schema = new DelimitedSchema();
+            var schema = new DelimitedSchema();
             schema.AddColumn( new Int32Column( "id" ) )
                 .AddColumn( new StringColumn( "name" ) )
                 .AddColumn( new DateTimeColumn( "created" ) { InputFormat = "MM/dd/yyyy", OutputFormat = "MM/dd/yyyy" } )
                 .AddColumn( new DecimalColumn( "avg" ) );
-            DelimitedOptions options = new DelimitedOptions { IsFirstRecordSchema = true };
+            var options = new DelimitedOptions { IsFirstRecordSchema = true };
 
-            StringWriter stringWriter = new StringWriter();
-            DelimitedWriter builder = new DelimitedWriter( stringWriter, schema, options );
+            var stringWriter = new StringWriter();
+            var builder = new DelimitedWriter( stringWriter, schema, options );
             object[] data = [ 123, "Bob", new DateTime( 2012, 12, 31 ), 3.14159m ];
             builder.Write( data );
 
-            StringReader stringReader = new StringReader( stringWriter.ToString() );
-            DataTable table = new DataTable();
+            var stringReader = new StringReader( stringWriter.ToString() );
+            var table = new DataTable();
             IReader parser = new DelimitedReader( stringReader, schema, options );
             table.ReadFlatFile( parser );
 
@@ -79,20 +76,20 @@ namespace FlatFiles.Test
         public void TestReadFlatFile_AddsData()
         {
             // fill the table with some existing columns, constraints and data
-            DataTable table = new DataTable();
-            DataColumn idColumn = table.Columns.Add( "id", typeof( int ) );
-            DataColumn nameColumn = table.Columns.Add( "name", typeof( string ) );
-            DataColumn createdColumn = table.Columns.Add( "created", typeof( DateTime ) );
-            DataColumn avgColumn = table.Columns.Add( "avg", typeof( decimal ) );
+            var table = new DataTable();
+            var idColumn = table.Columns.Add( "id", typeof( int ) );
+            table.Columns.Add( "name", typeof( string ) );
+            table.Columns.Add( "created", typeof( DateTime ) );
+            table.Columns.Add( "avg", typeof( decimal ) );
             table.Constraints.Add( "PK_blah", idColumn, true );
-            DataRow row = table.Rows.Add( 1, "Bob", new DateTime( 2018, 07, 16 ), 12.34m );
+            var row = table.Rows.Add( 1, "Bob", new DateTime( 2018, 07, 16 ), 12.34m );
             row.AcceptChanges();
 
             const string text = @"id,name,created,avg
 2,John,07/17/2018,23.45
 3,Susan,07/18/2018,34.56";
-            DelimitedOptions options = new DelimitedOptions { IsFirstRecordSchema = true };
-            StringReader stringReader = new StringReader( text );
+            var options = new DelimitedOptions { IsFirstRecordSchema = true };
+            var stringReader = new StringReader( text );
             IReader csvReader = new DelimitedReader( stringReader, options );
             table.ReadFlatFile( csvReader );
 
@@ -115,20 +112,20 @@ namespace FlatFiles.Test
         public void TestReadFlatFile_ColumnMissing_InsertsNulls()
         {
             // fill the table with some existing columns, constraints and data
-            DataTable table = new DataTable();
-            DataColumn idColumn = table.Columns.Add( "id", typeof( int ) );
-            DataColumn nameColumn = table.Columns.Add( "name", typeof( string ) );
-            DataColumn createdColumn = table.Columns.Add( "created", typeof( DateTime ) );
-            DataColumn avgColumn = table.Columns.Add( "avg", typeof( string ) );
+            var table = new DataTable();
+            var idColumn = table.Columns.Add( "id", typeof( int ) );
+            table.Columns.Add( "name", typeof( string ) );
+            table.Columns.Add( "created", typeof( DateTime ) );
+            table.Columns.Add( "avg", typeof( string ) );
             table.Constraints.Add( "PK_blah", idColumn, true );
-            DataRow row = table.Rows.Add( 1, "Bob", new DateTime( 2018, 07, 16 ), "12.34" );
+            var row = table.Rows.Add( 1, "Bob", new DateTime( 2018, 07, 16 ), "12.34" );
             row.AcceptChanges();
 
             const string text = @"id,name,created
 2,John,07/17/2018
 3,Susan,07/18/2018";
-            DelimitedOptions options = new DelimitedOptions { IsFirstRecordSchema = true };
-            StringReader stringReader = new StringReader( text );
+            var options = new DelimitedOptions { IsFirstRecordSchema = true };
+            var stringReader = new StringReader( text );
             var schema = new DelimitedSchema();
             schema.AddColumn( new Int32Column( "id" ) );
             schema.AddColumn( new StringColumn( "name" ) );
@@ -155,13 +152,13 @@ namespace FlatFiles.Test
         public void TestReadFlatFile_Merge_PreserveChanges()
         {
             // fill the table with some existing columns, constraints and data
-            DataTable table = new DataTable();
-            DataColumn idColumn = table.Columns.Add( "id", typeof( int ) );
-            DataColumn nameColumn = table.Columns.Add( "name", typeof( string ) );
-            DataColumn createdColumn = table.Columns.Add( "created", typeof( DateTime ) );
-            DataColumn avgColumn = table.Columns.Add( "avg", typeof( decimal ) );
+            var table = new DataTable();
+            var idColumn = table.Columns.Add( "id", typeof( int ) );
+            table.Columns.Add( "name", typeof( string ) );
+            table.Columns.Add( "created", typeof( DateTime ) );
+            var avgColumn = table.Columns.Add( "avg", typeof( decimal ) );
             table.Constraints.Add( "PK_blah", idColumn, true );
-            DataRow row = table.Rows.Add( 1, "Bob", new DateTime( 2018, 07, 16 ), 12.34m );
+            var row = table.Rows.Add( 1, "Bob", new DateTime( 2018, 07, 16 ), 12.34m );
             row.AcceptChanges();
 
             row.SetField( avgColumn, 99.99m );  // Change but do not accept
@@ -170,8 +167,8 @@ namespace FlatFiles.Test
 1,Robert,07/19/2018,78.90
 2,John,07/17/2018,23.45
 3,Susan,07/18/2018,34.56";
-            DelimitedOptions options = new DelimitedOptions { IsFirstRecordSchema = true };
-            StringReader stringReader = new StringReader( text );
+            var options = new DelimitedOptions { IsFirstRecordSchema = true };
+            var stringReader = new StringReader( text );
             var schema = new DelimitedSchema();
             schema.AddColumn( new Int32Column( "id" ) );
             schema.AddColumn( new StringColumn( "name" ) );
@@ -206,13 +203,13 @@ namespace FlatFiles.Test
         public void TestReadFlatFile_Merge_Upsert()
         {
             // fill the table with some existing columns, constraints and data
-            DataTable table = new DataTable();
-            DataColumn idColumn = table.Columns.Add( "id", typeof( int ) );
-            DataColumn nameColumn = table.Columns.Add( "name", typeof( string ) );
-            DataColumn createdColumn = table.Columns.Add( "created", typeof( DateTime ) );
-            DataColumn avgColumn = table.Columns.Add( "avg", typeof( decimal ) );
+            var table = new DataTable();
+            var idColumn = table.Columns.Add( "id", typeof( int ) );
+            table.Columns.Add( "name", typeof( string ) );
+            table.Columns.Add( "created", typeof( DateTime ) );
+            var avgColumn = table.Columns.Add( "avg", typeof( decimal ) );
             table.Constraints.Add( "PK_blah", idColumn, true );
-            DataRow row = table.Rows.Add( 1, "Bob", new DateTime( 2018, 07, 16 ), 12.34m );
+            var row = table.Rows.Add( 1, "Bob", new DateTime( 2018, 07, 16 ), 12.34m );
             row.AcceptChanges();
 
             row.SetField( avgColumn, 99.99m );  // Change but do not accept
@@ -221,8 +218,8 @@ namespace FlatFiles.Test
 1,Robert,07/19/2018,78.90
 2,John,07/17/2018,23.45
 3,Susan,07/18/2018,34.56";
-            DelimitedOptions options = new DelimitedOptions { IsFirstRecordSchema = true };
-            StringReader stringReader = new StringReader( text );
+            var options = new DelimitedOptions { IsFirstRecordSchema = true };
+            var stringReader = new StringReader( text );
             var schema = new DelimitedSchema();
             schema.AddColumn( new Int32Column( "id" ) );
             schema.AddColumn( new StringColumn( "name" ) );
@@ -258,13 +255,13 @@ namespace FlatFiles.Test
         public void TestReadFlatFile_Merge_Overwrite()
         {
             // fill the table with some existing columns, constraints and data
-            DataTable table = new DataTable();
-            DataColumn idColumn = table.Columns.Add( "id", typeof( int ) );
-            DataColumn nameColumn = table.Columns.Add( "name", typeof( string ) );
-            DataColumn createdColumn = table.Columns.Add( "created", typeof( DateTime ) );
-            DataColumn avgColumn = table.Columns.Add( "avg", typeof( decimal ) );
+            var table = new DataTable();
+            var idColumn = table.Columns.Add( "id", typeof( int ) );
+            table.Columns.Add( "name", typeof( string ) );
+            table.Columns.Add( "created", typeof( DateTime ) );
+            var avgColumn = table.Columns.Add( "avg", typeof( decimal ) );
             table.Constraints.Add( "PK_blah", idColumn, true );
-            DataRow row = table.Rows.Add( 1, "Bob", new DateTime( 2018, 07, 16 ), 12.34m );
+            var row = table.Rows.Add( 1, "Bob", new DateTime( 2018, 07, 16 ), 12.34m );
             row.AcceptChanges();
 
             row.SetField( avgColumn, 99.99m );  // Change but do not accept
@@ -273,8 +270,8 @@ namespace FlatFiles.Test
 1,Robert,07/19/2018,78.90
 2,John,07/17/2018,23.45
 3,Susan,07/18/2018,34.56";
-            DelimitedOptions options = new DelimitedOptions { IsFirstRecordSchema = true };
-            StringReader stringReader = new StringReader( text );
+            var options = new DelimitedOptions { IsFirstRecordSchema = true };
+            var stringReader = new StringReader( text );
             var schema = new DelimitedSchema();
             schema.AddColumn( new Int32Column( "id" ) );
             schema.AddColumn( new StringColumn( "name" ) );
@@ -305,8 +302,8 @@ namespace FlatFiles.Test
         [TestMethod]
         public void TestWriteFlatFile_MatchingSchema()
         {
-            DataTable table = new DataTable();
-            DataColumn idColumn = table.Columns.Add( "id", typeof( int ) );
+            var table = new DataTable();
+            var idColumn = table.Columns.Add( "id", typeof( int ) );
             table.Columns.Add( "name", typeof( string ) );
             table.Columns.Add( "created", typeof( DateTime ) );
             table.Columns.Add( "avg", typeof( decimal ) );
@@ -332,7 +329,7 @@ namespace FlatFiles.Test
             var csvWriter = new DelimitedWriter( stringWriter, schema, options );
             table.WriteFlatFile( csvWriter );
 
-            string output = stringWriter.ToString();
+            var output = stringWriter.ToString();
 
             Assert.AreEqual( @"id,name,created,avg
 1,Bob,07/16/2018,12.34
@@ -345,8 +342,8 @@ namespace FlatFiles.Test
         [TestMethod]
         public void TestWriteFlatFile_MissingColumn_WritesNull()
         {
-            DataTable table = new DataTable();
-            DataColumn idColumn = table.Columns.Add( "id", typeof( int ) );
+            var table = new DataTable();
+            var idColumn = table.Columns.Add( "id", typeof( int ) );
             table.Columns.Add( "name", typeof( string ) );
             table.Columns.Add( "avg", typeof( decimal ) );
             table.Constraints.Add( "PK_blah", idColumn, true );
@@ -365,7 +362,7 @@ namespace FlatFiles.Test
             var csvWriter = new DelimitedWriter( stringWriter, schema, options );
             table.WriteFlatFile( csvWriter );
 
-            string output = stringWriter.ToString();
+            var output = stringWriter.ToString();
 
             Assert.AreEqual( @"id,name,created,avg
 1,Bob,,12.34
@@ -377,8 +374,8 @@ namespace FlatFiles.Test
         [TestMethod]
         public void TestWriteFlatFile_ExtraColumn_Ignores()
         {
-            DataTable table = new DataTable();
-            DataColumn idColumn = table.Columns.Add( "id", typeof( int ) );
+            var table = new DataTable();
+            var idColumn = table.Columns.Add( "id", typeof( int ) );
             table.Columns.Add( "name", typeof( string ) );
             table.Columns.Add( "created", typeof( DateTime ) );
             table.Columns.Add( "avg", typeof( decimal ) );
@@ -397,7 +394,7 @@ namespace FlatFiles.Test
             var csvWriter = new DelimitedWriter( stringWriter, schema, options );
             table.WriteFlatFile( csvWriter );
 
-            string output = stringWriter.ToString();
+            var output = stringWriter.ToString();
 
             Assert.AreEqual( @"id,name,avg
 1,Bob,12.34
@@ -426,22 +423,22 @@ namespace FlatFiles.Test
             var textReader = new StringReader( data );
             var csvReader = new DelimitedReader( textReader, schema, options );
 
-            DataTable dataTable = new DataTable();
+            var dataTable = new DataTable();
             dataTable.ReadFlatFile( csvReader );
             string[] columnNames = [.. dataTable.Columns.OfType<DataColumn>().Select( r => r.ColumnName )];
             CollectionAssert.AreEqual( new[] { "A", "C" }, columnNames );
             Assert.AreEqual( 2, dataTable.Rows.Count );
-            object[] values1 = dataTable.Rows[0].ItemArray;
+            var values1 = dataTable.Rows[0].ItemArray;
             CollectionAssert.AreEqual( new[] { "1", "3" }, values1 );
-            object[] values2 = dataTable.Rows[1].ItemArray;
+            var values2 = dataTable.Rows[1].ItemArray;
             CollectionAssert.AreEqual( new[] { "4", "6" }, values2 );
         }
 
         [TestMethod]
         public void TestWriteFlatFile_IgnoredColumns()
         {
-            DataTable table = new DataTable();
-            DataColumn idColumn = table.Columns.Add( "id", typeof( int ) );
+            var table = new DataTable();
+            var idColumn = table.Columns.Add( "id", typeof( int ) );
             table.Columns.Add( "name", typeof( string ) );
             table.Columns.Add( "created", typeof( DateTime ) );
             table.Columns.Add( "avg", typeof( decimal ) );
@@ -471,7 +468,7 @@ namespace FlatFiles.Test
             var csvWriter = new DelimitedWriter( stringWriter, schema, options );
             table.WriteFlatFile( csvWriter );
 
-            string output = stringWriter.ToString();
+            var output = stringWriter.ToString();
 
             Assert.AreEqual( @"i0,id,i1,name,i2,created,i3,avg,i4
 ,1,,Bob,,07/16/2018,,12.34,
@@ -483,7 +480,7 @@ namespace FlatFiles.Test
         [TestMethod]
         public void TestReadFlatFile_DuplicateHeaderNames()
         {
-            string data = @"ID,Description,Date,Time,Price,Date,Time,Price
+            const string data = @"ID,Description,Date,Time,Price,Date,Time,Price
 ""1"",""Net Profit"",""8/3/2020"",""9:58:48"",""$111.11"",""8/3/2020"",""10:41:10"",""$333.33""
 ""2"",""Net Loss"",""8/3/2020"",""14:41:10"",""$444.44"",""8/3/2020"",""16:29:08"",""$222.22""";
             var schema = new DelimitedSchema();
@@ -508,12 +505,12 @@ namespace FlatFiles.Test
             };
             var reader = new DelimitedReader( new StringReader( data ), schema, options );
 
-            DataTable dataTable = new DataTable();
+            var dataTable = new DataTable();
             dataTable.ReadFlatFile( reader );
 
             Assert.AreEqual( 2, dataTable.Rows.Count );
             string[] actualColumns = [.. dataTable.Columns.OfType<DataColumn>().Select( x => x.ColumnName )];
-            CollectionAssert.AreEqual( new string[]
+            CollectionAssert.AreEqual( new[]
                 {
                     "ID", "Description", "PurchaseDate", "PurchaseTime", "PurchasePrice", "SellDate", "SellTime", "SellPrice"
                 }, actualColumns );

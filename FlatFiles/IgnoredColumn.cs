@@ -12,7 +12,7 @@ namespace FlatFiles
         ///     Initializes a new IgnoredColumn.
         /// </summary>
         public IgnoredColumn() 
-            : base( String.Empty, true )
+            : base( string.Empty, true )
         {
         }
 
@@ -41,7 +41,7 @@ namespace FlatFiles
 #pragma warning disable CS0618 // Type or member is obsolete
             if (Preprocessor is not null)
             {
-                value = Preprocessor( value ) ?? String.Empty;
+                value = Preprocessor( value ) ?? string.Empty;
             }
 #pragma warning restore CS0618 // Type or member is obsolete
             if (OnParsing is not null)
@@ -68,10 +68,10 @@ namespace FlatFiles
             {
                 _ = OnFormatting( context, value );
             }
-            string result = NullFormatter.FormatNull( context ) ?? String.Empty;
+            var result = NullFormatter.FormatNull( context ) ?? string.Empty;
             if (OnFormatted is not null)
             {
-                result = OnFormatted( context, result ) ?? String.Empty;
+                result = OnFormatted( context, result ) ?? string.Empty;
             }
             return result;
         }

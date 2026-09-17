@@ -1,21 +1,13 @@
-﻿using System.Threading.Tasks;
+﻿using System;
 using System.Threading;
-using System;
+using System.Threading.Tasks;
 
 namespace FlatFiles.TypeMapping
 {
-    internal sealed class TypedWriter<TEntity> : ITypedWriter<TEntity>
+    internal sealed class TypedWriter<TEntity>( IWriterWithMetadata writer, IMapper<TEntity> mapper ) : ITypedWriter<TEntity>
     {
-        private readonly IWriterWithMetadata writer;
-        private readonly Action<IRecordContext, TEntity, object[]> serializer;
-        private readonly int logicalCount;
-
-        public TypedWriter( IWriterWithMetadata writer, IMapper<TEntity> mapper )
-        {
-            this.writer = writer;
-            serializer = mapper.GetWriter();
-            logicalCount = mapper.LogicalCount;
-        }
+        private readonly Action<IRecordContext, TEntity, object[]> serializer = mapper.GetWriter();
+        private readonly int logicalCount = mapper.LogicalCount;
 
         /// <summary>
         ///     Raised when an error occurs while processing a column.
@@ -54,7 +46,7 @@ namespace FlatFiles.TypeMapping
         }
 
         public async Task WriteSchemaAsync( CancellationToken cancellationToken )
-{
+        {
             cancellationToken.ThrowIfCancellationRequested();
             await writer.WriteSchemaAsync( cancellationToken ).ConfigureAwait( false );
         }
@@ -71,7 +63,7 @@ namespace FlatFiles.TypeMapping
         }
 
         public async Task WriteAsync( TEntity entity, CancellationToken cancellationToken )
-{
+        {
             cancellationToken.ThrowIfCancellationRequested();
             var values = Serialize( entity );
             await writer.WriteAsync( values, cancellationToken ).ConfigureAwait( false );

@@ -1,9 +1,9 @@
-﻿using System.Buffers;
+﻿using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.IO;
-using System.Threading.Tasks;
 using System.Threading;
-using System;
+using System.Threading.Tasks;
 using FlatFiles.Properties;
 
 namespace FlatFiles
@@ -68,7 +68,7 @@ namespace FlatFiles
         }
 
         public async ValueTask<bool> IsEndOfStreamAsync( CancellationToken cancellationToken = default )
-{
+        {
             if (reader is { Available: 0, IsEndOfStream: false })
             {
                 await reader.FillAsync( cancellationToken ).ConfigureAwait( false );
@@ -87,7 +87,7 @@ namespace FlatFiles
         }
 
         public async Task<(string, string[])> ReadRecordAsync( CancellationToken cancellationToken = default )
-{
+        {
             (string, string[]) record;
             while (!TryReadRecord( out record ))
             {
@@ -108,16 +108,15 @@ namespace FlatFiles
             while (true)
             {
                 var end = ReadToken( text, ref position, out var separatorStart );
-                if (end == TokenEnd.NeedMore)
+                switch (end)
                 {
-                    record = default;
-                    return false;
+                    case TokenEnd.NeedMore:
+                        record = default;
+                        return false;
+                    case TokenEnd.Token:
+                        continue;
                 }
-                if (end == TokenEnd.Token)
-                {
-                    continue;
-                }
-                var recordText = preserveRecordText ? new string( text[..separatorStart] ) : String.Empty;
+                var recordText = preserveRecordText ? new string( text[..separatorStart] ) : string.Empty;
                 record = (recordText, [.. tokens]);
                 tokens.Clear();
                 reader.Consume( position );
@@ -142,12 +141,12 @@ namespace FlatFiles
                     var end = MatchSeparator( text, start, out var length );
                     if (end != TokenEnd.None)
                     {
-                        tokens.Add( String.Empty );
+                        tokens.Add( string.Empty );
                         separatorStart = start;
                         position = start + length;
                         return end;
                     }
-                    if (!Char.IsWhiteSpace( text[start] ))
+                    if (!char.IsWhiteSpace( text[start] ))
                     {
                         break;
                     }
@@ -174,15 +173,15 @@ namespace FlatFiles
                 var index = text[scan..].IndexOfAny( stops );
                 if (index < 0)
                 {
-                    if (!reader.IsEndOfStream)
+                    if (reader.IsEndOfStream)
                     {
-                        separatorStart = 0;
-                        return TokenEnd.NeedMore;
+                        tokens.Add( new string( text[start..] ) );
+                        separatorStart = text.Length;
+                        position = text.Length;
+                        return TokenEnd.Stream;
                     }
-                    tokens.Add( new string( text[start..] ) );
-                    separatorStart = text.Length;
-                    position = text.Length;
-                    return TokenEnd.Stream;
+                    separatorStart = 0;
+                    return TokenEnd.NeedMore;
                 }
                 var candidate = scan + index;
                 if (NeedsMore( text, candidate ))
@@ -211,12 +210,12 @@ namespace FlatFiles
                 var index = text[scan..].IndexOf( quote );
                 if (index < 0)
                 {
-                    if (!reader.IsEndOfStream)
+                    if (reader.IsEndOfStream)
                     {
-                        separatorStart = 0;
-                        return TokenEnd.NeedMore;
+                        throw new DelimitedSyntaxException( Resources.UnmatchedQuote );
                     }
-                    throw new DelimitedSyntaxException( Resources.UnmatchedQuote );
+                    separatorStart = 0;
+                    return TokenEnd.NeedMore;
                 }
                 var quoteAt = scan + index;
                 scratch.Write( text[scan..quoteAt] );
@@ -250,7 +249,7 @@ namespace FlatFiles
                         position = after + length;
                         return end;
                     }
-                    if (!Char.IsWhiteSpace( text[after] ))
+                    if (!char.IsWhiteSpace( text[after] ))
                     {
                         throw new DelimitedSyntaxException( Resources.UnmatchedQuote );
                     }

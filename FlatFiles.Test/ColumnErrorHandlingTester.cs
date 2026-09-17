@@ -17,22 +17,22 @@ namespace FlatFiles.Test
             schema.AddColumn( new DateTimeColumn( "DateTime" ) );
             schema.AddColumn( new GuidColumn( "Guid" ) );
             var csvReader = new DelimitedReader( stringReader, schema );
-            csvReader.ColumnError += ( sender, e ) =>
+            csvReader.ColumnError += ( _, e ) =>
             {
-                if (e.ColumnContext.ColumnDefinition.ColumnName == "Int32")
+                switch (e.ColumnContext.ColumnDefinition.ColumnName)
                 {
-                    e.Substitution = 1;
-                    e.IsHandled = true;
-                }
-                else if (e.ColumnContext.ColumnDefinition.ColumnName == "DateTime")
-                {
-                    e.Substitution = new DateTime( 2018, 07, 08 );
-                    e.IsHandled = true;
-                }
-                else if (e.ColumnContext.ColumnDefinition.ColumnName == "Guid")
-                {
-                    e.Substitution = Guid.Empty;
-                    e.IsHandled = true;
+                    case "Int32":
+                        e.Substitution = 1;
+                        e.IsHandled = true;
+                        break;
+                    case "DateTime":
+                        e.Substitution = new DateTime( 2018, 07, 08 );
+                        e.IsHandled = true;
+                        break;
+                    case "Guid":
+                        e.Substitution = Guid.Empty;
+                        e.IsHandled = true;
+                        break;
                 }
             };
             Assert.IsTrue( csvReader.Read(), "Could not read the first record." );
@@ -52,22 +52,22 @@ namespace FlatFiles.Test
             schema.AddColumn( new DateTimeColumn( "DateTime" ), 10 );
             schema.AddColumn( new GuidColumn( "Guid" ), 32 );
             var csvReader = new FixedLengthReader( stringReader, schema );
-            csvReader.ColumnError += ( sender, e ) =>
+            csvReader.ColumnError += ( _, e ) =>
             {
-                if (e.ColumnContext.ColumnDefinition.ColumnName == "Int32")
+                switch (e.ColumnContext.ColumnDefinition.ColumnName)
                 {
-                    e.Substitution = 1;
-                    e.IsHandled = true;
-                }
-                else if (e.ColumnContext.ColumnDefinition.ColumnName == "DateTime")
-                {
-                    e.Substitution = new DateTime( 2018, 07, 08 );
-                    e.IsHandled = true;
-                }
-                else if (e.ColumnContext.ColumnDefinition.ColumnName == "Guid")
-                {
-                    e.Substitution = Guid.Empty;
-                    e.IsHandled = true;
+                    case "Int32":
+                        e.Substitution = 1;
+                        e.IsHandled = true;
+                        break;
+                    case "DateTime":
+                        e.Substitution = new DateTime( 2018, 07, 08 );
+                        e.IsHandled = true;
+                        break;
+                    case "Guid":
+                        e.Substitution = Guid.Empty;
+                        e.IsHandled = true;
+                        break;
                 }
             };
             Assert.IsTrue( csvReader.Read(), "Could not read the first record." );

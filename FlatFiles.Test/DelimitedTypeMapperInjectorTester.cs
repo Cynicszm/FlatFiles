@@ -16,10 +16,8 @@ namespace FlatFiles.Test
             var mapper = DelimitedTypeMapper.Define<Data>();
             mapper
                 .CustomMapping( new Int64Column( "amount" ) )
-                .WithWriter( ( p, v ) =>
-                {
-                    return (long) Math.Floor( Math.Abs( v.Amount ) * 100M );
-                } );
+                .WithWriter( ( _, v ) => (long) Math.Floor( Math.Abs( v.Amount ) * 100M ) );
+
             injector.When<Data>().Use( mapper );
 
             var stringWriter = new StringWriter();
@@ -27,8 +25,8 @@ namespace FlatFiles.Test
 
             var data = new List<Data>
             {
-                new Data { Amount = 1M },
-                new Data { Amount = 2M }
+                new() { Amount = 1M },
+                new() { Amount = 2M }
             };
 
             writer.WriteAll( data );

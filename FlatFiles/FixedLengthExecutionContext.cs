@@ -1,16 +1,10 @@
 ﻿namespace FlatFiles
 {
-    internal sealed class FixedLengthExecutionContext : IFixedLengthExecutionContext
+    internal sealed class FixedLengthExecutionContext( FixedLengthSchema schema, FixedLengthOptions options ) : IFixedLengthExecutionContext
     {
-        public FixedLengthExecutionContext(FixedLengthSchema schema, FixedLengthOptions options)
-        {
-            Schema = schema; // We guarantee Schema returns non-null before exposing interface
-            Options = options;
-        }
+        public FixedLengthSchema Schema { get; } = schema; // We guarantee Schema returns non-null before exposing interface
 
-        public FixedLengthSchema Schema { get; }
-
-        public FixedLengthOptions Options { get; }
+        public FixedLengthOptions Options { get; } = options;
 
         ISchema IExecutionContext.Schema => Schema;
 

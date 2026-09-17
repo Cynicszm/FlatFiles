@@ -13,9 +13,9 @@ namespace FlatFiles.Test
         [TestMethod]
         public void ShouldTreatConstantAsNull()
         {
-            string content = "----,5.12,----,apple" + Environment.NewLine;            
+            var content = "----,5.12,----,apple" + Environment.NewLine;            
 
-            object[] values = ParseValues( content );
+            var values = ParseValues( content );
 
             Assert.AreEqual( 4, values.Length );
             Assert.IsNull( values[0] );
@@ -23,18 +23,18 @@ namespace FlatFiles.Test
             Assert.IsNull( values[2] );
             Assert.AreEqual( "apple", values[3] );
 
-            string output = WriteValues( values );
+            var output = WriteValues( values );
 
             Assert.AreEqual( content, output );
         }
 
         private static object[] ParseValues( string content )
         {
-            StringReader stringReader = new StringReader( content );
+            var stringReader = new StringReader( content );
             var schema = GetSchema();
-            DelimitedReader reader = new DelimitedReader( stringReader, schema );
+            var reader = new DelimitedReader( stringReader, schema );
             Assert.IsTrue( reader.Read(), "The record could not be read." );
-            object[] values = reader.GetValues();
+            var values = reader.GetValues();
             Assert.IsFalse( reader.Read(), "Too many records were read." );
             return values;
         }
@@ -42,8 +42,8 @@ namespace FlatFiles.Test
         private static string WriteValues( object[] values )
         {
             var schema = GetSchema();
-            StringWriter stringWriter = new StringWriter();
-            DelimitedWriter writer = new DelimitedWriter( stringWriter, schema );
+            var stringWriter = new StringWriter();
+            var writer = new DelimitedWriter( stringWriter, schema );
             writer.Write( values );
 
             return stringWriter.ToString();
@@ -53,7 +53,7 @@ namespace FlatFiles.Test
         {
             var nullHandler = NullFormatter.ForValue( "----" );
 
-            DelimitedSchema schema = new DelimitedSchema();
+            var schema = new DelimitedSchema();
             schema.AddColumn( new StringColumn( "Name" ) { NullFormatter = nullHandler } );
             schema.AddColumn( new DecimalColumn( "Cost" ) { NullFormatter = nullHandler, FormatProvider = CultureInfo.InvariantCulture } );
             schema.AddColumn( new SingleColumn( "Available" ) { NullFormatter = nullHandler } );
@@ -72,20 +72,20 @@ namespace FlatFiles.Test
             mapper.Property( p => p.Available ).ColumnName( "available" ).NullFormatter( nullHandler );
             mapper.Property( p => p.Vendor ).ColumnName( "vendor" ).NullFormatter( nullHandler );
 
-            string content = "----,5.12,----,apple" + Environment.NewLine;
-            StringReader stringReader = new StringReader( content );
+            var content = "----,5.12,----,apple" + Environment.NewLine;
+            var stringReader = new StringReader( content );
             Product[] products = [.. mapper.Read( stringReader )];
             Assert.AreEqual( 1, products.Length );
 
-            Product product = products.Single();
+            var product = products.Single();
             Assert.IsNull( product.Name );
             Assert.AreEqual( 5.12m, product.Cost );
             Assert.IsNull( product.Available );
             Assert.AreEqual( "apple", product.Vendor );
 
-            StringWriter stringWriter = new StringWriter();
+            var stringWriter = new StringWriter();
             mapper.Write( stringWriter, products );
-            string output = stringWriter.ToString();
+            var output = stringWriter.ToString();
 
             Assert.AreEqual( content, output );
         }

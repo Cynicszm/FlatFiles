@@ -1,8 +1,8 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
-using System.Threading.Tasks;
 using System.Threading;
-using System;
+using System.Threading.Tasks;
 using FlatFiles.Properties;
 
 namespace FlatFiles
@@ -41,7 +41,7 @@ namespace FlatFiles
         }
 
         public ValueTask<bool> IsEndOfStreamAsync( CancellationToken cancellationToken = default )
-{
+        {
             return recordReader.IsEndOfStreamAsync( cancellationToken );
         }
 
@@ -51,7 +51,7 @@ namespace FlatFiles
         }
 
         public Task<string> ReadRecordAsync( CancellationToken cancellationToken = default )
-{
+        {
             return recordReader.ReadRecordAsync( cancellationToken );
         }
 
@@ -85,7 +85,7 @@ namespace FlatFiles
             }
 
             public async ValueTask<bool> IsEndOfStreamAsync( CancellationToken cancellationToken = default )
-{
+            {
                 if (buffer is { Available: 0, IsEndOfStream: false })
                 {
                     await buffer.FillAsync( cancellationToken ).ConfigureAwait( false );
@@ -104,7 +104,7 @@ namespace FlatFiles
             }
 
             public async Task<string> ReadRecordAsync( CancellationToken cancellationToken = default )
-{
+            {
                 string? record;
                 while (!TryReadRecord( out record ))
                 {
@@ -148,18 +148,11 @@ namespace FlatFiles
             }
         }
 
-        private sealed class FixedLengthRecordReader : IRecordReader
+        private sealed class FixedLengthRecordReader( TextReader reader, int totalWidth ) : IRecordReader
         {
-            private readonly TextReader reader;
-            private readonly char[] buffer;
+            private readonly char[] buffer = new char[totalWidth];
             private int length;
             private bool isEndOfStream;
-
-            public FixedLengthRecordReader( TextReader reader, int totalWidth )
-            {
-                this.reader = reader;
-                buffer = new char[totalWidth];
-            }
 
             public bool IsEndOfStream()
             {
@@ -168,37 +161,37 @@ namespace FlatFiles
                     return true;
                 }
                 length = reader.ReadBlock( buffer );
-                if (length == 0)
+                if (length != 0)
                 {
-                    isEndOfStream = true;
-                    return true;
+                    return false;
                 }
-                return false;
+                isEndOfStream = true;
+                return true;
             }
 
             public async ValueTask<bool> IsEndOfStreamAsync( CancellationToken cancellationToken = default )
-{
+            {
                 if (isEndOfStream)
                 {
                     return true;
                 }
                 length = await reader.ReadBlockAsync( buffer, cancellationToken ).ConfigureAwait( false );
-                if (length == 0)
+                if (length != 0)
                 {
-                    isEndOfStream = true;
-                    return true;
+                    return false;
                 }
-                return false;
+                isEndOfStream = true;
+                return true;
             }
 
             public string ReadRecord()
             {
-                return new String( buffer, 0, length );
+                return new string( buffer, 0, length );
             }
 
             public Task<string> ReadRecordAsync( CancellationToken cancellationToken = default )
-{
-                return Task.FromResult( new String( buffer, 0, length ) );
+            {
+                return Task.FromResult( new string( buffer, 0, length ) );
             }
         }
     }

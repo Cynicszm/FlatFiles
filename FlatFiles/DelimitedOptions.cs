@@ -24,7 +24,7 @@ namespace FlatFiles
             get;
             set
             {
-                if (String.IsNullOrEmpty( value ))
+                if (string.IsNullOrEmpty( value ))
                 {
                     throw new ArgumentException( Resources.EmptySeparator );
                 }

@@ -31,7 +31,7 @@ namespace FlatFiles
         /// <returns>The formatted value.</returns>
         public sealed override string Format( IColumnContext? context, object? value )
         {
-            return OnFormat( context ) ?? String.Empty;
+            return OnFormat( context ) ?? string.Empty;
         }
 
         /// <summary>
@@ -61,7 +61,7 @@ namespace FlatFiles
         /// <param name="destination">The buffer to append the formatted value to.</param>
         protected virtual void OnFormat( IColumnContext? context, IBufferWriter<char> destination )
         {
-            destination.Write( (OnFormat( context ) ?? String.Empty).AsSpan() );
+            destination.Write( (OnFormat( context ) ?? string.Empty).AsSpan() );
         }
 
         /// <summary>

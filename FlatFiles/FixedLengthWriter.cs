@@ -1,7 +1,7 @@
-﻿using System.IO;
-using System.Threading.Tasks;
+﻿using System;
+using System.IO;
 using System.Threading;
-using System;
+using System.Threading.Tasks;
 using FlatFiles.Properties;
 
 namespace FlatFiles
@@ -105,7 +105,7 @@ namespace FlatFiles
         /// <remarks>If the header or records have already been written, this call is ignored.</remarks>
         /// <param name="cancellationToken">The token to observe while waiting for the operation to complete.</param>
         public async Task WriteSchemaAsync( CancellationToken cancellationToken )
-{
+        {
             cancellationToken.ThrowIfCancellationRequested();
             if (isSchemaWritten)
             {
@@ -170,7 +170,7 @@ namespace FlatFiles
         /// <exception cref="ArgumentNullException">The values array is null.</exception>
         /// <param name="cancellationToken">The token to observe while waiting for the operation to complete.</param>
         public async Task WriteAsync( object?[] values, CancellationToken cancellationToken )
-{
+        {
             cancellationToken.ThrowIfCancellationRequested();
             ArgumentNullException.ThrowIfNull( values );
             if (!isSchemaWritten)
@@ -207,7 +207,7 @@ namespace FlatFiles
         /// </summary>
         /// <param name="data">The data to write to the output.</param>
         /// <param name="writeRecordSeparator">Indicates whether a newline should be written after the data.</param>
-        public void WriteRaw( String data, bool writeRecordSeparator = false )
+        public void WriteRaw( string data, bool writeRecordSeparator = false )
         {
             recordWriter.WriteRaw( data );
             if (writeRecordSeparator)
@@ -222,7 +222,7 @@ namespace FlatFiles
         /// </summary>
         /// <param name="data">The data to write to the output.</param>
         /// <param name="writeRecordSeparator">Indicates whether a record separator should be written after the data.</param>
-        public Task WriteRawAsync( String data, bool writeRecordSeparator = false )
+        public Task WriteRawAsync( string data, bool writeRecordSeparator = false )
         {
             return WriteRawAsync( data, writeRecordSeparator, CancellationToken.None );
         }
@@ -234,8 +234,8 @@ namespace FlatFiles
         /// <param name="data">The data to write to the output.</param>
         /// <param name="writeRecordSeparator">Indicates whether a record separator should be written after the data.</param>
         /// <param name="cancellationToken">The token to observe while waiting for the operation to complete.</param>
-        public async Task WriteRawAsync( String data, bool writeRecordSeparator, CancellationToken cancellationToken )
-{
+        public async Task WriteRawAsync( string data, bool writeRecordSeparator, CancellationToken cancellationToken )
+        {
             cancellationToken.ThrowIfCancellationRequested();
             await recordWriter.WriteRawAsync( data, cancellationToken );
             if (writeRecordSeparator)
@@ -246,14 +246,15 @@ namespace FlatFiles
 
         private void ProcessError( RecordProcessingException exception )
         {
-            if (RecordError is not null)
+            if (RecordError is null)
             {
-                var args = new RecordErrorEventArgs( exception );
-                RecordError( this, args );
-                if (args.IsHandled)
-                {
-                    return;
-                }
+                throw exception;
+            }
+            var args = new RecordErrorEventArgs( exception );
+            RecordError( this, args );
+            if (args.IsHandled)
+            {
+                return;
             }
             throw exception;
         }
@@ -277,7 +278,7 @@ namespace FlatFiles
 
         private IRecordContext GetUncachedMetadata( FixedLengthSchema? schema )
         {
-            var executionContext = (metadataExecutionContexts ??= new( s => new GenericExecutionContext( s, recordWriter.Options.Clone() ) )).Get( schema );
+            var executionContext = (metadataExecutionContexts ??= new ExecutionContextCache<FixedLengthSchema, GenericExecutionContext>( s => new GenericExecutionContext( s, recordWriter.Options.Clone() ) )).Get( schema );
             var recordContext = new GenericRecordContext( executionContext )
             {
                 PhysicalRecordNumber = recordWriter.PhysicalRecordNumber,

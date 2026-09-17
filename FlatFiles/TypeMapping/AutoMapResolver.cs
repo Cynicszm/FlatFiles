@@ -19,7 +19,7 @@ namespace FlatFiles.TypeMapping
         private AutoMapResolver( Func<MemberInfo, string> nameResolver, Func<MemberInfo, int>? positionResolver )
         {
             this.nameResolver = nameResolver;
-            this.positionResolver = positionResolver ?? (m => 0);
+            this.positionResolver = positionResolver ?? (_ => 0);
         }
 
         /// <summary>

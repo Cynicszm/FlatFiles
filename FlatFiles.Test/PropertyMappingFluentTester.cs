@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using FlatFiles.TypeMapping;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace FlatFiles.Test
 {
@@ -242,11 +242,11 @@ namespace FlatFiles.Test
             }
             if (type == typeof( INullFormatter ))
             {
-                return FlatFiles.NullFormatter.Default;
+                return NullFormatter.Default;
             }
             if (type == typeof( IDefaultValue ))
             {
-                return FlatFiles.DefaultValue.Disabled();
+                return DefaultValue.Disabled();
             }
             if (type == typeof( DelimitedOptions ))
             {
@@ -260,11 +260,7 @@ namespace FlatFiles.Test
             {
                 return Enum.GetValues( type ).GetValue( 0 );
             }
-            if (type.IsValueType)
-            {
-                return Activator.CreateInstance( type );
-            }
-            return null;
+            return type.IsValueType ? Activator.CreateInstance( type ) : null;
         }
 
         /// <summary>
@@ -274,7 +270,7 @@ namespace FlatFiles.Test
         private static int ExerciseFluentSurface( object mapping )
         {
             var type = mapping.GetType();
-            int invoked = 0;
+            var invoked = 0;
             foreach (var method in type.GetMethods( BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly ))
             {
                 if (method.IsSpecialName || method.IsGenericMethodDefinition || !method.ReturnType.IsInstanceOfType( mapping ))
@@ -296,7 +292,7 @@ namespace FlatFiles.Test
             var mappings = DelimitedMappings();
 
             Assert.AreEqual( 41, mappings.Count, "One mapping was expected per property overload, enum overload and complex overload." );
-            int invoked = mappings.Sum( ExerciseFluentSurface );
+            var invoked = mappings.Sum( ExerciseFluentSurface );
             Assert.IsTrue( invoked >= mappings.Count * 8, $"Only {invoked} fluent methods were driven across {mappings.Count} mappings." );
         }
 
@@ -306,7 +302,7 @@ namespace FlatFiles.Test
             var mappings = FixedLengthMappings();
 
             Assert.AreEqual( 41, mappings.Count, "One mapping was expected per property overload, enum overload and complex overload." );
-            int invoked = mappings.Sum( ExerciseFluentSurface );
+            var invoked = mappings.Sum( ExerciseFluentSurface );
             Assert.IsTrue( invoked >= mappings.Count * 8, $"Only {invoked} fluent methods were driven across {mappings.Count} mappings." );
         }
 

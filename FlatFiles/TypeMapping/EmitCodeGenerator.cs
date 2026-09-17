@@ -1,9 +1,9 @@
-﻿using FlatFiles.Properties;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Globalization;
-using System.Reflection.Emit;
 using System.Reflection;
-using System;
+using System.Reflection.Emit;
+using FlatFiles.Properties;
 
 namespace FlatFiles.TypeMapping
 {
@@ -27,7 +27,7 @@ namespace FlatFiles.TypeMapping
 
         private string GetUniqueTypeName( string name )
         {
-            int id = nameLookup.AddOrUpdate( name, 0, ( _, old ) => old + 1 );
+            var id = nameLookup.AddOrUpdate( name, 0, ( _, old ) => old + 1 );
             return $"{name}_{id}";
         }
 
@@ -65,7 +65,7 @@ namespace FlatFiles.TypeMapping
 
             var methodBuilder = typeBuilder.DefineMethod( "Read", MethodAttributes.Public, null, [typeof( IRecordContext ), entityType, typeof( object[] )] );
             var methodGenerator = methodBuilder.GetILGenerator();
-            for (int index = 0; index != mappings.Length; ++index)
+            for (var index = 0; index != mappings.Length; ++index)
             {
                 var mapping = mappings[index];
                 if (mapping.Member is not null)
@@ -92,21 +92,22 @@ namespace FlatFiles.TypeMapping
             generator.Emit( OpCodes.Ldc_I4, logicalIndex );
             generator.Emit( OpCodes.Ldelem_Ref );
 
-            if (member.MemberInfo is FieldInfo fieldInfo)
+            switch (member.MemberInfo)
             {
-                generator.Emit( OpCodes.Unbox_Any, fieldInfo.FieldType );
-                generator.Emit( OpCodes.Stfld, fieldInfo );
-            }
-            else if (member.MemberInfo is PropertyInfo propertyInfo)
-            {
-                MethodInfo? setter = propertyInfo.GetSetMethod( true );
-                if (setter is null)
-                {
-                    string message = String.Format( CultureInfo.CurrentCulture, Resources.ReadOnlyProperty, propertyInfo.Name );
-                    throw new FlatFileException( message );
-                }
-                generator.Emit( OpCodes.Unbox_Any, propertyInfo.PropertyType );
-                generator.Emit( OpCodes.Callvirt, setter );
+                case FieldInfo fieldInfo:
+                    generator.Emit( OpCodes.Unbox_Any, fieldInfo.FieldType );
+                    generator.Emit( OpCodes.Stfld, fieldInfo );
+                    break;
+                case PropertyInfo propertyInfo:
+                    var setter = propertyInfo.GetSetMethod( true );
+                    if (setter is null)
+                    {
+                        var message = string.Format( CultureInfo.CurrentCulture, Resources.ReadOnlyProperty, propertyInfo.Name );
+                        throw new FlatFileException( message );
+                    }
+                    generator.Emit( OpCodes.Unbox_Any, propertyInfo.PropertyType );
+                    generator.Emit( OpCodes.Callvirt, setter );
+                    break;
             }
         }
 
@@ -176,7 +177,7 @@ namespace FlatFiles.TypeMapping
 
             var methodBuilder = typeBuilder.DefineMethod( "Write", MethodAttributes.Public, null, [typeof( IRecordContext ), entityType, typeof( object[] )] );
             var methodGenerator = methodBuilder.GetILGenerator();
-            for (int index = 0; index != mappings.Length; ++index)
+            for (var index = 0; index != mappings.Length; ++index)
             {
                 var mapping = mappings[index];
                 if (mapping.Member is not null)
@@ -202,29 +203,30 @@ namespace FlatFiles.TypeMapping
             generator.Emit( OpCodes.Ldc_I4, logicalIndex );
             generator.Emit( OpCodes.Ldarg_2 );
 
-            if (member.MemberInfo is FieldInfo fieldInfo)
+            switch (member.MemberInfo)
             {
-                generator.Emit( OpCodes.Ldfld, fieldInfo );
-                var fieldType = fieldInfo.FieldType;
-                if (!fieldType.GetTypeInfo().IsClass)
-                {
-                    generator.Emit( OpCodes.Box, fieldType );
-                }
-            }
-            else if (member.MemberInfo is PropertyInfo propertyInfo)
-            {
-                var getter = propertyInfo.GetGetMethod( true );
-                if (getter is null)
-                {
-                    string message = String.Format( CultureInfo.CurrentCulture, Resources.WriteOnlyProperty, propertyInfo.Name );
-                    throw new FlatFileException( message );
-                }
-                generator.Emit( OpCodes.Callvirt, getter );
-                var propertyType = propertyInfo.PropertyType;
-                if (!propertyType.GetTypeInfo().IsClass)
-                {
-                    generator.Emit( OpCodes.Box, propertyType );
-                }
+                case FieldInfo fieldInfo:
+                    generator.Emit( OpCodes.Ldfld, fieldInfo );
+                    var fieldType = fieldInfo.FieldType;
+                    if (!fieldType.GetTypeInfo().IsClass)
+                    {
+                        generator.Emit( OpCodes.Box, fieldType );
+                    }
+                    break;
+                case PropertyInfo propertyInfo:
+                    var getter = propertyInfo.GetGetMethod( true );
+                    if (getter is null)
+                    {
+                        var message = string.Format( CultureInfo.CurrentCulture, Resources.WriteOnlyProperty, propertyInfo.Name );
+                        throw new FlatFileException( message );
+                    }
+                    generator.Emit( OpCodes.Callvirt, getter );
+                    var propertyType = propertyInfo.PropertyType;
+                    if (!propertyType.GetTypeInfo().IsClass)
+                    {
+                        generator.Emit( OpCodes.Box, propertyType );
+                    }
+                    break;
             }
             generator.Emit( OpCodes.Stelem_Ref );
         }

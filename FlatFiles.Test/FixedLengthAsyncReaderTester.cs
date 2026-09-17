@@ -28,10 +28,10 @@ namespace FlatFiles.Test
 
             var bob = new Person { Id = 123, Name = "Bob", Created = new DateTime( 2013, 1, 19 ), IsActive = true };
 
-            StringWriter stringWriter = new StringWriter();
-            await mapper.WriteAsync( stringWriter, new Person[] { bob } ).ConfigureAwait( false );
+            var stringWriter = new StringWriter();
+            await mapper.WriteAsync( stringWriter, [ bob ] ).ConfigureAwait( false );
 
-            StringReader stringReader = new StringReader( stringWriter.ToString() );
+            var stringReader = new StringReader( stringWriter.ToString() );
             var reader = mapper.GetReader( stringReader );
             List<Person> people = [];
             while (await reader.ReadAsync().ConfigureAwait( false ))
@@ -58,10 +58,10 @@ namespace FlatFiles.Test
             var bob = new Person { Id = 123, Name = "Bob", Created = new DateTime( 2013, 1, 19 ), IsActive = true };
             var options = new FixedLengthOptions { HasRecordSeparator = false };
 
-            StringWriter stringWriter = new StringWriter();
-            await mapper.WriteAsync( stringWriter, new Person[] { bob, bob }, options ).ConfigureAwait( false );
+            var stringWriter = new StringWriter();
+            await mapper.WriteAsync( stringWriter, [ bob, bob ], options ).ConfigureAwait( false );
 
-            StringReader stringReader = new StringReader( stringWriter.ToString() );
+            var stringReader = new StringReader( stringWriter.ToString() );
             var reader = mapper.GetReader( stringReader, options );
             List<Person> people = [];
             while (await reader.ReadAsync().ConfigureAwait( false ))

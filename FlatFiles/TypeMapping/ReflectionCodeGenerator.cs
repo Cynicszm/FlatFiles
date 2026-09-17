@@ -6,26 +6,26 @@ namespace FlatFiles.TypeMapping
     {
         public Func<TEntity> GetFactory<TEntity>()
         {
-            return () => (TEntity)Activator.CreateInstance(typeof(TEntity), true)!;
+            return () => (TEntity) Activator.CreateInstance( typeof( TEntity ), true )!;
         }
 
-        public Action<IRecordContext, TEntity, object?[]> GetReader<TEntity>(IMemberMapping[] mappings)
+        public Action<IRecordContext, TEntity, object?[]> GetReader<TEntity>( IMemberMapping[] mappings )
         {
-            void Reader(IRecordContext recordContext, TEntity entity, object?[] values)
+            void Reader( IRecordContext recordContext, TEntity entity, object?[] values )
             {
-                for (int index = 0; index != mappings.Length; ++index)
+                for (var index = 0; index != mappings.Length; ++index)
                 {
                     var mapping = mappings[index];
                     if (mapping.Member is not null)
                     {
                         var value = values[mapping.LogicalIndex];
-                        mapping.Member.SetValue(entity!, value);
+                        mapping.Member.SetValue( entity!, value );
                     }
                     else if (mapping.Reader is not null)
                     {
-                        var columnContext = GetColumnContext(recordContext, mapping);
+                        var columnContext = GetColumnContext( recordContext, mapping );
                         var value = values[mapping.LogicalIndex];
-                        mapping.Reader(columnContext, entity!, value);
+                        mapping.Reader( columnContext, entity!, value );
                     }
                 }
             }
@@ -33,22 +33,22 @@ namespace FlatFiles.TypeMapping
             return Reader;
         }
 
-        public Action<IRecordContext, TEntity, object?[]> GetWriter<TEntity>(IMemberMapping[] mappings)
+        public Action<IRecordContext, TEntity, object?[]> GetWriter<TEntity>( IMemberMapping[] mappings )
         {
-            void Writer(IRecordContext recordContext, TEntity entity, object?[] values)
+            void Writer( IRecordContext recordContext, TEntity entity, object?[] values )
             {
-                for (int index = 0; index != mappings.Length; ++index)
+                for (var index = 0; index != mappings.Length; ++index)
                 {
-                    IMemberMapping mapping = mappings[index];
+                    var mapping = mappings[index];
                     if (mapping.Member is not null)
                     {
-                        object? value = mapping.Member.GetValue(entity!);
+                        var value = mapping.Member.GetValue( entity! );
                         values[mapping.LogicalIndex] = value;
                     }
                     else if (mapping.Writer is not null)
                     {
-                        var columnContext = GetColumnContext(recordContext, mapping);
-                        mapping.Writer(columnContext, entity, values);
+                        var columnContext = GetColumnContext( recordContext, mapping );
+                        mapping.Writer( columnContext, entity, values );
                     }
                 }
             }
@@ -56,9 +56,9 @@ namespace FlatFiles.TypeMapping
             return Writer;
         }
 
-        private static IColumnContext GetColumnContext(IRecordContext recordContext, IMemberMapping mapping)
+        private static IColumnContext GetColumnContext( IRecordContext recordContext, IMemberMapping mapping )
         {
-            var columnContext = new ColumnContext(recordContext, mapping.PhysicalIndex, mapping.LogicalIndex);
+            var columnContext = new ColumnContext( recordContext, mapping.PhysicalIndex, mapping.LogicalIndex );
             return columnContext;
         }
     }

@@ -13,27 +13,27 @@ namespace FlatFiles.Benchmark
 
         public EmitVsReflectionWriteTester()
         {
-            var mapper = DelimitedTypeMapper.Define<Person>( () => new Person() );
-            mapper.Property( x => x.Name ).ColumnName( "Name" );
-            mapper.Property( x => x.IQ ).ColumnName( "IQ" );
-            mapper.Property( x => x.BirthDate ).ColumnName( "BirthDate" );
-            mapper.Property( x => x.TopSpeed ).ColumnName( "TopSpeed" );
-            this.mapper = mapper;
+            var delimitedTypeMapper = DelimitedTypeMapper.Define( () => new Person() );
+            delimitedTypeMapper.Property( x => x.Name ).ColumnName( "Name" );
+            delimitedTypeMapper.Property( x => x.IQ ).ColumnName( "IQ" );
+            delimitedTypeMapper.Property( x => x.BirthDate ).ColumnName( "BirthDate" );
+            delimitedTypeMapper.Property( x => x.TopSpeed ).ColumnName( "TopSpeed" );
+            mapper = delimitedTypeMapper;
 
-            people = Enumerable.Range( 0, 10000 ).Select( i => new Person
+            people = [.. Enumerable.Range( 0, 10000 ).Select( _ => new Person
             {
                 Name = "Susan",
                 IQ = 132,
                 BirthDate = new DateTime( 1984, 3, 15 ),
                 TopSpeed = 10.1m
-            } ).ToArray();
+            } )];
         }
 
         [Benchmark( Description = "SerializeEmit" )]
         public string SerializeEmit()
         {
-            mapper.OptimizeMapping( true );
-            StringWriter writer = new StringWriter();
+            mapper.OptimizeMapping();
+            var writer = new StringWriter();
             mapper.Write( writer, people );
             return writer.ToString();
         }
@@ -42,7 +42,7 @@ namespace FlatFiles.Benchmark
         public string SerializeReflection()
         {
             mapper.OptimizeMapping( false );
-            StringWriter writer = new StringWriter();
+            var writer = new StringWriter();
             mapper.Write( writer, people );
             return writer.ToString();
         }

@@ -216,13 +216,8 @@ namespace FlatFiles.Benchmark
             }
         }
 
-        public class GeoLocationColumn : ColumnDefinition<GeoLocation>
+        public class GeoLocationColumn( string columnName ) : ColumnDefinition<GeoLocation>( columnName )
         {
-            public GeoLocationColumn( string columnName )
-                : base( columnName )
-            {
-            }
-
             protected override string OnFormat( IColumnContext context, GeoLocation value )
             {
                 return value.ToString();
@@ -230,7 +225,7 @@ namespace FlatFiles.Benchmark
 
             protected override GeoLocation OnParse( IColumnContext context, string value )
             {
-                string[] parts = value.Substring( 1, value.Length - 2 ).Split( ',', 2 );
+                var parts = value.Substring( 1, value.Length - 2 ).Split( ',', 2 );
                 var result = new GeoLocation
                 {
                     Latitude = Convert.ToDecimal( parts[0].Trim() ),

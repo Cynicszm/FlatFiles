@@ -47,16 +47,16 @@ namespace FlatFiles
         /// <returns>The parsed objects.</returns>
         internal object?[] ParseValues( IRecoverableRecordContext context, string[] values )
         {
-            object?[] parsedValues = new object?[ColumnDefinitions.PhysicalCount];
-            for (int columnIndex = 0, sourceIndex = 0, destinationIndex = 0, columnCount = ColumnDefinitions.Count; 
-                columnIndex != columnCount; 
+            var parsedValues = new object?[ColumnDefinitions.PhysicalCount];
+            for (int columnIndex = 0, sourceIndex = 0, destinationIndex = 0, columnCount = ColumnDefinitions.Count;
+                columnIndex != columnCount;
                 ++columnIndex)
             {
                 var definition = ColumnDefinitions[columnIndex];
                 if (definition is IMetadataColumn)
                 {
                     var columnContext = NewColumnContext( context, columnIndex, destinationIndex );
-                    var metadata = ParseWithContext( columnContext, String.Empty );
+                    var metadata = ParseWithContext( columnContext, string.Empty );
                     parsedValues[destinationIndex] = metadata;
                     ++destinationIndex;
                 }
@@ -101,16 +101,14 @@ namespace FlatFiles
             catch (Exception exception)
             {
                 var columnException = new ColumnProcessingException( columnContext, rawValue, exception );
-                if (columnContext.RecordContext is IRecoverableRecordContext { HasHandler: true } recordContext)
+                if (columnContext.RecordContext is not IRecoverableRecordContext { HasHandler: true } recordContext)
                 {
-                    var e = new ColumnErrorEventArgs( columnException );
-                    recordContext.ProcessError( this, e );
-                    if (e.IsHandled)
-                    {
-                        return e.Substitution;
-                    }
+                    throw columnException;
                 }
-                throw columnException;
+                var e = new ColumnErrorEventArgs( columnException );
+                recordContext.ProcessError( this, e );
+
+                return !e.IsHandled ? throw columnException : e.Substitution;
             }
         }
 
@@ -188,17 +186,17 @@ namespace FlatFiles
                 // Whatever the column managed to write before it failed must not leak into the record.
                 destination.Truncate( start );
                 var columnException = new ColumnProcessingException( columnContext, value, exception );
-                if (columnContext.RecordContext is IRecoverableRecordContext { HasHandler: true } recordContext)
+                if (columnContext.RecordContext is not IRecoverableRecordContext { HasHandler: true } recordContext)
                 {
-                    var e = new ColumnErrorEventArgs( columnException );
-                    recordContext.ProcessError( this, e );
-                    if (e.IsHandled)
-                    {
-                        destination.Write( ((string?) e.Substitution ?? String.Empty).AsSpan() );
-                        return;
-                    }
+                    throw columnException;
                 }
-                throw columnException;
+                var e = new ColumnErrorEventArgs( columnException );
+                recordContext.ProcessError( this, e );
+                if (!e.IsHandled)
+                {
+                    throw columnException;
+                }
+                destination.Write( ((string?) e.Substitution ?? string.Empty).AsSpan() );
             }
         }
 

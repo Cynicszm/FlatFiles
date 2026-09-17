@@ -1,7 +1,7 @@
-﻿using System.IO;
-using System.Threading.Tasks;
+﻿using System;
+using System.IO;
 using System.Threading;
-using System;
+using System.Threading.Tasks;
 using FlatFiles.Properties;
 
 namespace FlatFiles
@@ -103,7 +103,7 @@ namespace FlatFiles
         public FixedLengthSchema? GetSchema()
         {
             return schema;
-        } 
+        }
 
         ISchema? IReader.GetSchema()
         {
@@ -125,18 +125,18 @@ namespace FlatFiles
         /// <param name="cancellationToken">The token to observe while waiting for the operation to complete.</param>
         /// <returns>The schema being used by the parser.</returns>
         public Task<FixedLengthSchema?> GetSchemaAsync( CancellationToken cancellationToken )
-{
+        {
             cancellationToken.ThrowIfCancellationRequested();
             return Task.FromResult( schema );
         }
 
         Task<ISchema?> IReader.GetSchemaAsync()
-{
+        {
             return Task.FromResult<ISchema?>( schema );
         }
 
         Task<ISchema?> IReader.GetSchemaAsync( CancellationToken cancellationToken )
-{
+        {
             return Task.FromResult<ISchema?>( schema );
         }
 
@@ -183,10 +183,10 @@ namespace FlatFiles
             while (!endOfFile)
             {
                 var record = ReadNextRecord();
-                var values = ProcessRecord( record );
-                if (values is not null)
+                var currentValues = ProcessRecord( record );
+                if (currentValues is not null)
                 {
-                    return values;
+                    return currentValues;
                 }
             }
             return null;
@@ -194,17 +194,17 @@ namespace FlatFiles
 
         private ExecutionContextCache<FixedLengthSchema, FixedLengthExecutionContext>? executionContexts;
 
-        private FixedLengthRecordContext NewRecordContext( FixedLengthSchema schema, string record, string[]? values )
+        private FixedLengthRecordContext NewRecordContext( FixedLengthSchema currentSchema, string record, string[]? currentValues )
         {
-            var executionContext = (executionContexts ??= new( s => new FixedLengthExecutionContext( s!, options.Clone() ) )).Get( schema );
-            var recordContext = new FixedLengthRecordContext( executionContext )
+            var executionContext = (executionContexts ??= new ExecutionContextCache<FixedLengthSchema, FixedLengthExecutionContext>( s => new FixedLengthExecutionContext( s!, options.Clone() ) )).Get( currentSchema );
+            var currentContext = new FixedLengthRecordContext( executionContext )
             {
                 PhysicalRecordNumber = physicalRecordNumber,
                 LogicalRecordNumber = logicalRecordNumber,
                 Record = record,
-                Values = values
+                Values = currentValues
             };
-            return recordContext;
+            return currentContext;
         }
 
         /// <summary>
@@ -222,7 +222,7 @@ namespace FlatFiles
         /// <param name="cancellationToken">The token to observe while waiting for the operation to complete.</param>
         /// <returns>True if the next record was parsed; otherwise, false if all files are read.</returns>
         public async ValueTask<bool> ReadAsync( CancellationToken cancellationToken )
-{
+        {
             cancellationToken.ThrowIfCancellationRequested();
             if (hasError)
             {
@@ -249,7 +249,7 @@ namespace FlatFiles
         }
 
         private async Task HandleHeaderAsync( CancellationToken cancellationToken = default )
-{
+        {
             if (physicalRecordNumber == 0 && options.IsFirstRecordHeader)
             {
                 await SkipAsyncInternal( cancellationToken ).ConfigureAwait( false );
@@ -257,14 +257,14 @@ namespace FlatFiles
         }
 
         private async Task<object?[]?> ParsePartitionsAsync( CancellationToken cancellationToken = default )
-{
+        {
             while (!endOfFile)
             {
                 var record = await ReadNextRecordAsync( cancellationToken ).ConfigureAwait( false );
-                var values = ProcessRecord( record );
-                if (values is not null)
+                var currentValues = ProcessRecord( record );
+                if (currentValues is not null)
                 {
-                    return values;
+                    return currentValues;
                 }
             }
             return null;
@@ -276,25 +276,25 @@ namespace FlatFiles
             {
                 return null;
             }
-            var schema = GetSchema( record );
-            if (schema is null)
+            var currentSchema = GetSchema( record );
+            if (currentSchema is null)
             {
                 return null;
             }
-            var rawValues = PartitionRecord( schema, record );
-            if (rawValues is null || IsSkipped( schema, record, rawValues ))
+            var rawValues = PartitionRecord( currentSchema, record );
+            if (rawValues is null || IsSkipped( currentSchema, record, rawValues ))
             {
                 return null;
             }
-            var values = ParseValues( schema, record, rawValues );
-            if (values is null)
+            var currentValues = ParseValues( currentSchema, record, rawValues );
+            if (currentValues is null)
             {
                 return null;
             }
-            var metadata = NewRecordContext( schema, record, rawValues );
+            var metadata = NewRecordContext( currentSchema, record, rawValues );
             recordContext = metadata;
-            RecordParsed?.Invoke( this, new FixedLengthRecordParsedEventArgs( metadata, values ) );
-            return values;
+            RecordParsed?.Invoke( this, new FixedLengthRecordParsedEventArgs( metadata, currentValues ) );
+            return currentValues;
         }
 
         private bool IsSkipped( string record )
@@ -308,25 +308,25 @@ namespace FlatFiles
             return e.IsSkipped;
         }
 
-        private bool IsSkipped( FixedLengthSchema schema, string record, string[] values )
+        private bool IsSkipped( FixedLengthSchema currentSchema, string record, string[] currentValues )
         {
             if (RecordPartitioned is null)
             {
                 return false;
             }
-            var metadata = NewRecordContext( schema, record, values );
-            var e = new FixedLengthRecordPartitionedEventArgs( metadata, values );
+            var metadata = NewRecordContext( currentSchema, record, currentValues );
+            var e = new FixedLengthRecordPartitionedEventArgs( metadata, currentValues );
             RecordPartitioned( this, e );
             return e.IsSkipped;
         }
 
-        private object?[]? ParseValues( FixedLengthSchema schema, string record, string[] rawValues )
+        private object?[]? ParseValues( FixedLengthSchema currentSchema, string record, string[] rawValues )
         {
-            var metadata = NewRecordContext( schema, record, rawValues );
+            var metadata = NewRecordContext( currentSchema, record, rawValues );
             metadata.ColumnError += ColumnError;
             try
             {
-                return schema.ParseValues( metadata, rawValues );
+                return currentSchema.ParseValues( metadata, rawValues );
             }
             catch (FlatFileException exception)
             {
@@ -373,7 +373,7 @@ namespace FlatFiles
         /// <returns>True if the next record was skipped; otherwise, false if all records are read.</returns>
         /// <remarks>The previously parsed values remain available.</remarks>
         public async ValueTask<bool> SkipAsync( CancellationToken cancellationToken )
-{
+        {
             cancellationToken.ThrowIfCancellationRequested();
             if (hasError)
             {
@@ -384,71 +384,72 @@ namespace FlatFiles
         }
 
         private async ValueTask<bool> SkipAsyncInternal( CancellationToken cancellationToken = default )
-{
+        {
             var record = await ReadNextRecordAsync( cancellationToken ).ConfigureAwait( false );
             return record is not null;
         }
 
-        private string[]? PartitionRecord( FixedLengthSchema schema, string record )
+        private string[]? PartitionRecord( FixedLengthSchema currentSchema, string record )
         {
-            if (record.Length < schema.TotalWidth)
+            if (record.Length < currentSchema.TotalWidth)
             {
-                var metadata = NewRecordContext( schema, record, null );
+                var metadata = NewRecordContext( currentSchema, record, null );
                 ProcessError( new RecordProcessingException( metadata, Resources.FixedLengthRecordTooShort ) );
                 return null;
             }
-            if (options.IsLongRecordRejected && record.Length > schema.TotalWidth)
+            if (options.IsLongRecordRejected && record.Length > currentSchema.TotalWidth)
             {
-                var metadata = NewRecordContext( schema, record, null );
+                var metadata = NewRecordContext( currentSchema, record, null );
                 ProcessError( new RecordProcessingException( metadata, Resources.FixedLengthRecordTooLong ) );
                 return null;
             }
-            var windows = schema.Windows;
-            var values = new string[schema.ColumnDefinitions.Count - schema.ColumnDefinitions.MetadataCount];
-            int offset = 0;
-            for (int valueIndex = 0, columnIndex = 0; valueIndex != values.Length; ++columnIndex)
+            var windows = currentSchema.Windows;
+            var currentValues = new string[currentSchema.ColumnDefinitions.Count - currentSchema.ColumnDefinitions.MetadataCount];
+            var offset = 0;
+            for (int valueIndex = 0, columnIndex = 0; valueIndex != currentValues.Length; ++columnIndex)
             {
-                var definition = schema.ColumnDefinitions[columnIndex];
-                if (definition is not IMetadataColumn)
+                var definition = currentSchema.ColumnDefinitions[columnIndex];
+                if (definition is IMetadataColumn)
                 {
-                    Window? window = columnIndex < windows.Count ? windows[columnIndex] : null;
-                    string value;
-                    if (window is null)
-                    {
-                        value = record[offset..];
-                    }
-                    else
-                    {
-                        value = record.Substring( offset, window.Width );
-                        if (!definition.IsComplex)
-                        {
-                            var alignment = window.Alignment ?? options.Alignment;
-                            value = alignment == FixedAlignment.LeftAligned
-                                ? value.TrimEnd( window.FillCharacter ?? options.FillCharacter )
-                                : value.TrimStart( window.FillCharacter ?? options.FillCharacter );
-                        }
-                        offset += window.Width;
-                    }
-                    values[valueIndex] = value;
-                    ++valueIndex;
+                    continue;
                 }
+                var window = columnIndex < windows.Count ? windows[columnIndex] : null;
+                string value;
+                if (window is null)
+                {
+                    value = record[offset..];
+                }
+                else
+                {
+                    value = record.Substring( offset, window.Width );
+                    if (!definition.IsComplex)
+                    {
+                        var alignment = window.Alignment ?? options.Alignment;
+                        value = alignment == FixedAlignment.LeftAligned
+                            ? value.TrimEnd( window.FillCharacter ?? options.FillCharacter )
+                            : value.TrimStart( window.FillCharacter ?? options.FillCharacter );
+                    }
+                    offset += window.Width;
+                }
+                currentValues[valueIndex] = value;
+                ++valueIndex;
             }
-            return values;
+            return currentValues;
         }
 
         private FixedLengthSchema? GetSchema( string record )
         {
             if (schemaSelector is null)
             {
-                return this.schema;
-            }
-            FixedLengthSchema? schema = schemaSelector.GetSchema( record );
-            if (schema is not null)
-            {
                 return schema;
             }
-            var recordContext = GetMetadata( null, record );
-            ProcessError( new RecordProcessingException( recordContext, Resources.MissingMatcher ) );
+            var currentSchema = schemaSelector.GetSchema( record );
+            if (currentSchema is not null)
+            {
+                return currentSchema;
+            }
+            var currentContext = GetMetadata( null, record );
+            ProcessError( new RecordProcessingException( currentContext, Resources.MissingMatcher ) );
             return null;
         }
 
@@ -465,7 +466,7 @@ namespace FlatFiles
         }
 
         private async Task<string?> ReadNextRecordAsync( CancellationToken cancellationToken = default )
-{
+        {
             if (await parser.IsEndOfStreamAsync( cancellationToken ).ConfigureAwait( false ))
             {
                 endOfFile = true;
@@ -478,14 +479,15 @@ namespace FlatFiles
 
         private void ProcessError( RecordProcessingException exception )
         {
-            if (RecordError is not null)
+            if (RecordError is null)
             {
-                var args = new RecordErrorEventArgs( exception );
-                RecordError( this, args );
-                if (args.IsHandled)
-                {
-                    return;
-                }
+                throw exception;
+            }
+            var args = new RecordErrorEventArgs( exception );
+            RecordError( this, args );
+            if (args.IsHandled)
+            {
+                return;
             }
             throw exception;
         }
@@ -515,20 +517,20 @@ namespace FlatFiles
 
         private ExecutionContextCache<FixedLengthSchema, GenericExecutionContext>? metadataExecutionContexts;
 
-        private IRecordContext GetMetadata( FixedLengthSchema? schema, string? record )
+        private IRecordContext GetMetadata( FixedLengthSchema? currentSchema, string? record )
         {
-            if (this.recordContext is not null)
+            if (recordContext is not null)
             {
-                return this.recordContext;
+                return recordContext;
             }
-            var executionContext = (metadataExecutionContexts ??= new( s => new GenericExecutionContext( s, options.Clone() ) )).Get( schema );
-            var recordContext = new GenericRecordContext( executionContext )
+            var executionContext = (metadataExecutionContexts ??= new ExecutionContextCache<FixedLengthSchema, GenericExecutionContext>( s => new GenericExecutionContext( s, options.Clone() ) )).Get( currentSchema );
+            var currentContext = new GenericRecordContext( executionContext )
             {
                 PhysicalRecordNumber = physicalRecordNumber,
                 LogicalRecordNumber = logicalRecordNumber,
                 Record = record
             };
-            return recordContext;
+            return currentContext;
         }
 
         IRecordContext IReaderWithMetadata.GetMetadata()
