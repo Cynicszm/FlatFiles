@@ -25,15 +25,16 @@ namespace FlatFiles
         private TSchema? schema;
         private TContext? context;
 
-        public TContext Get( TSchema? schema )
+        public TContext Get( TSchema? requested )
         {
             var current = context;
-            if (current is null || !ReferenceEquals( this.schema, schema ))
+            if (current is not null && ReferenceEquals( schema, requested ))
             {
-                current = create( schema );
-                this.schema = schema;
-                context = current;
+                return current;
             }
+            current = create( requested );
+            schema = requested;
+            context = current;
             return current;
         }
     }

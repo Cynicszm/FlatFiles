@@ -1,6 +1,6 @@
 ﻿using System;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using FlatFiles.TypeMapping;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace FlatFiles.Test
 {
@@ -18,7 +18,7 @@ namespace FlatFiles.Test
 
         private sealed class Holder
         {
-            public static Inner Instance { get; } = new Inner();
+            public static Inner Instance { get; } = new();
         }
 
         private sealed class Entity
@@ -27,7 +27,7 @@ namespace FlatFiles.Test
 
             public Inner Child { get; set; }
 
-            public static string Tag { get; set; } = "tag";
+            public static string Tag { get; } = "tag";
         }
 
         /// <summary>

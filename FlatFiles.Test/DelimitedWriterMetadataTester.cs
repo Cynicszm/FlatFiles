@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Linq;
 using FlatFiles.TypeMapping;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -20,21 +19,21 @@ namespace FlatFiles.Test
             outputMapper.Property( x => x.CreatedOn ).OutputFormat( "MM/dd/yyyy" );
 
             Person[] people = [
-                new Person { Name = "Bob", CreatedOn = new DateTime( 2018, 04, 25 ) },
-                new Person { Name = "Tom", CreatedOn = new DateTime( 2018, 04, 26 ) },
-                new Person { Name = "Jane", CreatedOn = new DateTime( 2018, 04, 27 ) }
+                new() { Name = "Bob", CreatedOn = new DateTime( 2018, 04, 25 ) },
+                new() { Name = "Tom", CreatedOn = new DateTime( 2018, 04, 26 ) },
+                new() { Name = "Jane", CreatedOn = new DateTime( 2018, 04, 27 ) }
             ];
 
-            StringWriter writer = new StringWriter();
+            var writer = new StringWriter();
             outputMapper.Write( writer, people, new DelimitedOptions { IsFirstRecordSchema = true } );
-            string output = writer.ToString();
+            var output = writer.ToString();
 
             var inputMapper = DelimitedTypeMapper.Define( () => new Person() );
             inputMapper.Property( x => x.Name );
             inputMapper.Property( x => x.RecordNumber );
             inputMapper.Property( x => x.CreatedOn ).InputFormat( "MM/dd/yyyy" );
 
-            StringReader reader = new StringReader( output );
+            var reader = new StringReader( output );
             Person[] results = [.. inputMapper.Read( reader, new DelimitedOptions { IsFirstRecordSchema = true } )];
             Assert.AreEqual( 3, results.Length );
             Assert.AreEqual( "Bob", results[0].Name );
@@ -59,21 +58,21 @@ namespace FlatFiles.Test
             outputMapper.Property( x => x.CreatedOn ).OutputFormat( "MM/dd/yyyy" );
 
             Person[] people = [
-                new Person { Name = "Bob", CreatedOn = new DateTime( 2018, 04, 25 ) },
-                new Person { Name = "Tom", CreatedOn = new DateTime( 2018, 04, 26 ) },
-                new Person { Name = "Jane", CreatedOn = new DateTime( 2018, 04, 27 ) }
+                new() { Name = "Bob", CreatedOn = new DateTime( 2018, 04, 25 ) },
+                new() { Name = "Tom", CreatedOn = new DateTime( 2018, 04, 26 ) },
+                new() { Name = "Jane", CreatedOn = new DateTime( 2018, 04, 27 ) }
             ];
 
-            StringWriter writer = new StringWriter();
+            var writer = new StringWriter();
             outputMapper.Write( writer, people, new DelimitedOptions { IsFirstRecordSchema = true } );
-            string output = writer.ToString();
+            var output = writer.ToString();
 
             var inputMapper = DelimitedTypeMapper.Define( () => new Person() );
             inputMapper.Property( x => x.Name );
             inputMapper.Property( x => x.RecordNumber );
             inputMapper.Property( x => x.CreatedOn ).InputFormat( "MM/dd/yyyy" );
 
-            StringReader reader = new StringReader( output );
+            var reader = new StringReader( output );
             Person[] results = [.. inputMapper.Read( reader, new DelimitedOptions { IsFirstRecordSchema = true } )];
             Assert.AreEqual( 3, results.Length );
             Assert.AreEqual( "Bob", results[0].Name );
@@ -98,21 +97,21 @@ namespace FlatFiles.Test
             outputMapper.Property( x => x.CreatedOn ).OutputFormat( "MM/dd/yyyy" );
 
             Person[] people = [
-                new Person { Name = "Bob", CreatedOn = new DateTime( 2018, 04, 25 ) },
-                new Person { Name = "Tom", CreatedOn = new DateTime( 2018, 04, 26 ) },
-                new Person { Name = "Jane", CreatedOn = new DateTime( 2018, 04, 27 ) }
+                new() { Name = "Bob", CreatedOn = new DateTime( 2018, 04, 25 ) },
+                new() { Name = "Tom", CreatedOn = new DateTime( 2018, 04, 26 ) },
+                new() { Name = "Jane", CreatedOn = new DateTime( 2018, 04, 27 ) }
             ];
 
-            StringWriter writer = new StringWriter();
+            var writer = new StringWriter();
             outputMapper.Write( writer, people, new DelimitedOptions { IsFirstRecordSchema = true } );
-            string output = writer.ToString();
+            var output = writer.ToString();
 
             var inputMapper = DelimitedTypeMapper.Define( () => new Person() );
             inputMapper.Property( x => x.Name );
             inputMapper.Property( x => x.RecordNumber );
             inputMapper.Property( x => x.CreatedOn ).InputFormat( "MM/dd/yyyy" );
 
-            StringReader reader = new StringReader( output );
+            var reader = new StringReader( output );
             Person[] results = [.. inputMapper.Read( reader, new DelimitedOptions { IsFirstRecordSchema = true } )];
             Assert.AreEqual( 3, results.Length );
             Assert.AreEqual( "Bob", results[0].Name );
@@ -139,14 +138,14 @@ namespace FlatFiles.Test
             outputMapper.Property( x => x.CreatedOn ).OutputFormat( "MM/dd/yyyy" );
 
             Person[] people = [
-                new Person { Name = "Bob", CreatedOn = new DateTime( 2018, 04, 25 ) },
-                new Person { Name = "Tom", CreatedOn = new DateTime( 2018, 04, 26 ) },
-                new Person { Name = "Jane", CreatedOn = new DateTime( 2018, 04, 27 ) }
+                new() { Name = "Bob", CreatedOn = new DateTime( 2018, 04, 25 ) },
+                new() { Name = "Tom", CreatedOn = new DateTime( 2018, 04, 26 ) },
+                new() { Name = "Jane", CreatedOn = new DateTime( 2018, 04, 27 ) }
             ];
 
-            StringWriter writer = new StringWriter();
+            var writer = new StringWriter();
             outputMapper.Write( writer, people, new DelimitedOptions { IsFirstRecordSchema = true } );
-            string output = writer.ToString();
+            var output = writer.ToString();
 
             var inputMapper = DelimitedTypeMapper.Define( () => new Person() );
             inputMapper.Property( x => x.Name );
@@ -155,7 +154,7 @@ namespace FlatFiles.Test
             inputMapper.Ignored();
             inputMapper.Property( x => x.CreatedOn ).InputFormat( "MM/dd/yyyy" );
 
-            StringReader reader = new StringReader( output );
+            var reader = new StringReader( output );
             Person[] results = [.. inputMapper.Read( reader, new DelimitedOptions { IsFirstRecordSchema = true } )];
             Assert.AreEqual( 3, results.Length );
             Assert.AreEqual( "Bob", results[0].Name );
@@ -180,14 +179,14 @@ namespace FlatFiles.Test
             outputMapper.Property( x => x.CreatedOn ).OutputFormat( "MM/dd/yyyy" );
 
             Person[] people = [
-                new Person { Name = "Bob", CreatedOn = new DateTime( 2018, 04, 25 ) },
-                new Person { Name = "Tom", CreatedOn = new DateTime( 2018, 04, 26 ) },
-                new Person { Name = "Jane", CreatedOn = new DateTime( 2018, 04, 27 ) }
+                new() { Name = "Bob", CreatedOn = new DateTime( 2018, 04, 25 ) },
+                new() { Name = "Tom", CreatedOn = new DateTime( 2018, 04, 26 ) },
+                new() { Name = "Jane", CreatedOn = new DateTime( 2018, 04, 27 ) }
             ];
 
-            StringWriter writer = new StringWriter();
+            var writer = new StringWriter();
             outputMapper.Write( writer, people, new DelimitedOptions { IsFirstRecordSchema = true } );
-            string output = writer.ToString();
+            var output = writer.ToString();
 
             var inputMapper = DelimitedTypeMapper.Define( () => new Person() );
             inputMapper.Property( x => x.Name );
@@ -196,7 +195,7 @@ namespace FlatFiles.Test
             inputMapper.Ignored();
             inputMapper.Property( x => x.CreatedOn ).InputFormat( "MM/dd/yyyy" );
 
-            StringReader reader = new StringReader( output );
+            var reader = new StringReader( output );
             Person[] results = [.. inputMapper.Read( reader, new DelimitedOptions { IsFirstRecordSchema = true } )];
             Assert.AreEqual( 3, results.Length );
             Assert.AreEqual( "Bob", results[0].Name );

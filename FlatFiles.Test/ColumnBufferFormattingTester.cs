@@ -72,7 +72,7 @@ namespace FlatFiles.Test
         [TestMethod]
         public void TestFormat_OnFormattingHook_IsAppliedBeforeFormatting()
         {
-            var column = new Int32Column( "c" ) { OnFormatting = ( context, value ) => (int) value * 2 };
+            var column = new Int32Column( "c" ) { OnFormatting = ( _, value ) => (int) value * 2 };
 
             Assert.AreEqual( "84", ToBuffer( column, 42 ) );
         }
@@ -80,7 +80,7 @@ namespace FlatFiles.Test
         [TestMethod]
         public void TestFormat_OnFormattedHook_SeesTheWholeString()
         {
-            var column = new StringColumn( "c" ) { OnFormatted = ( context, value ) => value.ToUpperInvariant() };
+            var column = new StringColumn( "c" ) { OnFormatted = ( _, value ) => value.ToUpperInvariant() };
 
             Assert.AreEqual( "SHOUT", ToBuffer( column, "shout" ) );
         }
@@ -128,7 +128,7 @@ namespace FlatFiles.Test
             schema.AddColumn( new Int32Column( "b" ) );
             var output = new StringWriter();
             var writer = new DelimitedWriter( output, schema, new DelimitedOptions { RecordSeparator = "\n" } );
-            writer.ColumnError += ( sender, e ) =>
+            writer.ColumnError += ( _, e ) =>
             {
                 e.Substitution = "sub";
                 e.IsHandled = true;
@@ -155,13 +155,8 @@ namespace FlatFiles.Test
         ///     A custom column that only overrides the string formatting members, as every column written before the
         ///     buffer overload existed does.
         /// </summary>
-        private sealed class HexColumn : ColumnDefinition<int>
+        private sealed class HexColumn() : ColumnDefinition<int>( "hex" )
         {
-            public HexColumn()
-                : base( "hex" )
-            {
-            }
-
             protected override int OnParse( IColumnContext context, string value )
             {
                 return Convert.ToInt32( value, 16 );
@@ -176,13 +171,8 @@ namespace FlatFiles.Test
         /// <summary>
         ///     A column that writes part of its value and then fails, so the writer has to discard what it wrote.
         /// </summary>
-        private sealed class FailingColumn : ColumnDefinition<int>
+        private sealed class FailingColumn() : ColumnDefinition<int>( "fail" )
         {
-            public FailingColumn()
-                : base( "fail" )
-            {
-            }
-
             protected override int OnParse( IColumnContext context, string value )
             {
                 return 0;

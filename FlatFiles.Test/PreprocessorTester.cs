@@ -20,7 +20,7 @@ namespace FlatFiles.Test
             mapper.Property( x => x.Money ).ColumnName( "money" ).Preprocessor( x => x.Trim( '"', '=' ) ).NumberStyles( NumberStyles.Currency );
 #pragma warning restore CS0618 // Type or member is obsolete
 
-            StringReader reader = new StringReader( input );
+            var reader = new StringReader( input );
             Numbers[] results = [.. mapper.Read( reader )];
 
             Assert.AreEqual( 1, results.Length );
@@ -38,7 +38,7 @@ namespace FlatFiles.Test
             mapper.Property( x => x.Value ).ColumnName( "value" ).OnParsing( ( ctx, x ) => x.Trim( '"', '=' ) ).NumberStyles( NumberStyles.AllowDecimalPoint );
             mapper.Property( x => x.Money ).ColumnName( "money" ).OnParsing( ( ctx, x ) => x.Trim( '"', '=' ) ).NumberStyles( NumberStyles.Currency );
 
-            StringReader reader = new StringReader( input );
+            var reader = new StringReader( input );
             Numbers[] results = [.. mapper.Read( reader )];
 
             Assert.AreEqual( 1, results.Length );

@@ -2,15 +2,8 @@
 
 namespace FlatFiles.TypeMapping
 {
-    internal sealed class DelimitedTypedReader<TEntity> : TypedReader<TEntity>, IDelimitedTypedReader<TEntity>
+    internal sealed class DelimitedTypedReader<TEntity>( DelimitedReader reader, IMapper<TEntity> mapper ) : TypedReader<TEntity>( mapper ), IDelimitedTypedReader<TEntity>
     {
-        private readonly DelimitedReader reader;
-
-        public DelimitedTypedReader(DelimitedReader reader, IMapper<TEntity> mapper)
-            : base(mapper)
-        {
-            this.reader = reader;
-        }
 
         public event EventHandler<DelimitedRecordReadEventArgs>? RecordRead
         {

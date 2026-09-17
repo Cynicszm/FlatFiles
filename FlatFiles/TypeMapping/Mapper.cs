@@ -3,10 +3,8 @@ using System.Linq;
 
 namespace FlatFiles.TypeMapping
 {
-    internal sealed class Mapper<TEntity> : IMapper<TEntity>
+    internal sealed class Mapper<TEntity>( MemberLookup lookup, ICodeGenerator codeGenerator, IMemberAccessor? member ) : IMapper<TEntity>
     {
-        private readonly MemberLookup lookup;
-        private readonly ICodeGenerator codeGenerator;
         private Func<IRecordContext, object?[], TEntity>? cachedReader;
         private Action<IRecordContext, TEntity, object?[]>? cachedWriter;
 
@@ -15,14 +13,7 @@ namespace FlatFiles.TypeMapping
         {
         }
 
-        public Mapper( MemberLookup lookup, ICodeGenerator codeGenerator, IMemberAccessor? member )
-        {
-            this.lookup = lookup;
-            this.codeGenerator = codeGenerator;
-            Member = member;
-        }
-
-        public IMemberAccessor? Member { get; }
+        public IMemberAccessor? Member { get; } = member;
 
         public int LogicalCount => lookup.LogicalCount;
 
@@ -129,7 +120,7 @@ namespace FlatFiles.TypeMapping
             var mappers = mappings
                 .Where( m => m.Member is not null )
                 .Where( m => Member?.Name != m.Member!.ParentAccessor?.Name )
-                .Where( m => m.Member!.Name.StartsWith( Member?.Name ?? String.Empty ) )
+                .Where( m => m.Member!.Name.StartsWith( Member?.Name ?? string.Empty ) )
                 .Select( GetParentAccessor )
                 .GroupBy( p => p.Name )
                 .Select( g => g.First() )
@@ -140,7 +131,7 @@ namespace FlatFiles.TypeMapping
 
         private IMemberAccessor GetParentAccessor( IMemberMapping mapping )
         {
-            string accessorName = Member?.Name ?? String.Empty;
+            var accessorName = Member?.Name ?? string.Empty;
             var childAccessor = mapping.Member!;
             var parentAccessor = childAccessor.ParentAccessor;
             while (parentAccessor is not null && accessorName != parentAccessor.Name)

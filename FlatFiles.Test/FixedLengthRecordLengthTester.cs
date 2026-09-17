@@ -71,7 +71,7 @@ namespace FlatFiles.Test
         {
             var reader = Reader( 4, new FixedLengthOptions { IsLongRecordRejected = true } );
             List<int> rejected = [];
-            reader.RecordError += ( sender, e ) =>
+            reader.RecordError += ( _, e ) =>
             {
                 rejected.Add( ((RecordProcessingException) e.Exception).RecordContext.PhysicalRecordNumber );
                 e.IsHandled = true;
@@ -108,7 +108,7 @@ namespace FlatFiles.Test
         [TestMethod]
         public void TestRead_HeaderRecordLongerThanTheSchema_IsSkippedNotRejected()
         {
-            var text = "This header is much longer than the nineteen characters of a record\r\n" + Records;
+            const string text = "This header is much longer than the nineteen characters of a record\r\n" + Records;
             var options = new FixedLengthOptions { IsLongRecordRejected = true, IsFirstRecordHeader = true };
             var reader = new FixedLengthReader( new StringReader( text ), Schema( 5 ), options );
 

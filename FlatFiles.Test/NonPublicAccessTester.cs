@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Linq;
 using FlatFiles.TypeMapping;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -20,8 +19,8 @@ namespace FlatFiles.Test
             mapper.Property( x => x.ModificationDate ).InputFormat( "yyyyMMddHHmmss" );
             mapper.Property( x => x.IsInternal );
 
-            string rawData = @"ABC123,Doing Fine,20180115,20180115145100,true";
-            StringReader reader = new StringReader( rawData );
+            const string rawData = @"ABC123,Doing Fine,20180115,20180115145100,true";
+            var reader = new StringReader( rawData );
             InternalClass[] data = [.. mapper.Read( reader, new DelimitedOptions
             {
                 IsFirstRecordSchema = false,
@@ -50,8 +49,8 @@ namespace FlatFiles.Test
             mapper.DateTimeProperty( "ModificationDate" ).InputFormat( "yyyyMMddHHmmss" );
             mapper.BooleanProperty( "IsInternal" );
 
-            string rawData = @"ABC123,Doing Fine,20180115,20180115145100,true";
-            StringReader reader = new StringReader( rawData );
+            const string rawData = @"ABC123,Doing Fine,20180115,20180115145100,true";
+            var reader = new StringReader( rawData );
             object[] data = [.. mapper.Read( reader, new DelimitedOptions
             {
                 IsFirstRecordSchema = false,

@@ -17,24 +17,23 @@ namespace FlatFiles.Benchmark
 
         public CoreBenchmarkSuite()
         {
-            string[] headers = new string[]
-            {
+            string[] headers =
+            [
                 "FirstName", "LastName", "Age", "Street1", "Street2", "City", "State", "Zip", "FavoriteColor", "FavoriteFood", "FavoriteSport", "CreatedOn", "IsActive"
-            };
-            string[] values = new string[]
-            {
+            ];
+            string[] values =
+            [
                 "John", "Smith", "29", "West Street Rd", "Apt 23", "Lexington", "DE", "001569", "Blue", "Cheese and Crackers", "Soccer", "2017-01-01", "true"
-            };
-            string header = String.Join( ",", headers );
-            string record = String.Join( ",", values );
-            data = String.Join( Environment.NewLine, (new[] { header }).Concat( Enumerable.Repeat( 0, 10000 ).Select( i => record ) ) );
+            ];
+            var header = string.Join( ",", headers );
+            var record = string.Join( ",", values );
+            data = string.Join( Environment.NewLine, new[] { header }.Concat( Enumerable.Repeat( 0, 10000 ).Select( _ => record ) ) );
 
-            string[] quotedValues = new string[]
-            {
+            string[] quotedValues =
+            [
                 "Joe", "Smith", "29", "\"West Street Rd, Apt. 23\"", "ATTN: Will Smith", "Lexington", "DE", "001569", "Blue", "\"Cheese, and Crackers\"", "Soccer", "2017-01-01", "true"
-            };
-            string quotedRecord = String.Join( ",", quotedValues );
-            quotedData = String.Join( Environment.NewLine, (new[] { header }).Concat( Enumerable.Repeat( 0, 10000 ).Select( i => record ) ) );
+            ];
+            quotedData = string.Join( Environment.NewLine, new[] { header }.Concat( Enumerable.Repeat( 0, 10000 ).Select( _ => record ) ) );
         }
 
         [Benchmark]
@@ -68,13 +67,13 @@ namespace FlatFiles.Benchmark
             mapper.Property( x => x.IsActive );
 
             var reader = new StringReader( data );
-            var people = mapper.Read( reader, new DelimitedOptions { IsFirstRecordSchema = true } ).ToArray();
+            _ = mapper.Read( reader, new DelimitedOptions { IsFirstRecordSchema = true } ).ToArray();
         }
 
         [Benchmark]
         public async Task RunFlatFiles_TypeMapper_Async()
         {
-            var mapper = DelimitedTypeMapper.Define<Person>( () => new Person() );
+            var mapper = DelimitedTypeMapper.Define( () => new Person() );
             mapper.Property( x => x.FirstName );
             mapper.Property( x => x.LastName );
             mapper.Property( x => x.Age );
@@ -117,7 +116,7 @@ namespace FlatFiles.Benchmark
             mapper.Property( x => x.IsActive );
 
             var reader = new StringReader( quotedData );
-            var people = mapper.Read( reader, new DelimitedOptions { IsFirstRecordSchema = true } ).ToArray();
+            _ = mapper.Read( reader, new DelimitedOptions { IsFirstRecordSchema = true } ).ToArray();
         }
 
         [Benchmark]
@@ -139,7 +138,7 @@ namespace FlatFiles.Benchmark
             mapper.Property( x => x.IsActive );
 
             var reader = new StringReader( data );
-            var people = mapper.Read( reader, new DelimitedOptions { IsFirstRecordSchema = true } ).ToArray();
+            _ = mapper.Read( reader, new DelimitedOptions { IsFirstRecordSchema = true } ).ToArray();
         }
 
         [Benchmark]
@@ -162,7 +161,7 @@ namespace FlatFiles.Benchmark
             mapper.Property( x => x.IsActive );
 
             var reader = new StringReader( data );
-            var people = mapper.Read( reader, new DelimitedOptions { IsFirstRecordSchema = true } ).ToArray();
+            _ = mapper.Read( reader, new DelimitedOptions { IsFirstRecordSchema = true } ).ToArray();
         }
 
         [Benchmark]
@@ -184,7 +183,7 @@ namespace FlatFiles.Benchmark
             mapper.CustomMapping( new BooleanColumn( "IsActive" ) ).WithReader( p => p.IsActive );
 
             var reader = new StringReader( data );
-            var people = mapper.Read( reader, new DelimitedOptions { IsFirstRecordSchema = true } ).ToArray();
+            _ = mapper.Read( reader, new DelimitedOptions { IsFirstRecordSchema = true } ).ToArray();
         }
 
         [Benchmark]
@@ -207,7 +206,7 @@ namespace FlatFiles.Benchmark
             mapper.CustomMapping( new BooleanColumn( "IsActive" ) ).WithReader( p => p.IsActive );
 
             var reader = new StringReader( data );
-            var people = mapper.Read( reader, new DelimitedOptions { IsFirstRecordSchema = true } ).ToArray();
+            _ = mapper.Read( reader, new DelimitedOptions { IsFirstRecordSchema = true } ).ToArray();
         }
 
         [Benchmark]
@@ -395,7 +394,7 @@ namespace FlatFiles.Benchmark
         public void RunStringSplit()
         {
             var lines = data.Split( Environment.NewLine );
-            var records = lines.Skip( 1 ).Select( l => l.Split( "," ).ToArray() );
+            var records = lines.Skip( 1 ).Select( l => l.Split( "," ) );
             var people = new List<Person>();
             foreach (var record in records)
             {
@@ -403,7 +402,7 @@ namespace FlatFiles.Benchmark
                 {
                     FirstName = record[0],
                     LastName = record[1],
-                    Age = Int32.Parse( record[2] ),
+                    Age = int.Parse( record[2] ),
                     Street1 = record[3],
                     Street2 = record[4],
                     City = record[5],
@@ -413,12 +412,12 @@ namespace FlatFiles.Benchmark
                     FavoriteFood = record[9],
                     FavoriteSport = record[10],
                     CreatedOn = DateTime.Parse( record[11] ),
-                    IsActive = Boolean.Parse( record[12] )
+                    IsActive = bool.Parse( record[12] )
                 };
                 people.Add( person );
             }
         }
-        
+
         public class Person
         {
             public string FirstName { get; set; }
@@ -442,7 +441,7 @@ namespace FlatFiles.Benchmark
             public string FavoriteFood { get; set; }
 
             public string FavoriteSport { get; set; }
-            
+
             public DateTime? CreatedOn { get; set; }
 
             public bool IsActive { get; set; }

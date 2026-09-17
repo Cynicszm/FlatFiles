@@ -1,5 +1,4 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace FlatFiles.Test
@@ -10,7 +9,7 @@ namespace FlatFiles.Test
         [TestMethod]
         public void ShouldNotFindRecordsInEmptyFile()
         {
-            var source = String.Empty;
+            var source = string.Empty;
             var stringReader = new StringReader( source );
             var options = new DelimitedOptions { IsFirstRecordSchema = false };
             var reader = new DelimitedReader( stringReader, options );
@@ -20,235 +19,235 @@ namespace FlatFiles.Test
         [TestMethod]
         public void ShouldFindOneRecordOneColumn_CharactersFollowedByEndOfStream()
         {
-            var source = "Hello";
+            const string source = "Hello";
             var stringReader = new StringReader( source );
             var options = new DelimitedOptions { IsFirstRecordSchema = false };
             var reader = new DelimitedReader( stringReader, options );
-            var expected = new object[][]
-            {
-                new object[] { "Hello" }
-            };
+            object[][] expected =
+            [
+                [ "Hello" ]
+            ];
             AssertRecords( expected, reader );
         }
 
         [TestMethod]
         public void ShouldFindOneRecordTwoColumn_CharactersFollowedByEndOfStream()
         {
-            var source = "Hello,World";
+            const string source = "Hello,World";
             var stringReader = new StringReader( source );
             var options = new DelimitedOptions { IsFirstRecordSchema = false };
             var reader = new DelimitedReader( stringReader, options );
-            var expected = new object[][]
-            {
-                new object[] { "Hello", "World" }
-            };
+            object[][] expected =
+            [
+                [ "Hello", "World" ]
+            ];
             AssertRecords( expected, reader );
         }
 
         [TestMethod]
         public void ShouldFindTwoRecordsOneColumn()
         {
-            var source = "Hello\r\nWorld\r\n";
+            const string source = "Hello\r\nWorld\r\n";
             var stringReader = new StringReader( source );
             var options = new DelimitedOptions { IsFirstRecordSchema = false };
             var reader = new DelimitedReader( stringReader, options );
-            var expected = new object[][]
-            {
-                new object[] { "Hello" },
-                new object[] { "World" }
-            };
+            object[][] expected =
+            [
+                [ "Hello" ],
+                [ "World" ]
+            ];
             AssertRecords( expected, reader );
         }
 
         [TestMethod]
         public void ShouldFindTwoRecordsOneColumn_MissingClosingRecordSeparator()
         {
-            var source = "Hello\r\nWorld";
+            const string source = "Hello\r\nWorld";
             var stringReader = new StringReader( source );
             var options = new DelimitedOptions { IsFirstRecordSchema = false };
             var reader = new DelimitedReader( stringReader, options );
-            var expected = new object[][]
-            {
-                new object[] { "Hello" },
-                new object[] { "World" }
-            };
+            object[][] expected =
+            [
+                [ "Hello" ],
+                [ "World" ]
+            ];
             AssertRecords( expected, reader );
         }
 
         [TestMethod]
         public void ShouldFindOneRecordTwoColumn_EOROverlapsEOT()
         {
-            var source = "a\rb\r\n";
+            const string source = "a\rb\r\n";
             var stringReader = new StringReader( source );
-            var options = new DelimitedOptions 
-            { 
-                IsFirstRecordSchema = false, 
-                RecordSeparator = "\r\n", 
-                Separator = "\r" 
+            var options = new DelimitedOptions
+            {
+                IsFirstRecordSchema = false,
+                RecordSeparator = "\r\n",
+                Separator = "\r"
             };
             var reader = new DelimitedReader( stringReader, options );
-            var expected = new object[][]
-            {
-                new object[] { "a", "b" },
-            };
+            object[][] expected =
+            [
+                [ "a", "b" ]
+            ];
             AssertRecords( expected, reader );
         }
 
         [TestMethod]
         public void ShouldFindTwoRecordsOneColumn_EOROverlapsEOT()
         {
-            var source = "a\r\nb";
+            const string source = "a\r\nb";
             var stringReader = new StringReader( source );
-            var options = new DelimitedOptions 
-            { 
-                IsFirstRecordSchema = false, 
-                RecordSeparator = "\r\n", 
-                Separator = "\r" 
+            var options = new DelimitedOptions
+            {
+                IsFirstRecordSchema = false,
+                RecordSeparator = "\r\n",
+                Separator = "\r"
             };
             var reader = new DelimitedReader( stringReader, options );
-            var expected = new object[][]
-            {
-                new object[] { "a" },
-                new object[] { "b" }
-            };
+            object[][] expected =
+            [
+                [ "a" ],
+                [ "b" ]
+            ];
             AssertRecords( expected, reader );
         }
 
         [TestMethod]
         public void ShouldFindOneRecordTwoColumn_EOTOverlapsEOR()
         {
-            var source = "a\r\nb\r";
+            const string source = "a\r\nb\r";
             var stringReader = new StringReader( source );
-            var options = new DelimitedOptions 
-            { 
-                IsFirstRecordSchema = false, 
-                RecordSeparator = "\r", 
-                Separator = "\r\n" 
+            var options = new DelimitedOptions
+            {
+                IsFirstRecordSchema = false,
+                RecordSeparator = "\r",
+                Separator = "\r\n"
             };
             var reader = new DelimitedReader( stringReader, options );
-            var expected = new object[][]
-            {
-                new object[] { "a", "b" },
-            };
+            object[][] expected =
+            [
+                [ "a", "b" ]
+            ];
             AssertRecords( expected, reader );
         }
 
         [TestMethod]
         public void ShouldFindTwoRecordsOneColumn_EOTOverlapsEOR()
         {
-            var source = "a\rb";
+            const string source = "a\rb";
             var stringReader = new StringReader( source );
-            var options = new DelimitedOptions 
-            { 
-                IsFirstRecordSchema = false, 
-                RecordSeparator = "\r", 
-                Separator = "\r\n" 
+            var options = new DelimitedOptions
+            {
+                IsFirstRecordSchema = false,
+                RecordSeparator = "\r",
+                Separator = "\r\n"
             };
             var reader = new DelimitedReader( stringReader, options );
-            var expected = new object[][]
-            {
-                new object[] { "a" },
-                new object[] { "b" }
-            };
+            object[][] expected =
+            [
+                [ "a" ],
+                [ "b" ]
+            ];
             AssertRecords( expected, reader );
         }
 
         [TestMethod]
         public void ShouldSeparateBlanks()
         {
-            var source = ",";
+            const string source = ",";
             var stringReader = new StringReader( source );
             var options = new DelimitedOptions { IsFirstRecordSchema = false };
             var reader = new DelimitedReader( stringReader, options );
-            var expected = new object[][]
-            {
-                new object[] { null, null },
-            };
+            object[][] expected =
+            [
+                [ null, null ]
+            ];
             AssertRecords( expected, reader );
         }
 
         [TestMethod]
         public void ShouldSeparateBlanksAcrossRecords()
         {
-            var source = ",,\r\n,,";
+            const string source = ",,\r\n,,";
             var stringReader = new StringReader( source );
             var options = new DelimitedOptions { IsFirstRecordSchema = false };
             var reader = new DelimitedReader( stringReader, options );
-            var expected = new object[][]
-            {
-                new object[] { null, null, null },
-                new object[] { null, null, null },
-            };
+            object[][] expected =
+            [
+                [ null, null, null ],
+                [ null, null, null ]
+            ];
             AssertRecords( expected, reader );
         }
 
         [TestMethod]
         public void ShouldHandleSingleEmptyRecord()
         {
-            var source = "\r\n";
+            const string source = "\r\n";
             var stringReader = new StringReader( source );
             var options = new DelimitedOptions { IsFirstRecordSchema = false };
             var reader = new DelimitedReader( stringReader, options );
-            var expected = new object[][]
-            {
-                new object[] { null },
-            };
+            object[][] expected =
+            [
+                [ null ]
+            ];
             AssertRecords( expected, reader );
         }
 
         [TestMethod]
         public void ShouldHandleMultipleEmptyRecords()
         {
-            var source = "\r\n\r\n";
+            const string source = "\r\n\r\n";
             var stringReader = new StringReader( source );
             var options = new DelimitedOptions { IsFirstRecordSchema = false };
             var reader = new DelimitedReader( stringReader, options );
-            var expected = new object[][]
-            {
-                new object[] { null },
-                new object[] { null },
-            };
+            object[][] expected =
+            [
+                [ null ],
+                [ null ]
+            ];
             AssertRecords( expected, reader );
         }
 
         [TestMethod]
         public void ShouldStripLeadingWhitespace()
         {
-            var source = " a";
+            const string source = " a";
             var stringReader = new StringReader( source );
             var options = new DelimitedOptions { IsFirstRecordSchema = false };
             var reader = new DelimitedReader( stringReader, options );
-            var expected = new object[][]
-            {
-                new object[] { "a" }
-            };
+            object[][] expected =
+            [
+                [ "a" ]
+            ];
             AssertRecords( expected, reader );
         }
 
         [TestMethod]
         public void ShouldPreserveLeadingWhitespaceIfConfigured()
         {
-            var source = " a";
+            const string source = " a";
             var stringReader = new StringReader( source );
             var schema = new DelimitedSchema();
             schema.AddColumn( new StringColumn( "a" ) { Trim = false } );
-            var options = new DelimitedOptions 
-            { 
-                IsFirstRecordSchema = false, 
-                PreserveWhiteSpace = true 
+            var options = new DelimitedOptions
+            {
+                IsFirstRecordSchema = false,
+                PreserveWhiteSpace = true
             };
             var reader = new DelimitedReader( stringReader, schema, options );
-            var expected = new object[][]
-            {
-                new object[] { " a" }
-            };
+            object[][] expected =
+            [
+                [ " a" ]
+            ];
             AssertRecords( expected, reader );
         }
 
         [TestMethod]
         public void ShouldStripLeadingWhitespace_MultipleSpaces_TwoColumn()
         {
-            var source = "  a, \t\n  b";
+            const string source = "  a, \t\n  b";
             var stringReader = new StringReader( source );
             var options = new DelimitedOptions
             {
@@ -256,10 +255,10 @@ namespace FlatFiles.Test
                 RecordSeparator = "\r\n"
             };
             var reader = new DelimitedReader( stringReader, options );
-            var expected = new object[][]
-            {
-                new object[] { "a", "b" }
-            };
+            object[][] expected =
+            [
+                [ "a", "b" ]
+            ];
             AssertRecords( expected, reader );
         }
 
@@ -271,58 +270,58 @@ namespace FlatFiles.Test
             //DelimitedSchema schema = new DelimitedSchema();
             //schema.AddColumn(new StringColumn("a") { Trim = false });
             //schema.AddColumn(new StringColumn("b") { Trim = false });
-            var options = new DelimitedOptions 
-            { 
-                IsFirstRecordSchema = false, 
-                RecordSeparator = "\r\n", 
-                PreserveWhiteSpace = true 
+            var options = new DelimitedOptions
+            {
+                IsFirstRecordSchema = false,
+                RecordSeparator = "\r\n",
+                PreserveWhiteSpace = true
             };
             var reader = new DelimitedReader( stringReader, /*schema,*/ options );
-            var expected = new object[][]
-            {
-                new object[] { "  a", " \t\n  b" }
-            };
+            object[][] expected =
+            [
+                [ "  a", " \t\n  b" ]
+            ];
             AssertRecords( expected, reader );
         }
 
         [TestMethod]
         public void ShouldStripTrailingWhitespace()
         {
-            var source = "a ";
+            const string source = "a ";
             var stringReader = new StringReader( source );
             var options = new DelimitedOptions { IsFirstRecordSchema = false };
             var reader = new DelimitedReader( stringReader, options );
-            var expected = new object[][]
-            {
-                new object[] { "a" }
-            };
+            object[][] expected =
+            [
+                [ "a" ]
+            ];
             AssertRecords( expected, reader );
         }
 
         [TestMethod]
         public void ShouldPreserveTrailingWhitespaceIfConfigured()
         {
-            var source = "a ";
+            const string source = "a ";
             var stringReader = new StringReader( source );
             var schema = new DelimitedSchema();
             schema.AddColumn( new StringColumn( "a" ) { Trim = false } );
             var options = new DelimitedOptions
             {
-                IsFirstRecordSchema = false, 
-                PreserveWhiteSpace = true 
+                IsFirstRecordSchema = false,
+                PreserveWhiteSpace = true
             };
             var reader = new DelimitedReader( stringReader, schema, options );
-            var expected = new object[][]
-            {
-                new object[] { "a " }
-            };
+            object[][] expected =
+            [
+                [ "a " ]
+            ];
             AssertRecords( expected, reader );
         }
 
         [TestMethod]
         public void ShouldStripTrailingWhitespace_MultipleSpaces_TwoColumn()
         {
-            var source = "a  ,b \t\n  ";
+            const string source = "a  ,b \t\n  ";
             var stringReader = new StringReader( source );
             var options = new DelimitedOptions
             {
@@ -330,212 +329,212 @@ namespace FlatFiles.Test
                 RecordSeparator = "\r\n"
             };
             var reader = new DelimitedReader( stringReader, options );
-            var expected = new object[][]
-            {
-                new object[] { "a", "b" }
-            };
+            object[][] expected =
+            [
+                [ "a", "b" ]
+            ];
             AssertRecords( expected, reader );
         }
 
         [TestMethod]
         public void ShouldPreserveTrailingWhitespaceIfConfigured_MultipleSpaces_TwoColumn()
         {
-            var source = "a  ,b \t\n  ";
+            const string source = "a  ,b \t\n  ";
             var stringReader = new StringReader( source );
             var schema = new DelimitedSchema();
             schema.AddColumn( new StringColumn( "a" ) { Trim = false } );
             schema.AddColumn( new StringColumn( "b" ) { Trim = false } );
             var options = new DelimitedOptions { IsFirstRecordSchema = false, RecordSeparator = "\r\n", PreserveWhiteSpace = true };
             var reader = new DelimitedReader( stringReader, schema, options );
-            var expected = new object[][]
-            {
-                new object[] { "a  ", "b \t\n  " }
-            };
+            object[][] expected =
+            [
+                [ "a  ", "b \t\n  " ]
+            ];
             AssertRecords( expected, reader );
         }
 
         [TestMethod]
         public void ShouldStripLeadingAndTrailingWhitespace()
         {
-            var source = " a ";
+            const string source = " a ";
             var stringReader = new StringReader( source );
             var options = new DelimitedOptions { IsFirstRecordSchema = false };
             var reader = new DelimitedReader( stringReader, options );
-            var expected = new object[][]
-            {
-                new object[] { "a" }
-            };
+            object[][] expected =
+            [
+                [ "a" ]
+            ];
             AssertRecords( expected, reader );
         }
 
         [TestMethod]
         public void ShouldPreserveLeadingAndTrailingWhitespaceIfConfigured()
         {
-            var source = " a ";
+            const string source = " a ";
             var stringReader = new StringReader( source );
             var schema = new DelimitedSchema();
             schema.AddColumn( new StringColumn( "a" ) { Trim = false } );
             var options = new DelimitedOptions { IsFirstRecordSchema = false, PreserveWhiteSpace = true };
             var reader = new DelimitedReader( stringReader, schema, options );
-            var expected = new object[][]
-            {
-                new object[] { " a " }
-            };
+            object[][] expected =
+            [
+                [ " a " ]
+            ];
             AssertRecords( expected, reader );
         }
 
         [TestMethod]
         public void ShouldStripLeadingAndTrailingWhitespace_MultipleSpaces_TwoColumn()
         {
-            var source = "  a  , \t\n  b \t\n  ";
+            const string source = "  a  , \t\n  b \t\n  ";
             var stringReader = new StringReader( source );
             var options = new DelimitedOptions { IsFirstRecordSchema = false, RecordSeparator = "\r\n" };
             var reader = new DelimitedReader( stringReader, options );
-            var expected = new object[][]
-            {
-                new object[] { "a", "b" }
-            };
+            object[][] expected =
+            [
+                [ "a", "b" ]
+            ];
             AssertRecords( expected, reader );
         }
 
         [TestMethod]
         public void ShouldPreserveLeadingAndTrailingWhitespaceIfConfigured_MultipleSpaces_TwoColumn()
         {
-            var source = "  a  , \t\n  b \t\n  ";
+            const string source = "  a  , \t\n  b \t\n  ";
             var stringReader = new StringReader( source );
             var schema = new DelimitedSchema();
             schema.AddColumn( new StringColumn( "a" ) { Trim = false } );
             schema.AddColumn( new StringColumn( "b" ) { Trim = false } );
-            var options = new DelimitedOptions 
-            { 
-                IsFirstRecordSchema = false, 
-                RecordSeparator = "\r\n", 
-                PreserveWhiteSpace = true 
+            var options = new DelimitedOptions
+            {
+                IsFirstRecordSchema = false,
+                RecordSeparator = "\r\n",
+                PreserveWhiteSpace = true
             };
             var reader = new DelimitedReader( stringReader, schema, options );
-            var expected = new object[][]
-            {
-                new object[] { "  a  ", " \t\n  b \t\n  " }
-            };
+            object[][] expected =
+            [
+                [ "  a  ", " \t\n  b \t\n  " ]
+            ];
             AssertRecords( expected, reader );
         }
 
         [TestMethod]
         public void ShouldFindOneColumnOneRecordIfAllWhitespace()
         {
-            var source = " \t\n\r ";
+            const string source = " \t\n\r ";
             var stringReader = new StringReader( source );
             var options = new DelimitedOptions { IsFirstRecordSchema = false, RecordSeparator = "\r\n" };
             var reader = new DelimitedReader( stringReader, options );
-            var expected = new object[][]
-            {
-                new object[] { null }
-            };
+            object[][] expected =
+            [
+                [ null ]
+            ];
             AssertRecords( expected, reader );
         }
 
         [TestMethod]
         public void ShouldPreserveWhiteSpaceIfConfigured_AllWhitespace()
         {
-            var source = " \t\n\r ";
+            const string source = " \t\n\r ";
             var stringReader = new StringReader( source );
             var schema = new DelimitedSchema();
             schema.AddColumn( new StringColumn( "a" ) { Trim = false, NullFormatter = NullFormatter.ForValue( null ) } );
-            var options = new DelimitedOptions 
+            var options = new DelimitedOptions
             {
-                IsFirstRecordSchema = false, 
-                RecordSeparator = "\r\n", 
-                PreserveWhiteSpace = true 
+                IsFirstRecordSchema = false,
+                RecordSeparator = "\r\n",
+                PreserveWhiteSpace = true
             };
             var reader = new DelimitedReader( stringReader, schema, options );
-            var expected = new object[][]
-            {
-                new object[] { " \t\n\r " }
-            };
+            object[][] expected =
+            [
+                [ " \t\n\r " ]
+            ];
             AssertRecords( expected, reader );
         }
 
         [TestMethod]
         public void ShouldNotStripEmbeddedWhitespace()
         {
-            var source = " a b ";
+            const string source = " a b ";
             var stringReader = new StringReader( source );
             var options = new DelimitedOptions { IsFirstRecordSchema = false };
             var reader = new DelimitedReader( stringReader, options );
-            var expected = new object[][]
-            {
-                new object[] { "a b" }
-            };
+            object[][] expected =
+            [
+                [ "a b" ]
+            ];
             AssertRecords( expected, reader );
         }
 
         [TestMethod]
         public void ShouldNotStripEmbeddedWhitespace_PreservingWhiteSpace()
         {
-            var source = " a b ";
+            const string source = " a b ";
             var stringReader = new StringReader( source );
             var schema = new DelimitedSchema();
             schema.AddColumn( new StringColumn( "a" ) { Trim = false } );
             var options = new DelimitedOptions { IsFirstRecordSchema = false, PreserveWhiteSpace = true };
             var reader = new DelimitedReader( stringReader, schema, options );
-            var expected = new object[][]
-            {
-                new object[] { " a b " }
-            };
+            object[][] expected =
+            [
+                [ " a b " ]
+            ];
             AssertRecords( expected, reader );
         }
 
         [TestMethod]
         public void ShouldHandleDoubleWhitespaceAsSeparator()
         {
-            var source = " a  b ";
+            const string source = " a  b ";
             var stringReader = new StringReader( source );
             var options = new DelimitedOptions { IsFirstRecordSchema = false, Separator = "  " };
             var reader = new DelimitedReader( stringReader, options );
-            var expected = new object[][]
-            {
-                new object[] { "a", "b" }
-            };
+            object[][] expected =
+            [
+                [ "a", "b" ]
+            ];
             AssertRecords( expected, reader );
         }
 
         [TestMethod]
         public void ShouldIgnoreInvalidSeparatorSharingSharedPrefix()
         {
-            var source = "axxcb";
+            const string source = "axxcb";
             var stringReader = new StringReader( source );
-            var options = new DelimitedOptions 
-            { 
-                IsFirstRecordSchema = false, 
-                Separator = "xxa", 
-                RecordSeparator = "xxb" 
+            var options = new DelimitedOptions
+            {
+                IsFirstRecordSchema = false,
+                Separator = "xxa",
+                RecordSeparator = "xxb"
             };
             var reader = new DelimitedReader( stringReader, options );
-            var expected = new object[][]
-            {
-                new object[] { "axxcb" }
-            };
+            object[][] expected =
+            [
+                [ "axxcb" ]
+            ];
             AssertRecords( expected, reader );
         }
 
         [TestMethod]
         public void ShouldHandleLongUndoOperation()
         {
-            var source = "axxxb";
+            const string source = "axxxb";
             var stringReader = new StringReader( source );
             var options = new DelimitedOptions { IsFirstRecordSchema = false, Separator = "xxxx" };
             var reader = new DelimitedReader( stringReader, options );
-            var expected = new object[][]
-            {
-                new object[] { "axxxb" }
-            };
+            object[][] expected =
+            [
+                [ "axxxb" ]
+            ];
             AssertRecords( expected, reader );
         }
 
         [TestMethod]
         public void ShouldExtractQuotedValue()
         {
-            var source = "'a'";
+            const string source = "'a'";
             var stringReader = new StringReader( source );
             var options = new DelimitedOptions
             {
@@ -543,17 +542,17 @@ namespace FlatFiles.Test
                 Quote = '\''
             };
             var reader = new DelimitedReader( stringReader, options );
-            var expected = new object[][]
-            {
-                new object[] { "a" }
-            };
+            object[][] expected =
+            [
+                [ "a" ]
+            ];
             AssertRecords( expected, reader );
         }
 
         [TestMethod]
         public void ShouldIncludeSpacesBetweenQuotes()
         {
-            var source = "' a  '";
+            const string source = "' a  '";
             var stringReader = new StringReader( source );
             var options = new DelimitedOptions
             {
@@ -563,17 +562,17 @@ namespace FlatFiles.Test
             var schema = new DelimitedSchema();
             schema.AddColumn( new StringColumn( "a" ) { Trim = false } );
             var reader = new DelimitedReader( stringReader, schema, options );
-            var expected = new object[][]
-            {
-                new object[] { " a  " }
-            };
+            object[][] expected =
+            [
+                [ " a  " ]
+            ];
             AssertRecords( expected, reader );
         }
 
         [TestMethod]
         public void ShouldIgnoreSeparatorsBetweenQuotes()
         {
-            var source = "'a,b'";
+            const string source = "'a,b'";
             var stringReader = new StringReader( source );
             var options = new DelimitedOptions
             {
@@ -581,17 +580,17 @@ namespace FlatFiles.Test
                 Quote = '\''
             };
             var reader = new DelimitedReader( stringReader, options );
-            var expected = new object[][]
-            {
-                new object[] { "a,b" }
-            };
+            object[][] expected =
+            [
+                [ "a,b" ]
+            ];
             AssertRecords( expected, reader );
         }
 
         [TestMethod]
         public void ShouldHandleEscapedQuotesWithinQuotes()
         {
-            var source = "'a''b'";
+            const string source = "'a''b'";
             var stringReader = new StringReader( source );
             var options = new DelimitedOptions
             {
@@ -599,17 +598,17 @@ namespace FlatFiles.Test
                 Quote = '\''
             };
             var reader = new DelimitedReader( stringReader, options );
-            var expected = new object[][]
-            {
-                new object[] { "a'b" }
-            };
+            object[][] expected =
+            [
+                [ "a'b" ]
+            ];
             AssertRecords( expected, reader );
         }
 
         [TestMethod]
         public void ShouldIgnoreLeadingWhiteSpaceBeforeQuote()
         {
-            var source = "   'a'";
+            const string source = "   'a'";
             var stringReader = new StringReader( source );
             var options = new DelimitedOptions
             {
@@ -617,17 +616,17 @@ namespace FlatFiles.Test
                 Quote = '\''
             };
             var reader = new DelimitedReader( stringReader, options );
-            var expected = new object[][]
-            {
-                new object[] { "a" }
-            };
+            object[][] expected =
+            [
+                [ "a" ]
+            ];
             AssertRecords( expected, reader );
         }
 
         [TestMethod]
         public void ShouldIgnoreTrailingWhiteSpaceAfterQuote()
         {
-            var source = "'a' ";
+            const string source = "'a' ";
             var stringReader = new StringReader( source );
             var options = new DelimitedOptions
             {
@@ -635,17 +634,17 @@ namespace FlatFiles.Test
                 Quote = '\''
             };
             var reader = new DelimitedReader( stringReader, options );
-            var expected = new object[][]
-            {
-                new object[] { "a" }
-            };
+            object[][] expected =
+            [
+                [ "a" ]
+            ];
             AssertRecords( expected, reader );
         }
 
         [TestMethod]
         public void ShouldThrowSyntaxExceptionIfQuoteFollowedByEOS()
         {
-            var source = "'";
+            const string source = "'";
             var stringReader = new StringReader( source );
             var options = new DelimitedOptions
             {
@@ -659,7 +658,7 @@ namespace FlatFiles.Test
         [TestMethod]
         public void ShouldThrowSyntaxExceptionIfQuoteFollowedByNonSeparator()
         {
-            var source = "'a'b";
+            const string source = "'a'b";
             var stringReader = new StringReader( source );
             var options = new DelimitedOptions
             {
@@ -673,7 +672,7 @@ namespace FlatFiles.Test
         [TestMethod]
         public void ShouldIgnoreRecordSeparatorsWithinQuotes()
         {
-            var source = @"'John','Smith','123 Playtown Place', 'Grangewood','CA' ,12345,'John likes to travel to far away places.
+            const string source = @"'John','Smith','123 Playtown Place', 'Grangewood','CA' ,12345,'John likes to travel to far away places.
 His favorite travel spots are Tannis, Venice and Chicago.
 When he''s not traveling, he''s at home with his lovely wife, children and leather armchair.'
 Mary,Smith,'1821 Grover''s Village',West Chattingham,WA,43221,'Likes cats.'";
@@ -684,22 +683,22 @@ Mary,Smith,'1821 Grover''s Village',West Chattingham,WA,43221,'Likes cats.'";
                 Quote = '\''
             };
             var reader = new DelimitedReader( stringReader, options );
-            var expected = new object[][]
-            {
-                new object[] 
+            object[][] expected =
+            [
+                new object[]
                 { "John", "Smith", "123 Playtown Place", "Grangewood", "CA", "12345", @"John likes to travel to far away places.
 His favorite travel spots are Tannis, Venice and Chicago.
 When he's not traveling, he's at home with his lovely wife, children and leather armchair."
                 },
-                new object[] { "Mary", "Smith", "1821 Grover's Village", "West Chattingham", "WA", "43221", "Likes cats." }
-            };
+                [ "Mary", "Smith", "1821 Grover's Village", "West Chattingham", "WA", "43221", "Likes cats." ]
+            ];
             AssertRecords( expected, reader );
         }
 
         [TestMethod]
         public void ShouldHandleSeparatorAfterQuoteIfPreservingWhiteSpace()
         {
-            var source = "26087,C Country C,,1,3,7,Randy E,(555) 555-5500,,\"P.O.Box 60,\",,,Woodsland,CA,56281,,,,0292315c-0daa-df11-9397-0019b9e7d4cd,,0,8713cbdd-fb50-dc11-a545-000423c05bf1,40,79527,,False";
+            const string source = "26087,C Country C,,1,3,7,Randy E,(555) 555-5500,,\"P.O.Box 60,\",,,Woodsland,CA,56281,,,,0292315c-0daa-df11-9397-0019b9e7d4cd,,0,8713cbdd-fb50-dc11-a545-000423c05bf1,40,79527,,False";
             var stringReader = new StringReader( source );
             var options = new DelimitedOptions
             {
@@ -707,10 +706,9 @@ When he's not traveling, he's at home with his lovely wife, children and leather
                 PreserveWhiteSpace = true
             };
             var reader = new DelimitedReader( stringReader, options );
-            var expected = new object[][]
-            {
-                new object[] 
-                { 
+            object[][] expected =
+            [
+                [
                     "26087",
                     "C Country C",
                     null,
@@ -736,16 +734,16 @@ When he's not traveling, he's at home with his lovely wife, children and leather
                     "40",
                     "79527",
                     null,
-                    "False" 
-                }
-            };
+                    "False"
+                ]
+            ];
             AssertRecords( expected, reader );
         }
 
         [TestMethod]
         public void ShouldHandleEmbeddedQuotes()
         {
-            var source = "x\ty\tabc\"def\tz";
+            const string source = "x\ty\tabc\"def\tz";
             var stringReader = new StringReader( source );
             var options = new DelimitedOptions
             {
@@ -753,17 +751,17 @@ When he's not traveling, he's at home with his lovely wife, children and leather
                 Separator = "\t"
             };
             var reader = new DelimitedReader( stringReader, options );
-            var expected = new object[][]
-            {
-                new object[] { "x", "y", "abc\"def", "z" }
-            };
+            object[][] expected =
+            [
+                [ "x", "y", "abc\"def", "z" ]
+            ];
             AssertRecords( expected, reader );
         }
 
         [TestMethod]
         public void ShouldHandleEmbeddedQuotes2()
         {
-            var source = "DebtConversionConvertedInstrumentAmount1\tus-gaap/2019" +
+            const string source = "DebtConversionConvertedInstrumentAmount1\tus-gaap/2019" +
                 "\t0\t0\tmonetary\tD\tC\tDebt Conversion, Converted Instrument, Amount" +
                 "\tThe value of the financial instrument(s) that the original debt is being converted into in a noncash (or part noncash) transaction. \"Part noncash refers to that portion of the transaction not resulting in cash receipts or cash payments in the period.";
             var stringReader = new StringReader( source );
@@ -775,21 +773,20 @@ When he's not traveling, he's at home with his lovely wife, children and leather
                 QuoteBehavior = QuoteBehavior.Never
             };
             var reader = new DelimitedReader( stringReader, options );
-            var expected = new object[][]
-            {
-                new object[] 
-                { 
+            object[][] expected =
+            [
+                [
                     "DebtConversionConvertedInstrumentAmount1",
-                    "us-gaap/2019", 
-                    "0", 
+                    "us-gaap/2019",
+                    "0",
                     "0",
                     "monetary",
                     "D",
                     "C",
                     "Debt Conversion, Converted Instrument, Amount",
                     "The value of the financial instrument(s) that the original debt is being converted into in a noncash (or part noncash) transaction. \"Part noncash refers to that portion of the transaction not resulting in cash receipts or cash payments in the period."
-                }
-            };
+                ]
+            ];
             AssertRecords( expected, reader );
         }
 
@@ -798,7 +795,7 @@ When he's not traveling, he's at home with his lovely wife, children and leather
         public void ShouldHandleNonTerminatingEmbeddedQuotes()
 #pragma warning restore CA1822 // Mark members as static
         {
-            var source = "This\tis\t\"not\"the\tend\"\tof\tthe\tmessage";
+            const string source = "This\tis\t\"not\"the\tend\"\tof\tthe\tmessage";
             var stringReader = new StringReader( source );
             var options = new DelimitedOptions
             {
@@ -806,13 +803,12 @@ When he's not traveling, he's at home with his lovely wife, children and leather
                 Separator = "\t"
             };
             var reader = new DelimitedReader( stringReader, options );
-            var expected = new object[][]
-            {
-                new object[] 
-                { 
+            object[][] expected =
+            [
+                [
                     "This", "is", "not\"the\tend", "of", "the", "message"
-                }
-            };
+                ]
+            ];
             AssertRecords( expected, reader );
         }
 
@@ -820,7 +816,7 @@ When he's not traveling, he's at home with his lovely wife, children and leather
         {
             for (var recordIndex = 0; recordIndex != expected.Length; ++recordIndex)
             {
-                Assert.IsTrue( reader.Read(), String.Format( "The record could not be read (Record {0}).", recordIndex ) );
+                Assert.IsTrue( reader.Read(), $"The record could not be read (Record {recordIndex})." );
                 var actualValues = reader.GetValues();
                 var expectedValues = expected[recordIndex];
                 AssertRecord( expectedValues, actualValues );

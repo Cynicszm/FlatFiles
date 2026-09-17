@@ -1,26 +1,16 @@
-﻿using System.IO;
-using System.Threading.Tasks;
+﻿using System;
+using System.IO;
 using System.Threading;
-using System;
+using System.Threading.Tasks;
 using FlatFiles.Properties;
 
 namespace FlatFiles
 {
-    internal sealed class FixedLengthRecordWriter : IFormattedColumnHandler
+    internal sealed class FixedLengthRecordWriter( TextWriter writer, FixedLengthSchema? schema, FixedLengthOptions? options ) : IFormattedColumnHandler
     {
-        private readonly TextWriter writer;
-        private readonly FixedLengthSchema? schema;
         private readonly FixedLengthSchemaInjector? injector;
         private readonly RecordBuffer buffer = new();
-        private FixedLengthRecordContext? recordContext;
         private ExecutionContextCache<FixedLengthSchema, FixedLengthExecutionContext>? executionContexts;
-
-        public FixedLengthRecordWriter( TextWriter writer, FixedLengthSchema? schema, FixedLengthOptions? options )
-        {
-            this.writer = writer;
-            this.schema = schema;
-            Options = options is null ? new FixedLengthOptions() : options.Clone();
-        }
 
         public FixedLengthRecordWriter( TextWriter writer, FixedLengthSchemaInjector injector, FixedLengthOptions? options )
             : this( writer, (FixedLengthSchema?) null, options )
@@ -28,11 +18,11 @@ namespace FlatFiles
             this.injector = injector;
         }
 
-        public FixedLengthRecordContext? Metadata => recordContext;
+        public FixedLengthSchema? ActualSchema { get; } = schema;
 
-        public FixedLengthSchema? ActualSchema => schema;
+        public FixedLengthOptions Options { get; } = options is null ? new FixedLengthOptions() : options.Clone();
 
-        public FixedLengthOptions Options { get; }
+        public FixedLengthRecordContext? Metadata { get; private set; }
 
         public int PhysicalRecordNumber { get; set; }
 
@@ -42,14 +32,14 @@ namespace FlatFiles
 
         public void WriteRecord( object?[] values )
         {
-            recordContext = null;
+            Metadata = null;
             FormatRecord( values );
             writer.Write( buffer.WrittenSpan );
         }
 
         public async Task WriteRecordAsync( object?[] values, CancellationToken cancellationToken = default )
-{
-            recordContext = null;
+        {
+            Metadata = null;
             FormatRecord( values );
             await writer.WriteAsync( buffer.WrittenMemory, cancellationToken ).ConfigureAwait( false );
         }
@@ -60,16 +50,16 @@ namespace FlatFiles
         /// </summary>
         private void FormatRecord( object?[] values )
         {
-            var schema = GetSchema( values );
-            var metadata = NewRecordContext( schema, null, null );
-            recordContext = metadata;
-            if (values.Length != schema.ColumnDefinitions.PhysicalCount)
+            var currentSchema = GetSchema( values );
+            var metadata = NewRecordContext( currentSchema, null, null );
+            Metadata = metadata;
+            if (values.Length != currentSchema.ColumnDefinitions.PhysicalCount)
             {
                 throw new RecordProcessingException( metadata, Resources.WrongNumberOfValues );
             }
             metadata.ColumnError += ColumnError;
             buffer.Clear();
-            schema.FormatValues( metadata, values, buffer, this );
+            currentSchema.FormatValues( metadata, values, buffer, this );
         }
 
         void IFormattedColumnHandler.ColumnStarting( int columnIndex, RecordBuffer destination )
@@ -78,7 +68,7 @@ namespace FlatFiles
 
         void IFormattedColumnHandler.ColumnFormatted( int columnIndex, int start, RecordBuffer destination )
         {
-            var windows = recordContext?.ExecutionContext.Schema.Windows;
+            var windows = Metadata?.ExecutionContext.Schema.Windows;
             if (windows is not null && columnIndex < windows.Count)
             {
                 FitWindow( windows[columnIndex], start );
@@ -87,47 +77,47 @@ namespace FlatFiles
 
         public FixedLengthSchema GetSchema( object?[] values )
         {
-            return injector is null ? schema! : injector.GetSchema( values );
+            return injector is null ? ActualSchema! : injector.GetSchema( values );
         }
 
-        private FixedLengthRecordContext NewRecordContext( FixedLengthSchema schema, string? record, string[]? values )
+        private FixedLengthRecordContext NewRecordContext( FixedLengthSchema currentSchema, string? record, string[]? values )
         {
-            var executionContext = (executionContexts ??= new( s => new FixedLengthExecutionContext( s!, Options.Clone() ) )).Get( schema );
-            var recordContext = new FixedLengthRecordContext( executionContext )
+            var executionContext = (executionContexts ??= new ExecutionContextCache<FixedLengthSchema, FixedLengthExecutionContext>( s => new FixedLengthExecutionContext( s!, Options.Clone() ) )).Get( currentSchema );
+            var currentContext = new FixedLengthRecordContext( executionContext )
             {
                 PhysicalRecordNumber = PhysicalRecordNumber,
                 LogicalRecordNumber = LogicalRecordNumber,
                 Record = record,
                 Values = values
             };
-            return recordContext;
+            return currentContext;
         }
 
         public void WriteSchema()
         {
-            if (schema is null)
+            if (ActualSchema is null)
             {
                 return;
             }
-            FormatSchema( schema );
+            FormatSchema( ActualSchema );
             writer.Write( buffer.WrittenSpan );
         }
 
         public async Task WriteSchemaAsync( CancellationToken cancellationToken = default )
-{
-            if (schema is null)
+        {
+            if (ActualSchema is null)
             {
                 return;
             }
-            FormatSchema( schema );
+            FormatSchema( ActualSchema );
             await writer.WriteAsync( buffer.WrittenMemory, cancellationToken ).ConfigureAwait( false );
         }
 
-        private void FormatSchema( FixedLengthSchema schema )
+        private void FormatSchema( FixedLengthSchema currentSchema )
         {
             buffer.Clear();
-            var definitions = schema.ColumnDefinitions;
-            var windows = schema.Windows;
+            var definitions = currentSchema.ColumnDefinitions;
+            var windows = currentSchema.Windows;
             for (int columnIndex = 0, columnCount = definitions.Count; columnIndex != columnCount; ++columnIndex)
             {
                 var start = buffer.Length;
@@ -194,20 +184,22 @@ namespace FlatFiles
 
         public void WriteRecordSeparator()
         {
-            if (Options.HasRecordSeparator)
+            if (!Options.HasRecordSeparator)
             {
-                var separator = Options.RecordSeparator ?? Environment.NewLine;
-                writer.Write( separator );
+                return;
             }
+            var separator = Options.RecordSeparator ?? Environment.NewLine;
+            writer.Write( separator );
         }
 
         public async Task WriteRecordSeparatorAsync( CancellationToken cancellationToken = default )
-{
-            if (Options.HasRecordSeparator)
+        {
+            if (!Options.HasRecordSeparator)
             {
-                var separator = Options.RecordSeparator ?? Environment.NewLine;
-                await writer.WriteAsync( separator.AsMemory(), cancellationToken ).ConfigureAwait( false );
+                return;
             }
+            var separator = Options.RecordSeparator ?? Environment.NewLine;
+            await writer.WriteAsync( separator.AsMemory(), cancellationToken ).ConfigureAwait( false );
         }
 
         public void WriteRaw( string data )
@@ -216,7 +208,7 @@ namespace FlatFiles
         }
 
         public Task WriteRawAsync( string data, CancellationToken cancellationToken = default )
-{
+        {
             return writer.WriteAsync( data.AsMemory(), cancellationToken );
         }
     }

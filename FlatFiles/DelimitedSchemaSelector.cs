@@ -8,7 +8,7 @@ namespace FlatFiles
     /// </summary>
     public sealed class DelimitedSchemaSelector
     {
-        private static readonly SchemaMatcher NonMatcher = new( null, values => false );
+        private static readonly SchemaMatcher NonMatcher = new( null, _ => false );
         private readonly List<SchemaMatcher> matchers = [];
         private SchemaMatcher defaultMatcher = NonMatcher;
 
@@ -39,14 +39,7 @@ namespace FlatFiles
         /// <returns>The current selector to allow for further customization.</returns>
         public IDelimitedSchemaSelectorUseBuilder WithDefault( DelimitedSchema? schema )
         {
-            if (schema is null)
-            {
-                defaultMatcher = NonMatcher;
-            }
-            else
-            {
-                defaultMatcher = new SchemaMatcher( schema, values => true );
-            }
+            defaultMatcher = schema is null ? NonMatcher : new SchemaMatcher( schema, _ => true );
             return new DelimitedSchemaSelectorUseBuilder( defaultMatcher );
         }
 
@@ -61,45 +54,32 @@ namespace FlatFiles
         {
             foreach (var matcher in matchers)
             {
-                if (matcher.Predicate( values ))
+                if (!matcher.Predicate( values ))
                 {
-                    matcher.Action?.Invoke();
-                    return matcher.Schema;
+                    continue;
                 }
+                matcher.Action?.Invoke();
+                return matcher.Schema;
             }
-            if (defaultMatcher.Predicate( values ))
+            if (!defaultMatcher.Predicate( values ))
             {
-                defaultMatcher.Action?.Invoke();
-                return defaultMatcher.Schema;
+                return null;
             }
-            return null;
+            defaultMatcher.Action?.Invoke();
+            return defaultMatcher.Schema;
         }
 
-        private sealed class SchemaMatcher
+        private sealed class SchemaMatcher( DelimitedSchema? schema, Func<string[], bool> predicate )
         {
-            public SchemaMatcher( DelimitedSchema? schema, Func<string[], bool> predicate )
-            {
-                Schema = schema;
-                Predicate = predicate;
-            }
+            public DelimitedSchema? Schema { get; } = schema;
 
-            public DelimitedSchema? Schema { get; }
-
-            public Func<string[], bool> Predicate { get; }
+            public Func<string[], bool> Predicate { get; } = predicate;
 
             public Action? Action { get; set; }
         }
 
-        private sealed class DelimitedSchemaSelectorWhenBuilder : IDelimitedSchemaSelectorWhenBuilder
+        private sealed class DelimitedSchemaSelectorWhenBuilder( DelimitedSchemaSelector selector, Func<string[], bool> predicate ) : IDelimitedSchemaSelectorWhenBuilder
         {
-            private readonly DelimitedSchemaSelector selector;
-            private readonly Func<string[], bool> predicate;
-
-            public DelimitedSchemaSelectorWhenBuilder( DelimitedSchemaSelector selector, Func<string[], bool> predicate )
-            {
-                this.selector = selector;
-                this.predicate = predicate;
-            }
 
             public IDelimitedSchemaSelectorUseBuilder Use( DelimitedSchema schema )
             {
@@ -109,14 +89,8 @@ namespace FlatFiles
             }
         }
 
-        private sealed class DelimitedSchemaSelectorUseBuilder : IDelimitedSchemaSelectorUseBuilder
+        private sealed class DelimitedSchemaSelectorUseBuilder( SchemaMatcher matcher ) : IDelimitedSchemaSelectorUseBuilder
         {
-            private readonly SchemaMatcher matcher;
-
-            public DelimitedSchemaSelectorUseBuilder( SchemaMatcher matcher )
-            {
-                this.matcher = matcher;
-            }
 
             public void OnMatch( Action action )
             {

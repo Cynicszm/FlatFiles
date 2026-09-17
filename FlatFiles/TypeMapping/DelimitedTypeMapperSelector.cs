@@ -65,15 +65,16 @@ namespace FlatFiles.TypeMapping
                 var typedReader = new Lazy<Func<IRecordContext, object?[], object?>>( GetReader( matcher.TypeMapper ) );
                 selector.When( matcher.Predicate ).Use( matcher.TypeMapper.GetSchema() ).OnMatch( () => multiReader.Deserializer = typedReader.Value );
             }
-            if (defaultMapper is not null)
+            if (defaultMapper is null)
             {
-                var typeReader = new Lazy<Func<IRecordContext, object?[], object?>>( GetReader( defaultMapper ) );
-                selector.WithDefault( defaultMapper.GetSchema() ).OnMatch( () => multiReader.Deserializer = typeReader.Value );
+                return multiReader;
             }
+            var typeReader = new Lazy<Func<IRecordContext, object?[], object?>>( GetReader( defaultMapper ) );
+            selector.WithDefault( defaultMapper.GetSchema() ).OnMatch( () => multiReader.Deserializer = typeReader.Value );
             return multiReader;
         }
 
-        private Func<Func<IRecordContext, object?[], object?>> GetReader( IDynamicDelimitedTypeMapper defaultMapper )
+        private static Func<Func<IRecordContext, object?[], object?>> GetReader( IDynamicDelimitedTypeMapper defaultMapper )
         {
             var source = (IMapperSource) defaultMapper;
             var reader = source.GetMapper();
@@ -85,29 +86,15 @@ namespace FlatFiles.TypeMapping
             matchers.Add( new TypeMapperMatcher( typeMapper, predicate ) );
         }
 
-        private sealed class TypeMapperMatcher
+        private sealed class TypeMapperMatcher( IDynamicDelimitedTypeMapper typeMapper, Func<string[], bool> predicate )
         {
-            public TypeMapperMatcher( IDynamicDelimitedTypeMapper typeMapper, Func<string[], bool> predicate )
-            {
-                TypeMapper = typeMapper;
-                Predicate = predicate;
-            }
+            public IDynamicDelimitedTypeMapper TypeMapper { get; } = typeMapper;
 
-            public IDynamicDelimitedTypeMapper TypeMapper { get; }
-
-            public Func<string[], bool> Predicate { get; }
+            public Func<string[], bool> Predicate { get; } = predicate;
         }
 
-        private sealed class DelimitedTypeMapperSelectorWhenBuilder : IDelimitedTypeMapperSelectorWhenBuilder
+        private sealed class DelimitedTypeMapperSelectorWhenBuilder( DelimitedTypeMapperSelector selector, Func<string[], bool> predicate ) : IDelimitedTypeMapperSelectorWhenBuilder
         {
-            private readonly DelimitedTypeMapperSelector selector;
-            private readonly Func<string[], bool> predicate;
-
-            public DelimitedTypeMapperSelectorWhenBuilder( DelimitedTypeMapperSelector selector, Func<string[], bool> predicate )
-            {
-                this.selector = selector;
-                this.predicate = predicate;
-            }
 
             public void Use<TEntity>( IDelimitedTypeMapper<TEntity> typeMapper )
             {

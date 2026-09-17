@@ -1,6 +1,6 @@
-﻿using System.Threading.Tasks;
+﻿using System;
 using System.Threading;
-using System;
+using System.Threading.Tasks;
 
 namespace FlatFiles.TypeMapping
 {
@@ -73,7 +73,7 @@ namespace FlatFiles.TypeMapping
         }
 
         public async ValueTask<bool> ReadAsync( CancellationToken cancellationToken )
-{
+        {
             cancellationToken.ThrowIfCancellationRequested();
             if (!await reader.ReadAsync( cancellationToken ).ConfigureAwait( false ))
             {
@@ -102,7 +102,7 @@ namespace FlatFiles.TypeMapping
         }
 
         public ValueTask<bool> SkipAsync( CancellationToken cancellationToken )
-{
+        {
             cancellationToken.ThrowIfCancellationRequested();
             return reader.SkipAsync( cancellationToken );
         }

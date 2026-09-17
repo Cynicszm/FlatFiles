@@ -10,15 +10,15 @@ namespace FlatFiles.Test
         [TestMethod]
         public void TestReadWrite_Comments()
         {
-            StringWriter output = new StringWriter();
-            DelimitedWriter writer = new DelimitedWriter( output );
+            var output = new StringWriter();
+            var writer = new DelimitedWriter( output );
             writer.Write( [ "a", "b", "c" ] );
             writer.WriteRaw( "# Hello, world!!!", true );
             writer.Write( [ "d", "e", "f" ] );
 
-            StringReader input = new StringReader( output.ToString() );
-            DelimitedReader reader = new DelimitedReader( input );
-            reader.RecordRead += ( sender, e ) =>
+            var input = new StringReader( output.ToString() );
+            var reader = new DelimitedReader( input );
+            reader.RecordRead += ( _, e ) =>
             {
                 e.IsSkipped = e.Values.Length > 0 && e.Values[0].StartsWith( "#" );
             };
@@ -32,15 +32,15 @@ namespace FlatFiles.Test
         [TestMethod]
         public async Task TestReadWriteAsync_Comments()
         {
-            StringWriter output = new StringWriter();
-            DelimitedWriter writer = new DelimitedWriter( output );
+            var output = new StringWriter();
+            var writer = new DelimitedWriter( output );
             await writer.WriteAsync( [ "a", "b", "c" ] );
             await writer.WriteRawAsync( "# Hello, world!!!", true );
             await writer.WriteAsync( [ "d", "e", "f" ] );
 
-            StringReader input = new StringReader( output.ToString() );
-            DelimitedReader reader = new DelimitedReader( input );
-            reader.RecordRead += ( sender, e ) =>
+            var input = new StringReader( output.ToString() );
+            var reader = new DelimitedReader( input );
+            reader.RecordRead += ( _, e ) =>
             {
                 e.IsSkipped = e.Values.Length > 0 && e.Values[0].StartsWith( "#" );
             };

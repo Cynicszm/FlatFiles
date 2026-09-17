@@ -3,10 +3,13 @@ using FlatFiles.Properties;
 
 namespace FlatFiles.TypeMapping
 {
-    internal sealed class FixedLengthComplexPropertyMapping<TEntity> : IFixedLengthComplexPropertyMapping, IMemberMapping
+    internal sealed class FixedLengthComplexPropertyMapping<TEntity>(
+        IFixedLengthTypeMapper<TEntity> mapper,
+        IMemberAccessor member,
+        int physicalIndex,
+        int logicalIndex ) : IFixedLengthComplexPropertyMapping, IMemberMapping
     {
-        private readonly IFixedLengthTypeMapper<TEntity> mapper;
-        private string columnName;
+        private string columnName = member.Name;
         private FixedLengthOptions? options;
         private INullFormatter nullFormatter = FlatFiles.NullFormatter.Default;
         private IDefaultValue defaultValue = FlatFiles.DefaultValue.Disabled();
@@ -17,24 +20,11 @@ namespace FlatFiles.TypeMapping
         private Func<IColumnContext?, object?, object?>? onFormatting;
         private Func<IColumnContext?, string, string?>? onFormatted;
 
-        public FixedLengthComplexPropertyMapping(
-            IFixedLengthTypeMapper<TEntity> mapper, 
-            IMemberAccessor member, 
-            int physicalIndex, 
-            int logicalIndex )
-        {
-            this.mapper = mapper;
-            Member = member;
-            columnName = member.Name;
-            PhysicalIndex = physicalIndex;
-            LogicalIndex = logicalIndex;
-        }
-
         public IColumnDefinition ColumnDefinition
         {
             get
             {
-                FixedLengthSchema schema = mapper.GetSchema();
+                var schema = mapper.GetSchema();
                 var column = new FixedLengthComplexColumn( columnName, schema )
                 {
                     Options = options,
@@ -55,19 +45,19 @@ namespace FlatFiles.TypeMapping
             }
         }
 
-        public IMemberAccessor Member { get; }
+        public IMemberAccessor Member { get; } = member;
 
         public Action<IColumnContext?, object?, object?>? Reader => null;
 
         public Action<IColumnContext?, object?, object?[]>? Writer => null;
 
-        public int PhysicalIndex { get; }
+        public int PhysicalIndex { get; } = physicalIndex;
 
-        public int LogicalIndex { get; }
+        public int LogicalIndex { get; } = logicalIndex;
 
         public IFixedLengthComplexPropertyMapping ColumnName( string name )
         {
-            if (String.IsNullOrWhiteSpace( name ))
+            if (string.IsNullOrWhiteSpace( name ))
             {
                 throw new ArgumentException( Resources.BlankColumnName );
             }

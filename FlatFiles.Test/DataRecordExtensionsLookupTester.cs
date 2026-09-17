@@ -46,7 +46,7 @@ namespace FlatFiles.Test
             Assert.AreEqual( (sbyte) -5, record.GetSByte( "sb" ) );
             Assert.AreEqual( new TimeSpan( 1, 2, 3 ), record.GetTimeSpan( "span" ) );
             Assert.AreEqual( (byte?) 7, record.GetNullableByte( "small" ) );
-            Assert.AreEqual( (ulong?) 18000000000000000000UL, record.GetNullableUInt64( "u64" ) );
+            Assert.AreEqual( 18000000000000000000UL, record.GetNullableUInt64( "u64" ) );
         }
 
         [TestMethod]
@@ -55,11 +55,11 @@ namespace FlatFiles.Test
             var record = OpenRecord();
 
             Assert.AreEqual( Colour.Green, record.GetEnum<Colour>( "colour" ) );
-            Assert.AreEqual( Colour.Green, record.GetEnum<string, Colour>( "colour", value => Enum.Parse<Colour>( value ) ) );
-            Assert.AreEqual( Colour.Green, record.GetEnum<string, Colour>( 8, value => Enum.Parse<Colour>( value ) ) );
-            Assert.AreEqual( (Colour?) Colour.Green, record.GetNullableEnum<Colour>( "colour" ) );
-            Assert.AreEqual( (Colour?) Colour.Green, record.GetNullableEnum<string, Colour>( "colour", value => (Colour?) Enum.Parse<Colour>( value ) ) );
-            Assert.AreEqual( (Colour?) Colour.Green, record.GetNullableEnum<string, Colour>( 8, value => (Colour?) Enum.Parse<Colour>( value ) ) );
+            Assert.AreEqual( Colour.Green, record.GetEnum<string, Colour>( "colour", Enum.Parse<Colour> ) );
+            Assert.AreEqual( Colour.Green, record.GetEnum<string, Colour>( 8, Enum.Parse<Colour> ) );
+            Assert.AreEqual( Colour.Green, record.GetNullableEnum<Colour>( "colour" ) );
+            Assert.AreEqual( Colour.Green, record.GetNullableEnum<string, Colour>( "colour", value => Enum.Parse<Colour>( value ) ) );
+            Assert.AreEqual( Colour.Green, record.GetNullableEnum<string, Colour>( 8, value => Enum.Parse<Colour>( value ) ) );
         }
 
         [TestMethod]

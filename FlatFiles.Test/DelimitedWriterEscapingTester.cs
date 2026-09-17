@@ -13,14 +13,14 @@ namespace FlatFiles.Test
         private static DelimitedSchema Schema( int columns )
         {
             var schema = new DelimitedSchema();
-            for (int index = 0; index != columns; ++index)
+            for (var index = 0; index != columns; ++index)
             {
                 schema.AddColumn( new StringColumn( "col" + index ) );
             }
             return schema;
         }
 
-        private static string Write( DelimitedOptions options, params string[] values )
+        private static string Write( DelimitedOptions options, params object[] values )
         {
             options.RecordSeparator ??= "\n";
             var output = new StringWriter();
@@ -98,7 +98,7 @@ namespace FlatFiles.Test
         public void TestWrite_ManyColumns_AreAllSeparated()
         {
             var values = new string[100];
-            for (int index = 0; index != values.Length; ++index)
+            for (var index = 0; index != values.Length; ++index)
             {
                 values[index] = "value" + index;
             }

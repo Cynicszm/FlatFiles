@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Linq;
 using FlatFiles.TypeMapping;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -23,8 +22,8 @@ namespace FlatFiles.Test
             mapper.Property( x => x.CreatedOn ).ColumnName( "CreatedOn" );
 
             string[] recordValues = [ "123", "Bob", "Test Street 1", "Test City", "PA", "55555", "true", "2017-11-05" ];
-            var record = String.Join( ",", recordValues );
-            StringReader reader = new StringReader( record );
+            var record = string.Join( ",", recordValues );
+            var reader = new StringReader( record );
             Person[] results = [.. mapper.Read( reader )];
             Assert.AreEqual( 1, results.Length );
             var result = results[0];
@@ -61,8 +60,8 @@ namespace FlatFiles.Test
             mapper.DateTimeProperty( "CreatedOn" ).ColumnName( "CreatedOn" );
 
             string[] recordValues = [ "123", "Bob", "Test Street 1", "Test City", "PA", "55555", "true", "2017-11-05" ];
-            var record = String.Join( ",", recordValues );
-            StringReader reader = new StringReader( record );
+            var record = string.Join( ",", recordValues );
+            var reader = new StringReader( record );
             object[] results = [.. mapper.Read( reader )];
             Assert.AreEqual( 1, results.Length );
             var result = results[0];
@@ -115,10 +114,10 @@ namespace FlatFiles.Test
                 CreatedOn = new DateTime( 2017, 11, 05 )
             };
 
-            StringWriter writer = new StringWriter();
+            var writer = new StringWriter();
             mapper.Write( writer, [ expected ] );
             
-            StringReader reader = new StringReader( writer.ToString() );
+            var reader = new StringReader( writer.ToString() );
             Person[] results = [.. mapper.Read( reader )];
             Assert.AreEqual( 1, results.Length );
             var result = results[0];
@@ -156,10 +155,10 @@ namespace FlatFiles.Test
                 CreatedOn = new DateTime( 2017, 11, 05 )
             };
 
-            StringWriter writer = new StringWriter();
+            var writer = new StringWriter();
             mapper.Write( writer, [ expected ] );
 
-            StringReader reader = new StringReader( writer.ToString() );
+            var reader = new StringReader( writer.ToString() );
             object[] results = [.. mapper.Read( reader )];
             Assert.AreEqual( 1, results.Length );
             var result = results[0];
@@ -208,10 +207,10 @@ namespace FlatFiles.Test
                 CreatedOn = new DateTime( 2017, 11, 05 )
             };
 
-            StringWriter writer = new StringWriter();
+            var writer = new StringWriter();
             mapper.Write( writer, [ expected ] );
 
-            StringReader reader = new StringReader( writer.ToString() );
+            var reader = new StringReader( writer.ToString() );
             Person[] results = [.. mapper.Read( reader )];
             Assert.AreEqual( 1, results.Length );
             var result = results[0];
@@ -302,10 +301,10 @@ namespace FlatFiles.Test
                 }                
             };
 
-            StringWriter writer = new StringWriter();
+            var writer = new StringWriter();
             mapper.Write( writer, [ expected ] );
 
-            StringReader reader = new StringReader( writer.ToString() );
+            var reader = new StringReader( writer.ToString() );
             Level1[] results = [.. mapper.Read( reader )];
             Assert.AreEqual( 1, results.Length );
             var result = results[0];
@@ -366,10 +365,10 @@ namespace FlatFiles.Test
                 }
             };
 
-            StringWriter writer = new StringWriter();
+            var writer = new StringWriter();
             mapper.Write( writer, [ expected ] );
 
-            StringReader reader = new StringReader( writer.ToString() );
+            var reader = new StringReader( writer.ToString() );
             Level1[] results = [.. mapper.Read( reader )];
             Assert.AreEqual( 1, results.Length );
             var result = results[0];

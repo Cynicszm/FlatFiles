@@ -13,64 +13,64 @@ namespace FlatFiles.Test
             {
                 ColumnName = "Ignored",
                 NullFormatter = NullFormatter.ForValue( "NULL" ),
-                OnParsing = ( ctx, value ) => 
+                OnParsing = ( _, value ) => 
                 {
                     Assert.AreEqual( "NULL", value );
                     return value;
                 },
-                OnParsed = ( ctx, value ) =>
+                OnParsed = ( _, value ) =>
                 {
                     Assert.IsNull( value );
                     return value;
                 },
-                OnFormatting = ( ctx, value ) =>
+                OnFormatting = ( _, value ) =>
                 {
                     Assert.IsNull( value );
                     return value;
                 },
-                OnFormatted = ( ctx, value ) =>
+                OnFormatted = ( _, value ) =>
                 {
                     Assert.AreEqual( "NULL", value );
                     return value;
                 }
             };
-            object value = ignored.Parse( null, "NULL" );
+            var value = ignored.Parse( null, "NULL" );
             Assert.IsNull( value );
-            string formatted = ignored.Format( null, value );
+            var formatted = ignored.Format( null, null );
             Assert.AreEqual( "NULL", formatted );
         }
 
         [TestMethod]
         public void TestIgnoredMapping_HandlePreAndPostProcessing()
         {
-            IDelimitedTypeMapper<IgnoredOnly> mapper = DelimitedTypeMapper.Define( () => new IgnoredOnly() );
+            var mapper = DelimitedTypeMapper.Define( () => new IgnoredOnly() );
             mapper.Ignored()
                 .ColumnName( "Ignored" )
                 .NullFormatter( NullFormatter.ForValue( "NULL" ) )
-                .OnParsing( ( ctx, value ) =>
+                .OnParsing( ( _, value ) =>
                 {
                     Assert.AreEqual( "NULL", value );
                     return value;
                 } )
-                .OnParsed( ( ctx, value ) =>
+                .OnParsed( ( _, value ) =>
                 {
                     Assert.IsNull( value );
                     return value;
                 } )
-                .OnFormatting( ( ctx, value ) =>
+                .OnFormatting( ( _, value ) =>
                 {
                     Assert.IsNull( value );
                     return value;
                 } )
-                .OnFormatted( ( ctx, value ) =>
+                .OnFormatted( ( _, value ) =>
                 {
                     Assert.AreEqual( "NULL", value );
                     return value;
                 } );
             var ignored = mapper.GetSchema().ColumnDefinitions["Ignored"];
-            object value = ignored.Parse( null, "NULL" );
+            var value = ignored.Parse( null, "NULL" );
             Assert.IsNull( value );
-            string formatted = ignored.Format( null, value );
+            var formatted = ignored.Format( null, null );
             Assert.AreEqual( "NULL", formatted );
         }
 

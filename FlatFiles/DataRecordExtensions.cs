@@ -70,7 +70,7 @@ namespace FlatFiles
             public TEnum GetEnum<TEnum>( string name )
                 where TEnum : Enum
             {
-                int ordinal = record.GetOrdinal( name );
+                var ordinal = record.GetOrdinal( name );
                 return GetValue<TEnum>( record, ordinal )!;
             }
 
@@ -97,7 +97,7 @@ namespace FlatFiles
             public TEnum? GetNullableEnum<TEnum>( string name )
                 where TEnum : struct, Enum
             {
-                int ordinal = record.GetOrdinal( name );
+                var ordinal = record.GetOrdinal( name );
                 return GetValue<TEnum?>( record, ordinal );
             }
 
@@ -112,7 +112,7 @@ namespace FlatFiles
             public TEnum GetEnum<T, TEnum>( int i, Func<T?, TEnum> mapper )
                 where TEnum : Enum
             {
-                T? value = GetValue<T>( record, i );
+                var value = GetValue<T>( record, i );
                 return mapper( value );
             }
 
@@ -127,7 +127,7 @@ namespace FlatFiles
             public TEnum GetEnum<T, TEnum>( string name, Func<T?, TEnum> mapper )
                 where TEnum : Enum
             {
-                int ordinal = record.GetOrdinal( name );
+                var ordinal = record.GetOrdinal( name );
                 return GetEnum( record, ordinal, mapper );
             }
 
@@ -142,7 +142,7 @@ namespace FlatFiles
             public TEnum? GetNullableEnum<T, TEnum>( int i, Func<T?, TEnum?> mapper )
                 where TEnum : struct, Enum
             {
-                T? value = GetValue<T>( record, i );
+                var value = GetValue<T>( record, i );
                 return mapper( value );
             }
 
@@ -157,7 +157,7 @@ namespace FlatFiles
             public TEnum? GetNullableEnum<T, TEnum>( string name, Func<T?, TEnum?> mapper )
                 where TEnum : struct, Enum
             {
-                int ordinal = record.GetOrdinal( name );
+                var ordinal = record.GetOrdinal( name );
                 return GetNullableEnum( record, ordinal, mapper );
             }
 
@@ -192,7 +192,7 @@ namespace FlatFiles
             /// <returns>The value of the column -or- the default value if the column is null.</returns>
             public byte? GetNullableByte( string name )
             {
-                int ordinal = record.GetOrdinal( name );
+                var ordinal = record.GetOrdinal( name );
                 return GetNullable( record, ordinal, record.GetByte );
             }
 
@@ -212,7 +212,7 @@ namespace FlatFiles
             /// <returns>The actual number of bytes read.</returns>
             public long GetBytes( string name, long fieldOffset, byte[] buffer, int bufferoffset, int length )
             {
-                int ordinal = record.GetOrdinal( name );
+                var ordinal = record.GetOrdinal( name );
                 return record.GetBytes( ordinal, fieldOffset, buffer, bufferoffset, length );
             }
 
@@ -266,7 +266,7 @@ namespace FlatFiles
             /// <returns>The actual number of characters read.</returns>
             public long GetChars( string name, long fieldoffset, char[] buffer, int bufferoffset, int length )
             {
-                int ordinal = record.GetOrdinal( name );
+                var ordinal = record.GetOrdinal( name );
                 return record.GetChars( ordinal, fieldoffset, buffer, bufferoffset, length );
             }
 
@@ -699,7 +699,7 @@ namespace FlatFiles
             /// <returns>The value of the column -or- null if the column is null.</returns>
             public string? GetNullableString( string name )
             {
-                int ordinal = record.GetOrdinal( name );
+                var ordinal = record.GetOrdinal( name );
                 return GetNullableString( record, ordinal );
             }
         }
@@ -868,7 +868,7 @@ namespace FlatFiles
             /// <returns>The value.</returns>
             public T? GetValue<T>( string name, IFormatProvider? provider = null )
             {
-                int ordinal = record.GetOrdinal( name );
+                var ordinal = record.GetOrdinal( name );
                 return GetValue<T>( record, ordinal, provider );
             }
 
@@ -881,8 +881,8 @@ namespace FlatFiles
             /// <returns>The value.</returns>
             public T? GetValue<T>( int i, IFormatProvider? provider = null )
             {
-                Type? underlyingType = Nullable.GetUnderlyingType( typeof( T ) );
-                Type type = underlyingType ?? typeof( T );
+                var underlyingType = Nullable.GetUnderlyingType( typeof( T ) );
+                var type = underlyingType ?? typeof( T );
                 if (record.IsDBNull( i ))
                 {
                     if (type.IsValueType && underlyingType is null)
@@ -891,21 +891,22 @@ namespace FlatFiles
                     }
                     return default;
                 }
-                object value = record.GetValue( i );
-                if (type != value.GetType())
+                var value = record.GetValue( i );
+                if (type == value.GetType())
                 {
-                    if (type == typeof( Guid ))
-                    {
-                        value = GetGuid( value );
-                    }
-                    else if (type.IsEnum)
-                    {
-                        value = GetEnum( type, value );
-                    }
-                    else if (value is IConvertible)
-                    {
-                        value = Convert.ChangeType( value, type, provider );
-                    }
+                    return (T) value;
+                }
+                if (type == typeof( Guid ))
+                {
+                    value = GetGuid( value );
+                }
+                else if (type.IsEnum)
+                {
+                    value = GetEnum( type, value );
+                }
+                else if (value is IConvertible)
+                {
+                    value = Convert.ChangeType( value, type, provider );
                 }
                 return (T) value;
             }
@@ -913,15 +914,12 @@ namespace FlatFiles
 
         private static object GetGuid( object value )
         {
-            if (value is string stringValue)
+            return value switch
             {
-                return Guid.Parse( stringValue );
-            }
-            if (value is byte[] byteArray)
-            {
-                return new Guid( byteArray );
-            }
-            return value;
+                string stringValue => Guid.Parse( stringValue ),
+                byte[] byteArray => new Guid( byteArray ),
+                _ => value
+            };
         }
 
         private static object GetEnum( Type type, object value )
@@ -986,15 +984,16 @@ namespace FlatFiles
             {
                 // GetValues only writes into the array, so the element nullability it declares is
                 // not something it can observe.
-                int result = record.GetValues( values! );
-                if (replaceDBNulls)
+                var result = record.GetValues( values! );
+                if (!replaceDBNulls)
                 {
-                    for (int index = 0; index != result; ++index)
+                    return result;
+                }
+                for (var index = 0; index != result; ++index)
+                {
+                    if (values[index] == DBNull.Value)
                     {
-                        if (values[index] == DBNull.Value)
-                        {
-                            values[index] = null;
-                        }
+                        values[index] = null;
                     }
                 }
                 return result;
@@ -1019,7 +1018,7 @@ namespace FlatFiles
 
         private static T Get<T>( IDataRecord record, string name, Func<int, T> getter )
         {
-            int index = record.GetOrdinal( name );
+            var index = record.GetOrdinal( name );
             return getter( index );
         }
 
@@ -1032,7 +1031,7 @@ namespace FlatFiles
         private static T? GetNullable<T>( IDataRecord record, string name, Func<int, T> getter )
             where T : struct
         {
-            int index = record.GetOrdinal( name );
+            var index = record.GetOrdinal( name );
             return GetNullable( record, index, getter );
         }
     }
