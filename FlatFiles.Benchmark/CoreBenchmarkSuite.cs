@@ -27,13 +27,13 @@ namespace FlatFiles.Benchmark
             ];
             var header = string.Join( ",", headers );
             var record = string.Join( ",", values );
-            data = string.Join( Environment.NewLine, (new[] { header }).Concat( Enumerable.Repeat( 0, 10000 ).Select( _ => record ) ) );
+            data = string.Join( Environment.NewLine, new[] { header }.Concat( Enumerable.Repeat( 0, 10000 ).Select( _ => record ) ) );
 
             string[] quotedValues =
             [
                 "Joe", "Smith", "29", "\"West Street Rd, Apt. 23\"", "ATTN: Will Smith", "Lexington", "DE", "001569", "Blue", "\"Cheese, and Crackers\"", "Soccer", "2017-01-01", "true"
             ];
-            quotedData = string.Join( Environment.NewLine, (new[] { header }).Concat( Enumerable.Repeat( 0, 10000 ).Select( _ => record ) ) );
+            quotedData = string.Join( Environment.NewLine, new[] { header }.Concat( Enumerable.Repeat( 0, 10000 ).Select( _ => record ) ) );
         }
 
         [Benchmark]
@@ -417,7 +417,7 @@ namespace FlatFiles.Benchmark
                 people.Add( person );
             }
         }
-        
+
         public class Person
         {
             public string FirstName { get; set; }
@@ -441,7 +441,7 @@ namespace FlatFiles.Benchmark
             public string FavoriteFood { get; set; }
 
             public string FavoriteSport { get; set; }
-            
+
             public DateTime? CreatedOn { get; set; }
 
             public bool IsActive { get; set; }

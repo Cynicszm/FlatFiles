@@ -516,7 +516,7 @@ namespace FlatFiles
 #pragma warning disable CS8766 // see the note on IDataRecord nullability above
         public object? this[string name]
         {
-            get 
+            get
             {
                 var index = GetColumns().GetOrdinal( name );
                 return GetValue( index );
@@ -543,11 +543,8 @@ namespace FlatFiles
                 return schema;
             }
             schema = Reader.GetSchema();
-            if (schema is null)
-            {
-                throw new NullReferenceException();
-            }
-            return schema;
+
+            return schema ?? throw new NullReferenceException();
         }
 
         private ColumnCollection GetColumns()
@@ -587,11 +584,8 @@ namespace FlatFiles
                 return values;
             }
             values = Reader.GetValues();
-            if (values is null)
-            {
-                throw new NullReferenceException();
-            }
-            return values;
+
+            return values ?? throw new NullReferenceException();
         }
     }
 }

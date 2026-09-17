@@ -106,7 +106,7 @@ namespace FlatFiles
         IOptions IReader.Options => parser.Options;
 
         /// <summary>
-        ///     Gets the schema being used by the parser. If a 
+        ///     Gets the schema being used by the parser. If a
         ///     SchemaSelector was provided, null will be returned.
         ///     If no schema was specified and no schema exists in
         ///     the file, null will be returned.
@@ -118,7 +118,7 @@ namespace FlatFiles
         }
 
         /// <summary>
-        ///     Gets the schema being used by the parser.If a 
+        ///     Gets the schema being used by the parser.If a
         ///     SchemaSelector was provided, null will be returned.
         ///     If no schema was specified and no schema exists in
         ///     the file, null will be returned.
@@ -130,7 +130,7 @@ namespace FlatFiles
         }
 
         /// <summary>
-        ///     Gets the schema being used by the parser.If a 
+        ///     Gets the schema being used by the parser.If a
         ///     SchemaSelector was provided, null will be returned.
         ///     If no schema was specified and no schema exists in
         ///     the file, null will be returned.
@@ -335,7 +335,7 @@ namespace FlatFiles
             }
             var currentSchema = GetSchema( record, rawValues ) ?? DelimitedSchema.BuildDynamicSchema( parser.Options, rawValues.Length );
             var currentContext = NewRecordContext( currentSchema, record, rawValues );
-            this.recordContext = currentContext;
+            recordContext = currentContext;
             if (IsSkipped( currentContext, rawValues ))
             {
                 return null;
@@ -359,7 +359,7 @@ namespace FlatFiles
         {
             if (schemaSelector is null)
             {
-                return this.schema;
+                return schema;
             }
             var currentSchema = schemaSelector.GetSchema( rawValues );
             if (currentSchema is not null)
@@ -562,9 +562,9 @@ namespace FlatFiles
 
         private IRecordContext GetMetadata( DelimitedSchema? currentSchema, string? record )
         {
-            if (this.recordContext is not null)
+            if (recordContext is not null)
             {
-                return this.recordContext;
+                return recordContext;
             }
             var executionContext = (metadataExecutionContexts ??= new ExecutionContextCache<DelimitedSchema, GenericExecutionContext>( s => new GenericExecutionContext( s, parser.Options.Clone() ) )).Get( currentSchema );
             var currentContext = new GenericRecordContext( executionContext )
@@ -583,7 +583,7 @@ namespace FlatFiles
 
         internal void SetSchema( DelimitedSchema currentSchema )
         {
-            this.schema = currentSchema;
+            schema = currentSchema;
         }
     }
 }

@@ -210,12 +210,12 @@ namespace FlatFiles
                 var index = text[scan..].IndexOf( quote );
                 if (index < 0)
                 {
-                    if (!reader.IsEndOfStream)
+                    if (reader.IsEndOfStream)
                     {
-                        separatorStart = 0;
-                        return TokenEnd.NeedMore;
+                        throw new DelimitedSyntaxException( Resources.UnmatchedQuote );
                     }
-                    throw new DelimitedSyntaxException( Resources.UnmatchedQuote );
+                    separatorStart = 0;
+                    return TokenEnd.NeedMore;
                 }
                 var quoteAt = scan + index;
                 scratch.Write( text[scan..quoteAt] );
