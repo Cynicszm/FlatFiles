@@ -40,21 +40,21 @@ namespace FlatFiles
         ///     Write the textual representation of the record schema.
         /// </summary>
         /// <remarks>If the header or records have already been written, this call is ignored.</remarks>
-        Task WriteSchemaAsync();
+        /// <remarks>
+        ///     The default implementation forwards to the overload that takes a token, passing
+        ///     <see cref="CancellationToken.None"/>.
+        /// </remarks>
+        Task WriteSchemaAsync()
+        {
+            return WriteSchemaAsync( CancellationToken.None );
+        }
 
         /// <summary>
         ///     Write the textual representation of the record schema.
         /// </summary>
         /// <remarks>If the header or records have already been written, this call is ignored.</remarks>
         /// <param name="cancellationToken">The token to observe while waiting for the operation to complete.</param>
-        /// <remarks>
-        ///     The default implementation forwards to the overload without a token and so cannot observe
-        ///     cancellation; an implementation that can should override it.
-        /// </remarks>
-        Task WriteSchemaAsync( CancellationToken cancellationToken )
-        {
-            return WriteSchemaAsync();
-        }
+        Task WriteSchemaAsync( CancellationToken cancellationToken );
 
         /// <summary>
         ///     Writes the textual representation of the given values to the writer.
@@ -68,7 +68,14 @@ namespace FlatFiles
         /// </summary>
         /// <param name="values">The values to write.</param>
         /// <returns>The textual representation of the given values.</returns>
-        Task WriteAsync( object?[] values );
+        /// <remarks>
+        ///     The default implementation forwards to the overload that takes a token, passing
+        ///     <see cref="CancellationToken.None"/>.
+        /// </remarks>
+        Task WriteAsync( object?[] values )
+        {
+            return WriteAsync( values, CancellationToken.None );
+        }
 
         /// <summary>
         ///     Writes the textual representation of the given values to the writer.
@@ -76,14 +83,7 @@ namespace FlatFiles
         /// <param name="values">The values to write.</param>
         /// <param name="cancellationToken">The token to observe while waiting for the operation to complete.</param>
         /// <returns>The textual representation of the given values.</returns>
-        /// <remarks>
-        ///     The default implementation forwards to the overload without a token and so cannot observe
-        ///     cancellation; an implementation that can should override it.
-        /// </remarks>
-        Task WriteAsync( object?[] values, CancellationToken cancellationToken )
-        {
-            return WriteAsync( values );
-        }
+        Task WriteAsync( object?[] values, CancellationToken cancellationToken );
 
         /// <summary>
         ///     Write the given data directly to the output. By default, this will
@@ -99,7 +99,14 @@ namespace FlatFiles
         /// </summary>
         /// <param name="data">The data to write to the output.</param>
         /// <param name="writeRecordSeparator">Indicates whether a record separator should be written after the data.</param>
-        Task WriteRawAsync( string data, bool writeRecordSeparator = false );
+        /// <remarks>
+        ///     The default implementation forwards to the overload that takes a token, passing
+        ///     <see cref="CancellationToken.None"/>.
+        /// </remarks>
+        Task WriteRawAsync( string data, bool writeRecordSeparator = false )
+        {
+            return WriteRawAsync( data, writeRecordSeparator, CancellationToken.None );
+        }
 
         /// <summary>
         ///     Write the given data directly to the output. By default, this will
@@ -108,13 +115,6 @@ namespace FlatFiles
         /// <param name="data">The data to write to the output.</param>
         /// <param name="writeRecordSeparator">Indicates whether a record separator should be written after the data.</param>
         /// <param name="cancellationToken">The token to observe while waiting for the operation to complete.</param>
-        /// <remarks>
-        ///     The default implementation forwards to the overload without a token and so cannot observe
-        ///     cancellation; an implementation that can should override it.
-        /// </remarks>
-        Task WriteRawAsync( string data, bool writeRecordSeparator, CancellationToken cancellationToken )
-        {
-            return WriteRawAsync( data, writeRecordSeparator );
-        }
+        Task WriteRawAsync( string data, bool writeRecordSeparator, CancellationToken cancellationToken );
     }
 }

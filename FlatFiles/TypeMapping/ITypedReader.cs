@@ -46,21 +46,21 @@ namespace FlatFiles.TypeMapping
         ///     Reads the next record from the file.
         /// </summary>
         /// <returns>True if the next record was read; otherwise, false if the end of file was reached.</returns>
-        ValueTask<bool> ReadAsync();
+        /// <remarks>
+        ///     The default implementation forwards to the overload that takes a token, passing
+        ///     <see cref="CancellationToken.None"/>.
+        /// </remarks>
+        ValueTask<bool> ReadAsync()
+        {
+            return ReadAsync( CancellationToken.None );
+        }
 
         /// <summary>
         ///     Reads the next record from the file.
         /// </summary>
         /// <param name="cancellationToken">The token to observe while waiting for the operation to complete.</param>
         /// <returns>True if the next record was read; otherwise, false if the end of file was reached.</returns>
-        /// <remarks>
-        ///     The default implementation forwards to the overload without a token and so cannot observe
-        ///     cancellation; an implementation that can should override it.
-        /// </remarks>
-        ValueTask<bool> ReadAsync( CancellationToken cancellationToken )
-        {
-            return ReadAsync();
-        }
+        ValueTask<bool> ReadAsync( CancellationToken cancellationToken );
 
         /// <summary>
         ///     Skips the next record from the file.
@@ -72,21 +72,21 @@ namespace FlatFiles.TypeMapping
         ///     Skips the next record from the file.
         /// </summary>
         /// <returns>True if the next record was skipped; otherwise, false if the end of the file was reached.</returns>
-        ValueTask<bool> SkipAsync();
+        /// <remarks>
+        ///     The default implementation forwards to the overload that takes a token, passing
+        ///     <see cref="CancellationToken.None"/>.
+        /// </remarks>
+        ValueTask<bool> SkipAsync()
+        {
+            return SkipAsync( CancellationToken.None );
+        }
 
         /// <summary>
         ///     Skips the next record from the file.
         /// </summary>
         /// <param name="cancellationToken">The token to observe while waiting for the operation to complete.</param>
         /// <returns>True if the next record was skipped; otherwise, false if the end of the file was reached.</returns>
-        /// <remarks>
-        ///     The default implementation forwards to the overload without a token and so cannot observe
-        ///     cancellation; an implementation that can should override it.
-        /// </remarks>
-        ValueTask<bool> SkipAsync( CancellationToken cancellationToken )
-        {
-            return SkipAsync();
-        }
+        ValueTask<bool> SkipAsync( CancellationToken cancellationToken );
 
         /// <summary>
         ///     Gets the last read entity.
