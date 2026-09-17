@@ -52,7 +52,7 @@ namespace FlatFiles.Test
                 } );
             var reader = new StringReader( data );
             var typedReader = mapper.GetReader( reader );
-            Person[] results = [.. typedReader.ReadAll()];
+            _ = typedReader.ReadAll().ToArray();
 
             int[] expectedPhysicalIndexes = [ 0, 2, 4, 6 ];
             CollectionAssert.AreEqual( expectedPhysicalIndexes, colPhysicalIndexes );
@@ -66,7 +66,7 @@ namespace FlatFiles.Test
         [TestMethod]
         public void ShouldPassCorrectIndexesWhenWriting()
         {
-            Person[] data = [ new Person { Id = 1, Name = "Bob", CreatedOn = new DateTime( 2018, 06, 30 ), IsActive = true } ];
+            Person[] data = [ new() { Id = 1, Name = "Bob", CreatedOn = new DateTime( 2018, 06, 30 ), IsActive = true } ];
             var mapper = DelimitedTypeMapper.Define( () => new Person() );
             List<int> colPhysicalIndexes = [];
             List<int> colLogicalIndexes = [];

@@ -1,6 +1,6 @@
-﻿using System.Threading.Tasks;
+﻿using System;
 using System.Threading;
-using System;
+using System.Threading.Tasks;
 
 namespace FlatFiles.TypeMapping
 {
@@ -55,7 +55,7 @@ namespace FlatFiles.TypeMapping
         }
 
         public async ValueTask<bool> ReadAsync( CancellationToken cancellationToken )
-{
+        {
             cancellationToken.ThrowIfCancellationRequested();
             if (!await Reader.ReadAsync( cancellationToken ).ConfigureAwait( false ))
             {
@@ -68,7 +68,7 @@ namespace FlatFiles.TypeMapping
         private void SetCurrent()
         {
             var values = Reader.GetValues();
-            IReaderWithMetadata metadataReader = (IReaderWithMetadata) Reader;
+            var metadataReader = (IReaderWithMetadata) Reader;
             var recordContext = metadataReader.GetMetadata();
             current = deserializer( recordContext, values ); // Won't be null is Read returns true
         }
@@ -84,7 +84,7 @@ namespace FlatFiles.TypeMapping
         }
 
         public async ValueTask<bool> SkipAsync( CancellationToken cancellationToken )
-{
+        {
             cancellationToken.ThrowIfCancellationRequested();
             return await Reader.SkipAsync( cancellationToken ).ConfigureAwait( false );
         }

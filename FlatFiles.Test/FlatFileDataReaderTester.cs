@@ -13,7 +13,7 @@ namespace FlatFiles.Test
         [TestMethod]
         public void ShouldGetDefaultSchemaForCSVFile()
         {
-            FlatFileDataReader dataReader = GetFlatFileReaderWithDefaultSchema();
+            var dataReader = GetFlatFileReaderWithDefaultSchema();
             var schema = dataReader.GetSchemaTable();
 
             string[] expectedNames = [ "Id", "Name", "CreatedOn", "IsActive", "VisitCount", "UniqueId", "FavoriteDay" ];
@@ -32,7 +32,7 @@ namespace FlatFiles.Test
         [TestMethod]
         public void ShouldGetDefaultSchemaForCSVFile_GetValue()
         {
-            FlatFileDataReader dataReader = GetFlatFileReaderWithDefaultSchema();
+            var dataReader = GetFlatFileReaderWithDefaultSchema();
             Assert.IsTrue( dataReader.Read(), "The first record could not be read." );
             Assert.AreEqual( 1, dataReader.GetValue<int>( "Id" ), "The wrong 'Id' was retrieved for 'Bob'." );
             Assert.AreEqual( "Bob", dataReader.GetValue<string>( "Name" ), "The wrong 'Name' was retrieved for 'Bob'." );
@@ -88,7 +88,7 @@ namespace FlatFiles.Test
         [TestMethod]
         public void ShouldGetRecordsFromReader()
         {
-            FlatFileDataReader dataReader = GetFlatFileReader();
+            var dataReader = GetFlatFileReader();
             Assert.IsTrue( dataReader.Read(), "The first record could not be read." );
             Assert.AreEqual( 1, dataReader.GetInt32( "Id" ), "The wrong 'Id' was retrieved for 'Bob'." );
             Assert.AreEqual( "Bob", dataReader.GetString( "Name" ), "The wrong 'Name' was retrieved for 'Bob'." );
@@ -109,7 +109,7 @@ namespace FlatFiles.Test
         [TestMethod]
         public void ShouldGetRecordsFromReader_GetValue()
         {
-            FlatFileDataReader dataReader = GetFlatFileReader();
+            var dataReader = GetFlatFileReader();
             Assert.IsTrue( dataReader.Read(), "The first record could not be read." );
             Assert.AreEqual( 1, dataReader.GetValue<int>( "Id" ), "The wrong 'Id' was retrieved for 'Bob'." );
             Assert.AreEqual( "Bob", dataReader.GetValue<string>( "Name" ), "The wrong 'Name' was retrieved for 'Bob'." );
@@ -135,7 +135,7 @@ namespace FlatFiles.Test
 2,Susan,2018-07-04,false,,{24C250EB-87C9-45DE-B01F-71A7754C6AAD}
 ";
             var reader = new StringReader( data );
-            DelimitedSchema schema = new DelimitedSchema();
+            var schema = new DelimitedSchema();
             schema.AddColumn( new Int32Column( "Id" ) );
             schema.AddColumn( new StringColumn( "Name" ) );
             schema.AddColumn( new DateTimeColumn( "CreatedOn" ) );
@@ -178,10 +178,10 @@ namespace FlatFiles.Test
             CollectionAssert.AreEqual( new[] { "A", "C" }, columnNames );
 
             Assert.IsTrue( dataReader.Read() );
-            object[] values1 = dataReader.GetValues();
+            var values1 = dataReader.GetValues();
             CollectionAssert.AreEqual( new[] { "1", "3" }, values1 );
             Assert.IsTrue( dataReader.Read() );
-            object[] values2 = dataReader.GetValues();
+            var values2 = dataReader.GetValues();
             CollectionAssert.AreEqual( new[] { "4", "6" }, values2 );
             Assert.IsFalse( dataReader.Read() );
         }

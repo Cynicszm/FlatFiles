@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using System.Linq;
 using FlatFiles.TypeMapping;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -163,9 +162,9 @@ namespace FlatFiles.Test
             mapper.Property( p => p.Active ).ColumnName( "Active" );
             Person[] people =
             [
-                new Person { Id = 1, Name = "Smith, Bob", Amount = 12.5m, Active = true },
-                new Person { Id = 2, Name = "Tab\there", Amount = null, Active = false },
-                new Person { Id = 3, Name = "Pipe|here; semi", Amount = -3m, Active = true }
+                new() { Id = 1, Name = "Smith, Bob", Amount = 12.5m, Active = true },
+                new() { Id = 2, Name = "Tab\there", Amount = null, Active = false },
+                new() { Id = 3, Name = "Pipe|here; semi", Amount = -3m, Active = true }
             ];
             foreach (var separator in Separators)
             {
@@ -176,7 +175,7 @@ namespace FlatFiles.Test
                 Person[] read = [.. mapper.Read( new StringReader( output.ToString() ), options )];
 
                 Assert.AreEqual( people.Length, read.Length, $"Separator {separator}" );
-                for (int index = 0; index != people.Length; ++index)
+                for (var index = 0; index != people.Length; ++index)
                 {
                     Assert.AreEqual( people[index].Id, read[index].Id, $"Separator {separator}" );
                     Assert.AreEqual( people[index].Name, read[index].Name, $"Separator {separator}" );

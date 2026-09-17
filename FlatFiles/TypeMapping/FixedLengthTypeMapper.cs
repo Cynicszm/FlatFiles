@@ -1,10 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Threading.Tasks;
 using System.Threading;
-using System;
+using System.Threading.Tasks;
 using FlatFiles.Properties;
 
 namespace FlatFiles.TypeMapping
@@ -599,7 +599,7 @@ namespace FlatFiles.TypeMapping
         public ICustomMapping<TEntity> CustomMapping( IColumnDefinition column, Window window )
         {
             var columnName = column.ColumnName;
-            if (String.IsNullOrWhiteSpace( columnName ))
+            if (string.IsNullOrWhiteSpace( columnName ))
             {
                 throw new ArgumentException( Resources.BlankColumnName, nameof( column ) );
             }
@@ -625,7 +625,7 @@ namespace FlatFiles.TypeMapping
         }
 
         public IAsyncEnumerable<TEntity> ReadAsync( TextReader reader, FixedLengthOptions? options, CancellationToken cancellationToken )
-{
+        {
             var typedReader = GetReader( reader, options );
             return typedReader.ReadAllAsync( cancellationToken );
         }
@@ -656,7 +656,7 @@ namespace FlatFiles.TypeMapping
         }
 
         public Task WriteAsync( TextWriter writer, IEnumerable<TEntity> entities, FixedLengthOptions? options, CancellationToken cancellationToken )
-{
+        {
             ArgumentNullException.ThrowIfNull( entities );
             var typedWriter = GetWriter( writer, options );
             return typedWriter.WriteAllAsync( entities, cancellationToken );
@@ -668,7 +668,7 @@ namespace FlatFiles.TypeMapping
         }
 
         public Task WriteAsync( TextWriter writer, IAsyncEnumerable<TEntity> entities, FixedLengthOptions? options, CancellationToken cancellationToken )
-{
+        {
             ArgumentNullException.ThrowIfNull( entities );
             var typedWriter = GetWriter( writer, options );
             return typedWriter.WriteAllAsync( entities, cancellationToken );
@@ -696,7 +696,7 @@ namespace FlatFiles.TypeMapping
         {
             var schema = new FixedLengthSchema();
             var mappings = lookup.GetMappings();
-            foreach (IMemberMapping mapping in mappings)
+            foreach (var mapping in mappings)
             {
                 var column = mapping.ColumnDefinition;
                 var window = windowLookup[mapping];
@@ -881,14 +881,14 @@ namespace FlatFiles.TypeMapping
         }
 
         IAsyncEnumerable<object> IDynamicFixedLengthTypeMapper.ReadAsync( TextReader reader, FixedLengthOptions? options )
-{
+        {
             IDynamicFixedLengthTypeMapper untypedMapper = this;
             var untypedReader = untypedMapper.GetReader( reader, options );
             return untypedReader.ReadAllAsync();
         }
 
         IAsyncEnumerable<object> IDynamicFixedLengthTypeMapper.ReadAsync( TextReader reader, FixedLengthOptions? options, CancellationToken cancellationToken )
-{
+        {
             IDynamicFixedLengthTypeMapper untypedMapper = this;
             var untypedReader = untypedMapper.GetReader( reader, options );
             return untypedReader.ReadAllAsync( cancellationToken );
@@ -907,28 +907,28 @@ namespace FlatFiles.TypeMapping
         }
 
         Task IDynamicFixedLengthTypeMapper.WriteAsync( TextWriter writer, IEnumerable<object> entities, FixedLengthOptions? options )
-{
+        {
             IDynamicFixedLengthTypeMapper untypedMapper = this;
             var untypedWriter = untypedMapper.GetWriter( writer, options );
             return untypedWriter.WriteAllAsync( entities );
         }
 
         Task IDynamicFixedLengthTypeMapper.WriteAsync( TextWriter writer, IEnumerable<object> entities, FixedLengthOptions? options, CancellationToken cancellationToken )
-{
+        {
             IDynamicFixedLengthTypeMapper untypedMapper = this;
             var untypedWriter = untypedMapper.GetWriter( writer, options );
             return untypedWriter.WriteAllAsync( entities, cancellationToken );
         }
 
         Task IDynamicFixedLengthTypeMapper.WriteAsync( TextWriter writer, IAsyncEnumerable<object> entities, FixedLengthOptions? options )
-{
+        {
             IDynamicFixedLengthTypeMapper untypedMapper = this;
             var untypedWriter = untypedMapper.GetWriter( writer, options );
             return untypedWriter.WriteAllAsync( entities );
         }
 
         Task IDynamicFixedLengthTypeMapper.WriteAsync( TextWriter writer, IAsyncEnumerable<object> entities, FixedLengthOptions? options, CancellationToken cancellationToken )
-{
+        {
             IDynamicFixedLengthTypeMapper untypedMapper = this;
             var untypedWriter = untypedMapper.GetWriter( writer, options );
             return untypedWriter.WriteAllAsync( entities, cancellationToken );

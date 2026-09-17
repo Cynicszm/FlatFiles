@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Diagnostics.CodeAnalysis;
 using System.Buffers;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using FlatFiles.Properties;
 
@@ -40,7 +40,7 @@ namespace FlatFiles
             internal set 
             {
                 value = value?.Trim();
-                if (!IsIgnored && String.IsNullOrEmpty( value ))
+                if (!IsIgnored && string.IsNullOrEmpty( value ))
                 {
                     throw new ArgumentException( Resources.BlankColumnName );
                 }
@@ -225,14 +225,14 @@ namespace FlatFiles
 #pragma warning disable CS0618 // Type or member is obsolete
             if (Preprocessor is not null)
             {
-                value = Preprocessor( value ) ?? String.Empty;
+                value = Preprocessor( value ) ?? string.Empty;
             }
 #pragma warning restore CS0618 // Type or member is obsolete
             if (OnParsing is not null)
             {
-                value = OnParsing( context, value ) ?? String.Empty;
+                value = OnParsing( context, value ) ?? string.Empty;
             }
-            object? result = ParseValue( context, value );
+            var result = ParseValue( context, value );
             if (OnParsed is not null)
             {
                 result = OnParsed( context, result );
@@ -246,7 +246,7 @@ namespace FlatFiles
             {
                 return IsNullable ? null : DefaultValue.GetDefaultValue( context ); // Should we check for the expected type?
             }
-            string trimmed = IsTrimmed ? TrimValue( value ) : value;
+            var trimmed = IsTrimmed ? TrimValue( value ) : value;
             return OnParse( context, trimmed );
         }
 
@@ -275,10 +275,10 @@ namespace FlatFiles
             {
                 value = OnFormatting( context, value );
             }
-            string result = FormatValue( context, value );
+            var result = FormatValue( context, value );
             if (OnFormatted is not null)
             {
-                result = OnFormatted( context, result ) ?? String.Empty;
+                result = OnFormatted( context, result ) ?? string.Empty;
             }
             return result;
         }
@@ -306,7 +306,7 @@ namespace FlatFiles
             }
             if (value is null)
             {
-                destination.Write( (NullFormatter.FormatNull( context ) ?? String.Empty).AsSpan() );
+                destination.Write( (NullFormatter.FormatNull( context ) ?? string.Empty).AsSpan() );
             }
             else
             {
@@ -318,7 +318,7 @@ namespace FlatFiles
         {
             if (value is null)
             {
-                return NullFormatter.FormatNull( context ) ?? String.Empty;
+                return NullFormatter.FormatNull( context ) ?? string.Empty;
             }
             return OnFormat( context, (T) value );
         }

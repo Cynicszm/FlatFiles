@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
-using System.Threading.Tasks;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace FlatFiles.TypeMapping
 {
@@ -45,7 +45,7 @@ namespace FlatFiles.TypeMapping
             /// <param name="cancellationToken">The token to observe while waiting for the operation to complete.</param>
             /// <returns>The entities written by the writer.</returns>
             public async Task WriteAllAsync( IEnumerable<TEntity> entities, CancellationToken cancellationToken )
-{
+            {
                 cancellationToken.ThrowIfCancellationRequested();
                 if (writer.Writer.Options.IsFirstRecordSchema)
                 {
@@ -74,7 +74,7 @@ namespace FlatFiles.TypeMapping
             /// <param name="cancellationToken">The token to observe while waiting for the operation to complete.</param>
             /// <returns>The entities written by the writer.</returns>
             public async Task WriteAllAsync( IAsyncEnumerable<TEntity> entities, CancellationToken cancellationToken )
-{
+            {
                 cancellationToken.ThrowIfCancellationRequested();
                 if (writer.Writer.Options.IsFirstRecordSchema)
                 {

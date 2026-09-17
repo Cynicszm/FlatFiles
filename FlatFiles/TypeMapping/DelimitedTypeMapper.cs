@@ -1,13 +1,13 @@
-﻿using System.Collections.Frozen;
+﻿using System;
+using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using System.Linq.Expressions;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
-using System.Threading.Tasks;
 using System.Threading;
-using System;
+using System.Threading.Tasks;
 using FlatFiles.Properties;
 
 namespace FlatFiles.TypeMapping
@@ -179,7 +179,7 @@ namespace FlatFiles.TypeMapping
                 var columnDefinition = GetColumnDefinition( memberExpression.Type, column.ColumnName! );
                 if (columnDefinition is null)
                 {
-                    throw new FlatFileException( String.Format( CultureInfo.CurrentCulture, Resources.NoAutoMapPropertyType, column.ColumnName ) );
+                    throw new FlatFileException( string.Format( CultureInfo.CurrentCulture, Resources.NoAutoMapPropertyType, column.ColumnName ) );
                 }
                 var lambdaExpression = Expression.Lambda<Action<IColumnContext?, object?, object?>>( body, contextParameter, entityParameter, valueParameter );
                 var compiledSetter = lambdaExpression.Compile();
@@ -196,7 +196,7 @@ namespace FlatFiles.TypeMapping
             {
                 if (!propertyInfo.CanWrite)
                 {
-                    throw new FlatFileException( String.Format( CultureInfo.CurrentCulture, Resources.ReadOnlyProperty, column.ColumnName ) );
+                    throw new FlatFileException( string.Format( CultureInfo.CurrentCulture, Resources.ReadOnlyProperty, column.ColumnName ) );
                 }
                 return Expression.Property( Expression.Convert( entityParameter, entityType ), propertyInfo );
             }
@@ -270,7 +270,7 @@ namespace FlatFiles.TypeMapping
             foreach (var member in members)
             {
                 var columnName = nameResolver.GetColumnName( member );
-                if (String.IsNullOrWhiteSpace( columnName ))
+                if (string.IsNullOrWhiteSpace( columnName ))
                 {
                     continue;
                 }
@@ -804,7 +804,7 @@ namespace FlatFiles.TypeMapping
         public ICustomMapping<TEntity> CustomMapping( IColumnDefinition column )
         {
             var columnName = column.ColumnName;
-            if (String.IsNullOrWhiteSpace( columnName ))
+            if (string.IsNullOrWhiteSpace( columnName ))
             {
                 throw new ArgumentException( Resources.BlankColumnName, nameof( column ) );
             }
@@ -829,7 +829,7 @@ namespace FlatFiles.TypeMapping
         }
 
         public IAsyncEnumerable<TEntity> ReadAsync( TextReader reader, DelimitedOptions? options, CancellationToken cancellationToken )
-{
+        {
             var typedReader = GetReader( reader, options );
             return typedReader.ReadAllAsync( cancellationToken );
         }
@@ -866,7 +866,7 @@ namespace FlatFiles.TypeMapping
         }
 
         public Task WriteAsync( TextWriter writer, IEnumerable<TEntity> entities, DelimitedOptions? options, CancellationToken cancellationToken )
-{
+        {
             ArgumentNullException.ThrowIfNull( entities );
             var typedWriter = GetWriter( writer, options );
             return typedWriter.WriteAllAsync( entities, cancellationToken );
@@ -878,7 +878,7 @@ namespace FlatFiles.TypeMapping
         }
 
         public Task WriteAsync( TextWriter writer, IAsyncEnumerable<TEntity> entities, DelimitedOptions? options, CancellationToken cancellationToken )
-{
+        {
             ArgumentNullException.ThrowIfNull( entities );
             var typedWriter = GetWriter( writer, options );
             return typedWriter.WriteAllAsync( entities, cancellationToken );
@@ -906,9 +906,9 @@ namespace FlatFiles.TypeMapping
         {
             var schema = new DelimitedSchema();
             var mappings = lookup.GetMappings();
-            foreach (IMemberMapping mapping in mappings)
+            foreach (var mapping in mappings)
             {
-                IColumnDefinition column = mapping.ColumnDefinition;
+                var column = mapping.ColumnDefinition;
                 schema.AddColumn( column );
             }
             return schema;
@@ -1090,14 +1090,14 @@ namespace FlatFiles.TypeMapping
         }
 
         IAsyncEnumerable<object> IDynamicDelimitedTypeMapper.ReadAsync( TextReader reader, DelimitedOptions? options )
-{
+        {
             IDynamicDelimitedTypeMapper untypedMapper = this;
             var untypedReader = untypedMapper.GetReader( reader, options );
             return untypedReader.ReadAllAsync();
         }
 
         IAsyncEnumerable<object> IDynamicDelimitedTypeMapper.ReadAsync( TextReader reader, DelimitedOptions? options, CancellationToken cancellationToken )
-{
+        {
             IDynamicDelimitedTypeMapper untypedMapper = this;
             var untypedReader = untypedMapper.GetReader( reader, options );
             return untypedReader.ReadAllAsync( cancellationToken );
@@ -1116,28 +1116,28 @@ namespace FlatFiles.TypeMapping
         }
 
         Task IDynamicDelimitedTypeMapper.WriteAsync( TextWriter writer, IEnumerable<object> entities, DelimitedOptions? options )
-{
+        {
             IDynamicDelimitedTypeMapper untypedMapper = this;
             var untypedWriter = untypedMapper.GetWriter( writer, options );
             return untypedWriter.WriteAllAsync( entities );
         }
 
         Task IDynamicDelimitedTypeMapper.WriteAsync( TextWriter writer, IEnumerable<object> entities, DelimitedOptions? options, CancellationToken cancellationToken )
-{
+        {
             IDynamicDelimitedTypeMapper untypedMapper = this;
             var untypedWriter = untypedMapper.GetWriter( writer, options );
             return untypedWriter.WriteAllAsync( entities, cancellationToken );
         }
 
         Task IDynamicDelimitedTypeMapper.WriteAsync( TextWriter writer, IAsyncEnumerable<object> entities, DelimitedOptions? options )
-{
+        {
             IDynamicDelimitedTypeMapper untypedMapper = this;
             var untypedWriter = untypedMapper.GetWriter( writer, options );
             return untypedWriter.WriteAllAsync( entities );
         }
 
         Task IDynamicDelimitedTypeMapper.WriteAsync( TextWriter writer, IAsyncEnumerable<object> entities, DelimitedOptions? options, CancellationToken cancellationToken )
-{
+        {
             IDynamicDelimitedTypeMapper untypedMapper = this;
             var untypedWriter = untypedMapper.GetWriter( writer, options );
             return untypedWriter.WriteAllAsync( entities, cancellationToken );

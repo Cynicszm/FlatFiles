@@ -84,7 +84,7 @@ namespace FlatFiles
         {
             if (values is null)
             {
-                return String.Empty;
+                return string.Empty;
             }
             var writer = new StringWriter();
             var recordWriter = GetWriter( writer );

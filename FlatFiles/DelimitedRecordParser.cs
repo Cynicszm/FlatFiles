@@ -1,9 +1,9 @@
-﻿using System.Buffers;
+﻿using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.IO;
-using System.Threading.Tasks;
 using System.Threading;
-using System;
+using System.Threading.Tasks;
 using FlatFiles.Properties;
 
 namespace FlatFiles
@@ -68,7 +68,7 @@ namespace FlatFiles
         }
 
         public async ValueTask<bool> IsEndOfStreamAsync( CancellationToken cancellationToken = default )
-{
+        {
             if (reader is { Available: 0, IsEndOfStream: false })
             {
                 await reader.FillAsync( cancellationToken ).ConfigureAwait( false );
@@ -87,7 +87,7 @@ namespace FlatFiles
         }
 
         public async Task<(string, string[])> ReadRecordAsync( CancellationToken cancellationToken = default )
-{
+        {
             (string, string[]) record;
             while (!TryReadRecord( out record ))
             {
@@ -117,7 +117,7 @@ namespace FlatFiles
                 {
                     continue;
                 }
-                var recordText = preserveRecordText ? new string( text[..separatorStart] ) : String.Empty;
+                var recordText = preserveRecordText ? new string( text[..separatorStart] ) : string.Empty;
                 record = (recordText, [.. tokens]);
                 tokens.Clear();
                 reader.Consume( position );
@@ -142,12 +142,12 @@ namespace FlatFiles
                     var end = MatchSeparator( text, start, out var length );
                     if (end != TokenEnd.None)
                     {
-                        tokens.Add( String.Empty );
+                        tokens.Add( string.Empty );
                         separatorStart = start;
                         position = start + length;
                         return end;
                     }
-                    if (!Char.IsWhiteSpace( text[start] ))
+                    if (!char.IsWhiteSpace( text[start] ))
                     {
                         break;
                     }
@@ -250,7 +250,7 @@ namespace FlatFiles
                         position = after + length;
                         return end;
                     }
-                    if (!Char.IsWhiteSpace( text[after] ))
+                    if (!char.IsWhiteSpace( text[after] ))
                     {
                         throw new DelimitedSyntaxException( Resources.UnmatchedQuote );
                     }

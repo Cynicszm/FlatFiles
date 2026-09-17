@@ -37,7 +37,7 @@ namespace FlatFiles
             }
             else
             {
-                defaultMatcher = new SchemaMatcher( schema, values => true );
+                defaultMatcher = new SchemaMatcher( schema, _ => true );
             }
             return new FixedLengthSchemaSelectorUseBuilder( defaultMatcher );
         }

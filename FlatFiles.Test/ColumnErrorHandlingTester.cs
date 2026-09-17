@@ -17,7 +17,7 @@ namespace FlatFiles.Test
             schema.AddColumn( new DateTimeColumn( "DateTime" ) );
             schema.AddColumn( new GuidColumn( "Guid" ) );
             var csvReader = new DelimitedReader( stringReader, schema );
-            csvReader.ColumnError += ( sender, e ) =>
+            csvReader.ColumnError += ( _, e ) =>
             {
                 if (e.ColumnContext.ColumnDefinition.ColumnName == "Int32")
                 {
@@ -52,7 +52,7 @@ namespace FlatFiles.Test
             schema.AddColumn( new DateTimeColumn( "DateTime" ), 10 );
             schema.AddColumn( new GuidColumn( "Guid" ), 32 );
             var csvReader = new FixedLengthReader( stringReader, schema );
-            csvReader.ColumnError += ( sender, e ) =>
+            csvReader.ColumnError += ( _, e ) =>
             {
                 if (e.ColumnContext.ColumnDefinition.ColumnName == "Int32")
                 {

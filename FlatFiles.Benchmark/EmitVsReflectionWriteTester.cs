@@ -13,14 +13,14 @@ namespace FlatFiles.Benchmark
 
         public EmitVsReflectionWriteTester()
         {
-            var mapper = DelimitedTypeMapper.Define<Person>( () => new Person() );
+            var mapper = DelimitedTypeMapper.Define( () => new Person() );
             mapper.Property( x => x.Name ).ColumnName( "Name" );
             mapper.Property( x => x.IQ ).ColumnName( "IQ" );
             mapper.Property( x => x.BirthDate ).ColumnName( "BirthDate" );
             mapper.Property( x => x.TopSpeed ).ColumnName( "TopSpeed" );
             this.mapper = mapper;
 
-            people = Enumerable.Range( 0, 10000 ).Select( i => new Person
+            people = Enumerable.Range( 0, 10000 ).Select( _ => new Person
             {
                 Name = "Susan",
                 IQ = 132,
@@ -33,7 +33,7 @@ namespace FlatFiles.Benchmark
         public string SerializeEmit()
         {
             mapper.OptimizeMapping( true );
-            StringWriter writer = new StringWriter();
+            var writer = new StringWriter();
             mapper.Write( writer, people );
             return writer.ToString();
         }
@@ -42,7 +42,7 @@ namespace FlatFiles.Benchmark
         public string SerializeReflection()
         {
             mapper.OptimizeMapping( false );
-            StringWriter writer = new StringWriter();
+            var writer = new StringWriter();
             mapper.Write( writer, people );
             return writer.ToString();
         }

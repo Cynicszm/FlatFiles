@@ -10,30 +10,30 @@ namespace FlatFiles.Test
         [TestMethod]
         public void ShouldNotWriteSchemaIfNoSchemaProvided()
         {
-            StringWriter stringWriter = new StringWriter();
-            DelimitedWriter writer = new DelimitedWriter( stringWriter, new DelimitedOptions { IsFirstRecordSchema = true } );
-            writer.Write( new string[] { "a" } );
+            var stringWriter = new StringWriter();
+            var writer = new DelimitedWriter( stringWriter, new DelimitedOptions { IsFirstRecordSchema = true } );
+            writer.Write( [ "a" ] );
 
-            string output = stringWriter.ToString();
-            string expected = "a" + Environment.NewLine;
+            var output = stringWriter.ToString();
+            var expected = "a" + Environment.NewLine;
             Assert.AreEqual( expected, output );
         }
 
         [TestMethod]
         public void ShouldWriteSchemaIfExplicit()
         {
-            StringWriter stringWriter = new StringWriter();
+            var stringWriter = new StringWriter();
             // Explicitly indicate that the first record is NOT the schema
-            DelimitedSchema schema = new DelimitedSchema();
+            var schema = new DelimitedSchema();
             schema.AddColumn( new StringColumn( "Col1" ) );
-            DelimitedWriter writer = new DelimitedWriter( stringWriter, schema, new DelimitedOptions
+            var writer = new DelimitedWriter( stringWriter, schema, new DelimitedOptions
             {
                 IsFirstRecordSchema = false
             } );
             writer.WriteSchema();  // Explicitly write the schema
-            writer.Write( new string[] { "a" } );
+            writer.Write( [ "a" ] );
 
-            StringReader stringReader = new StringReader( stringWriter.ToString() );
+            var stringReader = new StringReader( stringWriter.ToString() );
             var reader = new DelimitedReader( stringReader, new DelimitedOptions { IsFirstRecordSchema = true } );
             var parsedSchema = reader.GetSchema();
             Assert.AreEqual( schema.ColumnDefinitions.Count, parsedSchema.ColumnDefinitions.Count );
@@ -46,19 +46,19 @@ namespace FlatFiles.Test
         [TestMethod]
         public void ShouldNotWriteSchemaAfterFirstRecordWritten()
         {
-            StringWriter stringWriter = new StringWriter();
+            var stringWriter = new StringWriter();
             // Explicitly indicate that the first record is NOT the schema
-            DelimitedSchema schema = new DelimitedSchema();
+            var schema = new DelimitedSchema();
             schema.AddColumn( new StringColumn( "Col1" ) );
             var options = new DelimitedOptions
             {
                 IsFirstRecordSchema = false
             };
-            DelimitedWriter writer = new DelimitedWriter( stringWriter, schema, options );
-            writer.Write( new string[] { "a" } );
+            var writer = new DelimitedWriter( stringWriter, schema, options );
+            writer.Write( [ "a" ] );
             writer.WriteSchema();  // Explicitly write the schema
 
-            StringReader stringReader = new StringReader( stringWriter.ToString() );
+            var stringReader = new StringReader( stringWriter.ToString() );
             var reader = new DelimitedReader( stringReader, schema, options );
             Assert.IsTrue( reader.Read(), "The record was not retrieved." );
             Assert.IsFalse( reader.Read(), "Encountered more than the expected number of records." );

@@ -59,7 +59,7 @@ namespace FlatFiles.TypeMapping
         /// <param name="typeMapper">The default schema to use.</param>
         public void WithDefault( IDynamicDelimitedTypeMapper? typeMapper )
         {
-            defaultMatcher = typeMapper is null ? null : new TypeMapperMatcher( typeMapper, o => true );
+            defaultMatcher = typeMapper is null ? null : new TypeMapperMatcher( typeMapper, _ => true );
         }
 
         /// <summary>
@@ -74,7 +74,7 @@ namespace FlatFiles.TypeMapping
             foreach (var matcher in matchers)
             {
                 var schema = matcher.Reset();
-                injector.When( values => matcher.IsMatch ).Use( schema );
+                injector.When( _ => matcher.IsMatch ).Use( schema );
             }
             if (defaultMatcher is not null)
             {

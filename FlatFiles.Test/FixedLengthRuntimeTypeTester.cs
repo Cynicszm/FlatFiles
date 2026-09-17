@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using FlatFiles.TypeMapping;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -18,13 +17,13 @@ namespace FlatFiles.Test
                 Name = (string) null
             } );
             mapper.Property( x => x.Name, 10 ).ColumnName( "Name" );
-            StringWriter writer = new StringWriter();
-            mapper.Write( writer, new[]
-            {
+            var writer = new StringWriter();
+            mapper.Write( writer,
+            [
                 new { Name = "John" }, new { Name = "Sam" }
-            } );
-            string result = writer.ToString();
-            string expected = $"John      {Environment.NewLine}Sam       {Environment.NewLine}";
+            ] );
+            var result = writer.ToString();
+            var expected = $"John      {Environment.NewLine}Sam       {Environment.NewLine}";
             Assert.AreEqual( expected, result );
         }
 
@@ -38,15 +37,15 @@ namespace FlatFiles.Test
             mapper.DecimalProperty( "TopSpeed", 10 ).ColumnName( "TopSpeed" );
 
             Person[] people = [
-                new Person { Name = "John", IQ = null, BirthDate = new DateTime( 1954, 10, 29 ), TopSpeed = 3.4m },
-                new Person { Name = "Susan", IQ = 132, BirthDate = new DateTime( 1984, 3, 15 ), TopSpeed = 10.1m }
+                new() { Name = "John", IQ = null, BirthDate = new DateTime( 1954, 10, 29 ), TopSpeed = 3.4m },
+                new() { Name = "Susan", IQ = 132, BirthDate = new DateTime( 1984, 3, 15 ), TopSpeed = 10.1m }
             ];
 
-            StringWriter writer = new StringWriter();
+            var writer = new StringWriter();
             mapper.Write( writer, people );
-            string result = writer.ToString();
+            var result = writer.ToString();
 
-            StringReader reader = new StringReader( result );
+            var reader = new StringReader( result );
             object[] parsed = [.. mapper.Read( reader )];
             Assert.AreEqual( 2, parsed.Length );
             Assert.IsInstanceOfType( parsed[0], typeof( Person ) );
@@ -65,19 +64,19 @@ namespace FlatFiles.Test
             mapper.DecimalProperty( "TopSpeed", 10 ).ColumnName( "TopSpeed" );
 
             Person[] people = [
-                new Person { Name = "John", IQ = null, BirthDate = new DateTime( 1954, 10, 29 ), TopSpeed = 3.4m },
-                new Person { Name = "Susan", IQ = 132, BirthDate = new DateTime( 1984, 3, 15 ), TopSpeed = 10.1m }
+                new() { Name = "John", IQ = null, BirthDate = new DateTime( 1954, 10, 29 ), TopSpeed = 3.4m },
+                new() { Name = "Susan", IQ = 132, BirthDate = new DateTime( 1984, 3, 15 ), TopSpeed = 10.1m }
             ];
 
-            StringWriter writer = new StringWriter();
+            var writer = new StringWriter();
             var entityWriter = mapper.GetWriter( writer );
             foreach (var person in people)
             {
                 entityWriter.Write( person );
             }
-            string result = writer.ToString();
+            var result = writer.ToString();
 
-            StringReader reader = new StringReader( result );
+            var reader = new StringReader( result );
             var entityReader = mapper.GetReader( reader );
             List<object> parsed = [];
             while (entityReader.Read())
@@ -91,7 +90,7 @@ namespace FlatFiles.Test
             AssertEqual( people[1], (Person) parsed[1] );
         }
 
-        private void AssertEqual( Person person1, Person person2 )
+        private static void AssertEqual( Person person1, Person person2 )
         {
             Assert.AreEqual( person1.Name, person2.Name );
             Assert.AreEqual( person1.IQ, person2.IQ );

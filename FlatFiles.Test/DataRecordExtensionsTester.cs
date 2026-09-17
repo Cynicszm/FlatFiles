@@ -13,7 +13,7 @@ namespace FlatFiles.Test
         [TestMethod]
         public void TestNullableExtensions_AllNull()
         {
-            string data = String.Join( ",", typeof( NullableValues ).GetProperties().Select( x => (string) null ) );
+            var data = string.Join( ",", typeof( NullableValues ).GetProperties().Select( _ => (string) null ) );
             var schema = GetSchema();
             var stringReader = new StringReader( data );
             var csvReader = new DelimitedReader( stringReader, schema );
@@ -36,7 +36,7 @@ namespace FlatFiles.Test
         [TestMethod]
         public void TestNullableExtensions_AllNotNull()
         {
-            string data = String.Join( ",", new object[] 
+            var data = string.Join( ",", new object[] 
             {
                 (byte)0,  // Byte
                 (short)1,  // Short
@@ -116,10 +116,10 @@ namespace FlatFiles.Test
         [TestMethod]
         public void TestGetValues_DBNullToNull()
         {
-            var record = new FakeDataRecord( new object[]
-            {
+            var record = new FakeDataRecord(
+            [
                 0, DateTime.UnixEpoch, DBNull.Value, 3.14159, 3.14159m, "A String"
-            } );
+            ] );
             var values = record.GetValues( replaceDBNulls: true );
             Assert.AreEqual( 6, values.Length );
             Assert.AreEqual( null, values[2] );
@@ -128,12 +128,12 @@ namespace FlatFiles.Test
         [TestMethod]
         public void TestGetValues_LargerArray()
         {
-            var record = new FakeDataRecord( new object[]
-            {
+            var record = new FakeDataRecord(
+            [
                 0, DateTime.UnixEpoch, DBNull.Value, 3.14159, 3.14159m, "A String"
-            } );
+            ] );
             var values = new object[10];
-            int length = record.GetValues( values );
+            var length = record.GetValues( values );
             Assert.AreEqual( 6, length );
             var expected = new object[]
             {
@@ -145,12 +145,12 @@ namespace FlatFiles.Test
         [TestMethod]
         public void TestGetValues_LargerArray_DBNullToNull()
         {
-            var record = new FakeDataRecord( new object[]
-            {
+            var record = new FakeDataRecord(
+            [
                 0, DateTime.UnixEpoch, DBNull.Value, 3.14159, 3.14159m, "A String"
-            } );
+            ] );
             var values = new object[10];
-            int length = record.GetValues( values, replaceDBNulls: true );
+            var length = record.GetValues( values, replaceDBNulls: true );
             Assert.AreEqual( 6, length );
             var expected = new object[]
             {
@@ -270,7 +270,7 @@ namespace FlatFiles.Test
 
             public int GetValues( object[] values )
             {
-                int length = Math.Min( values.Length, Values.Length );
+                var length = Math.Min( values.Length, Values.Length );
                 Array.Copy( Values, values, length );
                 return length;
             }

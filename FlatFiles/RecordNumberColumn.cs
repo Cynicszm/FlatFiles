@@ -112,7 +112,7 @@ namespace FlatFiles
             var options = recordContext.ExecutionContext.Options;
             if (IncludeSkippedRecords)
             {
-                int recordCount = recordContext.PhysicalRecordNumber;
+                var recordCount = recordContext.PhysicalRecordNumber;
                 if (options.IsFirstRecordSchema && !IncludeSchema)
                 {
                     --recordCount;
@@ -122,7 +122,7 @@ namespace FlatFiles
 
             // We only incrememnt the logical count after we are sure the record is not filtered out.
             // Since the value for the column is generated beforehand, we must increase it by one.
-            int offset = IncludeSchema && options.IsFirstRecordSchema ? 2 : 1;
+            var offset = IncludeSchema && options.IsFirstRecordSchema ? 2 : 1;
             return recordContext.LogicalRecordNumber + offset;
         }
     }

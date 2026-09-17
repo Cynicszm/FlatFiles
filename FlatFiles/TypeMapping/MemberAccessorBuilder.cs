@@ -15,7 +15,7 @@ namespace FlatFiles.TypeMapping
 
         public static IMemberAccessor? GetMember<TEntity>( Type propertyType, string memberName )
         {
-            string[] memberNames = memberName.Split( '.' );
+            var memberNames = memberName.Split( '.' );
             var member = GetMember( typeof( TEntity ), memberNames, 0, null );
             if (member is not null
                 && member.Type != propertyType 
@@ -32,7 +32,7 @@ namespace FlatFiles.TypeMapping
             {
                 return parent;
             }
-            string memberName = memberNames[nameIndex];
+            var memberName = memberNames[nameIndex];
             var propertyInfo = GetProperty( entityType, memberName );
             if (propertyInfo is not null)
             {
@@ -85,7 +85,7 @@ namespace FlatFiles.TypeMapping
                     // recursing on the null would surface as a NullReferenceException from inside.
                     throw new ArgumentException( Resources.BadPropertySelector, nameof( expression ) );
                 }
-                IMemberAccessor parentAccessor = GetMember<TEntity>( member.Expression );
+                var parentAccessor = GetMember<TEntity>( member.Expression );
                 return new PropertyAccessor( propertyInfo, parentAccessor );
             }
 
@@ -102,7 +102,7 @@ namespace FlatFiles.TypeMapping
                     // recursing on the null would surface as a NullReferenceException from inside.
                     throw new ArgumentException( Resources.BadPropertySelector, nameof( expression ) );
                 }
-                IMemberAccessor parentAccessor = GetMember<TEntity>( member.Expression );
+                var parentAccessor = GetMember<TEntity>( member.Expression );
                 return new FieldAccessor( fieldInfo, parentAccessor );
             }
 
@@ -124,7 +124,7 @@ namespace FlatFiles.TypeMapping
 
         private static bool HaveMatchingTypes( Type[] expected, Type[] actual )
         {
-            for (int index = 0; index != expected.Length; ++index)
+            for (var index = 0; index != expected.Length; ++index)
             {
                 if (expected[index] != actual[index])
                 {

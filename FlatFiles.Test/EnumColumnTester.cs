@@ -41,7 +41,7 @@ namespace FlatFiles.Test
         [TestMethod]
         public void TestCtor_SetsName_Trimmed()
         {
-            EnumColumn<MyEnum> column = new EnumColumn<MyEnum>( " Name   " );
+            var column = new EnumColumn<MyEnum>( " Name   " );
             Assert.AreEqual( "Name", column.ColumnName );
         }
 
@@ -51,8 +51,8 @@ namespace FlatFiles.Test
         [TestMethod]
         public void TestParse_ValueBlank_NullReturned()
         {
-            EnumColumn<MyEnum> column = new EnumColumn<MyEnum>( "count" );
-            MyEnum? actual = (MyEnum?) column.Parse( null, "    " );
+            var column = new EnumColumn<MyEnum>( "count" );
+            var actual = (MyEnum?) column.Parse( null, "    " );
             MyEnum? expected = null;
             Assert.AreEqual( expected, actual );
         }
@@ -63,9 +63,9 @@ namespace FlatFiles.Test
         [TestMethod]
         public void TestParse_Int32Value_EnumReturned()
         {
-            EnumColumn<MyEnum> column = new EnumColumn<MyEnum>( "count" );
-            MyEnum actual = (MyEnum) column.Parse( null, "1" );
-            MyEnum expected = MyEnum.First;
+            var column = new EnumColumn<MyEnum>( "count" );
+            var actual = (MyEnum) column.Parse( null, "1" );
+            const MyEnum expected = MyEnum.First;
             Assert.AreEqual( expected, actual );
         }
 
@@ -75,9 +75,9 @@ namespace FlatFiles.Test
         [TestMethod]
         public void TestParse_StringValue_EnumReturned()
         {
-            EnumColumn<MyEnum> column = new EnumColumn<MyEnum>( "count" );
-            MyEnum actual = (MyEnum) column.Parse( null, "First" );
-            MyEnum expected = MyEnum.First;
+            var column = new EnumColumn<MyEnum>( "count" );
+            var actual = (MyEnum) column.Parse( null, "First" );
+            const MyEnum expected = MyEnum.First;
             Assert.AreEqual( expected, actual );
         }
 
@@ -87,9 +87,9 @@ namespace FlatFiles.Test
         [TestMethod]
         public void TestFormat_IntegerStringReturned()
         {
-            EnumColumn<MyEnum> column = new EnumColumn<MyEnum>( "count" );
-            string actual = column.Format( null, MyEnum.First );
-            string expected = "1";
+            var column = new EnumColumn<MyEnum>( "count" );
+            var actual = column.Format( null, MyEnum.First );
+            const string expected = "1";
             Assert.AreEqual( expected, actual );
         }
 
@@ -99,12 +99,12 @@ namespace FlatFiles.Test
         [TestMethod]
         public void TestFormat_OverrideFormatter_UsesCustomFormatter()
         {
-            EnumColumn<MyEnum> column = new EnumColumn<MyEnum>( "count" )
+            var column = new EnumColumn<MyEnum>( "count" )
             {
                 Formatter = e => e.ToString()
             };
-            string actual = column.Format( null, MyEnum.First );
-            string expected = "First";
+            var actual = column.Format( null, MyEnum.First );
+            const string expected = "First";
             Assert.AreEqual( expected, actual );
         }
         [TestMethod]
@@ -112,8 +112,8 @@ namespace FlatFiles.Test
         {
             var column = new EnumColumn<DayOfWeek>( "day" )
             {
-                Parser = value => DayOfWeek.Sunday,
-                Formatter = value => "custom"
+                Parser = _ => DayOfWeek.Sunday,
+                Formatter = _ => "custom"
             };
             Assert.AreEqual( DayOfWeek.Sunday, column.Parse( null, "Friday" ) );
             Assert.AreEqual( "custom", column.Format( null, DayOfWeek.Friday ) );

@@ -1,7 +1,7 @@
-﻿using System.IO;
-using System.Threading.Tasks;
+﻿using System;
+using System.IO;
 using System.Threading;
-using System;
+using System.Threading.Tasks;
 
 namespace FlatFiles
 {
@@ -76,7 +76,7 @@ namespace FlatFiles
         /// </summary>
         /// <param name="cancellationToken">The token to observe while waiting for the operation to complete.</param>
         public async ValueTask FillAsync( CancellationToken cancellationToken = default )
-{
+        {
             if (IsEndOfStream)
             {
                 return;

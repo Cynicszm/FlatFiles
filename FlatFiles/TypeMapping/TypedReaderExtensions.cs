@@ -40,7 +40,7 @@ namespace FlatFiles.TypeMapping
             /// <param name="cancellationToken">The token to observe while waiting for the operation to complete.</param>
             /// <returns>Each record from the given reader.</returns>
             public async IAsyncEnumerable<TEntity> ReadAllAsync( [EnumeratorCancellation] CancellationToken cancellationToken )
-{
+            {
                 while (await reader.ReadAsync( cancellationToken ).ConfigureAwait( false ))
                 {
                     var entity = reader.Current;

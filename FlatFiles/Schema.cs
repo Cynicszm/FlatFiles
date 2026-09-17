@@ -47,7 +47,7 @@ namespace FlatFiles
         /// <returns>The parsed objects.</returns>
         internal object?[] ParseValues( IRecoverableRecordContext context, string[] values )
         {
-            object?[] parsedValues = new object?[ColumnDefinitions.PhysicalCount];
+            var parsedValues = new object?[ColumnDefinitions.PhysicalCount];
             for (int columnIndex = 0, sourceIndex = 0, destinationIndex = 0, columnCount = ColumnDefinitions.Count; 
                 columnIndex != columnCount; 
                 ++columnIndex)
@@ -56,7 +56,7 @@ namespace FlatFiles
                 if (definition is IMetadataColumn)
                 {
                     var columnContext = NewColumnContext( context, columnIndex, destinationIndex );
-                    var metadata = ParseWithContext( columnContext, String.Empty );
+                    var metadata = ParseWithContext( columnContext, string.Empty );
                     parsedValues[destinationIndex] = metadata;
                     ++destinationIndex;
                 }
@@ -194,7 +194,7 @@ namespace FlatFiles
                     recordContext.ProcessError( this, e );
                     if (e.IsHandled)
                     {
-                        destination.Write( ((string?) e.Substitution ?? String.Empty).AsSpan() );
+                        destination.Write( ((string?) e.Substitution ?? string.Empty).AsSpan() );
                         return;
                     }
                 }

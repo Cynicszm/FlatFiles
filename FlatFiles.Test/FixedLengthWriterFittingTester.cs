@@ -22,7 +22,7 @@ namespace FlatFiles.Test
         private static FixedLengthSchema Schema( params Window[] windows )
         {
             var schema = new FixedLengthSchema();
-            for (int index = 0; index != windows.Length; ++index)
+            for (var index = 0; index != windows.Length; ++index)
             {
                 schema.AddColumn( new StringColumn( "col" + index ), windows[index] );
             }

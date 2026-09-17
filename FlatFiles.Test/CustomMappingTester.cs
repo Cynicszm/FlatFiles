@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using FlatFiles.TypeMapping;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -16,15 +15,15 @@ namespace FlatFiles.Test
             var mapper = GetTypeMapper();
             mapper.OptimizeMapping( false );
 
-            StringWriter writer = new StringWriter();
+            var writer = new StringWriter();
             Person[] data = [
-                new Person { Id = 1, Name = "Bob", CreatedOn = new DateTime( 2018, 6, 28 ), Amount = 12.34m },
-                new Person { Id = 2, Name = "John", CreatedOn = new DateTime( 2018, 6, 29 ), Amount = 23.45m },
-                new Person { Id = 3, Name = "Susan", CreatedOn= new DateTime( 2018, 6, 30 ), Amount  = null }
+                new() { Id = 1, Name = "Bob", CreatedOn = new DateTime( 2018, 6, 28 ), Amount = 12.34m },
+                new() { Id = 2, Name = "John", CreatedOn = new DateTime( 2018, 6, 29 ), Amount = 23.45m },
+                new() { Id = 3, Name = "Susan", CreatedOn= new DateTime( 2018, 6, 30 ), Amount  = null }
             ];
             mapper.Write( writer, data );
-            string output = writer.ToString();
-            StringReader reader = new StringReader( output );
+            var output = writer.ToString();
+            var reader = new StringReader( output );
             Person[] people = [.. mapper.Read( reader )];
             Assert.AreEqual( 3, people.Length, "The wrong number of entities were read." );
             AssertPeopleEqual( data, people, 0 );
@@ -37,15 +36,15 @@ namespace FlatFiles.Test
         {
             var mapper = GetTypeMapper();
 
-            StringWriter writer = new StringWriter();
+            var writer = new StringWriter();
             Person[] data = [
-                new Person { Id = 1, Name = "Bob", CreatedOn = new DateTime( 2018, 6, 28 ), Amount = 12.34m },
-                new Person { Id = 2, Name = "John", CreatedOn = new DateTime( 2018, 6, 29 ), Amount = 23.45m },
-                new Person { Id = 3, Name = "Susan", CreatedOn= new DateTime( 2018, 6, 30 ), Amount  = null }
+                new() { Id = 1, Name = "Bob", CreatedOn = new DateTime( 2018, 6, 28 ), Amount = 12.34m },
+                new() { Id = 2, Name = "John", CreatedOn = new DateTime( 2018, 6, 29 ), Amount = 23.45m },
+                new() { Id = 3, Name = "Susan", CreatedOn= new DateTime( 2018, 6, 30 ), Amount  = null }
             ];
             mapper.Write( writer, data );
-            string output = writer.ToString();
-            StringReader reader = new StringReader( output );
+            var output = writer.ToString();
+            var reader = new StringReader( output );
             Person[] people = [.. mapper.Read( reader )];
             Assert.AreEqual( 3, people.Length, "The wrong number of entities were read." );
             AssertPeopleEqual( data, people, 0 );
@@ -56,7 +55,7 @@ namespace FlatFiles.Test
         private static IDelimitedTypeMapper<Person> GetTypeMapper()
         {
             var mapper = DelimitedTypeMapper.Define( () => new Person() );
-            mapper.CustomMapping( new Int32Column( "Id" ) ).WithReader( ( ctx, person, value ) =>
+            mapper.CustomMapping( new Int32Column( "Id" ) ).WithReader( ( _, person, value ) =>
             {
                 person.Id = (int) value;
             } ).WithWriter( ( ctx, person, values ) =>
@@ -68,9 +67,9 @@ namespace FlatFiles.Test
                 person.Name = (string) value;
             } ).WithWriter( p => p.Name );
             mapper.CustomMapping( new DateTimeColumn( "CreatedOn" ) ).WithReader( p => p.CreatedOn ).WithWriter( p => p.CreatedOn );
-            mapper.CustomMapping( new DecimalColumn( "Amount" ) ).WithReader( ( ctx, person, value ) =>
+            mapper.CustomMapping( new DecimalColumn( "Amount" ) ).WithReader( ( _, person, value ) =>
             {
-                person.Amount = value is null ? (decimal?) null : (decimal) value;
+                person.Amount = (decimal?) value;
             } ).WithWriter( ( ctx, person, values ) =>
             {
                 values[ctx.LogicalIndex] = person.Amount;
@@ -106,8 +105,8 @@ namespace FlatFiles.Test
             var data = GetContacts();
             var writer = new StringWriter();
             mapper.Write( writer, data );
-            string output = writer.ToString();
-            StringReader reader = new StringReader( output );
+            var output = writer.ToString();
+            var reader = new StringReader( output );
             Contact[] contacts = [.. mapper.Read( reader )];
             Assert.AreEqual( 3, contacts.Length, "The wrong number of entities were read." );
             AssertContactEqual( data, contacts, 0 );
@@ -125,8 +124,8 @@ namespace FlatFiles.Test
             var data = GetContacts();
             var writer = new StringWriter();
             mapper.Write( writer, data );
-            string output = writer.ToString();
-            StringReader reader = new StringReader( output );
+            var output = writer.ToString();
+            var reader = new StringReader( output );
             Contact[] contacts = [.. mapper.Read( reader )];
             Assert.AreEqual( 3, contacts.Length, "The wrong number of entities were read." );
             AssertContactEqual( data, contacts, 0 );
@@ -147,21 +146,21 @@ namespace FlatFiles.Test
         private static Contact[] GetContacts()
         {
             Contact[] data = [
-                new Contact
+                new()
                 {
                     Id = 1,
                     Name = "Bob",
                     PhoneNumbers = [ "555-1111", "555-2222" ],
                     Emails = [ "bob@x.com" ]
                 },
-                new Contact
+                new()
                 {
                     Id = 2,
                     Name = "John",
                     PhoneNumbers = [ "555-3333" ],
                     Emails = [ "john@x.com", "john@y.com" ]
                 },
-                new Contact
+                new()
                 {
                     Id = 3,
                     Name = "Susan",
@@ -198,7 +197,7 @@ namespace FlatFiles.Test
                     c.PhoneNumbers.Add( (string) phone3 );
                 }
             } ).WithWriter( c => c.PhoneNumbers.Count > 2 ? c.PhoneNumbers[2] : null );
-            mapper.CustomMapping( new StringColumn( "Email1" ), 15 ).WithReader( ( ctx, c, email1 ) =>
+            mapper.CustomMapping( new StringColumn( "Email1" ), 15 ).WithReader( ( _, c, email1 ) =>
             {
                 if (email1 is not null)
                 {
@@ -208,7 +207,7 @@ namespace FlatFiles.Test
             {
                 values[ctx.LogicalIndex] = c.Emails.Count > 0 ? c.Emails[0] : null;
             } );
-            mapper.CustomMapping( new StringColumn( "Email2" ), 15 ).WithReader( ( ctx, c, email2 ) =>
+            mapper.CustomMapping( new StringColumn( "Email2" ), 15 ).WithReader( ( _, c, email2 ) =>
             {
                 if (email2 is not null)
                 {
@@ -227,9 +226,9 @@ namespace FlatFiles.Test
 
             public string Name { get; set; }
 
-            public List<string> PhoneNumbers { get; set; } = new List<string>();
+            public List<string> PhoneNumbers { get; set; } = [];
 
-            public List<string> Emails { get; set; } = new List<string>();
+            public List<string> Emails { get; set; } = [];
         }
 
         [TestMethod]
@@ -241,7 +240,7 @@ namespace FlatFiles.Test
             var data = GetRealtyProperties();
             var writer = new StringWriter();
             mapper.Write( writer, data );
-            string output = writer.ToString();
+            var output = writer.ToString();
             var reader = new StringReader( output );
             RealtyProperty[] properties = [.. mapper.Read( reader )];
             Assert.AreEqual( 2, properties.Length, "The wrong number of entities were read." );
@@ -257,8 +256,8 @@ namespace FlatFiles.Test
             var data = GetRealtyProperties();
             var writer = new StringWriter();
             mapper.Write( writer, data );
-            string output = writer.ToString();
-            StringReader reader = new StringReader( output );
+            var output = writer.ToString();
+            var reader = new StringReader( output );
             RealtyProperty[] properties = [.. mapper.Read( reader )];
             Assert.AreEqual( 2, properties.Length, "The wrong number of entities were read." );
             AssertPropertyEqual( data, properties, 0 );
@@ -296,8 +295,8 @@ namespace FlatFiles.Test
 
         private static RealtyProperty[] GetRealtyProperties()
         {
-            return new[]
-            {
+            return
+            [
                 new RealtyProperty
                 {
                     Id = 1,
@@ -330,10 +329,10 @@ namespace FlatFiles.Test
                         Zip = "11111"
                     }
                 }
-            };
+            ];
         }
 
-        private void AssertPropertyEqual( RealtyProperty[] expected, RealtyProperty[] actual, int id )
+        private static void AssertPropertyEqual( RealtyProperty[] expected, RealtyProperty[] actual, int id )
         {
             Assert.AreEqual( expected[id].Id, actual[id].Id, $"Property {id} ID is wrong." );
             Assert.AreEqual( expected[id].Coordinates.Longitude, actual[id].Coordinates.Longitude, $"Property {id} Longitude is wrong." );
