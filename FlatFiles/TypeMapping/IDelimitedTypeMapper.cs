@@ -25,7 +25,14 @@ namespace FlatFiles.TypeMapping
         /// <param name="reader">A reader over the delimited document.</param>
         /// <param name="options">The options controlling how the delimited document is read.</param>
         /// <returns>An asynchronous enumerable over the entities.</returns>
-        IAsyncEnumerable<TEntity> ReadAsync( TextReader reader, DelimitedOptions? options = null );
+        /// <remarks>
+        ///     The default implementation forwards to the overload that takes a token, passing
+        ///     <see cref="CancellationToken.None"/>.
+        /// </remarks>
+        IAsyncEnumerable<TEntity> ReadAsync( TextReader reader, DelimitedOptions? options = null )
+        {
+            return ReadAsync( reader, options, CancellationToken.None );
+        }
 
         /// <summary>
         ///     Reads the entities from the given reader.
@@ -34,14 +41,7 @@ namespace FlatFiles.TypeMapping
         /// <param name="options">The options controlling how the delimited document is read.</param>
         /// <param name="cancellationToken">The token to observe while waiting for the operation to complete.</param>
         /// <returns>An asynchronous enumerable over the entities.</returns>
-        /// <remarks>
-        ///     The default implementation forwards to the overload without a token and so cannot observe
-        ///     cancellation; an implementation that can should override it.
-        /// </remarks>
-        IAsyncEnumerable<TEntity> ReadAsync( TextReader reader, DelimitedOptions? options, CancellationToken cancellationToken )
-        {
-            return ReadAsync( reader, options );
-        }
+        IAsyncEnumerable<TEntity> ReadAsync( TextReader reader, DelimitedOptions? options, CancellationToken cancellationToken );
 
         /// <summary>
         ///     Gets a typed reader to read entities from the underlying document.
@@ -65,22 +65,13 @@ namespace FlatFiles.TypeMapping
         /// <param name="writer">A writer over the delimited document.</param>
         /// <param name="entities">The entities to write to the stream.</param>
         /// <param name="options">The options used to format the output.</param>
-        Task WriteAsync( TextWriter writer, IEnumerable<TEntity> entities, DelimitedOptions? options = null );
-
-        /// <summary>
-        ///     Writes the given entities to the given stream.
-        /// </summary>
-        /// <param name="writer">A writer over the delimited document.</param>
-        /// <param name="entities">The entities to write to the stream.</param>
-        /// <param name="options">The options used to format the output.</param>
-        /// <param name="cancellationToken">The token to observe while waiting for the operation to complete.</param>
         /// <remarks>
-        ///     The default implementation forwards to the overload without a token and so cannot observe
-        ///     cancellation; an implementation that can should override it.
+        ///     The default implementation forwards to the overload that takes a token, passing
+        ///     <see cref="CancellationToken.None"/>.
         /// </remarks>
-        Task WriteAsync( TextWriter writer, IEnumerable<TEntity> entities, DelimitedOptions? options, CancellationToken cancellationToken )
+        Task WriteAsync( TextWriter writer, IEnumerable<TEntity> entities, DelimitedOptions? options = null )
         {
-            return WriteAsync( writer, entities, options );
+            return WriteAsync( writer, entities, options, CancellationToken.None );
         }
 
         /// <summary>
@@ -89,7 +80,23 @@ namespace FlatFiles.TypeMapping
         /// <param name="writer">A writer over the delimited document.</param>
         /// <param name="entities">The entities to write to the stream.</param>
         /// <param name="options">The options used to format the output.</param>
-        Task WriteAsync( TextWriter writer, IAsyncEnumerable<TEntity> entities, DelimitedOptions? options = null );
+        /// <param name="cancellationToken">The token to observe while waiting for the operation to complete.</param>
+        Task WriteAsync( TextWriter writer, IEnumerable<TEntity> entities, DelimitedOptions? options, CancellationToken cancellationToken );
+
+        /// <summary>
+        ///     Writes the given entities to the given stream.
+        /// </summary>
+        /// <param name="writer">A writer over the delimited document.</param>
+        /// <param name="entities">The entities to write to the stream.</param>
+        /// <param name="options">The options used to format the output.</param>
+        /// <remarks>
+        ///     The default implementation forwards to the overload that takes a token, passing
+        ///     <see cref="CancellationToken.None"/>.
+        /// </remarks>
+        Task WriteAsync( TextWriter writer, IAsyncEnumerable<TEntity> entities, DelimitedOptions? options = null )
+        {
+            return WriteAsync( writer, entities, options, CancellationToken.None );
+        }
 
         /// <summary>
         ///     Writes the given entities to the given stream.
@@ -98,14 +105,7 @@ namespace FlatFiles.TypeMapping
         /// <param name="entities">The entities to write to the stream.</param>
         /// <param name="options">The options used to format the output.</param>
         /// <param name="cancellationToken">The token to observe while waiting for the operation to complete.</param>
-        /// <remarks>
-        ///     The default implementation forwards to the overload without a token and so cannot observe
-        ///     cancellation; an implementation that can should override it.
-        /// </remarks>
-        Task WriteAsync( TextWriter writer, IAsyncEnumerable<TEntity> entities, DelimitedOptions? options, CancellationToken cancellationToken )
-        {
-            return WriteAsync( writer, entities, options );
-        }
+        Task WriteAsync( TextWriter writer, IAsyncEnumerable<TEntity> entities, DelimitedOptions? options, CancellationToken cancellationToken );
 
         /// <summary>
         ///     Gets a typed writer to write entities to the underlying document.
