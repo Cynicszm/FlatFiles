@@ -14,21 +14,21 @@ namespace FlatFiles.Benchmark
 
         public DirectVsDynamicTester()
         {
-            var directMapper = DelimitedTypeMapper.Define( () => new Person() );
-            directMapper.Property( x => x.Name ).ColumnName( "Name" );
-            directMapper.Property( x => x.IQ ).ColumnName( "IQ" );
-            directMapper.Property( x => x.BirthDate ).ColumnName( "BirthDate" );
-            directMapper.Property( x => x.TopSpeed ).ColumnName( "TopSpeed" );
-            directMapper.Property( x => x.IsActive ).ColumnName( "IsActive" );
-            this.directMapper = directMapper;
+            var classTypeMapper = DelimitedTypeMapper.Define( () => new Person() );
+            classTypeMapper.Property( x => x.Name ).ColumnName( "Name" );
+            classTypeMapper.Property( x => x.IQ ).ColumnName( "IQ" );
+            classTypeMapper.Property( x => x.BirthDate ).ColumnName( "BirthDate" );
+            classTypeMapper.Property( x => x.TopSpeed ).ColumnName( "TopSpeed" );
+            classTypeMapper.Property( x => x.IsActive ).ColumnName( "IsActive" );
+            directMapper = classTypeMapper;
 
-            var dynamicMapper = DelimitedTypeMapper.DefineDynamic( typeof( Person ) );
-            dynamicMapper.StringProperty( "Name" ).ColumnName( "Name" );
-            dynamicMapper.Int32Property( "IQ" ).ColumnName( "IQ" );
-            dynamicMapper.DateTimeProperty( "BirthDate" ).ColumnName( "BirthDate" );
-            dynamicMapper.DecimalProperty( "TopSpeed" ).ColumnName( "TopSpeed" );
-            dynamicMapper.BooleanProperty( "IsActive" ).ColumnName( "IsActive" );
-            this.dynamicMapper = dynamicMapper;
+            var dynamicTypeMapper = DelimitedTypeMapper.DefineDynamic( typeof( Person ) );
+            dynamicTypeMapper.StringProperty( "Name" ).ColumnName( "Name" );
+            dynamicTypeMapper.Int32Property( "IQ" ).ColumnName( "IQ" );
+            dynamicTypeMapper.DateTimeProperty( "BirthDate" ).ColumnName( "BirthDate" );
+            dynamicTypeMapper.DecimalProperty( "TopSpeed" ).ColumnName( "TopSpeed" );
+            dynamicTypeMapper.BooleanProperty( "IsActive" ).ColumnName( "IsActive" );
+            dynamicMapper = dynamicTypeMapper;
 
             people = [.. Enumerable.Range( 0, 10000 ).Select( _ => new Person
             {
