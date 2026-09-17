@@ -159,14 +159,9 @@ namespace FlatFiles.Test
             CollectionAssert.AreEqual( expected, values );
         }
 
-        private class FakeDataRecord : IDataRecord
+        private class FakeDataRecord( object[] values ) : IDataRecord
         {
-            public FakeDataRecord( object[] values )
-            {
-                Values = values;
-            }
-
-            public object[] Values { get; }
+            public object[] Values { get; } = values;
 
             public bool GetBoolean( int i )
             {

@@ -6,21 +6,11 @@ using FlatFiles.Properties;
 
 namespace FlatFiles
 {
-    internal sealed class DelimitedRecordWriter : IFormattedColumnHandler
+    internal sealed class DelimitedRecordWriter( TextWriter writer, DelimitedSchema? schema, DelimitedOptions? options ) : IFormattedColumnHandler
     {
-        private readonly TextWriter writer;
-        private readonly DelimitedSchema? schema;
         private readonly DelimitedSchemaInjector? injector;
         private readonly RecordBuffer buffer = new();
-        private DelimitedRecordContext? recordContext;
         private ExecutionContextCache<DelimitedSchema, DelimitedExecutionContext>? executionContexts;
-
-        public DelimitedRecordWriter( TextWriter writer, DelimitedSchema? schema, DelimitedOptions? options )
-        {
-            this.writer = writer;
-            this.schema = schema;
-            Options = options is null ? new DelimitedOptions() : options.Clone();
-        }
 
         public DelimitedRecordWriter( TextWriter writer, DelimitedSchemaInjector injector, DelimitedOptions? options )
             : this( writer, (DelimitedSchema?) null, options )
@@ -28,13 +18,13 @@ namespace FlatFiles
             this.injector = injector;
         }
 
-        public DelimitedSchema? ActualSchema => schema;
+        public DelimitedSchema? ActualSchema { get; } = schema;
 
         public DelimitedSchema? Schema => GetSchema( [] );
 
-        public DelimitedOptions Options { get; }
+        public DelimitedOptions Options { get; } = options is null ? new DelimitedOptions() : options.Clone();
 
-        public DelimitedRecordContext? Metadata => recordContext;
+        public DelimitedRecordContext? Metadata { get; private set; }
 
         public event EventHandler<ColumnErrorEventArgs>? ColumnError;
 
@@ -60,16 +50,16 @@ namespace FlatFiles
         /// </summary>
         private void FormatRecord( object?[] values )
         {
-            var schema = GetSchema( values ) ?? DelimitedSchema.BuildDynamicSchema( Options, values.Length );
-            var recordContext = NewRecordContext( schema );
-            this.recordContext = recordContext;
-            if (values.Length != schema.ColumnDefinitions.PhysicalCount)
+            var currentSchema = GetSchema( values ) ?? DelimitedSchema.BuildDynamicSchema( Options, values.Length );
+            var currentContext = NewRecordContext( currentSchema );
+            Metadata = currentContext;
+            if (values.Length != currentSchema.ColumnDefinitions.PhysicalCount)
             {
-                throw new RecordProcessingException( recordContext, Resources.WrongNumberOfValues );
+                throw new RecordProcessingException( currentContext, Resources.WrongNumberOfValues );
             }
-            recordContext.ColumnError += ColumnError;
+            currentContext.ColumnError += ColumnError;
             buffer.Clear();
-            schema.FormatValues( recordContext, values, buffer, this );
+            currentSchema.FormatValues( currentContext, values, buffer, this );
         }
 
         void IFormattedColumnHandler.ColumnStarting( int columnIndex, RecordBuffer destination )
@@ -85,9 +75,9 @@ namespace FlatFiles
             Escape( start );
         }
 
-        private DelimitedRecordContext NewRecordContext( DelimitedSchema schema )
+        private DelimitedRecordContext NewRecordContext( DelimitedSchema currentSchema )
         {
-            var executionContext = (executionContexts ??= new ExecutionContextCache<DelimitedSchema, DelimitedExecutionContext>( s => new DelimitedExecutionContext( s!, Options.Clone() ) )).Get( schema );
+            var executionContext = (executionContexts ??= new ExecutionContextCache<DelimitedSchema, DelimitedExecutionContext>( s => new DelimitedExecutionContext( s!, Options.Clone() ) )).Get( currentSchema );
             return new DelimitedRecordContext( executionContext )
             {
                 PhysicalRecordNumber = PhysicalRecordNumber,
@@ -97,7 +87,7 @@ namespace FlatFiles
 
         internal DelimitedSchema? GetSchema( object?[] values )
         {
-            return injector is null ? schema : injector.GetSchema( values );
+            return injector is null ? ActualSchema : injector.GetSchema( values );
         }
 
         /// <summary>
@@ -133,13 +123,12 @@ namespace FlatFiles
 
         private bool NeedsEscaping( ReadOnlySpan<char> value )
         {
-            if (Options.QuoteBehavior == QuoteBehavior.AlwaysQuote)
+            switch (Options.QuoteBehavior)
             {
-                return true;
-            }
-            if (Options.QuoteBehavior == QuoteBehavior.Never)
-            {
-                return false;
+                case QuoteBehavior.AlwaysQuote:
+                    return true;
+                case QuoteBehavior.Never:
+                    return false;
             }
             // Don't escape empty strings.
             if (value.IsEmpty)
@@ -167,28 +156,28 @@ namespace FlatFiles
 
         public void WriteSchema()
         {
-            if (schema is null)
+            if (ActualSchema is null)
             {
                 return;
             }
-            FormatSchema( schema );
+            FormatSchema( ActualSchema );
             writer.Write( buffer.WrittenSpan );
         }
 
         public async Task WriteSchemaAsync( CancellationToken cancellationToken = default )
         {
-            if (schema is null)
+            if (ActualSchema is null)
             {
                 return;
             }
-            FormatSchema( schema );
+            FormatSchema( ActualSchema );
             await writer.WriteAsync( buffer.WrittenMemory, cancellationToken ).ConfigureAwait( false );
         }
 
-        private void FormatSchema( DelimitedSchema schema )
+        private void FormatSchema( DelimitedSchema currentSchema )
         {
             buffer.Clear();
-            var definitions = schema.ColumnDefinitions;
+            var definitions = currentSchema.ColumnDefinitions;
             for (int columnIndex = 0, columnCount = definitions.Count; columnIndex != columnCount; ++columnIndex)
             {
                 if (columnIndex != 0)

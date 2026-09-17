@@ -20,13 +20,13 @@ namespace FlatFiles.Benchmark
             mapper.Property( x => x.TopSpeed ).ColumnName( "TopSpeed" );
             this.mapper = mapper;
 
-            people = Enumerable.Range( 0, 10000 ).Select( _ => new Person
+            people = [.. Enumerable.Range( 0, 10000 ).Select( _ => new Person
             {
                 Name = "Susan",
                 IQ = 132,
                 BirthDate = new DateTime( 1984, 3, 15 ),
                 TopSpeed = 10.1m
-            } ).ToArray();
+            } )];
         }
 
         [Benchmark( Description = "SerializeEmit" )]

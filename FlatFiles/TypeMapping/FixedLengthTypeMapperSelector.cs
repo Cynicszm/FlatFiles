@@ -68,11 +68,12 @@ namespace FlatFiles.TypeMapping
                 var typedReader = new Lazy<Func<IRecordContext, object?[], object?>>( GetReader( matcher.TypeMapper ) );
                 selector.When( matcher.Predicate ).Use( matcher.TypeMapper.GetSchema() ).OnMatch( () => multiReader.Deserializer = typedReader.Value );
             }
-            if (defaultMapper is not null)
+            if (defaultMapper is null)
             {
-                var typeReader = new Lazy<Func<IRecordContext, object?[], object?>>( GetReader (defaultMapper) );
-                selector.WithDefault( defaultMapper.GetSchema() ).OnMatch( () => multiReader.Deserializer = typeReader.Value );
+                return multiReader;
             }
+            var typeReader = new Lazy<Func<IRecordContext, object?[], object?>>( GetReader( defaultMapper ) );
+            selector.WithDefault( defaultMapper.GetSchema() ).OnMatch( () => multiReader.Deserializer = typeReader.Value );
             return multiReader;
         }
 
@@ -88,29 +89,15 @@ namespace FlatFiles.TypeMapping
             matchers.Add( new TypeMapperMatcher( typeMapper, predicate ) );
         }
 
-        private sealed class TypeMapperMatcher
+        private sealed class TypeMapperMatcher( IDynamicFixedLengthTypeMapper typeMapper, Func<string, bool> predicate )
         {
-            public TypeMapperMatcher( IDynamicFixedLengthTypeMapper typeMapper, Func<string, bool> predicate )
-            {
-                TypeMapper = typeMapper;
-                Predicate = predicate;
-            }
+            public IDynamicFixedLengthTypeMapper TypeMapper { get; } = typeMapper;
 
-            public IDynamicFixedLengthTypeMapper TypeMapper { get; }
-
-            public Func<string, bool> Predicate { get; }
+            public Func<string, bool> Predicate { get; } = predicate;
         }
 
-        private sealed class FixedLengthTypeMapperSelectorWhenBuilder : IFixedLengthTypeMapperSelectorWhenBuilder
+        private sealed class FixedLengthTypeMapperSelectorWhenBuilder( FixedLengthTypeMapperSelector selector, Func<string, bool> predicate ) : IFixedLengthTypeMapperSelectorWhenBuilder
         {
-            private readonly FixedLengthTypeMapperSelector selector;
-            private readonly Func<string, bool> predicate;
-
-            public FixedLengthTypeMapperSelectorWhenBuilder( FixedLengthTypeMapperSelector selector, Func<string, bool> predicate )
-            {
-                this.selector = selector;
-                this.predicate = predicate;
-            }
 
             public void Use<TEntity>( IFixedLengthTypeMapper<TEntity> typeMapper )
             {

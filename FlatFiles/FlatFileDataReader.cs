@@ -62,10 +62,10 @@ namespace FlatFiles
         /// <returns>The Schema DataTable.</returns>
         public DataTable GetSchemaTable()
         {
-            var schema = GetSchema();
-            var schemaTable = GetEmptySchemaDataTable( schema );
+            var currentSchema = GetSchema();
+            var schemaTable = GetEmptySchemaDataTable( currentSchema );
             var rows = schemaTable.Rows;
-            var values = new object?[]
+            var currentValues = new object?[]
             {
                 true,  // AllowDBNull
                 null,  // BaseCatalogName
@@ -93,17 +93,17 @@ namespace FlatFiles
                 255,  // NumericScale
                 null  // ProviderType
             };
-            var columns = GetColumns( schema );
-            for (int index = 0, count = columns.Count; index != count; ++index)
+            var currentColumns = GetColumns( currentSchema );
+            for (int index = 0, count = currentColumns.Count; index != count; ++index)
             {
-                var column = columns[index];
-                values[2] = column.ColumnName; // BaseColumnName
-                values[6] = column.ColumnName; // ColumnName
-                values[7] = index; // ColumnOrdinal
-                values[9] = column.ColumnType; // DataType
-                values[10] = column.ColumnType.Name; // DataTypeName
-                values[24] = column.ColumnType; // ProviderType
-                rows.Add( values );
+                var column = currentColumns[index];
+                currentValues[2] = column.ColumnName; // BaseColumnName
+                currentValues[6] = column.ColumnName; // ColumnName
+                currentValues[7] = index; // ColumnOrdinal
+                currentValues[9] = column.ColumnType; // DataType
+                currentValues[10] = column.ColumnType.Name; // DataTypeName
+                currentValues[24] = column.ColumnType; // ProviderType
+                rows.Add( currentValues );
             }
             schemaTable.AcceptChanges();
             return schemaTable;
@@ -163,12 +163,12 @@ namespace FlatFiles
         /// <returns>True if there was another record; otherwise, false.</returns>
         public bool Read()
         {
-            if (Reader.Read())
+            if (!Reader.Read())
             {
-                values = null;  // reset cache
-                return true;
+                return false;
             }
-            return false;
+            values = null;  // reset cache
+            return true;
         }
 
         int IDataReader.RecordsAffected => 0;
@@ -408,8 +408,8 @@ namespace FlatFiles
 #pragma warning disable CS8766 // see the note on IDataRecord nullability above
         public string? GetString( int i )
         {
-            var values = GetValues();
-            var value = (string?) values[i];
+            var currentValues = GetValues();
+            var value = (string?) currentValues[i];
             if (value is null && !Options.IsNullStringAllowed)
             {
                 throw new InvalidCastException();
@@ -466,8 +466,8 @@ namespace FlatFiles
 #pragma warning disable CS8766 // see the note on IDataRecord nullability above
         public object? GetValue( int i )
         {
-            var values = GetValues();
-            var value = values[i];
+            var currentValues = GetValues();
+            var value = currentValues[i];
             if (value is null && Options.IsDBNullReturned)
             {
                 value = DBNull.Value;
@@ -486,12 +486,13 @@ namespace FlatFiles
             var sources = GetValues();
             var length = Math.Min( sources.Length, values.Length );
             Array.Copy( sources, values, length );
-            if (Options.IsDBNullReturned)
+            if (!Options.IsDBNullReturned)
             {
-                for (var index = 0; index != length; ++index)
-                {
-                    values[index] ??= DBNull.Value;
-                }
+                return length;
+            }
+            for (var index = 0; index != length; ++index)
+            {
+                values[index] ??= DBNull.Value;
             }
             return length;
         }
@@ -503,8 +504,8 @@ namespace FlatFiles
         /// <returns>True if the value is null; otherwise, false.</returns>
         public bool IsDBNull( int i )
         {
-            var values = GetValues();
-            return values[i] is null;
+            var currentValues = GetValues();
+            return currentValues[i] is null;
         }
 
         /// <summary>
@@ -537,13 +538,14 @@ namespace FlatFiles
 
         private ISchema GetSchema()
         {
+            if (schema is not null)
+            {
+                return schema;
+            }
+            schema = Reader.GetSchema();
             if (schema is null)
             {
-                schema = Reader.GetSchema();
-                if (schema is null)
-                {
-                    throw new NullReferenceException();
-                }
+                throw new NullReferenceException();
             }
             return schema;
         }
@@ -553,17 +555,18 @@ namespace FlatFiles
             return GetColumns( GetSchema() );
         }
 
-        private ColumnCollection GetColumns( ISchema schema )
+        private ColumnCollection GetColumns( ISchema currentSchema )
         {
-            if (columns is null)
+            if (columns is not null)
             {
-                columns = new ColumnCollection();
-                foreach (var column in schema.ColumnDefinitions)
+                return columns;
+            }
+            columns = new ColumnCollection();
+            foreach (var column in currentSchema.ColumnDefinitions)
+            {
+                if (!column.IsIgnored)
                 {
-                    if (!column.IsIgnored)
-                    {
-                        columns.AddColumn( column );
-                    }
+                    columns.AddColumn( column );
                 }
             }
             return columns;
@@ -571,21 +574,22 @@ namespace FlatFiles
 
         private T GetValue<T>( int i )
         {
-            var values = GetValues();
+            var currentValues = GetValues();
             // A caller who has not checked IsDBNull is asking for a value that is not there. That is the
             // IDataRecord contract, so the cast is the right place for it to fail.
-            return (T) values[i]!;
+            return (T) currentValues[i]!;
         }
 
         private object?[] GetValues()
         {
+            if (values is not null)
+            {
+                return values;
+            }
+            values = Reader.GetValues();
             if (values is null)
             {
-                values = Reader.GetValues();
-                if (values is null)
-                {
-                    throw new NullReferenceException();
-                }
+                throw new NullReferenceException();
             }
             return values;
         }

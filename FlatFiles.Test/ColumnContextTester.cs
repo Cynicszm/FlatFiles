@@ -127,21 +127,12 @@ namespace FlatFiles.Test
             public bool IsActive { get; set; }
         }
 
-        internal class IndexTrackingColumn : IColumnDefinition
+        internal class IndexTrackingColumn(
+            IColumnDefinition columnDefinition,
+            List<int> physicalIndexes,
+            List<int> logicalIndexes ) : IColumnDefinition
         {
-            private readonly IColumnDefinition column;
-            private readonly List<int> physicalIndexes;
-            private readonly List<int> logicalIndexes;
-
-            public IndexTrackingColumn(
-                IColumnDefinition columnDefinition,
-                List<int> physicalIndexes,
-                List<int> logicalIndexes )
-            {
-                this.column = columnDefinition;
-                this.physicalIndexes = physicalIndexes;
-                this.logicalIndexes = logicalIndexes;
-            }
+            private readonly IColumnDefinition column = columnDefinition;
 
             public string ColumnName => column.ColumnName;
 

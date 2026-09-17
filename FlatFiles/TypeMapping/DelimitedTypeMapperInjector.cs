@@ -108,29 +108,23 @@ namespace FlatFiles.TypeMapping
                     matcher.IsMatch = false;
                 }
             }
-            if (context is null)
+            if (context is not null)
             {
-                if (defaultMatcher is null)
-                {
-                    throw new FlatFileException( Resources.MissingMatcher );
-                }
-                defaultMatcher.Initialize();
-                context = defaultMatcher;
+                return context;
             }
-            return context;
+            if (defaultMatcher is null)
+            {
+                throw new FlatFileException( Resources.MissingMatcher );
+            }
+            defaultMatcher.Initialize();
+            return defaultMatcher;
         }
 
-        private sealed class TypeMapperMatcher : ITypeMatcherContext
+        private sealed class TypeMapperMatcher( IDynamicDelimitedTypeMapper typeMapper, Func<object, bool> predicate ) : ITypeMatcherContext
         {
-            public TypeMapperMatcher( IDynamicDelimitedTypeMapper typeMapper, Func<object, bool> predicate )
-            {
-                TypeMapper = typeMapper;
-                Predicate = predicate;
-            }
+            public IDynamicDelimitedTypeMapper TypeMapper { get; } = typeMapper;
 
-            public IDynamicDelimitedTypeMapper TypeMapper { get; }
-
-            public Func<object, bool> Predicate { get; }
+            public Func<object, bool> Predicate { get; } = predicate;
 
             public bool IsMatch { get; set; }
 
@@ -145,13 +139,14 @@ namespace FlatFiles.TypeMapping
 
             public void Initialize()
             {
-                if (Serializer is null)
+                if (Serializer is not null)
                 {
-                    var source = (IMapperSource) TypeMapper;
-                    var mapper = source.GetMapper();
-                    LogicalCount = mapper.LogicalCount;
-                    Serializer = mapper.GetWriter();
+                    return;
                 }
+                var source = (IMapperSource) TypeMapper;
+                var mapper = source.GetMapper();
+                LogicalCount = mapper.LogicalCount;
+                Serializer = mapper.GetWriter();
             }
 
             public DelimitedSchema Reset()
@@ -163,16 +158,8 @@ namespace FlatFiles.TypeMapping
             }
         }
 
-        private sealed class DelimitedTypeMapperInjectorWhenBuilder : IDelimitedTypeMapperInjectorWhenBuilder
+        private sealed class DelimitedTypeMapperInjectorWhenBuilder( DelimitedTypeMapperInjector selector, Func<object, bool> predicate ) : IDelimitedTypeMapperInjectorWhenBuilder
         {
-            private readonly DelimitedTypeMapperInjector selector;
-            private readonly Func<object, bool> predicate;
-
-            public DelimitedTypeMapperInjectorWhenBuilder( DelimitedTypeMapperInjector selector, Func<object, bool> predicate )
-            {
-                this.selector = selector;
-                this.predicate = predicate;
-            }
 
             public void Use( IDynamicDelimitedTypeMapper typeMapper )
             {

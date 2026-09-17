@@ -39,14 +39,7 @@ namespace FlatFiles
         /// <returns>The current selector to allow for further customization.</returns>
         public void WithDefault( FixedLengthSchema? schema )
         {
-            if (schema is null)
-            {
-                defaultMatcher = null;
-            }
-            else
-            {
-                defaultMatcher = new SchemaMatcher( schema, _ => true );
-            }
+            defaultMatcher = schema is null ? null : new SchemaMatcher( schema, _ => true );
         }
 
         private void Add( FixedLengthSchema schema, Func<object?[], bool> predicate )
@@ -71,29 +64,15 @@ namespace FlatFiles
             throw new FlatFileException( Resources.MissingMatcher );
         }
 
-        private sealed class SchemaMatcher
+        private sealed class SchemaMatcher( FixedLengthSchema schema, Func<object?[], bool> predicate )
         {
-            public SchemaMatcher( FixedLengthSchema schema, Func<object?[], bool> predicate )
-            {
-                Schema = schema;
-                Predicate = predicate;
-            }
+            public FixedLengthSchema Schema { get; } = schema;
 
-            public FixedLengthSchema Schema { get; }
-
-            public Func<object?[], bool> Predicate { get; }
+            public Func<object?[], bool> Predicate { get; } = predicate;
         }
 
-        private sealed class FixedLengthSchemaInjectorWhenBuilder : IFixedLengthSchemaInjectorWhenBuilder
+        private sealed class FixedLengthSchemaInjectorWhenBuilder( FixedLengthSchemaInjector injector, Func<object?[], bool> predicate ) : IFixedLengthSchemaInjectorWhenBuilder
         {
-            private readonly FixedLengthSchemaInjector injector;
-            private readonly Func<object?[], bool> predicate;
-
-            public FixedLengthSchemaInjectorWhenBuilder( FixedLengthSchemaInjector injector, Func<object?[], bool> predicate )
-            {
-                this.injector = injector;
-                this.predicate = predicate;
-            }
 
             public void Use( FixedLengthSchema schema )
             {

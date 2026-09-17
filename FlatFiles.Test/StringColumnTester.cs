@@ -37,8 +37,7 @@ namespace FlatFiles.Test
         {
             var column = new StringColumn( "name" );
             var actual = (string) column.Parse( null, "     " );
-            string expected = null;
-            Assert.AreEqual( expected, actual );
+            Assert.IsNull( actual );
         }
 
         /// <summary>

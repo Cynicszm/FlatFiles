@@ -102,29 +102,23 @@ namespace FlatFiles.TypeMapping
                     matcher.IsMatch = false;
                 }
             }
-            if (context is null)
+            if (context is not null)
             {
-                if (defaultMatcher is null)
-                {
-                    throw new FlatFileException( Resources.MissingMatcher );
-                }
-                defaultMatcher.Initialize();
-                context = defaultMatcher;
+                return context;
             }
-            return context;
+            if (defaultMatcher is null)
+            {
+                throw new FlatFileException( Resources.MissingMatcher );
+            }
+            defaultMatcher.Initialize();
+            return defaultMatcher;
         }
 
-        private sealed class TypeMapperMatcher : ITypeMatcherContext
+        private sealed class TypeMapperMatcher( IDynamicFixedLengthTypeMapper typeMapper, Func<object, bool> predicate ) : ITypeMatcherContext
         {
-            public TypeMapperMatcher( IDynamicFixedLengthTypeMapper typeMapper, Func<object, bool> predicate )
-            {
-                TypeMapper = typeMapper;
-                Predicate = predicate;
-            }
+            public IDynamicFixedLengthTypeMapper TypeMapper { get; } = typeMapper;
 
-            public IDynamicFixedLengthTypeMapper TypeMapper { get; }
-
-            public Func<object, bool> Predicate { get; }
+            public Func<object, bool> Predicate { get; } = predicate;
 
             public bool IsMatch { get; set; }
 
@@ -139,13 +133,14 @@ namespace FlatFiles.TypeMapping
 
             public void Initialize()
             {
-                if (Serializer is null)
+                if (Serializer is not null)
                 {
-                    var source = (IMapperSource) TypeMapper;
-                    var mapper = source.GetMapper();
-                    LogicalCount = mapper.LogicalCount;
-                    Serializer = mapper.GetWriter();
+                    return;
                 }
+                var source = (IMapperSource) TypeMapper;
+                var mapper = source.GetMapper();
+                LogicalCount = mapper.LogicalCount;
+                Serializer = mapper.GetWriter();
             }
 
             public FixedLengthSchema Reset()
@@ -157,16 +152,8 @@ namespace FlatFiles.TypeMapping
             }
         }
 
-        private sealed class FixedLengthTypeMapperInjectorWhenBuilder : IFixedLengthTypeMapperInjectorWhenBuilder
+        private sealed class FixedLengthTypeMapperInjectorWhenBuilder( FixedLengthTypeMapperInjector selector, Func<object, bool> predicate ) : IFixedLengthTypeMapperInjectorWhenBuilder
         {
-            private readonly FixedLengthTypeMapperInjector selector;
-            private readonly Func<object, bool> predicate;
-
-            public FixedLengthTypeMapperInjectorWhenBuilder( FixedLengthTypeMapperInjector selector, Func<object, bool> predicate )
-            {
-                this.selector = selector;
-                this.predicate = predicate;
-            }
 
             public void Use( IDynamicFixedLengthTypeMapper typeMapper )
             {

@@ -50,11 +50,12 @@ namespace FlatFiles
             ArgumentOutOfRangeException.ThrowIfNegative( count );
             ArgumentOutOfRangeException.ThrowIfGreaterThan( count, Available );
             start += count;
-            if (start == end)
+            if (start != end)
             {
-                start = 0;
-                end = 0;
+                return;
             }
+            start = 0;
+            end = 0;
         }
 
         /// <summary>
@@ -94,12 +95,13 @@ namespace FlatFiles
                 end -= start;
                 start = 0;
             }
-            if (end == buffer.Length)
+            if (end != buffer.Length)
             {
-                var larger = new char[buffer.Length * 2];
-                buffer.AsSpan( 0, end ).CopyTo( larger );
-                buffer = larger;
+                return buffer.AsMemory( end );
             }
+            var larger = new char[buffer.Length * 2];
+            buffer.AsSpan( 0, end ).CopyTo( larger );
+            buffer = larger;
             return buffer.AsMemory( end );
         }
 

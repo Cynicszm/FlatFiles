@@ -31,14 +31,7 @@ namespace FlatFiles
         /// <returns>The current selector to allow for further customization.</returns>
         public IFixedLengthSchemaSelectorUseBuilder WithDefault( FixedLengthSchema? schema )
         {
-            if (schema is null)
-            {
-                defaultMatcher = null;
-            }
-            else
-            {
-                defaultMatcher = new SchemaMatcher( schema, _ => true );
-            }
+            defaultMatcher = schema is null ? null : new SchemaMatcher( schema, _ => true );
             return new FixedLengthSchemaSelectorUseBuilder( defaultMatcher );
         }
 
@@ -53,45 +46,32 @@ namespace FlatFiles
         {
             foreach (var matcher in matchers)
             {
-                if (matcher.Predicate( record ))
+                if (!matcher.Predicate( record ))
                 {
-                    matcher.Action?.Invoke();
-                    return matcher.Schema;
+                    continue;
                 }
+                matcher.Action?.Invoke();
+                return matcher.Schema;
             }
-            if (defaultMatcher is not null && defaultMatcher.Predicate( record ))
+            if (defaultMatcher is null || !defaultMatcher.Predicate( record ))
             {
-                defaultMatcher.Action?.Invoke();
-                return defaultMatcher.Schema;
+                return null;
             }
-            return null;
+            defaultMatcher.Action?.Invoke();
+            return defaultMatcher.Schema;
         }
 
-        private sealed class SchemaMatcher
+        private sealed class SchemaMatcher( FixedLengthSchema schema, Func<string, bool> predicate )
         {
-            public SchemaMatcher( FixedLengthSchema schema, Func<string, bool> predicate )
-            {
-                Schema = schema;
-                Predicate = predicate;
-            }
+            public FixedLengthSchema Schema { get; } = schema;
 
-            public FixedLengthSchema Schema { get; }
-
-            public Func<string, bool> Predicate { get; }
+            public Func<string, bool> Predicate { get; } = predicate;
 
             public Action? Action { get; set; }
         }
 
-        private sealed class FixedLengthSchemaSelectorWhenBuilder : IFixedLengthSchemaSelectorWhenBuilder
+        private sealed class FixedLengthSchemaSelectorWhenBuilder( FixedLengthSchemaSelector selector, Func<string, bool> predicate ) : IFixedLengthSchemaSelectorWhenBuilder
         {
-            private readonly FixedLengthSchemaSelector selector;
-            private readonly Func<string, bool> predicate;
-
-            public FixedLengthSchemaSelectorWhenBuilder( FixedLengthSchemaSelector selector, Func<string, bool> predicate )
-            {
-                this.selector = selector;
-                this.predicate = predicate;
-            }
 
             public IFixedLengthSchemaSelectorUseBuilder Use( FixedLengthSchema schema )
             {
@@ -101,14 +81,8 @@ namespace FlatFiles
             }
         }
 
-        private sealed class FixedLengthSchemaSelectorUseBuilder : IFixedLengthSchemaSelectorUseBuilder
+        private sealed class FixedLengthSchemaSelectorUseBuilder( SchemaMatcher? matcher ) : IFixedLengthSchemaSelectorUseBuilder
         {
-            private readonly SchemaMatcher? matcher;
-
-            public FixedLengthSchemaSelectorUseBuilder( SchemaMatcher? matcher )
-            {
-                this.matcher = matcher;
-            }
 
             public void OnMatch( Action? action )
             {

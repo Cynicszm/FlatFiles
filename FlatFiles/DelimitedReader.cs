@@ -154,14 +154,14 @@ namespace FlatFiles
 
         async Task<ISchema?> IReader.GetSchemaAsync()
         {
-            var schema = await GetSchemaAsync().ConfigureAwait( false );
-            return schema;
+            var currentSchema = await GetSchemaAsync().ConfigureAwait( false );
+            return currentSchema;
         }
 
         async Task<ISchema?> IReader.GetSchemaAsync( CancellationToken cancellationToken )
         {
-            var schema = await GetSchemaAsync( cancellationToken ).ConfigureAwait( false );
-            return schema;
+            var currentSchema = await GetSchemaAsync( cancellationToken ).ConfigureAwait( false );
+            return currentSchema;
         }
 
         /// <summary>
@@ -287,16 +287,16 @@ namespace FlatFiles
 
         private DelimitedSchema CreateSchemaFromHeader( string[] columnNames )
         {
-            var schema = new DelimitedSchema();
+            var currentSchema = new DelimitedSchema();
             foreach (var columnName in columnNames)
             {
                 var column = new StringColumn( columnName )
                 {
                     Trim = !parser.Options.PreserveWhiteSpace
                 };
-                schema.AddColumn( column );
+                currentSchema.AddColumn( column );
             }
-            return schema;
+            return currentSchema;
         }
 
         private object?[]? ParsePartitions()
@@ -304,10 +304,10 @@ namespace FlatFiles
             while (!endOfFile)
             {
                 var (record, rawValues) = ReadNextRecord();
-                var values = ProcessRecord( record, rawValues );
-                if (values is not null)
+                var currentValues = ProcessRecord( record, rawValues );
+                if (currentValues is not null)
                 {
-                    return values;
+                    return currentValues;
                 }
             }
             return null;
@@ -318,10 +318,10 @@ namespace FlatFiles
             while (!endOfFile)
             {
                 var (record, rawValues) = await ReadNextRecordAsync( cancellationToken );
-                var values = ProcessRecord( record, rawValues );
-                if (values is not null)
+                var currentValues = ProcessRecord( record, rawValues );
+                if (currentValues is not null)
                 {
-                    return values;
+                    return currentValues;
                 }
             }
             return null;
@@ -333,25 +333,25 @@ namespace FlatFiles
             {
                 return null;
             }
-            var schema = GetSchema( record, rawValues ) ?? DelimitedSchema.BuildDynamicSchema( parser.Options, rawValues.Length );
-            var recordContext = NewRecordContext( schema, record, rawValues );
-            this.recordContext = recordContext;
-            if (IsSkipped( recordContext, rawValues ))
+            var currentSchema = GetSchema( record, rawValues ) ?? DelimitedSchema.BuildDynamicSchema( parser.Options, rawValues.Length );
+            var currentContext = NewRecordContext( currentSchema, record, rawValues );
+            this.recordContext = currentContext;
+            if (IsSkipped( currentContext, rawValues ))
             {
                 return null;
             }
-            if (HasWrongNumberOfColumns( schema, rawValues ))
+            if (HasWrongNumberOfColumns( currentSchema, rawValues ))
             {
-                ProcessError( new RecordProcessingException( recordContext, Resources.DelimitedRecordWrongNumberOfColumns ) );
+                ProcessError( new RecordProcessingException( currentContext, Resources.DelimitedRecordWrongNumberOfColumns ) );
                 return null;
             }
-            var values = ParseValues( recordContext, rawValues );
-            if (values is null)
+            var currentValues = ParseValues( currentContext, rawValues );
+            if (currentValues is null)
             {
                 return null;
             }
-            RecordParsed?.Invoke( this, new DelimitedRecordParsedEventArgs( recordContext, values ) );
-            return values;
+            RecordParsed?.Invoke( this, new DelimitedRecordParsedEventArgs( currentContext, currentValues ) );
+            return currentValues;
         }
 
 
@@ -361,40 +361,40 @@ namespace FlatFiles
             {
                 return this.schema;
             }
-            var schema = schemaSelector.GetSchema( rawValues );
-            if (schema is not null)
+            var currentSchema = schemaSelector.GetSchema( rawValues );
+            if (currentSchema is not null)
             {
-                return schema;
+                return currentSchema;
             }
-            var recordContext = GetMetadata( null, record );
-            ProcessError( new RecordProcessingException( recordContext, Resources.MissingMatcher ) );
+            var currentContext = GetMetadata( null, record );
+            ProcessError( new RecordProcessingException( currentContext, Resources.MissingMatcher ) );
             return null;
         }
 
-        private bool IsSkipped( DelimitedRecordContext recordContext, string[] values )
+        private bool IsSkipped( DelimitedRecordContext currentContext, string[] currentValues )
         {
             if (RecordRead is null)
             {
                 return false;
             }
-            var e = new DelimitedRecordReadEventArgs( recordContext, values );
+            var e = new DelimitedRecordReadEventArgs( currentContext, currentValues );
             RecordRead( this, e );
             return e.IsSkipped;
         }
 
         private ExecutionContextCache<DelimitedSchema, DelimitedExecutionContext>? executionContexts;
 
-        private DelimitedRecordContext NewRecordContext( DelimitedSchema schema, string record, string[] values )
+        private DelimitedRecordContext NewRecordContext( DelimitedSchema currentSchema, string record, string[] currentValues )
         {
-            var executionContext = (executionContexts ??= new ExecutionContextCache<DelimitedSchema, DelimitedExecutionContext>( s => new DelimitedExecutionContext( s!, parser.Options.Clone() ) )).Get( schema );
-            var recordContext = new DelimitedRecordContext( executionContext )
+            var executionContext = (executionContexts ??= new ExecutionContextCache<DelimitedSchema, DelimitedExecutionContext>( s => new DelimitedExecutionContext( s!, parser.Options.Clone() ) )).Get( currentSchema );
+            var currentContext = new DelimitedRecordContext( executionContext )
             {
                 PhysicalRecordNumber = physicalRecordNumber,
                 LogicalRecordNumber = logicalRecordNumber,
                 Record = record,
-                Values = values
+                Values = currentValues
             };
-            return recordContext;
+            return currentContext;
         }
 
         private static bool HasWrongNumberOfColumns( DelimitedSchema schema, string[] values )
@@ -403,17 +403,17 @@ namespace FlatFiles
             return values.Length + columnDefinitions.MetadataCount < columnDefinitions.PhysicalCount;
         }
 
-        private object?[]? ParseValues( DelimitedRecordContext recordContext, string[] rawValues )
+        private object?[]? ParseValues( DelimitedRecordContext currentContext, string[] rawValues )
         {
             try
             {
-                recordContext.ColumnError += ColumnError;
-                var schema = recordContext.ExecutionContext.Schema;
-                return schema.ParseValues( recordContext, rawValues );
+                currentContext.ColumnError += ColumnError;
+                var currentSchema = currentContext.ExecutionContext.Schema;
+                return currentSchema.ParseValues( currentContext, rawValues );
             }
             catch (FlatFileException exception)
             {
-                ProcessError( new RecordProcessingException( recordContext, Resources.InvalidRecordConversion, exception ) );
+                ProcessError( new RecordProcessingException( currentContext, Resources.InvalidRecordConversion, exception ) );
                 return null;
             }
         }
@@ -478,14 +478,15 @@ namespace FlatFiles
 
         private void ProcessError( RecordProcessingException exception )
         {
-            if (RecordError is not null)
+            if (RecordError is null)
             {
-                var args = new RecordErrorEventArgs( exception );
-                RecordError( this, args );
-                if (args.IsHandled)
-                {
-                    return;
-                }
+                throw exception;
+            }
+            var args = new RecordErrorEventArgs( exception );
+            RecordError( this, args );
+            if (args.IsHandled)
+            {
+                return;
             }
             throw exception;
         }
@@ -508,8 +509,8 @@ namespace FlatFiles
             {
                 // If we cannot read the next record, we cannot process it or allow it to be ignored.
                 // We must treat it as a fatal error.
-                var recordContext = GetMetadata( null, null );
-                throw new RecordProcessingException( recordContext, Resources.InvalidRecordFormatNumber, exception );
+                var currentContext = GetMetadata( null, null );
+                throw new RecordProcessingException( currentContext, Resources.InvalidRecordFormatNumber, exception );
             }
         }
 
@@ -529,8 +530,8 @@ namespace FlatFiles
             }
             catch (DelimitedSyntaxException exception)
             {
-                var recordContext = GetMetadata( null, null );
-                throw new RecordProcessingException( recordContext, Resources.InvalidRecordFormatNumber, exception );
+                var currentContext = GetMetadata( null, null );
+                throw new RecordProcessingException( currentContext, Resources.InvalidRecordFormatNumber, exception );
             }
         }
 
@@ -559,20 +560,20 @@ namespace FlatFiles
 
         private ExecutionContextCache<DelimitedSchema, GenericExecutionContext>? metadataExecutionContexts;
 
-        private IRecordContext GetMetadata( DelimitedSchema? schema, string? record )
+        private IRecordContext GetMetadata( DelimitedSchema? currentSchema, string? record )
         {
             if (this.recordContext is not null)
             {
                 return this.recordContext;
             }
-            var executionContext = (metadataExecutionContexts ??= new ExecutionContextCache<DelimitedSchema, GenericExecutionContext>( s => new GenericExecutionContext( s, parser.Options.Clone() ) )).Get( schema );
-            var recordContext = new GenericRecordContext( executionContext )
+            var executionContext = (metadataExecutionContexts ??= new ExecutionContextCache<DelimitedSchema, GenericExecutionContext>( s => new GenericExecutionContext( s, parser.Options.Clone() ) )).Get( currentSchema );
+            var currentContext = new GenericRecordContext( executionContext )
             {
                 PhysicalRecordNumber = physicalRecordNumber,
                 LogicalRecordNumber = logicalRecordNumber,
                 Record = record
             };
-            return recordContext;
+            return currentContext;
         }
 
         IRecordContext IReaderWithMetadata.GetMetadata()
@@ -580,9 +581,9 @@ namespace FlatFiles
             return GetMetadata( null, null );
         }
 
-        internal void SetSchema( DelimitedSchema schema )
+        internal void SetSchema( DelimitedSchema currentSchema )
         {
-            this.schema = schema;
+            this.schema = currentSchema;
         }
     }
 }

@@ -148,18 +148,11 @@ namespace FlatFiles
             }
         }
 
-        private sealed class FixedLengthRecordReader : IRecordReader
+        private sealed class FixedLengthRecordReader( TextReader reader, int totalWidth ) : IRecordReader
         {
-            private readonly TextReader reader;
-            private readonly char[] buffer;
+            private readonly char[] buffer = new char[totalWidth];
             private int length;
             private bool isEndOfStream;
-
-            public FixedLengthRecordReader( TextReader reader, int totalWidth )
-            {
-                this.reader = reader;
-                buffer = new char[totalWidth];
-            }
 
             public bool IsEndOfStream()
             {
@@ -168,12 +161,12 @@ namespace FlatFiles
                     return true;
                 }
                 length = reader.ReadBlock( buffer );
-                if (length == 0)
+                if (length != 0)
                 {
-                    isEndOfStream = true;
-                    return true;
+                    return false;
                 }
-                return false;
+                isEndOfStream = true;
+                return true;
             }
 
             public async ValueTask<bool> IsEndOfStreamAsync( CancellationToken cancellationToken = default )
@@ -183,12 +176,12 @@ namespace FlatFiles
                     return true;
                 }
                 length = await reader.ReadBlockAsync( buffer, cancellationToken ).ConfigureAwait( false );
-                if (length == 0)
+                if (length != 0)
                 {
-                    isEndOfStream = true;
-                    return true;
+                    return false;
                 }
-                return false;
+                isEndOfStream = true;
+                return true;
             }
 
             public string ReadRecord()

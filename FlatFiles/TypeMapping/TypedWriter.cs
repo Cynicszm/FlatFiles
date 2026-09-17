@@ -4,18 +4,10 @@ using System.Threading.Tasks;
 
 namespace FlatFiles.TypeMapping
 {
-    internal sealed class TypedWriter<TEntity> : ITypedWriter<TEntity>
+    internal sealed class TypedWriter<TEntity>( IWriterWithMetadata writer, IMapper<TEntity> mapper ) : ITypedWriter<TEntity>
     {
-        private readonly IWriterWithMetadata writer;
-        private readonly Action<IRecordContext, TEntity, object[]> serializer;
-        private readonly int logicalCount;
-
-        public TypedWriter( IWriterWithMetadata writer, IMapper<TEntity> mapper )
-        {
-            this.writer = writer;
-            serializer = mapper.GetWriter();
-            logicalCount = mapper.LogicalCount;
-        }
+        private readonly Action<IRecordContext, TEntity, object[]> serializer = mapper.GetWriter();
+        private readonly int logicalCount = mapper.LogicalCount;
 
         /// <summary>
         ///     Raised when an error occurs while processing a column.
