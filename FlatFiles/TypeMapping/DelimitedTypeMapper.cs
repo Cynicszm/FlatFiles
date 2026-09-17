@@ -1132,14 +1132,14 @@ namespace FlatFiles.TypeMapping
             return new UntypedWriter<TEntity>( GetWriter( writer, options ) );
         }
 
-        public void OptimizeMapping( bool isOptimized = true )
+        public void OptimizeMapping( bool optimize = true )
         {
-            this.isOptimized = isOptimized;
+            isOptimized = optimize;
         }
 
-        void IDynamicDelimitedTypeConfiguration.OptimizeMapping( bool isOptimized )
+        void IDynamicDelimitedTypeConfiguration.OptimizeMapping( bool optimize )
         {
-            OptimizeMapping( isOptimized );
+            OptimizeMapping( optimize );
         }
 
         public void UseFactory<TOther>( Func<TOther> factory )

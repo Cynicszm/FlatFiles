@@ -13,13 +13,13 @@ namespace FlatFiles.TypeMapping
         /// </summary>
         public static readonly IAutoMapResolver Default = new DefaultAutoMapNameResolver();
 
-        private readonly Func<MemberInfo, string> nameResolver;
-        private readonly Func<MemberInfo, int> positionResolver;
+        private readonly Func<MemberInfo, string> resolveName;
+        private readonly Func<MemberInfo, int> resolvePosition;
 
         private AutoMapResolver( Func<MemberInfo, string> nameResolver, Func<MemberInfo, int>? positionResolver )
         {
-            this.nameResolver = nameResolver;
-            this.positionResolver = positionResolver ?? (_ => 0);
+            resolveName = nameResolver;
+            resolvePosition = positionResolver ?? (_ => 0);
         }
 
         /// <summary>
@@ -41,7 +41,7 @@ namespace FlatFiles.TypeMapping
         /// <returns>The index of the column in the file.</returns>
         public int GetPosition( MemberInfo member )
         {
-            return positionResolver( member );
+            return resolvePosition( member );
         }
 
         /// <summary>
@@ -51,7 +51,7 @@ namespace FlatFiles.TypeMapping
         /// <returns>The generated name -or- null to indicate the member should not be mapped.</returns>
         public string GetColumnName( MemberInfo member )
         {
-            return nameResolver( member );
+            return resolveName( member );
         }
 
         private sealed class DefaultAutoMapNameResolver : IAutoMapResolver
