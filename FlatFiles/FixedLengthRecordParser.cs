@@ -1,7 +1,8 @@
-﻿using System;
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Threading.Tasks;
+using System.Threading;
+using System;
 using FlatFiles.Properties;
 
 namespace FlatFiles
@@ -39,9 +40,9 @@ namespace FlatFiles
             return recordReader.IsEndOfStream();
         }
 
-        public ValueTask<bool> IsEndOfStreamAsync()
-        {
-            return recordReader.IsEndOfStreamAsync();
+        public ValueTask<bool> IsEndOfStreamAsync( CancellationToken cancellationToken = default )
+{
+            return recordReader.IsEndOfStreamAsync( cancellationToken );
         }
 
         public string ReadRecord()
@@ -49,20 +50,20 @@ namespace FlatFiles
             return recordReader.ReadRecord();
         }
 
-        public Task<string> ReadRecordAsync()
-        {
-            return recordReader.ReadRecordAsync();
+        public Task<string> ReadRecordAsync( CancellationToken cancellationToken = default )
+{
+            return recordReader.ReadRecordAsync( cancellationToken );
         }
 
         private interface IRecordReader
         {
             bool IsEndOfStream();
 
-            ValueTask<bool> IsEndOfStreamAsync();
+            ValueTask<bool> IsEndOfStreamAsync( CancellationToken cancellationToken );
 
             string ReadRecord();
 
-            Task<string> ReadRecordAsync();
+            Task<string> ReadRecordAsync( CancellationToken cancellationToken );
         }
 
         /// <summary>
@@ -83,11 +84,11 @@ namespace FlatFiles
                 return buffer is { IsEndOfStream: true, Available: 0 };
             }
 
-            public async ValueTask<bool> IsEndOfStreamAsync()
-            {
+            public async ValueTask<bool> IsEndOfStreamAsync( CancellationToken cancellationToken = default )
+{
                 if (buffer is { Available: 0, IsEndOfStream: false })
                 {
-                    await buffer.FillAsync().ConfigureAwait( false );
+                    await buffer.FillAsync( cancellationToken ).ConfigureAwait( false );
                 }
                 return buffer is { IsEndOfStream: true, Available: 0 };
             }
@@ -102,12 +103,12 @@ namespace FlatFiles
                 return record;
             }
 
-            public async Task<string> ReadRecordAsync()
-            {
+            public async Task<string> ReadRecordAsync( CancellationToken cancellationToken = default )
+{
                 string? record;
                 while (!TryReadRecord( out record ))
                 {
-                    await buffer.FillAsync().ConfigureAwait( false );
+                    await buffer.FillAsync( cancellationToken ).ConfigureAwait( false );
                 }
                 return record;
             }
@@ -175,13 +176,13 @@ namespace FlatFiles
                 return false;
             }
 
-            public async ValueTask<bool> IsEndOfStreamAsync()
-            {
+            public async ValueTask<bool> IsEndOfStreamAsync( CancellationToken cancellationToken = default )
+{
                 if (isEndOfStream)
                 {
                     return true;
                 }
-                length = await reader.ReadBlockAsync( buffer ).ConfigureAwait( false );
+                length = await reader.ReadBlockAsync( buffer, cancellationToken ).ConfigureAwait( false );
                 if (length == 0)
                 {
                     isEndOfStream = true;
@@ -195,8 +196,8 @@ namespace FlatFiles
                 return new String( buffer, 0, length );
             }
 
-            public Task<string> ReadRecordAsync()
-            {
+            public Task<string> ReadRecordAsync( CancellationToken cancellationToken = default )
+{
                 return Task.FromResult( new String( buffer, 0, length ) );
             }
         }

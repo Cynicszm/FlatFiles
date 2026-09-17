@@ -1,6 +1,7 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using System.Threading.Tasks;
+using System.Threading;
+using System;
 using FlatFiles.Properties;
 
 namespace FlatFiles
@@ -115,16 +116,27 @@ namespace FlatFiles
         ///     Write the textual representation of the record schema to the writer.
         /// </summary>
         /// <remarks>If the header or records have already been written, this call is ignored.</remarks>
-        public async Task WriteSchemaAsync()
+        public Task WriteSchemaAsync()
         {
+            return WriteSchemaAsync( CancellationToken.None );
+        }
+
+        /// <summary>
+        ///     Write the textual representation of the record schema to the writer.
+        /// </summary>
+        /// <remarks>If the header or records have already been written, this call is ignored.</remarks>
+        /// <param name="cancellationToken">The token to observe while waiting for the operation to complete.</param>
+        public async Task WriteSchemaAsync( CancellationToken cancellationToken )
+{
+            cancellationToken.ThrowIfCancellationRequested();
             if (isSchemaWritten)
             {
                 return;
             }
             if (recordWriter.ActualSchema is not null)
             {
-                await recordWriter.WriteSchemaAsync().ConfigureAwait( false );
-                await recordWriter.WriteRecordSeparatorAsync().ConfigureAwait( false );
+                await recordWriter.WriteSchemaAsync( cancellationToken ).ConfigureAwait( false );
+                await recordWriter.WriteRecordSeparatorAsync( cancellationToken ).ConfigureAwait( false );
                 ++recordWriter.PhysicalRecordNumber;
             }
             isSchemaWritten = true;
@@ -171,23 +183,35 @@ namespace FlatFiles
         /// </summary>
         /// <param name="values">The values to write.</param>
         /// <exception cref="ArgumentNullException">The values array is null.</exception>
-        public async Task WriteAsync( object?[] values )
+        public Task WriteAsync( object?[] values )
         {
+            return WriteAsync( values, CancellationToken.None );
+        }
+
+        /// <summary>
+        ///     Writes the textual representation of the given values to the writer.
+        /// </summary>
+        /// <param name="values">The values to write.</param>
+        /// <exception cref="ArgumentNullException">The values array is null.</exception>
+        /// <param name="cancellationToken">The token to observe while waiting for the operation to complete.</param>
+        public async Task WriteAsync( object?[] values, CancellationToken cancellationToken )
+{
+            cancellationToken.ThrowIfCancellationRequested();
             ArgumentNullException.ThrowIfNull( values );
             if (!isSchemaWritten)
             {
                 if (recordWriter.Options.IsFirstRecordSchema && recordWriter.ActualSchema is not null)
                 {
-                    await recordWriter.WriteSchemaAsync().ConfigureAwait( false );
-                    await recordWriter.WriteRecordSeparatorAsync().ConfigureAwait( false );
+                    await recordWriter.WriteSchemaAsync( cancellationToken ).ConfigureAwait( false );
+                    await recordWriter.WriteRecordSeparatorAsync( cancellationToken ).ConfigureAwait( false );
                     ++recordWriter.PhysicalRecordNumber;
                 }
                 isSchemaWritten = true;
             }
             try
             {
-                await recordWriter.WriteRecordAsync( values ).ConfigureAwait( false );
-                await recordWriter.WriteRecordSeparatorAsync().ConfigureAwait( false );
+                await recordWriter.WriteRecordAsync( values, cancellationToken ).ConfigureAwait( false );
+                await recordWriter.WriteRecordSeparatorAsync( cancellationToken ).ConfigureAwait( false );
                 ++recordWriter.PhysicalRecordNumber;
                 ++recordWriter.LogicalRecordNumber;
             }
@@ -223,12 +247,25 @@ namespace FlatFiles
         /// </summary>
         /// <param name="data">The data to write to the output.</param>
         /// <param name="writeRecordSeparator">Indicates whether a record separator should be written after the data.</param>
-        public async Task WriteRawAsync( string data, bool writeRecordSeparator = false )
+        public Task WriteRawAsync( string data, bool writeRecordSeparator = false )
         {
-            await recordWriter.WriteRawAsync( data );
+            return WriteRawAsync( data, writeRecordSeparator, CancellationToken.None );
+        }
+
+        /// <summary>
+        ///     Write the given data directly to the output. By default, this will
+        ///     not include a newline.
+        /// </summary>
+        /// <param name="data">The data to write to the output.</param>
+        /// <param name="writeRecordSeparator">Indicates whether a record separator should be written after the data.</param>
+        /// <param name="cancellationToken">The token to observe while waiting for the operation to complete.</param>
+        public async Task WriteRawAsync( string data, bool writeRecordSeparator, CancellationToken cancellationToken )
+{
+            cancellationToken.ThrowIfCancellationRequested();
+            await recordWriter.WriteRawAsync( data, cancellationToken );
             if (writeRecordSeparator)
             {
-                await recordWriter.WriteRecordSeparatorAsync();
+                await recordWriter.WriteRecordSeparatorAsync( cancellationToken );
             }
         }
 

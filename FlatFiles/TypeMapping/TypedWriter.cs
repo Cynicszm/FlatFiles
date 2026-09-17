@@ -1,5 +1,6 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
+using System.Threading;
+using System;
 
 namespace FlatFiles.TypeMapping
 {
@@ -9,7 +10,7 @@ namespace FlatFiles.TypeMapping
         private readonly Action<IRecordContext, TEntity, object[]> serializer;
         private readonly int logicalCount;
 
-        public TypedWriter(IWriterWithMetadata writer, IMapper<TEntity> mapper)
+        public TypedWriter( IWriterWithMetadata writer, IMapper<TEntity> mapper )
         {
             this.writer = writer;
             serializer = mapper.GetWriter();
@@ -17,7 +18,7 @@ namespace FlatFiles.TypeMapping
         }
 
         /// <summary>
-        /// Raised when an error occurs while processing a column.
+        ///     Raised when an error occurs while processing a column.
         /// </summary>
         public event EventHandler<ColumnErrorEventArgs>? ColumnError
         {
@@ -26,7 +27,7 @@ namespace FlatFiles.TypeMapping
         }
 
         /// <summary>
-        /// Raised when an error occurs while processing a record.
+        ///     Raised when an error occurs while processing a record.
         /// </summary>
         public event EventHandler<RecordErrorEventArgs>? RecordError
         {
@@ -47,28 +48,40 @@ namespace FlatFiles.TypeMapping
             writer.WriteSchema();
         }
 
-        public async Task WriteSchemaAsync()
+        public Task WriteSchemaAsync()
         {
-            await writer.WriteSchemaAsync().ConfigureAwait(false);
+            return WriteSchemaAsync( CancellationToken.None );
         }
 
-        public void Write(TEntity entity)
-        {
-            var values = Serialize(entity);
-            writer.Write(values);
+        public async Task WriteSchemaAsync( CancellationToken cancellationToken )
+{
+            cancellationToken.ThrowIfCancellationRequested();
+            await writer.WriteSchemaAsync( cancellationToken ).ConfigureAwait( false );
         }
 
-        public async Task WriteAsync(TEntity entity)
+        public void Write( TEntity entity )
         {
-            var values = Serialize(entity);
-            await writer.WriteAsync(values).ConfigureAwait(false);
+            var values = Serialize( entity );
+            writer.Write( values );
         }
 
-        private object[] Serialize(TEntity entity)
+        public Task WriteAsync( TEntity entity )
+        {
+            return WriteAsync( entity, CancellationToken.None );
+        }
+
+        public async Task WriteAsync( TEntity entity, CancellationToken cancellationToken )
+{
+            cancellationToken.ThrowIfCancellationRequested();
+            var values = Serialize( entity );
+            await writer.WriteAsync( values, cancellationToken ).ConfigureAwait( false );
+        }
+
+        private object[] Serialize( TEntity entity )
         {
             var values = new object[logicalCount];
             var recordContext = writer.GetMetadata();
-            serializer(recordContext, entity, values);
+            serializer( recordContext, entity, values );
             return values;
         }
     }

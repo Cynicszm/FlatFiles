@@ -1,5 +1,4 @@
-﻿using FlatFiles.Properties;
-using System.Collections.Frozen;
+﻿using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -7,7 +6,9 @@ using System.Linq.Expressions;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using System.Threading;
 using System;
+using FlatFiles.Properties;
 
 namespace FlatFiles.TypeMapping
 {
@@ -824,8 +825,13 @@ namespace FlatFiles.TypeMapping
 
         public IAsyncEnumerable<TEntity> ReadAsync( TextReader reader, DelimitedOptions? options = null )
         {
+            return ReadAsync( reader, options, CancellationToken.None );
+        }
+
+        public IAsyncEnumerable<TEntity> ReadAsync( TextReader reader, DelimitedOptions? options, CancellationToken cancellationToken )
+{
             var typedReader = GetReader( reader, options );
-            return typedReader.ReadAllAsync();
+            return typedReader.ReadAllAsync( cancellationToken );
         }
 
         public IDelimitedTypedReader<TEntity> GetReader( TextReader reader, DelimitedOptions? options = null )
@@ -856,16 +862,26 @@ namespace FlatFiles.TypeMapping
 
         public Task WriteAsync( TextWriter writer, IEnumerable<TEntity> entities, DelimitedOptions? options = null )
         {
+            return WriteAsync( writer, entities, options, CancellationToken.None );
+        }
+
+        public Task WriteAsync( TextWriter writer, IEnumerable<TEntity> entities, DelimitedOptions? options, CancellationToken cancellationToken )
+{
             ArgumentNullException.ThrowIfNull( entities );
             var typedWriter = GetWriter( writer, options );
-            return typedWriter.WriteAllAsync( entities );
+            return typedWriter.WriteAllAsync( entities, cancellationToken );
         }
 
         public Task WriteAsync( TextWriter writer, IAsyncEnumerable<TEntity> entities, DelimitedOptions? options = null )
         {
+            return WriteAsync( writer, entities, options, CancellationToken.None );
+        }
+
+        public Task WriteAsync( TextWriter writer, IAsyncEnumerable<TEntity> entities, DelimitedOptions? options, CancellationToken cancellationToken )
+{
             ArgumentNullException.ThrowIfNull( entities );
             var typedWriter = GetWriter( writer, options );
-            return typedWriter.WriteAllAsync( entities );
+            return typedWriter.WriteAllAsync( entities, cancellationToken );
         }
 
         public ITypedWriter<TEntity> GetWriter( TextWriter writer, DelimitedOptions? options = null )
@@ -1074,10 +1090,17 @@ namespace FlatFiles.TypeMapping
         }
 
         IAsyncEnumerable<object> IDynamicDelimitedTypeMapper.ReadAsync( TextReader reader, DelimitedOptions? options )
-        {
+{
             IDynamicDelimitedTypeMapper untypedMapper = this;
             var untypedReader = untypedMapper.GetReader( reader, options );
             return untypedReader.ReadAllAsync();
+        }
+
+        IAsyncEnumerable<object> IDynamicDelimitedTypeMapper.ReadAsync( TextReader reader, DelimitedOptions? options, CancellationToken cancellationToken )
+{
+            IDynamicDelimitedTypeMapper untypedMapper = this;
+            var untypedReader = untypedMapper.GetReader( reader, options );
+            return untypedReader.ReadAllAsync( cancellationToken );
         }
 
         IDelimitedTypedReader<object> IDynamicDelimitedTypeMapper.GetReader( TextReader reader, DelimitedOptions? options )
@@ -1093,17 +1116,31 @@ namespace FlatFiles.TypeMapping
         }
 
         Task IDynamicDelimitedTypeMapper.WriteAsync( TextWriter writer, IEnumerable<object> entities, DelimitedOptions? options )
-        {
+{
             IDynamicDelimitedTypeMapper untypedMapper = this;
             var untypedWriter = untypedMapper.GetWriter( writer, options );
             return untypedWriter.WriteAllAsync( entities );
         }
 
+        Task IDynamicDelimitedTypeMapper.WriteAsync( TextWriter writer, IEnumerable<object> entities, DelimitedOptions? options, CancellationToken cancellationToken )
+{
+            IDynamicDelimitedTypeMapper untypedMapper = this;
+            var untypedWriter = untypedMapper.GetWriter( writer, options );
+            return untypedWriter.WriteAllAsync( entities, cancellationToken );
+        }
+
         Task IDynamicDelimitedTypeMapper.WriteAsync( TextWriter writer, IAsyncEnumerable<object> entities, DelimitedOptions? options )
-        {
+{
             IDynamicDelimitedTypeMapper untypedMapper = this;
             var untypedWriter = untypedMapper.GetWriter( writer, options );
             return untypedWriter.WriteAllAsync( entities );
+        }
+
+        Task IDynamicDelimitedTypeMapper.WriteAsync( TextWriter writer, IAsyncEnumerable<object> entities, DelimitedOptions? options, CancellationToken cancellationToken )
+{
+            IDynamicDelimitedTypeMapper untypedMapper = this;
+            var untypedWriter = untypedMapper.GetWriter( writer, options );
+            return untypedWriter.WriteAllAsync( entities, cancellationToken );
         }
 
         ITypedWriter<object> IDynamicDelimitedTypeMapper.GetWriter( TextWriter writer, DelimitedOptions? options )
