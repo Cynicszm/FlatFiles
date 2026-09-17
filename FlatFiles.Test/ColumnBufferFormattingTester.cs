@@ -155,13 +155,8 @@ namespace FlatFiles.Test
         ///     A custom column that only overrides the string formatting members, as every column written before the
         ///     buffer overload existed does.
         /// </summary>
-        private sealed class HexColumn : ColumnDefinition<int>
+        private sealed class HexColumn() : ColumnDefinition<int>( "hex" )
         {
-            public HexColumn()
-                : base( "hex" )
-            {
-            }
-
             protected override int OnParse( IColumnContext context, string value )
             {
                 return Convert.ToInt32( value, 16 );
@@ -176,13 +171,8 @@ namespace FlatFiles.Test
         /// <summary>
         ///     A column that writes part of its value and then fails, so the writer has to discard what it wrote.
         /// </summary>
-        private sealed class FailingColumn : ColumnDefinition<int>
+        private sealed class FailingColumn() : ColumnDefinition<int>( "fail" )
         {
-            public FailingColumn()
-                : base( "fail" )
-            {
-            }
-
             protected override int OnParse( IColumnContext context, string value )
             {
                 return 0;

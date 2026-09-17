@@ -29,7 +29,7 @@ namespace FlatFiles.Benchmark
                 CreatedOn = new DateTime( 2017, 01, 01 ),
                 IsActive = true
             };
-            propertyPeople = Enumerable.Repeat( 0, 10000 ).Select( _ => propertyPerson ).ToArray();
+            propertyPeople = [.. Enumerable.Repeat( 0, 10000 ).Select( _ => propertyPerson )];
 
             var fieldPerson = new FieldPerson
             {
@@ -47,7 +47,7 @@ namespace FlatFiles.Benchmark
                 CreatedOn = new DateTime( 2017, 01, 01 ),
                 IsActive = true
             };
-            fieldPeople = Enumerable.Repeat( 0, 10000 ).Select( _ => fieldPerson ).ToArray();
+            fieldPeople = [.. Enumerable.Repeat( 0, 10000 ).Select( _ => fieldPerson )];
         }
 
         [Benchmark]

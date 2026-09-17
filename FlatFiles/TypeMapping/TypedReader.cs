@@ -4,15 +4,10 @@ using System.Threading.Tasks;
 
 namespace FlatFiles.TypeMapping
 {
-    internal abstract class TypedReader<TEntity> : ITypedReader<TEntity>
+    internal abstract class TypedReader<TEntity>( IMapper<TEntity> mapper ) : ITypedReader<TEntity>
     {
-        private readonly Func<IRecordContext, object?[], TEntity> deserializer;
+        private readonly Func<IRecordContext, object?[], TEntity> deserializer = mapper.GetReader();
         private TEntity? current;
-
-        protected TypedReader( IMapper<TEntity> mapper )
-        {
-            deserializer = mapper.GetReader();
-        }
 
         event EventHandler<IRecordParsedEventArgs>? ITypedReader<TEntity>.RecordParsed
         {

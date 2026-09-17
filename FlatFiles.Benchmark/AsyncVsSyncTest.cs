@@ -216,13 +216,8 @@ namespace FlatFiles.Benchmark
             }
         }
 
-        public class GeoLocationColumn : ColumnDefinition<GeoLocation>
+        public class GeoLocationColumn( string columnName ) : ColumnDefinition<GeoLocation>( columnName )
         {
-            public GeoLocationColumn( string columnName )
-                : base( columnName )
-            {
-            }
-
             protected override string OnFormat( IColumnContext context, GeoLocation value )
             {
                 return value.ToString();

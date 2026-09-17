@@ -108,14 +108,13 @@ namespace FlatFiles
             while (true)
             {
                 var end = ReadToken( text, ref position, out var separatorStart );
-                if (end == TokenEnd.NeedMore)
+                switch (end)
                 {
-                    record = default;
-                    return false;
-                }
-                if (end == TokenEnd.Token)
-                {
-                    continue;
+                    case TokenEnd.NeedMore:
+                        record = default;
+                        return false;
+                    case TokenEnd.Token:
+                        continue;
                 }
                 var recordText = preserveRecordText ? new string( text[..separatorStart] ) : string.Empty;
                 record = (recordText, [.. tokens]);
@@ -174,15 +173,15 @@ namespace FlatFiles
                 var index = text[scan..].IndexOfAny( stops );
                 if (index < 0)
                 {
-                    if (!reader.IsEndOfStream)
+                    if (reader.IsEndOfStream)
                     {
-                        separatorStart = 0;
-                        return TokenEnd.NeedMore;
+                        tokens.Add( new string( text[start..] ) );
+                        separatorStart = text.Length;
+                        position = text.Length;
+                        return TokenEnd.Stream;
                     }
-                    tokens.Add( new string( text[start..] ) );
-                    separatorStart = text.Length;
-                    position = text.Length;
-                    return TokenEnd.Stream;
+                    separatorStart = 0;
+                    return TokenEnd.NeedMore;
                 }
                 var candidate = scan + index;
                 if (NeedsMore( text, candidate ))

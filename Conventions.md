@@ -61,7 +61,23 @@ The changelog entries written before this rule was adopted are left as their aut
   /// </summary>
   ```
 
-- `var` is fine anywhere the type is obvious from the right-hand side, including for built-in types.
+- `var` for every local whose type the initialiser gives, built-in types included: `var count = 0;`,
+  `var reader = new StringReader( text );`, `for (var index = 0; ...)`. A local spells its type only when the
+  initialiser cannot supply one - a collection expression, `null` or `default` - or when the declared type is
+  deliberately the interface rather than the implementation.
+- The C# keyword aliases for the built-in types, `string`, `int`, `bool`, `char`, `object`, in declarations and
+  static member access alike: `string.Empty`, `int.Parse`, not `String.Empty`, `Int32.Parse`. The only
+  exceptions are type names that are part of an identifier, such as `Int32Column`.
+- Target-typed `new()` where the target gives the type: an element of a typed collection expression, a property
+  initialiser, an argument. A `var` declaration cannot target-type, so it spells the type after `new`.
+- A literal that never changes is a `const`, including test data strings.
+- Return early rather than nest the rest of a method inside an `if`. `if (x is null) { return; }` followed by
+  the work reads better than the work wrapped in `if (x is not null)`.
+- A class whose constructor only stores its parameters uses a primary constructor; one with validation, ordering
+  or side effects keeps the explicit form.
+- A lambda parameter that is not used is a discard: `( _, e ) => Handle( e )`.
+- A local or parameter never shares a field's name. `schema` in a method body must mean one thing; where a
+  method needs its own, it is `currentSchema`, `currentValues`, `currentContext`.
 - Do not convert a method to an expression body just because it fits on one line.
 
 ## Null checks and slicing
@@ -151,6 +167,24 @@ The cheapest coverage is rarely the most valuable, so prefer tests that assert b
 follow. The exception that proves it: the twenty-one property mapping classes are near-identical fluent
 setters, and one reflective test drives every method on all of them precisely so that a new mapping or
 setter is covered without anyone remembering to extend a test.
+
+## Inspections
+
+The three projects are kept clean against ReSharper's default inspection set, with the exceptions below, and a
+full-solution inspection is run before a release. A new inspection that survives review is either fixed or added
+to this list with its reason.
+
+Left as they are, deliberately:
+
+- "Never used" on public members. Fluent mapping methods, `IDataReader` members and the like exist for
+  consumers the inspection cannot see.
+- "Possible null reference" and "possible null assignment" in the test project, whose nullable analysis is off,
+  and where a null is usually the point of the test.
+- The `new[] { ... }` arrays passed to `CollectionAssert.AreEqual`, whose `ICollection` parameter gives a
+  collection expression no type to take.
+- Setters "never used" on benchmark data classes: the library sets them by reflection.
+- The static per-`TEntity` type check in the two type mapper injectors, which is meant to be one per type.
+- Parameter names on public members, which callers may use as named arguments even when they hide a field.
 
 ## Analysers
 

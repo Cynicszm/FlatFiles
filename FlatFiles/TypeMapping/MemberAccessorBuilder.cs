@@ -40,23 +40,23 @@ namespace FlatFiles.TypeMapping
                 return GetMember( propertyInfo.PropertyType, memberNames, nameIndex + 1, accessor );
             }
             var fieldInfo = GetField( entityType, memberName );
-            if (fieldInfo is not null)
+            if (fieldInfo is null)
             {
-                var accessor = new FieldAccessor( fieldInfo, parent );
-                return GetMember( fieldInfo.FieldType, memberNames, nameIndex + 1, accessor );
+                throw new ArgumentException( Resources.BadPropertySelector, nameof( memberName ) );
             }
-            throw new ArgumentException( Resources.BadPropertySelector, nameof( memberName ) );
+            var fieldAccessor = new FieldAccessor( fieldInfo, parent );
+            return GetMember( fieldInfo.FieldType, memberNames, nameIndex + 1, fieldAccessor );
         }
 
         private static PropertyInfo? GetProperty( Type type, string propertyName )
         {
-            var bindingFlags = BindingFlags.GetProperty | BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public;
+            const BindingFlags bindingFlags = BindingFlags.GetProperty | BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public;
             return type.GetTypeInfo().GetProperty( propertyName, bindingFlags );
         }
 
         private static FieldInfo? GetField( Type type, string fieldName )
         {
-            var bindingFlags = BindingFlags.GetField | BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public;
+            const BindingFlags bindingFlags = BindingFlags.GetField | BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public;
             return type.GetTypeInfo().GetField( fieldName, bindingFlags );
         }
 
@@ -72,46 +72,25 @@ namespace FlatFiles.TypeMapping
             {
                 throw new ArgumentException( Resources.BadPropertySelector, nameof( expression ) );
             }
-            if (member.Member is PropertyInfo propertyInfo)
+            var declaredOnEntity = member.Member.DeclaringType!.GetTypeInfo().IsAssignableFrom( typeof( TEntity ) );
+            if (!declaredOnEntity && member.Expression is null)
             {
-                if (propertyInfo.DeclaringType!.GetTypeInfo().IsAssignableFrom( typeof( TEntity ) ))
-                {
-                    return new PropertyAccessor( propertyInfo, null );
-                }
-
-                if (member.Expression is null)
-                {
-                    // A nested member needs an instance to read from. A static member has none, and
-                    // recursing on the null would surface as a NullReferenceException from inside.
-                    throw new ArgumentException( Resources.BadPropertySelector, nameof( expression ) );
-                }
-                var parentAccessor = GetMember<TEntity>( member.Expression );
-                return new PropertyAccessor( propertyInfo, parentAccessor );
+                // A nested member needs an instance to read from. A static member has none, and
+                // recursing on the null would surface as a NullReferenceException from inside.
+                throw new ArgumentException( Resources.BadPropertySelector, nameof( expression ) );
             }
-
-            if (member.Member is FieldInfo fieldInfo)
+            var parentAccessor = declaredOnEntity ? null : GetMember<TEntity>( member.Expression! );
+            return member.Member switch
             {
-                if (fieldInfo.DeclaringType!.GetTypeInfo().IsAssignableFrom( typeof( TEntity ) ))
-                {
-                    return new FieldAccessor( fieldInfo, null );
-                }
-
-                if (member.Expression is null)
-                {
-                    // A nested member needs an instance to read from. A static member has none, and
-                    // recursing on the null would surface as a NullReferenceException from inside.
-                    throw new ArgumentException( Resources.BadPropertySelector, nameof( expression ) );
-                }
-                var parentAccessor = GetMember<TEntity>( member.Expression );
-                return new FieldAccessor( fieldInfo, parentAccessor );
-            }
-
-            throw new ArgumentException( Resources.BadPropertySelector, nameof( expression ) );
+                PropertyInfo propertyInfo => new PropertyAccessor( propertyInfo, parentAccessor ),
+                FieldInfo fieldInfo => new FieldAccessor( fieldInfo, parentAccessor ),
+                _ => throw new ArgumentException( Resources.BadPropertySelector, nameof( expression ) )
+            };
         }
 
         public static ConstructorInfo? GetConstructor<TEntity>( params Type[] parameterTypes )
         {
-            var bindingFlags = BindingFlags.CreateInstance | BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public;
+            const BindingFlags bindingFlags = BindingFlags.CreateInstance | BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public;
             var query = from constructor in typeof( TEntity ).GetTypeInfo().GetConstructors( bindingFlags )
                         let parameters = constructor.GetParameters()
                         where parameters.Length == parameterTypes.Length

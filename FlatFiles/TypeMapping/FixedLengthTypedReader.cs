@@ -2,15 +2,8 @@
 
 namespace FlatFiles.TypeMapping
 {
-    internal sealed class FixedLengthTypedReader<TEntity> : TypedReader<TEntity>, IFixedLengthTypedReader<TEntity>
+    internal sealed class FixedLengthTypedReader<TEntity>( FixedLengthReader reader, IMapper<TEntity> mapper ) : TypedReader<TEntity>( mapper ), IFixedLengthTypedReader<TEntity>
     {
-        private readonly FixedLengthReader reader;
-
-        public FixedLengthTypedReader(FixedLengthReader reader, IMapper<TEntity> mapper)
-            : base(mapper)
-        {
-            this.reader = reader;
-        }
 
         public event EventHandler<FixedLengthRecordReadEventArgs>? RecordRead
         {

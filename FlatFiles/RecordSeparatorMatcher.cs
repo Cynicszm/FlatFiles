@@ -64,15 +64,14 @@ namespace FlatFiles
             }
             if (position < text.Length)
             {
-                if (text[position] == '\r')
+                switch (text[position])
                 {
-                    length = position + 1 < text.Length && text[position + 1] == '\n' ? 2 : 1;
-                    return true;
-                }
-                if (text[position] == '\n')
-                {
-                    length = 1;
-                    return true;
+                    case '\r':
+                        length = position + 1 < text.Length && text[position + 1] == '\n' ? 2 : 1;
+                        return true;
+                    case '\n':
+                        length = 1;
+                        return true;
                 }
             }
             length = 0;

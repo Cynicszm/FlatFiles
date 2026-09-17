@@ -246,14 +246,15 @@ namespace FlatFiles
 
         private void ProcessError( RecordProcessingException exception )
         {
-            if (RecordError is not null)
+            if (RecordError is null)
             {
-                var args = new RecordErrorEventArgs( exception );
-                RecordError( this, args );
-                if (args.IsHandled)
-                {
-                    return;
-                }
+                throw exception;
+            }
+            var args = new RecordErrorEventArgs( exception );
+            RecordError( this, args );
+            if (args.IsHandled)
+            {
+                return;
             }
             throw exception;
         }

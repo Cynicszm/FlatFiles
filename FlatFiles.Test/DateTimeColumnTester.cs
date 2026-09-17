@@ -97,8 +97,7 @@ namespace FlatFiles.Test
         {
             var column = new DateTimeColumn( "created" );
             var actual = (DateTime?) column.Parse( null, "    " );
-            DateTime? expected = null;
-            Assert.AreEqual( expected, actual );
+            Assert.IsNull( actual );
         }
     }
 }

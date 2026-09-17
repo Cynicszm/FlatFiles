@@ -53,8 +53,7 @@ namespace FlatFiles.Test
         {
             var column = new EnumColumn<MyEnum>( "count" );
             var actual = (MyEnum?) column.Parse( null, "    " );
-            MyEnum? expected = null;
-            Assert.AreEqual( expected, actual );
+            Assert.IsNull( actual );
         }
 
         /// <summary>

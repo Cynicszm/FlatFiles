@@ -219,15 +219,13 @@ namespace FlatFiles.Test
         {
             var headerMapping = FixedLengthTypeMapper.DefineDynamic( typeof( Header ) );
             headerMapping.CustomMapping( new StringColumn( "Name" ), 10 ).WithWriter( writeProperty );
-            var headerCreatedColumn = new DateTimeColumn( "DateCreated" );
-            headerCreatedColumn.OutputFormat = "yyyyMMdd";
+            var headerCreatedColumn = new DateTimeColumn( "DateCreated" ) { OutputFormat = "yyyyMMdd" };
             headerMapping.CustomMapping( headerCreatedColumn, 10 ).WithWriter( writeProperty );
 
             var detailMapping = FixedLengthTypeMapper.DefineDynamic( typeof( DetailRow ) );
             detailMapping.CustomMapping( new Int64Column( "CustomerId" ), 10 ).WithWriter( writeProperty );
             detailMapping.CustomMapping( new StringColumn( "Name2" ), 20 ).WithWriter( writeProperty );
-            var detailCreatedColumn = new DateTimeColumn( "Created" );
-            detailCreatedColumn.OutputFormat = "yyyyMMdd";
+            var detailCreatedColumn = new DateTimeColumn( "Created" ) { OutputFormat = "yyyyMMdd" };
             detailMapping.CustomMapping( detailCreatedColumn, 10 ).WithWriter( writeProperty );
             detailMapping.CustomMapping( new DecimalColumn( "AverageSales" ), 10 ).WithWriter( writeProperty );
 

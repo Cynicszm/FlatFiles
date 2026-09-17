@@ -36,7 +36,7 @@ namespace FlatFiles.Test
             };
             var value = ignored.Parse( null, "NULL" );
             Assert.IsNull( value );
-            var formatted = ignored.Format( null, value );
+            var formatted = ignored.Format( null, null );
             Assert.AreEqual( "NULL", formatted );
         }
 
@@ -70,7 +70,7 @@ namespace FlatFiles.Test
             var ignored = mapper.GetSchema().ColumnDefinitions["Ignored"];
             var value = ignored.Parse( null, "NULL" );
             Assert.IsNull( value );
-            var formatted = ignored.Format( null, value );
+            var formatted = ignored.Format( null, null );
             Assert.AreEqual( "NULL", formatted );
         }
 

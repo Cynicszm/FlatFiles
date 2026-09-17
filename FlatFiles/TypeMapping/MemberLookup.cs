@@ -56,18 +56,16 @@ namespace FlatFiles.TypeMapping
 
         public Func<TEntity>? GetFactory<TEntity>()
         {
-            if (factories.TryGetValue( typeof( TEntity ), out var factory ))
+            if (!factories.TryGetValue( typeof( TEntity ), out var factory ))
             {
-                if (factory is Func<TEntity> entityFactory)
-                {
-                    return entityFactory;
-                }
-                if (factory is Func<object> objectFactory)
-                {
-                    return () => (TEntity) objectFactory();
-                }
+                return null;
             }
-            return null;
+            return factory switch
+            {
+                Func<TEntity> entityFactory => entityFactory,
+                Func<object> objectFactory => () => (TEntity) objectFactory(),
+                _ => null
+            };
         }
 
         public void SetFactory<TEntity>( Func<TEntity> factory )

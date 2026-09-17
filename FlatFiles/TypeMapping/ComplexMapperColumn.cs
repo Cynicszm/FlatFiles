@@ -2,22 +2,12 @@
 
 namespace FlatFiles.TypeMapping
 {
-    internal sealed class ComplexMapperColumn<TEntity> : IColumnDefinition
+    internal sealed class ComplexMapperColumn<TEntity>( ISchema? schema, IOptions options, IColumnDefinition column, IMapper<TEntity> mapper ) : IColumnDefinition
     {
-        private readonly GenericExecutionContext executionContext;
-        private readonly IColumnDefinition column;
-        private readonly Func<IRecordContext, object?[], TEntity> reader;
-        private readonly Action<IRecordContext, TEntity, object?[]> writer;
-        private readonly int logicalCount;
-
-        public ComplexMapperColumn( ISchema? schema, IOptions options, IColumnDefinition column, IMapper<TEntity> mapper )
-        {
-            executionContext = new GenericExecutionContext( schema, options );
-            this.column = column;
-            reader = mapper.GetReader();
-            writer = mapper.GetWriter();
-            logicalCount = mapper.LogicalCount;
-        }
+        private readonly GenericExecutionContext executionContext = new( schema, options );
+        private readonly Func<IRecordContext, object?[], TEntity> reader = mapper.GetReader();
+        private readonly Action<IRecordContext, TEntity, object?[]> writer = mapper.GetWriter();
+        private readonly int logicalCount = mapper.LogicalCount;
 
         public string ColumnName => column.ColumnName!; // Uses the reflected member's name, so cannot be null
 

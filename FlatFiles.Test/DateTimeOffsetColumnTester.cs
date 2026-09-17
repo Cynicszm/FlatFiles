@@ -116,8 +116,7 @@ namespace FlatFiles.Test
         {
             var column = new DateTimeOffsetColumn( "created" );
             var actual = (DateTime?) column.Parse( null, "    " );
-            DateTime? expected = null;
-            Assert.AreEqual( expected, actual );
+            Assert.IsNull( actual );
         }
 
         /// <summary>
@@ -134,9 +133,8 @@ namespace FlatFiles.Test
 #pragma warning restore CS0618 // Type or member is obsolete
 
             var actual = (DateTime?) column.Parse( null, "    " );
-            DateTime? expected = null;
             Assert.AreEqual( 1, preprocessorCallCount, "Preprocessor function should be called exactly once" );
-            Assert.AreEqual( expected, actual );
+            Assert.IsNull( actual );
         }
     }
 }

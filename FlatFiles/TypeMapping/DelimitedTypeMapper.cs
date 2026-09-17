@@ -210,38 +210,30 @@ namespace FlatFiles.TypeMapping
 
         private static PropertyInfo? GetProperty( Type entityType, IColumnDefinition column, IAutoMapMatcher matcher )
         {
-            var bindingFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+            const BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
             var propertyInfos = entityType.GetTypeInfo().GetProperties( bindingFlags )
                 .Where( p => matcher.IsMatch( column, p ) )
                 .ToArray();
-            if (propertyInfos.Length > 1)
+            if (propertyInfos.Length <= 1)
             {
-                if (!matcher.UseFallback)
-                {
-                    return null;
-                }
-                // If there is more than one match, do an exact match
-                return propertyInfos.SingleOrDefault( i => i.Name == column.ColumnName );
+                return propertyInfos.SingleOrDefault();
             }
-            return propertyInfos.SingleOrDefault();
+            // If there is more than one match, do an exact match
+            return matcher.UseFallback ? propertyInfos.SingleOrDefault( i => i.Name == column.ColumnName ) : null;
         }
 
         private static FieldInfo? GetField( Type entityType, IColumnDefinition column, IAutoMapMatcher matcher )
         {
-            var bindingFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+            const BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
             var fieldInfos = entityType.GetTypeInfo().GetFields( bindingFlags )
                 .Where( p => matcher.IsMatch( column, p ) )
                 .ToArray();
-            if (fieldInfos.Length > 1)
+            if (fieldInfos.Length <= 1)
             {
-                if (!matcher.UseFallback)
-                {
-                    return null;
-                }
-                // If there is more than one match, do an exact match
-                return fieldInfos.SingleOrDefault( i => i.Name == column.ColumnName );
+                return fieldInfos.SingleOrDefault();
             }
-            return fieldInfos.SingleOrDefault();
+            // If there is more than one match, do an exact match
+            return matcher.UseFallback ? fieldInfos.SingleOrDefault( i => i.Name == column.ColumnName ) : null;
         }
 
         /// <summary>
@@ -274,30 +266,25 @@ namespace FlatFiles.TypeMapping
                 {
                     continue;
                 }
-                if (member is PropertyInfo property)
+                (Type? memberType, Expression? access) = member switch
                 {
-                    var column = GetColumnDefinition( property.PropertyType, columnName );
-                    if (column is null)
-                    {
-                        continue;
-                    }
-                    var body = Expression.Convert( Expression.Property( Expression.Convert( entity, entityType ), property ), typeof( object ) );
-                    var lambda = Expression.Lambda<Func<IColumnContext?, object?, object?>>( body, context, entity );
-                    var getter = lambda.Compile();
-                    dynamicMapper.CustomMapping( column ).WithWriter( getter );
-                }
-                else if (member is FieldInfo field)
+                    PropertyInfo property => (property.PropertyType, Expression.Property( Expression.Convert( entity, entityType ), property )),
+                    FieldInfo field => (field.FieldType, Expression.Field( Expression.Convert( entity, entityType ), field )),
+                    _ => (null, null)
+                };
+                if (memberType is null || access is null)
                 {
-                    var column = GetColumnDefinition( field.FieldType, columnName );
-                    if (column is null)
-                    {
-                        continue;
-                    }
-                    var body = Expression.Convert( Expression.Field( Expression.Convert( entity, entityType ), field ), typeof( object ) );
-                    var lambda = Expression.Lambda<Func<IColumnContext?, object?, object?>>( body, context, entity );
-                    var getter = lambda.Compile();
-                    dynamicMapper.CustomMapping( column ).WithWriter( getter );
+                    continue;
                 }
+                var column = GetColumnDefinition( memberType, columnName );
+                if (column is null)
+                {
+                    continue;
+                }
+                var body = Expression.Convert( access, typeof( object ) );
+                var lambda = Expression.Lambda<Func<IColumnContext?, object?, object?>>( body, context, entity );
+                var getter = lambda.Compile();
+                dynamicMapper.CustomMapping( column ).WithWriter( getter );
             }
             
             return typedMapper.GetWriter( writer, optionsCopy );
@@ -305,7 +292,7 @@ namespace FlatFiles.TypeMapping
 
         private static IEnumerable<MemberInfo> GetMembers( Type entityType, IAutoMapResolver resolver )
         {
-            var bindingFlags = BindingFlags.GetProperty | BindingFlags.GetField | BindingFlags.Instance | BindingFlags.Public;
+            const BindingFlags bindingFlags = BindingFlags.GetProperty | BindingFlags.GetField | BindingFlags.Instance | BindingFlags.Public;
             var members = entityType.GetTypeInfo().GetMembers( bindingFlags )
                 .Where( m => m.MemberType is MemberTypes.Property or MemberTypes.Field )
                 .Select( ( m, i ) => (member: m, positions: (user: resolver.GetPosition( m ), builtin: i)) )

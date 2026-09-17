@@ -101,16 +101,17 @@ namespace FlatFiles
             catch (Exception exception)
             {
                 var columnException = new ColumnProcessingException( columnContext, rawValue, exception );
-                if (columnContext.RecordContext is IRecoverableRecordContext { HasHandler: true } recordContext)
+                if (columnContext.RecordContext is not IRecoverableRecordContext { HasHandler: true } recordContext)
                 {
-                    var e = new ColumnErrorEventArgs( columnException );
-                    recordContext.ProcessError( this, e );
-                    if (e.IsHandled)
-                    {
-                        return e.Substitution;
-                    }
+                    throw columnException;
                 }
-                throw columnException;
+                var e = new ColumnErrorEventArgs( columnException );
+                recordContext.ProcessError( this, e );
+                if (!e.IsHandled)
+                {
+                    throw columnException;
+                }
+                return e.Substitution;
             }
         }
 
@@ -188,17 +189,17 @@ namespace FlatFiles
                 // Whatever the column managed to write before it failed must not leak into the record.
                 destination.Truncate( start );
                 var columnException = new ColumnProcessingException( columnContext, value, exception );
-                if (columnContext.RecordContext is IRecoverableRecordContext { HasHandler: true } recordContext)
+                if (columnContext.RecordContext is not IRecoverableRecordContext { HasHandler: true } recordContext)
                 {
-                    var e = new ColumnErrorEventArgs( columnException );
-                    recordContext.ProcessError( this, e );
-                    if (e.IsHandled)
-                    {
-                        destination.Write( ((string?) e.Substitution ?? string.Empty).AsSpan() );
-                        return;
-                    }
+                    throw columnException;
                 }
-                throw columnException;
+                var e = new ColumnErrorEventArgs( columnException );
+                recordContext.ProcessError( this, e );
+                if (!e.IsHandled)
+                {
+                    throw columnException;
+                }
+                destination.Write( ((string?) e.Substitution ?? string.Empty).AsSpan() );
             }
         }
 

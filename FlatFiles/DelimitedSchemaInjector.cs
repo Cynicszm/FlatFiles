@@ -39,14 +39,7 @@ namespace FlatFiles
         /// <returns>The current selector to allow for further customization.</returns>
         public void WithDefault( DelimitedSchema? schema )
         {
-            if (schema is null)
-            {
-                defaultMatcher = null;
-            }
-            else
-            {
-                defaultMatcher = new SchemaMatcher( schema, _ => true );
-            }
+            defaultMatcher = schema is null ? null : new SchemaMatcher( schema, _ => true );
         }
 
         private void Add( DelimitedSchema schema, Func<object?[], bool> predicate )
@@ -71,29 +64,15 @@ namespace FlatFiles
             throw new FlatFileException( Resources.MissingMatcher );
         }
 
-        private sealed class SchemaMatcher
+        private sealed class SchemaMatcher( DelimitedSchema schema, Func<object?[], bool> predicate )
         {
-            public SchemaMatcher( DelimitedSchema schema, Func<object?[], bool> predicate )
-            {
-                Schema = schema;
-                Predicate = predicate;
-            }
+            public DelimitedSchema Schema { get; } = schema;
 
-            public DelimitedSchema Schema { get; }
-
-            public Func<object?[], bool> Predicate { get; }
+            public Func<object?[], bool> Predicate { get; } = predicate;
         }
 
-        private sealed class DelimitedSchemaInjectorWhenBuilder : IDelimitedSchemaInjectorWhenBuilder
+        private sealed class DelimitedSchemaInjectorWhenBuilder( DelimitedSchemaInjector injector, Func<object?[], bool> predicate ) : IDelimitedSchemaInjectorWhenBuilder
         {
-            private readonly DelimitedSchemaInjector injector;
-            private readonly Func<object?[], bool> predicate;
-
-            public DelimitedSchemaInjectorWhenBuilder( DelimitedSchemaInjector injector, Func<object?[], bool> predicate )
-            {
-                this.injector = injector;
-                this.predicate = predicate;
-            }
 
             public void Use( DelimitedSchema schema )
             {

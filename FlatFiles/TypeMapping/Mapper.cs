@@ -3,10 +3,8 @@ using System.Linq;
 
 namespace FlatFiles.TypeMapping
 {
-    internal sealed class Mapper<TEntity> : IMapper<TEntity>
+    internal sealed class Mapper<TEntity>( MemberLookup lookup, ICodeGenerator codeGenerator, IMemberAccessor? member ) : IMapper<TEntity>
     {
-        private readonly MemberLookup lookup;
-        private readonly ICodeGenerator codeGenerator;
         private Func<IRecordContext, object?[], TEntity>? cachedReader;
         private Action<IRecordContext, TEntity, object?[]>? cachedWriter;
 
@@ -15,14 +13,7 @@ namespace FlatFiles.TypeMapping
         {
         }
 
-        public Mapper( MemberLookup lookup, ICodeGenerator codeGenerator, IMemberAccessor? member )
-        {
-            this.lookup = lookup;
-            this.codeGenerator = codeGenerator;
-            Member = member;
-        }
-
-        public IMemberAccessor? Member { get; }
+        public IMemberAccessor? Member { get; } = member;
 
         public int LogicalCount => lookup.LogicalCount;
 

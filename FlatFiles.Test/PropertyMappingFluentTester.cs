@@ -260,11 +260,7 @@ namespace FlatFiles.Test
             {
                 return Enum.GetValues( type ).GetValue( 0 );
             }
-            if (type.IsValueType)
-            {
-                return Activator.CreateInstance( type );
-            }
-            return null;
+            return type.IsValueType ? Activator.CreateInstance( type ) : null;
         }
 
         /// <summary>

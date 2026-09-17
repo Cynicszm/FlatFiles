@@ -892,20 +892,21 @@ namespace FlatFiles
                     return default;
                 }
                 var value = record.GetValue( i );
-                if (type != value.GetType())
+                if (type == value.GetType())
                 {
-                    if (type == typeof( Guid ))
-                    {
-                        value = GetGuid( value );
-                    }
-                    else if (type.IsEnum)
-                    {
-                        value = GetEnum( type, value );
-                    }
-                    else if (value is IConvertible)
-                    {
-                        value = Convert.ChangeType( value, type, provider );
-                    }
+                    return (T) value;
+                }
+                if (type == typeof( Guid ))
+                {
+                    value = GetGuid( value );
+                }
+                else if (type.IsEnum)
+                {
+                    value = GetEnum( type, value );
+                }
+                else if (value is IConvertible)
+                {
+                    value = Convert.ChangeType( value, type, provider );
                 }
                 return (T) value;
             }
@@ -913,15 +914,12 @@ namespace FlatFiles
 
         private static object GetGuid( object value )
         {
-            if (value is string stringValue)
+            return value switch
             {
-                return Guid.Parse( stringValue );
-            }
-            if (value is byte[] byteArray)
-            {
-                return new Guid( byteArray );
-            }
-            return value;
+                string stringValue => Guid.Parse( stringValue ),
+                byte[] byteArray => new Guid( byteArray ),
+                _ => value
+            };
         }
 
         private static object GetEnum( Type type, object value )
@@ -987,14 +985,15 @@ namespace FlatFiles
                 // GetValues only writes into the array, so the element nullability it declares is
                 // not something it can observe.
                 var result = record.GetValues( values! );
-                if (replaceDBNulls)
+                if (!replaceDBNulls)
                 {
-                    for (var index = 0; index != result; ++index)
+                    return result;
+                }
+                for (var index = 0; index != result; ++index)
+                {
+                    if (values[index] == DBNull.Value)
                     {
-                        if (values[index] == DBNull.Value)
-                        {
-                            values[index] = null;
-                        }
+                        values[index] = null;
                     }
                 }
                 return result;

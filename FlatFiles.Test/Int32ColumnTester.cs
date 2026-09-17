@@ -38,8 +38,7 @@ namespace FlatFiles.Test
         {
             var column = new Int32Column( "count" );
             var actual = (int?) column.Parse( null, "    " );
-            int? expected = null;
-            Assert.AreEqual( expected, actual );
+            Assert.IsNull( actual );
         }
 
         /// <summary>

@@ -54,14 +54,14 @@ namespace FlatFiles
                 {
                     return base.ColumnDefinitions;
                 }
-                if (cachedColumns is null)
+                if (cachedColumns is not null)
                 {
-                    var copy = new ColumnCollection( base.ColumnDefinitions );
-                    copy.AddColumn( trailing );
-                    cachedColumns = copy;
-                    return copy;
+                    return cachedColumns;
                 }
-                return cachedColumns;
+                var copy = new ColumnCollection( base.ColumnDefinitions );
+                copy.AddColumn( trailing );
+                cachedColumns = copy;
+                return copy;
             }
         }
 

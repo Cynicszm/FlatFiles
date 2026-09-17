@@ -25,12 +25,12 @@ namespace FlatFiles.Benchmark
             };
             configuration.AddColumn( StatisticColumn.Min );
             configuration.AddColumn( StatisticColumn.Max );
-            configuration.AddColumnProvider( DefaultConfig.Instance.GetColumnProviders().ToArray() );
-            configuration.AddLogger( DefaultConfig.Instance.GetLoggers().ToArray() );
-            configuration.AddDiagnoser( DefaultConfig.Instance.GetDiagnosers().ToArray() );
-            configuration.AddAnalyser( DefaultConfig.Instance.GetAnalysers().ToArray() );
-            configuration.AddJob( DefaultConfig.Instance.GetJobs().ToArray() );
-            configuration.AddValidator( DefaultConfig.Instance.GetValidators().ToArray() );
+            configuration.AddColumnProvider( [.. DefaultConfig.Instance.GetColumnProviders()] );
+            configuration.AddLogger( [.. DefaultConfig.Instance.GetLoggers()] );
+            configuration.AddDiagnoser( [.. DefaultConfig.Instance.GetDiagnosers()] );
+            configuration.AddAnalyser( [.. DefaultConfig.Instance.GetAnalysers()] );
+            configuration.AddJob( [.. DefaultConfig.Instance.GetJobs()] );
+            configuration.AddValidator( [.. DefaultConfig.Instance.GetValidators()] );
 
             BenchmarkRunner.Run<CoreBenchmarkSuite>( configuration );
 

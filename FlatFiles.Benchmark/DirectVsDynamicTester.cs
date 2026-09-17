@@ -30,13 +30,13 @@ namespace FlatFiles.Benchmark
             dynamicMapper.BooleanProperty( "IsActive" ).ColumnName( "IsActive" );
             this.dynamicMapper = dynamicMapper;
 
-            people = Enumerable.Range( 0, 10000 ).Select( _ => new Person
+            people = [.. Enumerable.Range( 0, 10000 ).Select( _ => new Person
             {
                 Name = "Susan",
                 IQ = 132,
                 BirthDate = new DateTime( 1984, 3, 15 ),
                 TopSpeed = 10.1m
-            } ).ToArray();
+            } )];
         }
 
         [Benchmark]
