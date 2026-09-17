@@ -389,15 +389,21 @@ namespace FlatFiles
             return record is not null;
         }
 
+        /// <summary>
+        ///     Cuts the record into one raw value per window. With a ragged right the last column runs from its offset
+        ///     to the end of the record, however long or short that is, a window the record ends inside takes the
+        ///     characters that are there, and a window past the end of the record is empty. Otherwise a record shorter
+        ///     than the schema is refused, and a longer one when the options say so.
+        /// </summary>
         private string[]? PartitionRecord( FixedLengthSchema currentSchema, string record )
         {
-            if (record.Length < currentSchema.TotalWidth)
+            if (!options.IsRaggedRight && record.Length < currentSchema.TotalWidth)
             {
                 var metadata = NewRecordContext( currentSchema, record, null );
                 ProcessError( new RecordProcessingException( metadata, Resources.FixedLengthRecordTooShort ) );
                 return null;
             }
-            if (options.IsLongRecordRejected && record.Length > currentSchema.TotalWidth)
+            if (!options.IsRaggedRight && options.IsLongRecordRejected && record.Length > currentSchema.TotalWidth)
             {
                 var metadata = NewRecordContext( currentSchema, record, null );
                 ProcessError( new RecordProcessingException( metadata, Resources.FixedLengthRecordTooLong ) );
@@ -405,6 +411,8 @@ namespace FlatFiles
             }
             var windows = currentSchema.Windows;
             var currentValues = new string[currentSchema.ColumnDefinitions.Count - currentSchema.ColumnDefinitions.MetadataCount];
+            // The ragged column is the last window unless a trailing column follows it and already runs to the end.
+            var raggedIndex = options.IsRaggedRight && windows.Count == currentSchema.ColumnDefinitions.Count ? windows.Count - 1 : -1;
             var offset = 0;
             for (int valueIndex = 0, columnIndex = 0; valueIndex != currentValues.Length; ++columnIndex)
             {
@@ -414,14 +422,21 @@ namespace FlatFiles
                     continue;
                 }
                 var window = columnIndex < windows.Count ? windows[columnIndex] : null;
+                var available = record.Length - offset;
+                var runsToTheEnd = window is null || columnIndex == raggedIndex;
                 string value;
-                if (window is null)
+                if (runsToTheEnd)
                 {
-                    value = record[offset..];
+                    value = available > 0 ? record[offset..] : string.Empty;
                 }
                 else
                 {
-                    value = record.Substring( offset, window.Width );
+                    value = available >= window!.Width ? record.Substring( offset, window.Width )
+                        : available > 0 ? record[offset..]
+                        : string.Empty;
+                }
+                if (window is not null)
+                {
                     if (!definition.IsComplex)
                     {
                         var alignment = window.Alignment ?? options.Alignment;

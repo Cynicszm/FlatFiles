@@ -138,6 +138,13 @@ By default, FlatFiles assumes there is a separator string/character between each
 
 If the `FixedLengthOptions`'s `IsFirstRecordHeader` property is set to `true`, the first record in the file will be skipped when reading. Unlike the `DelimitedReader`, you must *always provide a schema for fixed-length files*, since the width of the columns cannot be determined from the file format. When writing, a header will be written to the file upon writing the first record.
 
+By default a record shorter than the total width of the schema's windows raises a `RecordProcessingException`, and a longer one is read from its declared offsets with the surplus ignored. Two options change that. `IsLongRecordRejected` raises the same exception for a record longer than the schema, so a layout declared too narrow is reported rather than silently misread. `IsRaggedRight` reads a ragged-right file, where every column but the last has a fixed width and the last runs from its offset to the end of the line, however long or short: the last column takes whatever follows the other windows, a record that ends before the last column is read as far as it goes, with a window it ends inside taking the characters that are there and a window it never reaches parsing as null. `IsLongRecordRejected` has no effect alongside it, since no ragged-right record is too long. When writing with `IsRaggedRight`, the last column is written as formatted, neither padded nor truncated to its window, so a file read ragged and written ragged keeps its shape.
+
+```csharp
+var options = new FixedLengthOptions { IsRaggedRight = true };
+var reader = new FixedLengthReader(new StreamReader(path), schema, options);
+```
+
 ## Character Encoding
 FlatFiles reads from a `TextReader` and writes to a `TextWriter`, so it never sees bytes. The character encoding is decided by the `StreamReader` or `StreamWriter` you open, before any FlatFiles class is involved, and the same schema and options work with any encoding.
 
