@@ -22,6 +22,7 @@ If you are working with data classes, defining schemas is even easier. You can u
 * [Schemas](#schemas)
 * [Delimited Files](#delimited-files)
 * [Fixed Length Files](#fixed-length-files)
+* [Character Encoding](#character-encoding)
 * [Handling Nulls](#handling-nulls)
     * [Default Values](#default-values)
     * [Null Formatters](#null-formatters)
@@ -136,6 +137,35 @@ The `RecordSeparator` property specifies what string/character is used to separa
 By default, FlatFiles assumes there is a separator string/character between each record.  If you set the `HasRecordSeparator` to `false`, FlatFiles will read the next record immediately following the last character of the previous record. When writing, it will not insert a separator, writing immediately after the last character of the previous record.
 
 If the `FixedLengthOptions`'s `IsFirstRecordHeader` property is set to `true`, the first record in the file will be skipped when reading. Unlike the `DelimitedReader`, you must *always provide a schema for fixed-length files*, since the width of the columns cannot be determined from the file format. When writing, a header will be written to the file upon writing the first record.
+
+## Character Encoding
+FlatFiles reads from a `TextReader` and writes to a `TextWriter`, so it never sees bytes. The character encoding is decided by the `StreamReader` or `StreamWriter` you open, before any FlatFiles class is involved, and the same schema and options work with any encoding.
+
+```csharp
+using (var reader = new StreamReader(File.OpenRead(@"C:\path\to\file.csv"), Encoding.UTF8))
+{
+    var csvReader = new DelimitedReader(reader, schema);
+    // ...
+}
+```
+
+**UTF-8** is the default for both `StreamReader` and `StreamWriter`. A `StreamReader` also detects a byte order mark by default and consumes it, so a file that begins with `EF BB BF` reads the same as one that does not. Keep that detection on: if you construct a reader with `detectEncodingFromByteOrderMarks: false`, the mark is read as text and becomes part of the first column's name (`"\uFEFFId"` rather than `"Id"`), and that column is never matched. To write a file with a mark, pass `new UTF8Encoding(true)` to the writer; `Encoding.UTF8` writes one too, and `new UTF8Encoding(false)` writes none.
+
+**Windows-1252** is what most files from Windows tools are in when they are not UTF-8. It is not available in .NET by name until its provider is registered, once, at start-up:
+
+```csharp
+Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+var windows1252 = Encoding.GetEncoding(1252);
+```
+
+**ISO-8859-1** (Latin-1) is available directly as `Encoding.Latin1`. It agrees with Windows-1252 everywhere except the bytes `0x80` to `0x9F`, which Windows-1252 uses for the euro sign, curly quotes, the trademark sign and similar, and which ISO-8859-1 leaves as control characters. A Windows-1252 file read as Latin-1 therefore looks right until the first euro sign, which comes back as `U+0080`. When a file is described as "Latin-1" and contains a `€`, it is Windows-1252.
+
+Two consequences of the encoding sitting outside FlatFiles:
+
+* A character the encoding cannot represent is replaced when writing, not rejected. A `€` written through `Encoding.Latin1` arrives as `?`. Choose the encoding to fit the data, or use UTF-8.
+* Fixed length windows are measured in characters, not bytes. A name such as `Müller` fills a six-character window in every encoding, even though it is seven bytes in UTF-8, so widths taken from a byte-oriented specification are right only for single-byte encodings.
+
+The tests in `CharacterEncodingTester` pin each of these behaviours, including what the misreads look like.
 
 ## Handling Nulls
 Each column can be marked as "nullable", using the `IsNullable` property. By default, all columns are nullable, meaning `null` is considered a valid value. Setting `IsNullable` to `false` will cause FlatFiles to throw an exception whenever a `null` is encountered.
