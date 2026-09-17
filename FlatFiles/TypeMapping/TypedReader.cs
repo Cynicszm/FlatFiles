@@ -1,5 +1,6 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
+using System.Threading;
+using System;
 
 namespace FlatFiles.TypeMapping
 {
@@ -8,7 +9,7 @@ namespace FlatFiles.TypeMapping
         private readonly Func<IRecordContext, object?[], TEntity> deserializer;
         private TEntity? current;
 
-        protected TypedReader(IMapper<TEntity> mapper)
+        protected TypedReader( IMapper<TEntity> mapper )
         {
             deserializer = mapper.GetReader();
         }
@@ -48,9 +49,15 @@ namespace FlatFiles.TypeMapping
             return true;
         }
 
-        public async ValueTask<bool> ReadAsync()
+        public ValueTask<bool> ReadAsync()
         {
-            if (!await Reader.ReadAsync().ConfigureAwait(false))
+            return ReadAsync( CancellationToken.None );
+        }
+
+        public async ValueTask<bool> ReadAsync( CancellationToken cancellationToken )
+{
+            cancellationToken.ThrowIfCancellationRequested();
+            if (!await Reader.ReadAsync( cancellationToken ).ConfigureAwait( false ))
             {
                 return false;
             }
@@ -61,9 +68,9 @@ namespace FlatFiles.TypeMapping
         private void SetCurrent()
         {
             var values = Reader.GetValues();
-            IReaderWithMetadata metadataReader = (IReaderWithMetadata)Reader;
+            IReaderWithMetadata metadataReader = (IReaderWithMetadata) Reader;
             var recordContext = metadataReader.GetMetadata();
-            current = deserializer(recordContext, values); // Won't be null is Read returns true
+            current = deserializer( recordContext, values ); // Won't be null is Read returns true
         }
 
         public bool Skip()
@@ -71,9 +78,15 @@ namespace FlatFiles.TypeMapping
             return Reader.Skip();
         }
 
-        public async ValueTask<bool> SkipAsync()
+        public ValueTask<bool> SkipAsync()
         {
-            return await Reader.SkipAsync().ConfigureAwait(false);
+            return SkipAsync( CancellationToken.None );
+        }
+
+        public async ValueTask<bool> SkipAsync( CancellationToken cancellationToken )
+{
+            cancellationToken.ThrowIfCancellationRequested();
+            return await Reader.SkipAsync( cancellationToken ).ConfigureAwait( false );
         }
 
         // FIXME: We should throw an exception if no or all records read

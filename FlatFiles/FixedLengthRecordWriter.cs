@@ -1,6 +1,7 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using System.Threading.Tasks;
+using System.Threading;
+using System;
 using FlatFiles.Properties;
 
 namespace FlatFiles
@@ -46,11 +47,11 @@ namespace FlatFiles
             writer.Write( buffer.WrittenSpan );
         }
 
-        public async Task WriteRecordAsync( object?[] values )
-        {
+        public async Task WriteRecordAsync( object?[] values, CancellationToken cancellationToken = default )
+{
             recordContext = null;
             FormatRecord( values );
-            await writer.WriteAsync( buffer.WrittenMemory ).ConfigureAwait( false );
+            await writer.WriteAsync( buffer.WrittenMemory, cancellationToken ).ConfigureAwait( false );
         }
 
         /// <summary>
@@ -112,14 +113,14 @@ namespace FlatFiles
             writer.Write( buffer.WrittenSpan );
         }
 
-        public async Task WriteSchemaAsync()
-        {
+        public async Task WriteSchemaAsync( CancellationToken cancellationToken = default )
+{
             if (schema is null)
             {
                 return;
             }
             FormatSchema( schema );
-            await writer.WriteAsync( buffer.WrittenMemory ).ConfigureAwait( false );
+            await writer.WriteAsync( buffer.WrittenMemory, cancellationToken ).ConfigureAwait( false );
         }
 
         private void FormatSchema( FixedLengthSchema schema )
@@ -200,12 +201,12 @@ namespace FlatFiles
             }
         }
 
-        public async Task WriteRecordSeparatorAsync()
-        {
+        public async Task WriteRecordSeparatorAsync( CancellationToken cancellationToken = default )
+{
             if (Options.HasRecordSeparator)
             {
                 var separator = Options.RecordSeparator ?? Environment.NewLine;
-                await writer.WriteAsync( separator ).ConfigureAwait( false );
+                await writer.WriteAsync( separator.AsMemory(), cancellationToken ).ConfigureAwait( false );
             }
         }
 
@@ -214,9 +215,9 @@ namespace FlatFiles
             writer.Write( data );
         }
 
-        public Task WriteRawAsync( string data )
-        {
-            return writer.WriteAsync( data );
+        public Task WriteRawAsync( string data, CancellationToken cancellationToken = default )
+{
+            return writer.WriteAsync( data.AsMemory(), cancellationToken );
         }
     }
 }

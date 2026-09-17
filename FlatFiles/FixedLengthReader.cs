@@ -1,6 +1,7 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using System.Threading.Tasks;
+using System.Threading;
+using System;
 using FlatFiles.Properties;
 
 namespace FlatFiles
@@ -115,11 +116,27 @@ namespace FlatFiles
         /// <returns>The schema being used by the parser.</returns>
         public Task<FixedLengthSchema?> GetSchemaAsync()
         {
+            return GetSchemaAsync( CancellationToken.None );
+        }
+
+        /// <summary>
+        ///     Gets the schema being used by the parser.
+        /// </summary>
+        /// <param name="cancellationToken">The token to observe while waiting for the operation to complete.</param>
+        /// <returns>The schema being used by the parser.</returns>
+        public Task<FixedLengthSchema?> GetSchemaAsync( CancellationToken cancellationToken )
+{
+            cancellationToken.ThrowIfCancellationRequested();
             return Task.FromResult( schema );
         }
 
         Task<ISchema?> IReader.GetSchemaAsync()
-        {
+{
+            return Task.FromResult<ISchema?>( schema );
+        }
+
+        Task<ISchema?> IReader.GetSchemaAsync( CancellationToken cancellationToken )
+{
             return Task.FromResult<ISchema?>( schema );
         }
 
@@ -194,17 +211,28 @@ namespace FlatFiles
         ///     Reads the next record from the file.
         /// </summary>
         /// <returns>True if the next record was parsed; otherwise, false if all files are read.</returns>
-        public async ValueTask<bool> ReadAsync()
+        public ValueTask<bool> ReadAsync()
         {
+            return ReadAsync( CancellationToken.None );
+        }
+
+        /// <summary>
+        ///     Reads the next record from the file.
+        /// </summary>
+        /// <param name="cancellationToken">The token to observe while waiting for the operation to complete.</param>
+        /// <returns>True if the next record was parsed; otherwise, false if all files are read.</returns>
+        public async ValueTask<bool> ReadAsync( CancellationToken cancellationToken )
+{
+            cancellationToken.ThrowIfCancellationRequested();
             if (hasError)
             {
                 throw new InvalidOperationException( Resources.ReadingWithErrors );
             }
             recordContext = null;
-            await HandleHeaderAsync().ConfigureAwait( false );
+            await HandleHeaderAsync( cancellationToken ).ConfigureAwait( false );
             try
             {
-                values = await ParsePartitionsAsync().ConfigureAwait( false );
+                values = await ParsePartitionsAsync( cancellationToken ).ConfigureAwait( false );
                 if (values is null)
                 {
                     return false;
@@ -220,19 +248,19 @@ namespace FlatFiles
             }
         }
 
-        private async Task HandleHeaderAsync()
-        {
+        private async Task HandleHeaderAsync( CancellationToken cancellationToken = default )
+{
             if (physicalRecordNumber == 0 && options.IsFirstRecordHeader)
             {
-                await SkipAsyncInternal().ConfigureAwait( false );
+                await SkipAsyncInternal( cancellationToken ).ConfigureAwait( false );
             }
         }
 
-        private async Task<object?[]?> ParsePartitionsAsync()
-        {
+        private async Task<object?[]?> ParsePartitionsAsync( CancellationToken cancellationToken = default )
+{
             while (!endOfFile)
             {
-                var record = await ReadNextRecordAsync().ConfigureAwait( false );
+                var record = await ReadNextRecordAsync( cancellationToken ).ConfigureAwait( false );
                 var values = ProcessRecord( record );
                 if (values is not null)
                 {
@@ -333,19 +361,31 @@ namespace FlatFiles
         /// </summary>
         /// <returns>True if the next record was skipped; otherwise, false if all records are read.</returns>
         /// <remarks>The previously parsed values remain available.</remarks>
-        public async ValueTask<bool> SkipAsync()
+        public ValueTask<bool> SkipAsync()
         {
+            return SkipAsync( CancellationToken.None );
+        }
+
+        /// <summary>
+        ///     Skips the next record from the file.
+        /// </summary>
+        /// <param name="cancellationToken">The token to observe while waiting for the operation to complete.</param>
+        /// <returns>True if the next record was skipped; otherwise, false if all records are read.</returns>
+        /// <remarks>The previously parsed values remain available.</remarks>
+        public async ValueTask<bool> SkipAsync( CancellationToken cancellationToken )
+{
+            cancellationToken.ThrowIfCancellationRequested();
             if (hasError)
             {
                 throw new InvalidOperationException( Resources.ReadingWithErrors );
             }
-            await HandleHeaderAsync().ConfigureAwait( false );
-            return await SkipAsyncInternal().ConfigureAwait( false );
+            await HandleHeaderAsync( cancellationToken ).ConfigureAwait( false );
+            return await SkipAsyncInternal( cancellationToken ).ConfigureAwait( false );
         }
 
-        private async ValueTask<bool> SkipAsyncInternal()
-        {
-            var record = await ReadNextRecordAsync().ConfigureAwait( false );
+        private async ValueTask<bool> SkipAsyncInternal( CancellationToken cancellationToken = default )
+{
+            var record = await ReadNextRecordAsync( cancellationToken ).ConfigureAwait( false );
             return record is not null;
         }
 
@@ -424,14 +464,14 @@ namespace FlatFiles
             return record;
         }
 
-        private async Task<string?> ReadNextRecordAsync()
-        {
-            if (await parser.IsEndOfStreamAsync().ConfigureAwait( false ))
+        private async Task<string?> ReadNextRecordAsync( CancellationToken cancellationToken = default )
+{
+            if (await parser.IsEndOfStreamAsync( cancellationToken ).ConfigureAwait( false ))
             {
                 endOfFile = true;
                 return null;
             }
-            var record = await parser.ReadRecordAsync().ConfigureAwait( false );
+            var record = await parser.ReadRecordAsync( cancellationToken ).ConfigureAwait( false );
             ++physicalRecordNumber;
             return record;
         }

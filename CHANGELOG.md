@@ -1,3 +1,12 @@
+## 7.2.0 (2026-09-17)
+**Summary** - Every asynchronous read and write takes an optional `CancellationToken`, threaded through to the underlying `TextReader` and `TextWriter`.
+
+Until now nothing asynchronous in the library could be cancelled: a `ReadAsync` waiting on a slow stream ran until the stream delivered. Each asynchronous method now has an overload that takes a `CancellationToken` and passes it to the one place it matters - `TextReader.ReadBlockAsync` when reading and `TextWriter.WriteAsync` when writing - and checks it once on entry, so a token cancelled before the call throws `OperationCanceledException` before the stream is touched and one cancelled during a wait ends the wait.
+
+The overloads are on `IReader` (`ReadAsync`, `SkipAsync`, `GetSchemaAsync`), `IWriter` (`WriteAsync`, `WriteSchemaAsync`, `WriteRawAsync`), `ITypedReader<T>` and `ITypedWriter<T>`, the `ReadAllAsync` and `WriteAllAsync` extensions, and the type mappers' `ReadAsync` and `WriteAsync`, where the token follows the options: `mapper.ReadAsync( reader, options, token )`. `ReadAllAsync` also honours a token given through `await foreach (...) .WithCancellation( token )`. The overloads without a token are unchanged and hand the stream `CancellationToken.None`, as before.
+
+The interfaces gain the new members as default implementations that forward to the overload without a token, so a class outside the library that implements `IReader` or `ITypedWriter<T>` keeps compiling; it observes cancellation only if it overrides them, which the documentation on each says.
+
 ## 7.1.0 (2026-09-16)
 **Summary** - Writers format each record into one reusable buffer and readers scan their input as a span, for half to two thirds less allocation on write and a third to two fifths less time on read with unchanged output; a fixed-length record longer than the schema can be rejected; the numeric columns share one public base; and unsubscribing from `IReader.RecordParsed` now works.
 

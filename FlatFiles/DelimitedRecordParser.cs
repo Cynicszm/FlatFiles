@@ -1,8 +1,9 @@
-﻿using System;
-using System.Buffers;
+﻿using System.Buffers;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
+using System.Threading;
+using System;
 using FlatFiles.Properties;
 
 namespace FlatFiles
@@ -66,11 +67,11 @@ namespace FlatFiles
             return reader is { IsEndOfStream: true, Available: 0 };
         }
 
-        public async ValueTask<bool> IsEndOfStreamAsync()
-        {
+        public async ValueTask<bool> IsEndOfStreamAsync( CancellationToken cancellationToken = default )
+{
             if (reader is { Available: 0, IsEndOfStream: false })
             {
-                await reader.FillAsync().ConfigureAwait( false );
+                await reader.FillAsync( cancellationToken ).ConfigureAwait( false );
             }
             return reader is { IsEndOfStream: true, Available: 0 };
         }
@@ -85,12 +86,12 @@ namespace FlatFiles
             return record;
         }
 
-        public async Task<(string, string[])> ReadRecordAsync()
-        {
+        public async Task<(string, string[])> ReadRecordAsync( CancellationToken cancellationToken = default )
+{
             (string, string[]) record;
             while (!TryReadRecord( out record ))
             {
-                await reader.FillAsync().ConfigureAwait( false );
+                await reader.FillAsync( cancellationToken ).ConfigureAwait( false );
             }
             return record;
         }
