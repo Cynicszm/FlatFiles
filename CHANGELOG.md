@@ -1,3 +1,14 @@
+## 7.3.0 (2026-09-17)
+**Summary** - Ragged-right fixed-length files: with `FixedLengthOptions.IsRaggedRight` the last column runs from its offset to the end of the record, and a record that ends before it is read as far as it goes.
+
+Until now a fixed-length record shorter than the total width of the schema's windows was refused with a `RecordProcessingException`, and a longer one was cut at the last window. Many systems write fixed-length files ragged right: every column but the last has a fixed width and the last runs to the end of the line, so records differ in length and only the offsets are fixed. Reading such a file meant padding every line before handing it to the reader, or handling the error for every record, and a long last value was silently truncated.
+
+With `IsRaggedRight` set, the last column takes everything from its offset to the end of the record, however long or short, trimmed like any other column; its declared width is not used. A record that ends before the last column is read as far as it goes: a window the record ends inside takes the characters that are there, and a window the record never reaches yields an empty value, which the column's null handling turns into null. `IsLongRecordRejected` has no effect alongside the option, because no ragged-right record is too long. Schema selectors see the raw record as before, so a predicate on a record-type prefix or a position works unchanged across record types of different lengths, and a file without record separators reads its final partial record instead of refusing it.
+
+When writing with `IsRaggedRight`, the last column of each record, and of the header, is written as formatted, neither padded nor truncated to its window; every other column is fitted as before. A file read ragged and written ragged keeps its shape.
+
+The option defaults to false, so existing behaviour is unchanged.
+
 ## 7.2.0 (2026-09-17)
 **Summary** - Every asynchronous read and write takes an optional `CancellationToken`, threaded through to the underlying `TextReader` and `TextWriter`.
 
