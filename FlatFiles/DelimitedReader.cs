@@ -397,10 +397,10 @@ namespace FlatFiles
             return currentContext;
         }
 
-        private static bool HasWrongNumberOfColumns( DelimitedSchema schema, string[] values )
+        private static bool HasWrongNumberOfColumns( DelimitedSchema currentSchema, string[] rawValues )
         {
-            var columnDefinitions = schema.ColumnDefinitions;
-            return values.Length + columnDefinitions.MetadataCount < columnDefinitions.PhysicalCount;
+            var columnDefinitions = currentSchema.ColumnDefinitions;
+            return rawValues.Length + columnDefinitions.MetadataCount < columnDefinitions.PhysicalCount;
         }
 
         private object?[]? ParseValues( DelimitedRecordContext currentContext, string[] rawValues )

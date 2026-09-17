@@ -66,9 +66,9 @@ namespace FlatFiles.TypeMapping
             return this;
         }
 
-        public IDelimitedComplexPropertyMapping WithOptions( DelimitedOptions? options )
+        public IDelimitedComplexPropertyMapping WithOptions( DelimitedOptions? mappingOptions )
         {
-            this.options = options;
+            options = mappingOptions;
             return this;
         }
 
@@ -79,21 +79,21 @@ namespace FlatFiles.TypeMapping
             return this;
         }
 
-        public IDelimitedComplexPropertyMapping DefaultValue( IDefaultValue defaultValue )
+        public IDelimitedComplexPropertyMapping DefaultValue( IDefaultValue value )
         {
-            this.defaultValue = defaultValue;
+            defaultValue = value;
             return this;
         }
 
-        public IDelimitedComplexPropertyMapping Nullable( bool isNullable )
+        public IDelimitedComplexPropertyMapping Nullable( bool nullable )
         {
-            this.isNullable = isNullable;
+            isNullable = nullable;
             return this;
         }
 
-        public IDelimitedComplexPropertyMapping Preprocessor( Func<string, string?>? preprocessor )
+        public IDelimitedComplexPropertyMapping Preprocessor( Func<string, string?>? handler )
         {
-            this.preprocessor = preprocessor;
+            preprocessor = handler;
             return this;
         }
 

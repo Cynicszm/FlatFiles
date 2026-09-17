@@ -8,11 +8,11 @@ namespace FlatFiles
     /// </summary>
     public sealed class DefaultValue : IDefaultValue
     {
-        private readonly Func<IColumnContext?, object?> factory;
+        private readonly Func<IColumnContext?, object?> valueFactory;
 
         private DefaultValue( Func<IColumnContext?, object?> factory )
         {
-            this.factory = factory;
+            valueFactory = factory;
         }
 
         /// <summary>
@@ -52,7 +52,7 @@ namespace FlatFiles
         /// <returns>The default value.</returns>
         public object? GetDefaultValue( IColumnContext? context )
         {
-            return factory( context );
+            return valueFactory( context );
         }
     }
 }
