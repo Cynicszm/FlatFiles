@@ -103,7 +103,7 @@ namespace FlatFiles
         public FixedLengthSchema? GetSchema()
         {
             return schema;
-        } 
+        }
 
         ISchema? IReader.GetSchema()
         {
@@ -441,7 +441,7 @@ namespace FlatFiles
         {
             if (schemaSelector is null)
             {
-                return this.schema;
+                return schema;
             }
             var currentSchema = schemaSelector.GetSchema( record );
             if (currentSchema is not null)
@@ -519,9 +519,9 @@ namespace FlatFiles
 
         private IRecordContext GetMetadata( FixedLengthSchema? currentSchema, string? record )
         {
-            if (this.recordContext is not null)
+            if (recordContext is not null)
             {
-                return this.recordContext;
+                return recordContext;
             }
             var executionContext = (metadataExecutionContexts ??= new ExecutionContextCache<FixedLengthSchema, GenericExecutionContext>( s => new GenericExecutionContext( s, options.Clone() ) )).Get( currentSchema );
             var currentContext = new GenericRecordContext( executionContext )

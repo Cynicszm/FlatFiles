@@ -242,11 +242,11 @@ namespace FlatFiles.Test
             }
             if (type == typeof( INullFormatter ))
             {
-                return FlatFiles.NullFormatter.Default;
+                return NullFormatter.Default;
             }
             if (type == typeof( IDefaultValue ))
             {
-                return FlatFiles.DefaultValue.Disabled();
+                return DefaultValue.Disabled();
             }
             if (type == typeof( DelimitedOptions ))
             {

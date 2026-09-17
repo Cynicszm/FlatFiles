@@ -20,10 +20,8 @@ namespace FlatFiles.Test
                     Alignment = FixedAlignment.RightAligned,
                     FillCharacter = '0'
                 } )
-                .WithWriter( ( _, v ) =>
-                {
-                    return (long) Math.Floor( Math.Abs( v.Amount ) * 100M );
-                } );
+                .WithWriter( ( _, v ) => (long) Math.Floor( Math.Abs( v.Amount ) * 100M ) );
+
             injector.When<Data>().Use( mapper );
 
             var stringWriter = new StringWriter();

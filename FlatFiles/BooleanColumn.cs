@@ -39,11 +39,10 @@ namespace FlatFiles
             {
                 return true;
             }
-            if (string.Equals( value, FalseString, StringComparison.CurrentCultureIgnoreCase ))
-            {
-                return false;
-            }
-            throw new InvalidCastException();
+
+            return string.Equals( value, FalseString, StringComparison.CurrentCultureIgnoreCase ) ?
+                false :
+                throw new InvalidCastException();
         }
 
         /// <summary>

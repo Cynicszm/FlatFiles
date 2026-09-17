@@ -194,18 +194,15 @@ namespace FlatFiles.TypeMapping
             var propertyInfo = GetProperty( entityType, column, matcher );
             if (propertyInfo is not null)
             {
-                if (!propertyInfo.CanWrite)
-                {
-                    throw new FlatFileException( string.Format( CultureInfo.CurrentCulture, Resources.ReadOnlyProperty, column.ColumnName ) );
-                }
-                return Expression.Property( Expression.Convert( entityParameter, entityType ), propertyInfo );
+                return !propertyInfo.CanWrite ?
+                    throw new FlatFileException( string.Format( CultureInfo.CurrentCulture, Resources.ReadOnlyProperty, column.ColumnName ) ) :
+                    Expression.Property( Expression.Convert( entityParameter, entityType ), propertyInfo );
             }
             var fieldInfo = GetField( entityType, column, matcher );
-            if (fieldInfo is not null)
-            {
-                return Expression.Field( Expression.Convert( entityParameter, entityType ), fieldInfo );
-            }
-            throw new FlatFileException( Resources.BadPropertySelector );
+
+            return fieldInfo is not null ?
+                Expression.Field( Expression.Convert( entityParameter, entityType ), fieldInfo ) :
+                throw new FlatFileException( Resources.BadPropertySelector );
         }
 
         private static PropertyInfo? GetProperty( Type entityType, IColumnDefinition column, IAutoMapMatcher matcher )
@@ -247,8 +244,8 @@ namespace FlatFiles.TypeMapping
         /// <remarks>Unless options are provided, by default this method will write the schema before the first record.</remarks>
         public static ITypedWriter<TEntity> GetAutoMappedWriter<TEntity>( TextWriter writer, DelimitedOptions? options = null, IAutoMapResolver? resolver = null )
         {
-            var optionsCopy = options is null 
-                ? new DelimitedOptions() { IsFirstRecordSchema = true } 
+            var optionsCopy = options is null
+                ? new DelimitedOptions() { IsFirstRecordSchema = true }
                 : options.Clone();
             var entityType = typeof( TEntity );
             var typedMapper = Define<TEntity>( () => throw new InvalidOperationException( "Unexpected entity creation within autom-mapped writer." ) );
@@ -286,7 +283,7 @@ namespace FlatFiles.TypeMapping
                 var getter = lambda.Compile();
                 dynamicMapper.CustomMapping( column ).WithWriter( getter );
             }
-            
+
             return typedMapper.GetWriter( writer, optionsCopy );
         }
 
@@ -1167,8 +1164,8 @@ namespace FlatFiles.TypeMapping
 
         private ICodeGenerator GetCodeGenerator()
         {
-            return isOptimized 
-                ? new EmitCodeGenerator() 
+            return isOptimized
+                ? new EmitCodeGenerator()
                 : new ReflectionCodeGenerator();
         }
     }

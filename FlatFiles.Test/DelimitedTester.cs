@@ -1,5 +1,4 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace FlatFiles.Test
@@ -80,11 +79,11 @@ namespace FlatFiles.Test
         {
             const string source = "a\rb\r\n";
             var stringReader = new StringReader( source );
-            var options = new DelimitedOptions 
-            { 
-                IsFirstRecordSchema = false, 
-                RecordSeparator = "\r\n", 
-                Separator = "\r" 
+            var options = new DelimitedOptions
+            {
+                IsFirstRecordSchema = false,
+                RecordSeparator = "\r\n",
+                Separator = "\r"
             };
             var reader = new DelimitedReader( stringReader, options );
             object[][] expected =
@@ -99,11 +98,11 @@ namespace FlatFiles.Test
         {
             const string source = "a\r\nb";
             var stringReader = new StringReader( source );
-            var options = new DelimitedOptions 
-            { 
-                IsFirstRecordSchema = false, 
-                RecordSeparator = "\r\n", 
-                Separator = "\r" 
+            var options = new DelimitedOptions
+            {
+                IsFirstRecordSchema = false,
+                RecordSeparator = "\r\n",
+                Separator = "\r"
             };
             var reader = new DelimitedReader( stringReader, options );
             object[][] expected =
@@ -119,11 +118,11 @@ namespace FlatFiles.Test
         {
             const string source = "a\r\nb\r";
             var stringReader = new StringReader( source );
-            var options = new DelimitedOptions 
-            { 
-                IsFirstRecordSchema = false, 
-                RecordSeparator = "\r", 
-                Separator = "\r\n" 
+            var options = new DelimitedOptions
+            {
+                IsFirstRecordSchema = false,
+                RecordSeparator = "\r",
+                Separator = "\r\n"
             };
             var reader = new DelimitedReader( stringReader, options );
             object[][] expected =
@@ -138,11 +137,11 @@ namespace FlatFiles.Test
         {
             const string source = "a\rb";
             var stringReader = new StringReader( source );
-            var options = new DelimitedOptions 
-            { 
-                IsFirstRecordSchema = false, 
-                RecordSeparator = "\r", 
-                Separator = "\r\n" 
+            var options = new DelimitedOptions
+            {
+                IsFirstRecordSchema = false,
+                RecordSeparator = "\r",
+                Separator = "\r\n"
             };
             var reader = new DelimitedReader( stringReader, options );
             object[][] expected =
@@ -232,10 +231,10 @@ namespace FlatFiles.Test
             var stringReader = new StringReader( source );
             var schema = new DelimitedSchema();
             schema.AddColumn( new StringColumn( "a" ) { Trim = false } );
-            var options = new DelimitedOptions 
-            { 
-                IsFirstRecordSchema = false, 
-                PreserveWhiteSpace = true 
+            var options = new DelimitedOptions
+            {
+                IsFirstRecordSchema = false,
+                PreserveWhiteSpace = true
             };
             var reader = new DelimitedReader( stringReader, schema, options );
             object[][] expected =
@@ -271,11 +270,11 @@ namespace FlatFiles.Test
             //DelimitedSchema schema = new DelimitedSchema();
             //schema.AddColumn(new StringColumn("a") { Trim = false });
             //schema.AddColumn(new StringColumn("b") { Trim = false });
-            var options = new DelimitedOptions 
-            { 
-                IsFirstRecordSchema = false, 
-                RecordSeparator = "\r\n", 
-                PreserveWhiteSpace = true 
+            var options = new DelimitedOptions
+            {
+                IsFirstRecordSchema = false,
+                RecordSeparator = "\r\n",
+                PreserveWhiteSpace = true
             };
             var reader = new DelimitedReader( stringReader, /*schema,*/ options );
             object[][] expected =
@@ -308,8 +307,8 @@ namespace FlatFiles.Test
             schema.AddColumn( new StringColumn( "a" ) { Trim = false } );
             var options = new DelimitedOptions
             {
-                IsFirstRecordSchema = false, 
-                PreserveWhiteSpace = true 
+                IsFirstRecordSchema = false,
+                PreserveWhiteSpace = true
             };
             var reader = new DelimitedReader( stringReader, schema, options );
             object[][] expected =
@@ -406,11 +405,11 @@ namespace FlatFiles.Test
             var schema = new DelimitedSchema();
             schema.AddColumn( new StringColumn( "a" ) { Trim = false } );
             schema.AddColumn( new StringColumn( "b" ) { Trim = false } );
-            var options = new DelimitedOptions 
-            { 
-                IsFirstRecordSchema = false, 
-                RecordSeparator = "\r\n", 
-                PreserveWhiteSpace = true 
+            var options = new DelimitedOptions
+            {
+                IsFirstRecordSchema = false,
+                RecordSeparator = "\r\n",
+                PreserveWhiteSpace = true
             };
             var reader = new DelimitedReader( stringReader, schema, options );
             object[][] expected =
@@ -441,11 +440,11 @@ namespace FlatFiles.Test
             var stringReader = new StringReader( source );
             var schema = new DelimitedSchema();
             schema.AddColumn( new StringColumn( "a" ) { Trim = false, NullFormatter = NullFormatter.ForValue( null ) } );
-            var options = new DelimitedOptions 
+            var options = new DelimitedOptions
             {
-                IsFirstRecordSchema = false, 
-                RecordSeparator = "\r\n", 
-                PreserveWhiteSpace = true 
+                IsFirstRecordSchema = false,
+                RecordSeparator = "\r\n",
+                PreserveWhiteSpace = true
             };
             var reader = new DelimitedReader( stringReader, schema, options );
             object[][] expected =
@@ -504,11 +503,11 @@ namespace FlatFiles.Test
         {
             const string source = "axxcb";
             var stringReader = new StringReader( source );
-            var options = new DelimitedOptions 
-            { 
-                IsFirstRecordSchema = false, 
-                Separator = "xxa", 
-                RecordSeparator = "xxb" 
+            var options = new DelimitedOptions
+            {
+                IsFirstRecordSchema = false,
+                Separator = "xxa",
+                RecordSeparator = "xxb"
             };
             var reader = new DelimitedReader( stringReader, options );
             object[][] expected =
@@ -686,7 +685,7 @@ Mary,Smith,'1821 Grover''s Village',West Chattingham,WA,43221,'Likes cats.'";
             var reader = new DelimitedReader( stringReader, options );
             object[][] expected =
             [
-                new object[] 
+                new object[]
                 { "John", "Smith", "123 Playtown Place", "Grangewood", "CA", "12345", @"John likes to travel to far away places.
 His favorite travel spots are Tannis, Venice and Chicago.
 When he's not traveling, he's at home with his lovely wife, children and leather armchair."
@@ -735,7 +734,7 @@ When he's not traveling, he's at home with his lovely wife, children and leather
                     "40",
                     "79527",
                     null,
-                    "False" 
+                    "False"
                 ]
             ];
             AssertRecords( expected, reader );
@@ -778,8 +777,8 @@ When he's not traveling, he's at home with his lovely wife, children and leather
             [
                 [
                     "DebtConversionConvertedInstrumentAmount1",
-                    "us-gaap/2019", 
-                    "0", 
+                    "us-gaap/2019",
+                    "0",
                     "0",
                     "monetary",
                     "D",

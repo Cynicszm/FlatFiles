@@ -48,8 +48,8 @@ namespace FlatFiles
         internal object?[] ParseValues( IRecoverableRecordContext context, string[] values )
         {
             var parsedValues = new object?[ColumnDefinitions.PhysicalCount];
-            for (int columnIndex = 0, sourceIndex = 0, destinationIndex = 0, columnCount = ColumnDefinitions.Count; 
-                columnIndex != columnCount; 
+            for (int columnIndex = 0, sourceIndex = 0, destinationIndex = 0, columnCount = ColumnDefinitions.Count;
+                columnIndex != columnCount;
                 ++columnIndex)
             {
                 var definition = ColumnDefinitions[columnIndex];
@@ -107,11 +107,8 @@ namespace FlatFiles
                 }
                 var e = new ColumnErrorEventArgs( columnException );
                 recordContext.ProcessError( this, e );
-                if (!e.IsHandled)
-                {
-                    throw columnException;
-                }
-                return e.Substitution;
+
+                return !e.IsHandled ? throw columnException : e.Substitution;
             }
         }
 
