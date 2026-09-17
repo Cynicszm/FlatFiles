@@ -230,7 +230,7 @@ namespace FlatFiles.Benchmark
 
             protected override GeoLocation OnParse( IColumnContext context, string value )
             {
-                string[] parts = value.Substring( 1, value.Length - 2 ).Split( ',', 2 );
+                var parts = value.Substring( 1, value.Length - 2 ).Split( ',', 2 );
                 var result = new GeoLocation
                 {
                     Latitude = Convert.ToDecimal( parts[0].Trim() ),

@@ -1,7 +1,7 @@
-﻿using System.IO;
-using System.Threading.Tasks;
+﻿using System;
+using System.IO;
 using System.Threading;
-using System;
+using System.Threading.Tasks;
 using FlatFiles.Properties;
 
 namespace FlatFiles
@@ -49,7 +49,7 @@ namespace FlatFiles
         }
 
         public async Task WriteRecordAsync( object?[] values, CancellationToken cancellationToken = default )
-{
+        {
             FormatRecord( values );
             await writer.WriteAsync( buffer.WrittenMemory, cancellationToken ).ConfigureAwait( false );
         }
@@ -87,7 +87,7 @@ namespace FlatFiles
 
         private DelimitedRecordContext NewRecordContext( DelimitedSchema schema )
         {
-            var executionContext = (executionContexts ??= new( s => new DelimitedExecutionContext( s!, Options.Clone() ) )).Get( schema );
+            var executionContext = (executionContexts ??= new ExecutionContextCache<DelimitedSchema, DelimitedExecutionContext>( s => new DelimitedExecutionContext( s!, Options.Clone() ) )).Get( schema );
             return new DelimitedRecordContext( executionContext )
             {
                 PhysicalRecordNumber = PhysicalRecordNumber,
@@ -147,7 +147,7 @@ namespace FlatFiles
                 return false;
             }
             // Escape strings beginning or ending in whitespace.
-            if (Char.IsWhiteSpace( value[0] ) || Char.IsWhiteSpace( value[^1] ))
+            if (char.IsWhiteSpace( value[0] ) || char.IsWhiteSpace( value[^1] ))
             {
                 return true;
             }
@@ -176,7 +176,7 @@ namespace FlatFiles
         }
 
         public async Task WriteSchemaAsync( CancellationToken cancellationToken = default )
-{
+        {
             if (schema is null)
             {
                 return;
@@ -208,7 +208,7 @@ namespace FlatFiles
         }
 
         public async Task WriteRecordSeparatorAsync( CancellationToken cancellationToken = default )
-{
+        {
             var separator = Options.RecordSeparator ?? Environment.NewLine;
             await writer.WriteAsync( separator.AsMemory(), cancellationToken ).ConfigureAwait( false );
         }
@@ -219,7 +219,7 @@ namespace FlatFiles
         }
 
         public Task WriteRawAsync( string data, CancellationToken cancellationToken = default )
-{
+        {
             return writer.WriteAsync( data.AsMemory(), cancellationToken );
         }
     }

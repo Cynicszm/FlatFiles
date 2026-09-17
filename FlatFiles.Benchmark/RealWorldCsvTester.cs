@@ -13,8 +13,8 @@ namespace FlatFiles.Benchmark
         [Benchmark]
         public void RunCsvHelper()
         {
-            string directory = Path.GetDirectoryName( Assembly.GetExecutingAssembly().Location );
-            string path = Path.Combine( directory, "TestFiles", "SampleData.csv" );
+            var directory = Path.GetDirectoryName( Assembly.GetExecutingAssembly().Location );
+            var path = Path.Combine( directory, "TestFiles", "SampleData.csv" );
             using var stream = File.OpenRead( path );
             using var textReader = new StreamReader( stream );
             var configuration = new CsvConfiguration( CultureInfo.InvariantCulture )
@@ -60,7 +60,7 @@ namespace FlatFiles.Benchmark
             csvReader.Context.RegisterClassMap( map );
             csvReader.Read();
             csvReader.ReadHeader();
-            var people = csvReader.GetRecords<SampleData>().ToArray();
+            _ = csvReader.GetRecords<SampleData>().ToArray();
         }
 
         [Benchmark]
@@ -102,11 +102,11 @@ namespace FlatFiles.Benchmark
             mapper.Property( x => x.StratificationCategoryId3 ).ColumnName( "StratificationCategoryID3" );
             mapper.Property( x => x.StratificationId3 ).ColumnName( "StratificationID3" );
 
-            string directory = Path.GetDirectoryName( Assembly.GetExecutingAssembly().Location );
-            string path = Path.Combine( directory, "TestFiles", "SampleData.csv" );
+            var directory = Path.GetDirectoryName( Assembly.GetExecutingAssembly().Location );
+            var path = Path.Combine( directory, "TestFiles", "SampleData.csv" );
             using var stream = File.OpenRead( path );
             using var textReader = new StreamReader( stream );
-            var people = mapper.Read( textReader, new DelimitedOptions { IsFirstRecordSchema = true } ).ToArray();
+            _ = mapper.Read( textReader, new DelimitedOptions { IsFirstRecordSchema = true } ).ToArray();
         }
 
         private class SampleData

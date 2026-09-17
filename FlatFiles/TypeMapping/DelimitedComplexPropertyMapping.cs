@@ -34,7 +34,7 @@ namespace FlatFiles.TypeMapping
         {
             get
             {
-                DelimitedSchema schema = mapper.GetSchema();
+                var schema = mapper.GetSchema();
                 var column = new DelimitedComplexColumn( columnName, schema )
                 {
                     Options = options,
@@ -68,7 +68,7 @@ namespace FlatFiles.TypeMapping
 
         public IDelimitedComplexPropertyMapping ColumnName( string name )
         {
-            if (String.IsNullOrWhiteSpace( name ))
+            if (string.IsNullOrWhiteSpace( name ))
             {
                 throw new ArgumentException( Resources.BlankColumnName );
             }

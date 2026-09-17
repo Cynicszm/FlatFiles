@@ -43,7 +43,7 @@ namespace FlatFiles.Test
             {
                 var records = Parse( text, options ?? new DelimitedOptions(), size );
                 Assert.AreEqual( expected.Length, records.Count, $"Record count with a buffer of {size}." );
-                for (int index = 0; index != expected.Length; ++index)
+                for (var index = 0; index != expected.Length; ++index)
                 {
                     CollectionAssert.AreEqual( expected[index], records[index].Values, $"Record {index} with a buffer of {size}." );
                 }
@@ -173,7 +173,7 @@ namespace FlatFiles.Test
                 var asynchronous = await ParseAsync( text, options, size );
 
                 Assert.AreEqual( synchronous.Count, asynchronous.Count, $"Buffer of {size}." );
-                for (int index = 0; index != synchronous.Count; ++index)
+                for (var index = 0; index != synchronous.Count; ++index)
                 {
                     Assert.AreEqual( synchronous[index].Record, asynchronous[index].Record, $"Record {index} with a buffer of {size}." );
                     CollectionAssert.AreEqual( synchronous[index].Values, asynchronous[index].Values, $"Record {index} with a buffer of {size}." );

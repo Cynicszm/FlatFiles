@@ -23,10 +23,10 @@ namespace FlatFiles.Test
 
             var bob = new Person { Id = 123, Name = "Bob", Created = new DateTime( 2013, 1, 19 ), IsActive = true };
 
-            StringWriter stringWriter = new StringWriter();
-            mapper.Write( stringWriter, new Person[] { bob } );
+            var stringWriter = new StringWriter();
+            mapper.Write( stringWriter, [ bob ] );
 
-            StringReader stringReader = new StringReader( stringWriter.ToString() );
+            var stringReader = new StringReader( stringWriter.ToString() );
             Person[] people = [.. mapper.Read( stringReader )];
             Assert.AreEqual( 1, people.Length );
             var person = people.SingleOrDefault();

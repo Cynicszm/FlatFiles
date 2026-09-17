@@ -32,7 +32,7 @@ namespace FlatFiles.Test
             };
             var reader = new DelimitedReader( new StringReader( Data ), GetSchema(), options );
             List<string> captured = [];
-            reader.RecordRead += ( sender, e ) => captured.Add( e.RecordContext.Record );
+            reader.RecordRead += ( _, e ) => captured.Add( e.RecordContext.Record );
             while (reader.Read())
             {
             }
@@ -50,7 +50,7 @@ namespace FlatFiles.Test
 
             var captured = ReadCapturingRecordText( preserveRecordText: false );
 
-            CollectionAssert.AreEqual( new[] { String.Empty, String.Empty }, captured,
+            CollectionAssert.AreEqual( new[] { string.Empty, string.Empty }, captured,
                 "The raw record text should be empty when capture is disabled." );
         }
 
@@ -92,7 +92,7 @@ namespace FlatFiles.Test
             var discarded = Read( false );
 
             Assert.AreEqual( preserved.Length, discarded.Length, "A different number of records was read." );
-            for (int index = 0; index != preserved.Length; ++index)
+            for (var index = 0; index != preserved.Length; ++index)
             {
                 CollectionAssert.AreEqual( preserved[index], discarded[index],
                     $"Record {index} parsed differently when the record text was discarded." );
@@ -112,7 +112,7 @@ namespace FlatFiles.Test
                 PreserveRecordText = false
             };
             var reader = new DelimitedReader( new StringReader( Data ), GetSchema(), options );
-            int count = 0;
+            var count = 0;
             while (reader.Read())
             {
                 ++count;
@@ -133,12 +133,12 @@ namespace FlatFiles.Test
             var options = new DelimitedOptions { PreserveRecordText = true };
             var reader = new DelimitedReader( new StringReader( "a\r\n\r\nb\r\n" ), schema, options );
             List<string> captured = [];
-            reader.RecordRead += ( sender, e ) => captured.Add( e.RecordContext.Record );
+            reader.RecordRead += ( _, e ) => captured.Add( e.RecordContext.Record );
             while (reader.Read())
             {
             }
 
-            CollectionAssert.AreEqual( new[] { "a", String.Empty, "b" }, captured,
+            CollectionAssert.AreEqual( new[] { "a", string.Empty, "b" }, captured,
                 "An empty record should still report its own empty text." );
         }
     }

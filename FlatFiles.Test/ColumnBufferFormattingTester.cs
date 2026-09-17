@@ -72,7 +72,7 @@ namespace FlatFiles.Test
         [TestMethod]
         public void TestFormat_OnFormattingHook_IsAppliedBeforeFormatting()
         {
-            var column = new Int32Column( "c" ) { OnFormatting = ( context, value ) => (int) value * 2 };
+            var column = new Int32Column( "c" ) { OnFormatting = ( _, value ) => (int) value * 2 };
 
             Assert.AreEqual( "84", ToBuffer( column, 42 ) );
         }
@@ -80,7 +80,7 @@ namespace FlatFiles.Test
         [TestMethod]
         public void TestFormat_OnFormattedHook_SeesTheWholeString()
         {
-            var column = new StringColumn( "c" ) { OnFormatted = ( context, value ) => value.ToUpperInvariant() };
+            var column = new StringColumn( "c" ) { OnFormatted = ( _, value ) => value.ToUpperInvariant() };
 
             Assert.AreEqual( "SHOUT", ToBuffer( column, "shout" ) );
         }
@@ -128,7 +128,7 @@ namespace FlatFiles.Test
             schema.AddColumn( new Int32Column( "b" ) );
             var output = new StringWriter();
             var writer = new DelimitedWriter( output, schema, new DelimitedOptions { RecordSeparator = "\n" } );
-            writer.ColumnError += ( sender, e ) =>
+            writer.ColumnError += ( _, e ) =>
             {
                 e.Substitution = "sub";
                 e.IsHandled = true;

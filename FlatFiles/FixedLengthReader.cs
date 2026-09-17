@@ -1,7 +1,7 @@
-﻿using System.IO;
-using System.Threading.Tasks;
+﻿using System;
+using System.IO;
 using System.Threading;
-using System;
+using System.Threading.Tasks;
 using FlatFiles.Properties;
 
 namespace FlatFiles
@@ -125,18 +125,18 @@ namespace FlatFiles
         /// <param name="cancellationToken">The token to observe while waiting for the operation to complete.</param>
         /// <returns>The schema being used by the parser.</returns>
         public Task<FixedLengthSchema?> GetSchemaAsync( CancellationToken cancellationToken )
-{
+        {
             cancellationToken.ThrowIfCancellationRequested();
             return Task.FromResult( schema );
         }
 
         Task<ISchema?> IReader.GetSchemaAsync()
-{
+        {
             return Task.FromResult<ISchema?>( schema );
         }
 
         Task<ISchema?> IReader.GetSchemaAsync( CancellationToken cancellationToken )
-{
+        {
             return Task.FromResult<ISchema?>( schema );
         }
 
@@ -196,7 +196,7 @@ namespace FlatFiles
 
         private FixedLengthRecordContext NewRecordContext( FixedLengthSchema schema, string record, string[]? values )
         {
-            var executionContext = (executionContexts ??= new( s => new FixedLengthExecutionContext( s!, options.Clone() ) )).Get( schema );
+            var executionContext = (executionContexts ??= new ExecutionContextCache<FixedLengthSchema, FixedLengthExecutionContext>( s => new FixedLengthExecutionContext( s!, options.Clone() ) )).Get( schema );
             var recordContext = new FixedLengthRecordContext( executionContext )
             {
                 PhysicalRecordNumber = physicalRecordNumber,
@@ -222,7 +222,7 @@ namespace FlatFiles
         /// <param name="cancellationToken">The token to observe while waiting for the operation to complete.</param>
         /// <returns>True if the next record was parsed; otherwise, false if all files are read.</returns>
         public async ValueTask<bool> ReadAsync( CancellationToken cancellationToken )
-{
+        {
             cancellationToken.ThrowIfCancellationRequested();
             if (hasError)
             {
@@ -249,7 +249,7 @@ namespace FlatFiles
         }
 
         private async Task HandleHeaderAsync( CancellationToken cancellationToken = default )
-{
+        {
             if (physicalRecordNumber == 0 && options.IsFirstRecordHeader)
             {
                 await SkipAsyncInternal( cancellationToken ).ConfigureAwait( false );
@@ -257,7 +257,7 @@ namespace FlatFiles
         }
 
         private async Task<object?[]?> ParsePartitionsAsync( CancellationToken cancellationToken = default )
-{
+        {
             while (!endOfFile)
             {
                 var record = await ReadNextRecordAsync( cancellationToken ).ConfigureAwait( false );
@@ -373,7 +373,7 @@ namespace FlatFiles
         /// <returns>True if the next record was skipped; otherwise, false if all records are read.</returns>
         /// <remarks>The previously parsed values remain available.</remarks>
         public async ValueTask<bool> SkipAsync( CancellationToken cancellationToken )
-{
+        {
             cancellationToken.ThrowIfCancellationRequested();
             if (hasError)
             {
@@ -384,7 +384,7 @@ namespace FlatFiles
         }
 
         private async ValueTask<bool> SkipAsyncInternal( CancellationToken cancellationToken = default )
-{
+        {
             var record = await ReadNextRecordAsync( cancellationToken ).ConfigureAwait( false );
             return record is not null;
         }
@@ -405,13 +405,13 @@ namespace FlatFiles
             }
             var windows = schema.Windows;
             var values = new string[schema.ColumnDefinitions.Count - schema.ColumnDefinitions.MetadataCount];
-            int offset = 0;
+            var offset = 0;
             for (int valueIndex = 0, columnIndex = 0; valueIndex != values.Length; ++columnIndex)
             {
                 var definition = schema.ColumnDefinitions[columnIndex];
                 if (definition is not IMetadataColumn)
                 {
-                    Window? window = columnIndex < windows.Count ? windows[columnIndex] : null;
+                    var window = columnIndex < windows.Count ? windows[columnIndex] : null;
                     string value;
                     if (window is null)
                     {
@@ -442,7 +442,7 @@ namespace FlatFiles
             {
                 return this.schema;
             }
-            FixedLengthSchema? schema = schemaSelector.GetSchema( record );
+            var schema = schemaSelector.GetSchema( record );
             if (schema is not null)
             {
                 return schema;
@@ -465,7 +465,7 @@ namespace FlatFiles
         }
 
         private async Task<string?> ReadNextRecordAsync( CancellationToken cancellationToken = default )
-{
+        {
             if (await parser.IsEndOfStreamAsync( cancellationToken ).ConfigureAwait( false ))
             {
                 endOfFile = true;
@@ -521,7 +521,7 @@ namespace FlatFiles
             {
                 return this.recordContext;
             }
-            var executionContext = (metadataExecutionContexts ??= new( s => new GenericExecutionContext( s, options.Clone() ) )).Get( schema );
+            var executionContext = (metadataExecutionContexts ??= new ExecutionContextCache<FixedLengthSchema, GenericExecutionContext>( s => new GenericExecutionContext( s, options.Clone() ) )).Get( schema );
             var recordContext = new GenericRecordContext( executionContext )
             {
                 PhysicalRecordNumber = physicalRecordNumber,

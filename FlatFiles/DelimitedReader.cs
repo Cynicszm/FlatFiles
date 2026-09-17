@@ -1,7 +1,7 @@
-﻿using System.IO;
-using System.Threading.Tasks;
+﻿using System;
+using System.IO;
 using System.Threading;
-using System;
+using System.Threading.Tasks;
 using FlatFiles.Properties;
 
 namespace FlatFiles
@@ -138,7 +138,7 @@ namespace FlatFiles
         /// <param name="cancellationToken">The token to observe while waiting for the operation to complete.</param>
         /// <returns>The schema being used by the parser.</returns>
         public async Task<DelimitedSchema?> GetSchemaAsync( CancellationToken cancellationToken )
-{
+        {
             cancellationToken.ThrowIfCancellationRequested();
             if (schemaSelector is not null)
             {
@@ -153,13 +153,13 @@ namespace FlatFiles
         }
 
         async Task<ISchema?> IReader.GetSchemaAsync()
-{
+        {
             var schema = await GetSchemaAsync().ConfigureAwait( false );
             return schema;
         }
 
         async Task<ISchema?> IReader.GetSchemaAsync( CancellationToken cancellationToken )
-{
+        {
             var schema = await GetSchemaAsync( cancellationToken ).ConfigureAwait( false );
             return schema;
         }
@@ -210,7 +210,7 @@ namespace FlatFiles
         /// <param name="cancellationToken">The token to observe while waiting for the operation to complete.</param>
         /// <returns>True if the next record was read or false if all records have been read.</returns>
         public async ValueTask<bool> ReadAsync( CancellationToken cancellationToken )
-{
+        {
             cancellationToken.ThrowIfCancellationRequested();
             if (hasError)
             {
@@ -261,7 +261,7 @@ namespace FlatFiles
         }
 
         private async Task<DelimitedSchema?> HandleSchemaAsync( CancellationToken cancellationToken = default )
-{
+        {
             if (physicalRecordNumber != 0)
             {
                 return schema;
@@ -288,7 +288,7 @@ namespace FlatFiles
         private DelimitedSchema CreateSchemaFromHeader( string[] columnNames )
         {
             var schema = new DelimitedSchema();
-            foreach (string columnName in columnNames)
+            foreach (var columnName in columnNames)
             {
                 var column = new StringColumn( columnName )
                 {
@@ -314,7 +314,7 @@ namespace FlatFiles
         }
 
         private async Task<object?[]?> ParsePartitionsAsync( CancellationToken cancellationToken = default )
-{
+        {
             while (!endOfFile)
             {
                 var (record, rawValues) = await ReadNextRecordAsync( cancellationToken );
@@ -345,7 +345,7 @@ namespace FlatFiles
                 ProcessError( new RecordProcessingException( recordContext, Resources.DelimitedRecordWrongNumberOfColumns ) );
                 return null;
             }
-            object?[]? values = ParseValues( recordContext, rawValues );
+            var values = ParseValues( recordContext, rawValues );
             if (values is null)
             {
                 return null;
@@ -386,7 +386,7 @@ namespace FlatFiles
 
         private DelimitedRecordContext NewRecordContext( DelimitedSchema schema, string record, string[] values )
         {
-            var executionContext = (executionContexts ??= new( s => new DelimitedExecutionContext( s!, parser.Options.Clone() ) )).Get( schema );
+            var executionContext = (executionContexts ??= new ExecutionContextCache<DelimitedSchema, DelimitedExecutionContext>( s => new DelimitedExecutionContext( s!, parser.Options.Clone() ) )).Get( schema );
             var recordContext = new DelimitedRecordContext( executionContext )
             {
                 PhysicalRecordNumber = physicalRecordNumber,
@@ -397,7 +397,7 @@ namespace FlatFiles
             return recordContext;
         }
 
-        private bool HasWrongNumberOfColumns( DelimitedSchema schema, string[] values )
+        private static bool HasWrongNumberOfColumns( DelimitedSchema schema, string[] values )
         {
             var columnDefinitions = schema.ColumnDefinitions;
             return values.Length + columnDefinitions.MetadataCount < columnDefinitions.PhysicalCount;
@@ -430,7 +430,7 @@ namespace FlatFiles
                 throw new InvalidOperationException( Resources.ReadingWithErrors );
             }
             HandleSchema();
-            bool result = SkipInternal();
+            var result = SkipInternal();
             return result;
         }
 
@@ -453,7 +453,7 @@ namespace FlatFiles
         /// <returns>True if the next record was skipped or false if all records have been read.</returns>
         /// <remarks>The previously parsed values remain available.</remarks>
         public async ValueTask<bool> SkipAsync( CancellationToken cancellationToken )
-{
+        {
             cancellationToken.ThrowIfCancellationRequested();
             if (hasError)
             {
@@ -471,7 +471,7 @@ namespace FlatFiles
         }
 
         private async ValueTask<bool> SkipAsyncInternal( CancellationToken cancellationToken = default )
-{
+        {
             var (_, rawValues) = await ReadNextRecordAsync( cancellationToken ).ConfigureAwait( false );
             return rawValues is not null;
         }
@@ -514,7 +514,7 @@ namespace FlatFiles
         }
 
         private async Task<(string?, string[]?)> ReadNextRecordAsync( CancellationToken cancellationToken = default )
-{
+        {
             if (await parser.IsEndOfStreamAsync( cancellationToken ).ConfigureAwait( false ))
             {
                 endOfFile = true;
@@ -552,7 +552,7 @@ namespace FlatFiles
             {
                 throw new InvalidOperationException( Resources.NoMoreRecords );
             }
-            object[] copy = new object[values.Length];
+            var copy = new object[values.Length];
             Array.Copy( values, copy, values.Length );
             return copy;
         }
@@ -565,7 +565,7 @@ namespace FlatFiles
             {
                 return this.recordContext;
             }
-            var executionContext = (metadataExecutionContexts ??= new( s => new GenericExecutionContext( s, parser.Options.Clone() ) )).Get( schema );
+            var executionContext = (metadataExecutionContexts ??= new ExecutionContextCache<DelimitedSchema, GenericExecutionContext>( s => new GenericExecutionContext( s, parser.Options.Clone() ) )).Get( schema );
             var recordContext = new GenericRecordContext( executionContext )
             {
                 PhysicalRecordNumber = physicalRecordNumber,

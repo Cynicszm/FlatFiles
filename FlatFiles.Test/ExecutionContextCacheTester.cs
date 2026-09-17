@@ -24,7 +24,7 @@ namespace FlatFiles.Test
         private static List<IExecutionContext> ReadContexts( DelimitedReader reader )
         {
             List<IExecutionContext> contexts = [];
-            reader.RecordRead += ( sender, e ) => contexts.Add( e.RecordContext.ExecutionContext );
+            reader.RecordRead += ( _, e ) => contexts.Add( e.RecordContext.ExecutionContext );
             while (reader.Read())
             {
             }
@@ -98,7 +98,7 @@ namespace FlatFiles.Test
             var options = new DelimitedOptions();
             var reader = new DelimitedReader( new StringReader( "a,b\r\nc,d\r\n" ), Columns( "x", "y" ), options );
             List<DelimitedOptions> exposed = [];
-            reader.RecordRead += ( sender, e ) => exposed.Add( ((IDelimitedRecordContext) e.RecordContext).ExecutionContext.Options );
+            reader.RecordRead += ( _, e ) => exposed.Add( ((IDelimitedRecordContext) e.RecordContext).ExecutionContext.Options );
             while (reader.Read())
             {
             }
@@ -118,7 +118,7 @@ namespace FlatFiles.Test
             schema.AddColumn( new StringColumn( "x" ), new Window( 5 ) );
             var reader = new FixedLengthReader( new StringReader( "aaaaa\r\nbbbbb\r\n" ), schema );
             List<IExecutionContext> contexts = [];
-            reader.RecordParsed += ( sender, e ) => contexts.Add( e.RecordContext.ExecutionContext );
+            reader.RecordParsed += ( _, e ) => contexts.Add( e.RecordContext.ExecutionContext );
             while (reader.Read())
             {
             }

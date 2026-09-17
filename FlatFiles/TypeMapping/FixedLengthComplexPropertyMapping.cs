@@ -34,7 +34,7 @@ namespace FlatFiles.TypeMapping
         {
             get
             {
-                FixedLengthSchema schema = mapper.GetSchema();
+                var schema = mapper.GetSchema();
                 var column = new FixedLengthComplexColumn( columnName, schema )
                 {
                     Options = options,
@@ -67,7 +67,7 @@ namespace FlatFiles.TypeMapping
 
         public IFixedLengthComplexPropertyMapping ColumnName( string name )
         {
-            if (String.IsNullOrWhiteSpace( name ))
+            if (string.IsNullOrWhiteSpace( name ))
             {
                 throw new ArgumentException( Resources.BlankColumnName );
             }

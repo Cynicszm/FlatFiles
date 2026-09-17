@@ -190,7 +190,7 @@ namespace FlatFiles.Test
             var typedReader = Mapper().GetReader( recording, new DelimitedOptions { IsFirstRecordSchema = true } );
 
             var count = 0;
-            await foreach (var person in typedReader.ReadAllAsync().WithCancellation( source.Token ))
+            await foreach (var _ in typedReader.ReadAllAsync().WithCancellation( source.Token ))
             {
                 ++count;
             }

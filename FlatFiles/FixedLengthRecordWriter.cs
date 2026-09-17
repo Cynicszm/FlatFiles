@@ -1,7 +1,7 @@
-﻿using System.IO;
-using System.Threading.Tasks;
+﻿using System;
+using System.IO;
 using System.Threading;
-using System;
+using System.Threading.Tasks;
 using FlatFiles.Properties;
 
 namespace FlatFiles
@@ -48,7 +48,7 @@ namespace FlatFiles
         }
 
         public async Task WriteRecordAsync( object?[] values, CancellationToken cancellationToken = default )
-{
+        {
             recordContext = null;
             FormatRecord( values );
             await writer.WriteAsync( buffer.WrittenMemory, cancellationToken ).ConfigureAwait( false );
@@ -92,7 +92,7 @@ namespace FlatFiles
 
         private FixedLengthRecordContext NewRecordContext( FixedLengthSchema schema, string? record, string[]? values )
         {
-            var executionContext = (executionContexts ??= new( s => new FixedLengthExecutionContext( s!, Options.Clone() ) )).Get( schema );
+            var executionContext = (executionContexts ??= new ExecutionContextCache<FixedLengthSchema, FixedLengthExecutionContext>( s => new FixedLengthExecutionContext( s!, Options.Clone() ) )).Get( schema );
             var recordContext = new FixedLengthRecordContext( executionContext )
             {
                 PhysicalRecordNumber = PhysicalRecordNumber,
@@ -114,7 +114,7 @@ namespace FlatFiles
         }
 
         public async Task WriteSchemaAsync( CancellationToken cancellationToken = default )
-{
+        {
             if (schema is null)
             {
                 return;
@@ -202,7 +202,7 @@ namespace FlatFiles
         }
 
         public async Task WriteRecordSeparatorAsync( CancellationToken cancellationToken = default )
-{
+        {
             if (Options.HasRecordSeparator)
             {
                 var separator = Options.RecordSeparator ?? Environment.NewLine;
@@ -216,7 +216,7 @@ namespace FlatFiles
         }
 
         public Task WriteRawAsync( string data, CancellationToken cancellationToken = default )
-{
+        {
             return writer.WriteAsync( data.AsMemory(), cancellationToken );
         }
     }

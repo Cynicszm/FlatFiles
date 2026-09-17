@@ -22,7 +22,7 @@ namespace FlatFiles
             return DynamicSchemas.GetOrAdd( (length, options.PreserveWhiteSpace), pair =>
             {
                 var schema = new DelimitedSchema();
-                for (int columnIndex = 0; columnIndex != pair.Item1; ++columnIndex)
+                for (var columnIndex = 0; columnIndex != pair.Item1; ++columnIndex)
                 {
                     var column = new StringColumn( $"Column{columnIndex}" )
                     {

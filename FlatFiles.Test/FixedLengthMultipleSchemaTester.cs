@@ -11,15 +11,15 @@ namespace FlatFiles.Test
         [TestMethod]
         public void TestReader_ReadThreeTypes()
         {
-            StringWriter stringWriter = new StringWriter();
+            var stringWriter = new StringWriter();
             var injector = GetSchemaInjector();
             var options = new FixedLengthOptions { Alignment = FixedAlignment.RightAligned };
             var writer = new FixedLengthWriter( stringWriter, injector, options );
-            writer.Write( new object[] { "First Batch", 2 } );
-            writer.Write( new object[] { 1, "Bob Smith", new DateTime( 2018, 06, 04 ), 12.34m } );
-            writer.Write( new object[] { 2, "Jane Doe", new DateTime( 2018, 06, 05 ), 34.56m } );
-            writer.Write( new object[] { 46.9m, 23.45m, true } );
-            string output = stringWriter.ToString();
+            writer.Write( [ "First Batch", 2 ] );
+            writer.Write( [ 1, "Bob Smith", new DateTime( 2018, 06, 04 ), 12.34m ] );
+            writer.Write( [ 2, "Jane Doe", new DateTime( 2018, 06, 05 ), 34.56m ] );
+            writer.Write( [ 46.9m, 23.45m, true ] );
+            var output = stringWriter.ToString();
             Assert.AreEqual( @"              First Batch  2
          1                Bob Smith  20180604     12.34
          2                 Jane Doe  20180605     34.56
@@ -81,13 +81,13 @@ namespace FlatFiles.Test
             return selector;
         }
 
-        private FixedLengthSchema GetHeaderSchema()
+        private static FixedLengthSchema GetHeaderSchema()
         {
             var mapper = GetHeaderTypeMapper();
             return mapper.GetSchema();
         }
 
-        private FixedLengthSchema GetRecordSchema()
+        private static FixedLengthSchema GetRecordSchema()
         {
             var mapper = GetRecordTypeMapper();
             return mapper.GetSchema();
@@ -102,7 +102,7 @@ namespace FlatFiles.Test
         [TestMethod]
         public void TestTypeMapper_ReadThreeTypes()
         {
-            StringWriter stringWriter = new StringWriter();
+            var stringWriter = new StringWriter();
             var injector = GetTypeMapperInjector();
             var options = new FixedLengthOptions { Alignment = FixedAlignment.RightAligned };
             var writer = injector.GetWriter( stringWriter, options );
@@ -110,7 +110,7 @@ namespace FlatFiles.Test
             writer.Write( new DataRecord { Id = 1, Name = "Bob Smith", CreatedOn = new DateTime( 2018, 06, 04 ), TotalAmount = 12.34m } );
             writer.Write( new DataRecord { Id = 2, Name = "Jane Doe", CreatedOn = new DateTime( 2018, 06, 05 ), TotalAmount = 34.56m } );
             writer.Write( new FooterRecord { TotalAmount = 46.9m, AverageAmount = 23.45m, IsCriteriaMet = true } );
-            string output = stringWriter.ToString();
+            var output = stringWriter.ToString();
             Assert.AreEqual( @"              First Batch  2
          1                Bob Smith  20180604     12.34
          2                 Jane Doe  20180605     34.56
@@ -165,7 +165,7 @@ namespace FlatFiles.Test
             var stringReader = new StringReader( "What's this weird thing?" );
             var selector = GetSchemaSelector();
             var reader = new FixedLengthReader( stringReader, selector );
-            reader.RecordError += ( o, e ) => e.IsHandled = true;
+            reader.RecordError += ( _, e ) => e.IsHandled = true;
             Assert.IsFalse( reader.Read() );
         }
 
@@ -205,7 +205,7 @@ namespace FlatFiles.Test
             return mapper;
         }
 
-        private IFixedLengthTypeMapper<FooterRecord> GetFooterTypeMapper()
+        private static IFixedLengthTypeMapper<FooterRecord> GetFooterTypeMapper()
         {
             var mapper = FixedLengthTypeMapper.Define( () => new FooterRecord() );
             mapper.Property( x => x.TotalAmount, 10 );
@@ -239,8 +239,8 @@ namespace FlatFiles.Test
             selector.When( x => x is DetailRow ).Use( detailMapping );
             selector.When( x => x is Trailer ).Use( trailerMapping );
 
-            StringWriter stringWriter = new StringWriter();
-            ITypedWriter<object> writer = selector.GetWriter( stringWriter );
+            var stringWriter = new StringWriter();
+            var writer = selector.GetWriter( stringWriter );
 
             var now = new DateTime( 2022, 12, 4, 14, 4, 00 );
             var header = new Header
@@ -272,7 +272,7 @@ namespace FlatFiles.Test
             writer.Write( detail2 );
             writer.Write( trailer );
 
-            var expected = @"File-2    20221204  
+            const string expected = @"File-2    20221204  
 3333      Customer1           20221204  12.32     
 9999      Customer2           20221204  20.32     
 1         

@@ -75,7 +75,7 @@ namespace FlatFiles
                 null,  // BaseTableName
                 null,  // ColumnName
                 0,  // ColumnOrdinal
-                Int32.MaxValue,  // ColumnSize
+                int.MaxValue,  // ColumnSize
                 null, // DataType
                 null,  // DataTypeName
                 false,  // IsAliased
@@ -488,7 +488,7 @@ namespace FlatFiles
             Array.Copy( sources, values, length );
             if (Options.IsDBNullReturned)
             {
-                for (int index = 0; index != length; ++index)
+                for (var index = 0; index != length; ++index)
                 {
                     values[index] ??= DBNull.Value;
                 }
