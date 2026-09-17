@@ -55,9 +55,27 @@ namespace FlatFiles
         ///     every later column from the wrong offset and reports nothing. Setting this to true raises a
         ///     <see cref="RecordProcessingException" /> for the record instead, with the same record context a short
         ///     record gets, so both can be handled in the same way. It defaults to false because a file whose records
-        ///     carry trailing content that was always ignored would otherwise stop reading.
+        ///     carry trailing content that was always ignored would otherwise stop reading. It has no effect when
+        ///     <see cref="IsRaggedRight" /> is set, because the last column then takes whatever follows the other
+        ///     windows and no record is too long.
         /// </remarks>
         public bool IsLongRecordRejected { get; set; }
+
+        /// <summary>
+        ///     Gets or sets whether the file is ragged right: every column but the last has a fixed width, and the last
+        ///     runs from its offset to the end of the record, so records differ in length.
+        /// </summary>
+        /// <remarks>
+        ///     By default a record shorter than the total width of the schema's windows raises a
+        ///     <see cref="RecordProcessingException" /> and a longer one is cut at the last window. With this set to true
+        ///     the last column takes everything from its offset to the end of the record, however long or short, and its
+        ///     declared width is not used. A record that ends earlier still is read as far as it
+        ///     goes: a window the record ends inside takes the characters that are there, and a window the record never
+        ///     reaches yields an empty value, which the column's null handling turns into null.
+        ///     <see cref="IsLongRecordRejected" /> has no effect. When writing, the last column is written as formatted,
+        ///     neither padded nor truncated to its window, so a file read ragged and written ragged keeps its shape.
+        /// </remarks>
+        public bool IsRaggedRight { get; set; }
 
         /// <summary>
         ///     Gets or sets the default alignment for the values in the fixed length file.

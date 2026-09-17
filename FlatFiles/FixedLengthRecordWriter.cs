@@ -68,11 +68,27 @@ namespace FlatFiles
 
         void IFormattedColumnHandler.ColumnFormatted( int columnIndex, int start, RecordBuffer destination )
         {
-            var windows = Metadata?.ExecutionContext.Schema.Windows;
-            if (windows is not null && columnIndex < windows.Count)
+            var currentSchema = Metadata?.ExecutionContext.Schema;
+            if (currentSchema is not null && IsFitted( currentSchema, columnIndex ))
             {
-                FitWindow( windows[columnIndex], start );
+                FitWindow( currentSchema.Windows[columnIndex], start );
             }
+        }
+
+        /// <summary>
+        ///     Whether the column at <paramref name="columnIndex" /> is padded or truncated to its window. A trailing
+        ///     column has no window, and in a ragged-right file the last column runs to the end of the record, so both
+        ///     are written as formatted.
+        /// </summary>
+        private bool IsFitted( FixedLengthSchema currentSchema, int columnIndex )
+        {
+            var windows = currentSchema.Windows;
+            if (columnIndex >= windows.Count)
+            {
+                return false;
+            }
+            var isLastColumn = columnIndex == windows.Count - 1 && windows.Count == currentSchema.ColumnDefinitions.Count;
+            return !Options.IsRaggedRight || !isLastColumn;
         }
 
         public FixedLengthSchema GetSchema( object?[] values )
@@ -122,7 +138,10 @@ namespace FlatFiles
             {
                 var start = buffer.Length;
                 buffer.Write( definitions[columnIndex].ColumnName.AsSpan() );
-                FitWindow( windows[columnIndex], start );
+                if (IsFitted( currentSchema, columnIndex ))
+                {
+                    FitWindow( windows[columnIndex], start );
+                }
             }
         }
 
