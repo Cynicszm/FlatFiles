@@ -224,12 +224,70 @@ namespace FlatFiles.Test
             Assert.IsFalse( await typedReader.ReadAsync() );
         }
 
+        [TestMethod]
+        public async Task TestInterfaceDefaults_WithoutAToken_HandTheImplementationNone()
+        {
+            var recorder = new TokenRecordingTypedWriter();
+            ITypedWriter<string> writer = recorder;
+            await writer.WriteAsync( "record" );
+            await writer.WriteSchemaAsync();
+
+            Assert.HasCount( 2, recorder.Recorded );
+            Assert.IsFalse( recorder.Recorded[0].CanBeCanceled );
+            Assert.IsFalse( recorder.Recorded[1].CanBeCanceled );
+        }
+
+        [TestMethod]
+        public async Task TestInterfaceDefaults_WithAToken_PassItThrough()
+        {
+            using var source = new CancellationTokenSource();
+            var recorder = new TokenRecordingTypedWriter();
+            ITypedWriter<string> writer = recorder;
+            await writer.WriteAsync( "record", source.Token );
+
+            Assert.HasCount( 1, recorder.Recorded );
+            Assert.AreEqual( source.Token, recorder.Recorded[0] );
+        }
+
         public sealed class Person
         {
             public int Id { get; set; }
 
             public string Name { get; set; }
         }
+        /// <summary>
+        ///     An implementation outside the library that supplies only the required members, so the overloads without a
+        ///     token are the interface's defaults.
+        /// </summary>
+        private sealed class TokenRecordingTypedWriter : ITypedWriter<string>
+        {
+            public List<CancellationToken> Recorded { get; } = [];
+
+            public IWriter Writer => throw new NotSupportedException();
+
+            public event EventHandler<ColumnErrorEventArgs> ColumnError { add { } remove { } }
+
+            public event EventHandler<RecordErrorEventArgs> RecordError { add { } remove { } }
+
+            public ISchema GetSchema() => null;
+
+            public void WriteSchema() { }
+
+            public Task WriteSchemaAsync( CancellationToken cancellationToken )
+            {
+                Recorded.Add( cancellationToken );
+                return Task.CompletedTask;
+            }
+
+            public void Write( string entity ) { }
+
+            public Task WriteAsync( string entity, CancellationToken cancellationToken )
+            {
+                Recorded.Add( cancellationToken );
+                return Task.CompletedTask;
+            }
+        }
+
 
         /// <summary>
         ///     A reader over a string that records the token passed to each asynchronous read.
