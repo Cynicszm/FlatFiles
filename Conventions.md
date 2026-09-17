@@ -77,7 +77,8 @@ The changelog entries written before this rule was adopted are left as their aut
   or side effects keeps the explicit form.
 - A lambda parameter that is not used is a discard: `( _, e ) => Handle( e )`.
 - A local or parameter never shares a field's name. `schema` in a method body must mean one thing; where a
-  method needs its own, it is `currentSchema`, `currentValues`, `currentContext`.
+  method needs its own, it is `currentSchema`, `currentValues`, `currentContext`. When the parameter belongs to a
+  public member whose name callers may rely on, the field is renamed instead: `cachedValues`, `valueFactory`.
 - Do not convert a method to an expression body just because it fits on one line.
 
 ## Null checks and slicing
@@ -184,7 +185,6 @@ Left as they are, deliberately:
   collection expression no type to take.
 - Setters "never used" on benchmark data classes: the library sets them by reflection.
 - The static per-`TEntity` type check in the two type mapper injectors, which is meant to be one per type.
-- Parameter names on public members, which callers may use as named arguments even when they hide a field.
 
 ## Analysers
 

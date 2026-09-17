@@ -11,9 +11,9 @@ namespace FlatFiles
     /// </summary>
     public sealed class FlatFileDataReader : IDataReader, IFlatFileDataRecord
     {
-        private ISchema? schema;  // cached
-        private ColumnCollection? columns; // cached
-        private object?[]? values; // cached
+        private ISchema? cachedSchema;
+        private ColumnCollection? cachedColumns;
+        private object?[]? cachedValues;
 
         /// <summary>
         ///     Initializes a new instance of a FlatFileParser.
@@ -167,7 +167,7 @@ namespace FlatFiles
             {
                 return false;
             }
-            values = null;  // reset cache
+            cachedValues = null;
             return true;
         }
 
@@ -538,13 +538,13 @@ namespace FlatFiles
 
         private ISchema GetSchema()
         {
-            if (schema is not null)
+            if (cachedSchema is not null)
             {
-                return schema;
+                return cachedSchema;
             }
-            schema = Reader.GetSchema();
+            cachedSchema = Reader.GetSchema();
 
-            return schema ?? throw new NullReferenceException();
+            return cachedSchema ?? throw new NullReferenceException();
         }
 
         private ColumnCollection GetColumns()
@@ -554,19 +554,19 @@ namespace FlatFiles
 
         private ColumnCollection GetColumns( ISchema currentSchema )
         {
-            if (columns is not null)
+            if (cachedColumns is not null)
             {
-                return columns;
+                return cachedColumns;
             }
-            columns = new ColumnCollection();
+            cachedColumns = new ColumnCollection();
             foreach (var column in currentSchema.ColumnDefinitions)
             {
                 if (!column.IsIgnored)
                 {
-                    columns.AddColumn( column );
+                    cachedColumns.AddColumn( column );
                 }
             }
-            return columns;
+            return cachedColumns;
         }
 
         private T GetValue<T>( int i )
@@ -579,13 +579,13 @@ namespace FlatFiles
 
         private object?[] GetValues()
         {
-            if (values is not null)
+            if (cachedValues is not null)
             {
-                return values;
+                return cachedValues;
             }
-            values = Reader.GetValues();
+            cachedValues = Reader.GetValues();
 
-            return values ?? throw new NullReferenceException();
+            return cachedValues ?? throw new NullReferenceException();
         }
     }
 }

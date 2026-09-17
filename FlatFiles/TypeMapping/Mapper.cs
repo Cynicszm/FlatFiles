@@ -142,11 +142,11 @@ namespace FlatFiles.TypeMapping
             return childAccessor;
         }
 
-        private IMapper GetMapper( IMemberAccessor member )
+        private IMapper GetMapper( IMemberAccessor childMember )
         {
-            var entityType = member.Type;
+            var entityType = childMember.Type;
             var mapperType = typeof( Mapper<> ).MakeGenericType( entityType );
-            var mapper = (IMapper) Activator.CreateInstance( mapperType, lookup, codeGenerator, member )!;
+            var mapper = (IMapper) Activator.CreateInstance( mapperType, lookup, codeGenerator, childMember )!;
             return mapper;
         }
     }

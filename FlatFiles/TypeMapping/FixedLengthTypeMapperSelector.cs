@@ -77,9 +77,9 @@ namespace FlatFiles.TypeMapping
             return multiReader;
         }
 
-        private static Func<Func<IRecordContext, object?[], object?>> GetReader( IDynamicFixedLengthTypeMapper defaultMapper )
+        private static Func<Func<IRecordContext, object?[], object?>> GetReader( IDynamicFixedLengthTypeMapper typeMapper )
         {
-            var source = (IMapperSource) defaultMapper;
+            var source = (IMapperSource) typeMapper;
             var reader = source.GetMapper();
             return reader.GetReader;
         }
