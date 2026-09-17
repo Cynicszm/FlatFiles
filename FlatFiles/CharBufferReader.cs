@@ -1,6 +1,7 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using System.Threading.Tasks;
+using System.Threading;
+using System;
 
 namespace FlatFiles
 {
@@ -73,14 +74,15 @@ namespace FlatFiles
         /// <summary>
         ///     Reads more characters from the reader, keeping everything not yet consumed.
         /// </summary>
-        public async ValueTask FillAsync()
-        {
+        /// <param name="cancellationToken">The token to observe while waiting for the operation to complete.</param>
+        public async ValueTask FillAsync( CancellationToken cancellationToken = default )
+{
             if (IsEndOfStream)
             {
                 return;
             }
             var free = MakeRoom();
-            var read = await reader.ReadBlockAsync( free ).ConfigureAwait( false );
+            var read = await reader.ReadBlockAsync( free, cancellationToken ).ConfigureAwait( false );
             RecordRead( read, free.Length );
         }
 

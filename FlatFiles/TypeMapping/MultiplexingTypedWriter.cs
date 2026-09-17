@@ -1,5 +1,6 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
+using System.Threading;
+using System;
 
 namespace FlatFiles.TypeMapping
 {
@@ -35,9 +36,15 @@ namespace FlatFiles.TypeMapping
             writer.WriteSchema();
         }
 
-        public async Task WriteSchemaAsync()
+        public Task WriteSchemaAsync()
         {
-            await writer.WriteSchemaAsync().ConfigureAwait( false );
+            return WriteSchemaAsync( CancellationToken.None );
+        }
+
+        public async Task WriteSchemaAsync( CancellationToken cancellationToken )
+{
+            cancellationToken.ThrowIfCancellationRequested();
+            await writer.WriteSchemaAsync( cancellationToken ).ConfigureAwait( false );
         }
 
         public void Write( object entity )
@@ -46,10 +53,16 @@ namespace FlatFiles.TypeMapping
             writer.Write( values );
         }
 
-        public async Task WriteAsync( object entity )
+        public Task WriteAsync( object entity )
         {
+            return WriteAsync( entity, CancellationToken.None );
+        }
+
+        public async Task WriteAsync( object entity, CancellationToken cancellationToken )
+{
+            cancellationToken.ThrowIfCancellationRequested();
             var values = Serialize( entity );
-            await writer.WriteAsync( values ).ConfigureAwait( false );
+            await writer.WriteAsync( values, cancellationToken ).ConfigureAwait( false );
         }
 
         private object?[] Serialize( object entity )
