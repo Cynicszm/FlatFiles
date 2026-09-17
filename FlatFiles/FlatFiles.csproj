@@ -10,15 +10,15 @@
     <RepositoryUrl>https://github.com/Cynicszm/FlatFiles.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>csv;comma;tab;separated;value;delimited;flat;file;fixed;width;fixed-width;length;fixed-length;parser;parsing;parse</PackageTags>
-    <PackageReleaseNotes>Every asynchronous read and write now has an overload taking a CancellationToken, threaded through to the underlying TextReader and TextWriter: ReadAsync, SkipAsync and GetSchemaAsync on the readers, WriteAsync, WriteSchemaAsync and WriteRawAsync on the writers, the typed readers and writers, ReadAllAsync and WriteAllAsync, and the type mappers' ReadAsync and WriteAsync. The overloads without a token are unchanged for callers and are now default interface members that forward CancellationToken.None, so a class outside the library implementing IReader, IWriter, ITypedReader, ITypedWriter or a type mapper interface adds the token overloads. Source-compatible with 7.1.0 for callers.</PackageReleaseNotes>
+    <PackageReleaseNotes>FixedLengthOptions.IsRaggedRight reads ragged-right fixed-length files: every column but the last has a fixed width and the last runs from its offset to the end of the record, however long or short. A record that ends before the last column is read as far as it goes, a window it ends inside taking the characters present and a window it never reaches being null. IsLongRecordRejected has no effect alongside it. When writing, the last column is written as formatted, neither padded nor truncated. Defaults to false; existing behaviour unchanged. Source-compatible with 7.2.0.</PackageReleaseNotes>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>FlatFiles.snk</AssemblyOriginatorKeyFile>
-    <Version>7.2.0</Version>
+    <Version>7.3.0</Version>
   </PropertyGroup>
 
   <PropertyGroup>
-    <AssemblyVersion>7.2.0.0</AssemblyVersion>
-    <FileVersion>7.2.0.0</FileVersion>
+    <AssemblyVersion>7.3.0.0</AssemblyVersion>
+    <FileVersion>7.3.0.0</FileVersion>
     <PackageLicenseFile>UNLICENSE.txt</PackageLicenseFile>
     <PackageIcon>icon.png</PackageIcon>
     <Nullable>enable</Nullable>
