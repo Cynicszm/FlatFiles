@@ -1,12 +1,13 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
+using System.Threading;
+using System;
 
 namespace FlatFiles.TypeMapping
 {
-    internal sealed class UntypedWriter<TEntity>(ITypedWriter<TEntity> writer) : ITypedWriter<object>
+    internal sealed class UntypedWriter<TEntity>( ITypedWriter<TEntity> writer ) : ITypedWriter<object>
     {
         /// <summary>
-        /// Raised when an error occurs while processing a column.
+        ///     Raised when an error occurs while processing a column.
         /// </summary>
         public event EventHandler<ColumnErrorEventArgs>? ColumnError
         {
@@ -15,7 +16,7 @@ namespace FlatFiles.TypeMapping
         }
 
         /// <summary>
-        /// Raised when an error occurs while processing a record.
+        ///     Raised when an error occurs while processing a record.
         /// </summary>
         public event EventHandler<RecordErrorEventArgs>? RecordError
         {
@@ -35,19 +36,31 @@ namespace FlatFiles.TypeMapping
             writer.WriteSchema();
         }
 
-        public async Task WriteSchemaAsync()
+        public Task WriteSchemaAsync()
         {
-            await writer.WriteSchemaAsync().ConfigureAwait(false);
+            return WriteSchemaAsync( CancellationToken.None );
         }
 
-        public void Write(object entity)
-        {
-            writer.Write((TEntity)entity);
+        public async Task WriteSchemaAsync( CancellationToken cancellationToken )
+{
+            cancellationToken.ThrowIfCancellationRequested();
+            await writer.WriteSchemaAsync( cancellationToken ).ConfigureAwait( false );
         }
 
-        public async Task WriteAsync(object entity)
+        public void Write( object entity )
         {
-            await writer.WriteAsync((TEntity)entity).ConfigureAwait(false);
+            writer.Write( (TEntity) entity );
+        }
+
+        public Task WriteAsync( object entity )
+        {
+            return WriteAsync( entity, CancellationToken.None );
+        }
+
+        public async Task WriteAsync( object entity, CancellationToken cancellationToken )
+{
+            cancellationToken.ThrowIfCancellationRequested();
+            await writer.WriteAsync( (TEntity) entity, cancellationToken ).ConfigureAwait( false );
         }
     }
 }

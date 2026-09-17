@@ -1,69 +1,118 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
+using System.Threading;
 
 namespace FlatFiles.TypeMapping
 {
     /// <summary>
-    /// Supports reading to and writing from flat files for a type.
+    ///     Supports reading to and writing from flat files for a type.
     /// </summary>
     /// <typeparam name="TEntity">The type of the entity read and written.</typeparam>
     public interface IDelimitedTypeMapper<TEntity> : IDelimitedTypeConfiguration<TEntity>
     {
         /// <summary>
-        /// Reads the entities from the given reader.
+        ///     Reads the entities from the given reader.
         /// </summary>
         /// <param name="reader">A reader over the delimited document.</param>
         /// <param name="options">The options controlling how the delimited document is read.</param>
         /// <returns>The entities that are extracted from the file.</returns>
-        IEnumerable<TEntity> Read(TextReader reader, DelimitedOptions? options = null);
+        IEnumerable<TEntity> Read( TextReader reader, DelimitedOptions? options = null );
 
         /// <summary>
-        /// Reads the entities from the given reader.
+        ///     Reads the entities from the given reader.
         /// </summary>
         /// <param name="reader">A reader over the delimited document.</param>
         /// <param name="options">The options controlling how the delimited document is read.</param>
         /// <returns>An asynchronous enumerable over the entities.</returns>
-        IAsyncEnumerable<TEntity> ReadAsync(TextReader reader, DelimitedOptions? options = null);
+        IAsyncEnumerable<TEntity> ReadAsync( TextReader reader, DelimitedOptions? options = null );
 
         /// <summary>
-        /// Gets a typed reader to read entities from the underlying document.
+        ///     Reads the entities from the given reader.
+        /// </summary>
+        /// <param name="reader">A reader over the delimited document.</param>
+        /// <param name="options">The options controlling how the delimited document is read.</param>
+        /// <param name="cancellationToken">The token to observe while waiting for the operation to complete.</param>
+        /// <returns>An asynchronous enumerable over the entities.</returns>
+        /// <remarks>
+        ///     The default implementation forwards to the overload without a token and so cannot observe
+        ///     cancellation; an implementation that can should override it.
+        /// </remarks>
+        IAsyncEnumerable<TEntity> ReadAsync( TextReader reader, DelimitedOptions? options, CancellationToken cancellationToken )
+        {
+            return ReadAsync( reader, options );
+        }
+
+        /// <summary>
+        ///     Gets a typed reader to read entities from the underlying document.
         /// </summary>
         /// <param name="reader">A reader over the delimited document.</param>
         /// <param name="options">The options controlling how the delimited document is read.</param>
         /// <returns>A typed reader.</returns>
-        IDelimitedTypedReader<TEntity> GetReader(TextReader reader, DelimitedOptions? options = null);
+        IDelimitedTypedReader<TEntity> GetReader( TextReader reader, DelimitedOptions? options = null );
 
         /// <summary>
-        /// Writes the given entities to the given stream.
+        ///     Writes the given entities to the given stream.
         /// </summary>
         /// <param name="writer">A writer over the delimited document.</param>
         /// <param name="entities">The entities to write to the stream.</param>
         /// <param name="options">The options used to format the output.</param>
-        void Write(TextWriter writer, IEnumerable<TEntity> entities, DelimitedOptions? options = null);
+        void Write( TextWriter writer, IEnumerable<TEntity> entities, DelimitedOptions? options = null );
 
         /// <summary>
-        /// Writes the given entities to the given stream.
+        ///     Writes the given entities to the given stream.
         /// </summary>
         /// <param name="writer">A writer over the delimited document.</param>
         /// <param name="entities">The entities to write to the stream.</param>
         /// <param name="options">The options used to format the output.</param>
-        Task WriteAsync(TextWriter writer, IEnumerable<TEntity> entities, DelimitedOptions? options = null);
+        Task WriteAsync( TextWriter writer, IEnumerable<TEntity> entities, DelimitedOptions? options = null );
 
         /// <summary>
-        /// Writes the given entities to the given stream.
+        ///     Writes the given entities to the given stream.
         /// </summary>
         /// <param name="writer">A writer over the delimited document.</param>
         /// <param name="entities">The entities to write to the stream.</param>
         /// <param name="options">The options used to format the output.</param>
-        Task WriteAsync(TextWriter writer, IAsyncEnumerable<TEntity> entities, DelimitedOptions? options = null);
+        /// <param name="cancellationToken">The token to observe while waiting for the operation to complete.</param>
+        /// <remarks>
+        ///     The default implementation forwards to the overload without a token and so cannot observe
+        ///     cancellation; an implementation that can should override it.
+        /// </remarks>
+        Task WriteAsync( TextWriter writer, IEnumerable<TEntity> entities, DelimitedOptions? options, CancellationToken cancellationToken )
+        {
+            return WriteAsync( writer, entities, options );
+        }
 
         /// <summary>
-        /// Gets a typed writer to write entities to the underlying document.
+        ///     Writes the given entities to the given stream.
+        /// </summary>
+        /// <param name="writer">A writer over the delimited document.</param>
+        /// <param name="entities">The entities to write to the stream.</param>
+        /// <param name="options">The options used to format the output.</param>
+        Task WriteAsync( TextWriter writer, IAsyncEnumerable<TEntity> entities, DelimitedOptions? options = null );
+
+        /// <summary>
+        ///     Writes the given entities to the given stream.
+        /// </summary>
+        /// <param name="writer">A writer over the delimited document.</param>
+        /// <param name="entities">The entities to write to the stream.</param>
+        /// <param name="options">The options used to format the output.</param>
+        /// <param name="cancellationToken">The token to observe while waiting for the operation to complete.</param>
+        /// <remarks>
+        ///     The default implementation forwards to the overload without a token and so cannot observe
+        ///     cancellation; an implementation that can should override it.
+        /// </remarks>
+        Task WriteAsync( TextWriter writer, IAsyncEnumerable<TEntity> entities, DelimitedOptions? options, CancellationToken cancellationToken )
+        {
+            return WriteAsync( writer, entities, options );
+        }
+
+        /// <summary>
+        ///     Gets a typed writer to write entities to the underlying document.
         /// </summary>
         /// <param name="writer">The writer over the delimited document.</param>
         /// <param name="options">The options controlling how the delimited document is written.</param>
         /// <returns>A typed writer.</returns>
-        ITypedWriter<TEntity> GetWriter(TextWriter writer, DelimitedOptions? options = null);
+        ITypedWriter<TEntity> GetWriter( TextWriter writer, DelimitedOptions? options = null );
     }
 }

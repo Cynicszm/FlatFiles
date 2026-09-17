@@ -1,9 +1,10 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
+using System.Threading;
+using System;
 
 namespace FlatFiles.TypeMapping
 {
-    internal sealed class MultiplexingDelimitedTypedReader(DelimitedReader reader) : IDelimitedTypedReader<object>
+    internal sealed class MultiplexingDelimitedTypedReader( DelimitedReader reader ) : IDelimitedTypedReader<object>
     {
         private object? current;
 
@@ -24,8 +25,8 @@ namespace FlatFiles.TypeMapping
 
         event EventHandler<IRecordParsedEventArgs>? ITypedReader<object>.RecordParsed
         {
-            add => ((IReader)reader).RecordParsed += value;
-            remove => ((IReader)reader).RecordParsed -= value;
+            add => ((IReader) reader).RecordParsed += value;
+            remove => ((IReader) reader).RecordParsed -= value;
         }
 
         public event EventHandler<DelimitedRecordParsedEventArgs>? RecordParsed
@@ -66,9 +67,15 @@ namespace FlatFiles.TypeMapping
             return true;
         }
 
-        public async ValueTask<bool> ReadAsync()
+        public ValueTask<bool> ReadAsync()
         {
-            if (!await reader.ReadAsync().ConfigureAwait(false))
+            return ReadAsync( CancellationToken.None );
+        }
+
+        public async ValueTask<bool> ReadAsync( CancellationToken cancellationToken )
+{
+            cancellationToken.ThrowIfCancellationRequested();
+            if (!await reader.ReadAsync( cancellationToken ).ConfigureAwait( false ))
             {
                 return false;
             }
@@ -91,7 +98,13 @@ namespace FlatFiles.TypeMapping
 
         public ValueTask<bool> SkipAsync()
         {
-            return reader.SkipAsync();
+            return SkipAsync( CancellationToken.None );
+        }
+
+        public ValueTask<bool> SkipAsync( CancellationToken cancellationToken )
+{
+            cancellationToken.ThrowIfCancellationRequested();
+            return reader.SkipAsync( cancellationToken );
         }
     }
 }

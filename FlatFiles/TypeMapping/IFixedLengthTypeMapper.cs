@@ -1,69 +1,118 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
+using System.Threading;
 
 namespace FlatFiles.TypeMapping
 {
     /// <summary>
-    /// Supports configuring reading to and writing from flat files for a type.
+    ///     Supports configuring reading to and writing from flat files for a type.
     /// </summary>
     /// <typeparam name="TEntity">The type of the entity read and written.</typeparam>
     public interface IFixedLengthTypeMapper<TEntity> : IFixedLengthTypeConfiguration<TEntity>
     {
         /// <summary>
-        /// Reads the entities from the given reader.
+        ///     Reads the entities from the given reader.
         /// </summary>
         /// <param name="reader">A reader over the fixed-length document.</param>
         /// <param name="options">The options controlling how the fixed-length document is read.</param>
         /// <returns>The entities that are extracted from the file.</returns>
-        IEnumerable<TEntity> Read(TextReader reader, FixedLengthOptions? options = null);
+        IEnumerable<TEntity> Read( TextReader reader, FixedLengthOptions? options = null );
 
         /// <summary>
-        /// Reads the entities from the given reader.
+        ///     Reads the entities from the given reader.
         /// </summary>
         /// <param name="reader">A reader over the fixed-length document.</param>
         /// <param name="options">The options controlling how the fixed-length document is read.</param>
         /// <returns>An asynchronous enumerable over the entities.</returns>
-        IAsyncEnumerable<TEntity> ReadAsync(TextReader reader, FixedLengthOptions? options = null);
+        IAsyncEnumerable<TEntity> ReadAsync( TextReader reader, FixedLengthOptions? options = null );
 
         /// <summary>
-        /// Gets a typed reader to read entities from the underlying document.
+        ///     Reads the entities from the given reader.
+        /// </summary>
+        /// <param name="reader">A reader over the fixed-length document.</param>
+        /// <param name="options">The options controlling how the fixed-length document is read.</param>
+        /// <param name="cancellationToken">The token to observe while waiting for the operation to complete.</param>
+        /// <returns>An asynchronous enumerable over the entities.</returns>
+        /// <remarks>
+        ///     The default implementation forwards to the overload without a token and so cannot observe
+        ///     cancellation; an implementation that can should override it.
+        /// </remarks>
+        IAsyncEnumerable<TEntity> ReadAsync( TextReader reader, FixedLengthOptions? options, CancellationToken cancellationToken )
+        {
+            return ReadAsync( reader, options );
+        }
+
+        /// <summary>
+        ///     Gets a typed reader to read entities from the underlying document.
         /// </summary>
         /// <param name="reader">A reader over the fixed-length document.</param>
         /// <param name="options">The options controlling how the fixed-length document is read.</param>
         /// <returns>A typed reader.</returns>
-        IFixedLengthTypedReader<TEntity> GetReader(TextReader reader, FixedLengthOptions? options = null);
+        IFixedLengthTypedReader<TEntity> GetReader( TextReader reader, FixedLengthOptions? options = null );
 
         /// <summary>
-        /// Writes the given entities to the given writer.
+        ///     Writes the given entities to the given writer.
         /// </summary>
         /// <param name="writer">A writer over the fixed-length document.</param>
         /// <param name="entities">The entities to write to the document.</param>
         /// <param name="options">The options controlling how the fixed-length document is written.</param>
-        void Write(TextWriter writer, IEnumerable<TEntity> entities, FixedLengthOptions? options = null);
+        void Write( TextWriter writer, IEnumerable<TEntity> entities, FixedLengthOptions? options = null );
 
         /// <summary>
-        /// Writes the given entities to the given writer.
+        ///     Writes the given entities to the given writer.
         /// </summary>
         /// <param name="writer">A writer over the fixed-length document.</param>
         /// <param name="entities">The entities to write to the document.</param>
         /// <param name="options">The options controlling how the fixed-length document is written.</param>
-        Task WriteAsync(TextWriter writer, IEnumerable<TEntity> entities, FixedLengthOptions? options = null);
+        Task WriteAsync( TextWriter writer, IEnumerable<TEntity> entities, FixedLengthOptions? options = null );
 
         /// <summary>
-        /// Writes the given entities to the given writer.
+        ///     Writes the given entities to the given writer.
         /// </summary>
         /// <param name="writer">A writer over the fixed-length document.</param>
         /// <param name="entities">The entities to write to the document.</param>
         /// <param name="options">The options controlling how the fixed-length document is written.</param>
-        Task WriteAsync(TextWriter writer, IAsyncEnumerable<TEntity> entities, FixedLengthOptions? options = null);
+        /// <param name="cancellationToken">The token to observe while waiting for the operation to complete.</param>
+        /// <remarks>
+        ///     The default implementation forwards to the overload without a token and so cannot observe
+        ///     cancellation; an implementation that can should override it.
+        /// </remarks>
+        Task WriteAsync( TextWriter writer, IEnumerable<TEntity> entities, FixedLengthOptions? options, CancellationToken cancellationToken )
+        {
+            return WriteAsync( writer, entities, options );
+        }
 
         /// <summary>
-        /// Gets a typed writer to write entities to the underlying document.
+        ///     Writes the given entities to the given writer.
+        /// </summary>
+        /// <param name="writer">A writer over the fixed-length document.</param>
+        /// <param name="entities">The entities to write to the document.</param>
+        /// <param name="options">The options controlling how the fixed-length document is written.</param>
+        Task WriteAsync( TextWriter writer, IAsyncEnumerable<TEntity> entities, FixedLengthOptions? options = null );
+
+        /// <summary>
+        ///     Writes the given entities to the given writer.
+        /// </summary>
+        /// <param name="writer">A writer over the fixed-length document.</param>
+        /// <param name="entities">The entities to write to the document.</param>
+        /// <param name="options">The options controlling how the fixed-length document is written.</param>
+        /// <param name="cancellationToken">The token to observe while waiting for the operation to complete.</param>
+        /// <remarks>
+        ///     The default implementation forwards to the overload without a token and so cannot observe
+        ///     cancellation; an implementation that can should override it.
+        /// </remarks>
+        Task WriteAsync( TextWriter writer, IAsyncEnumerable<TEntity> entities, FixedLengthOptions? options, CancellationToken cancellationToken )
+        {
+            return WriteAsync( writer, entities, options );
+        }
+
+        /// <summary>
+        ///     Gets a typed writer to write entities to the underlying document.
         /// </summary>
         /// <param name="writer">The writer over the fixed-length document.</param>
         /// <param name="options">The options controlling how the fixed-length document is written.</param>
         /// <returns>A typed writer.</returns>
-        ITypedWriter<TEntity> GetWriter(TextWriter writer, FixedLengthOptions? options = null);
+        ITypedWriter<TEntity> GetWriter( TextWriter writer, FixedLengthOptions? options = null );
     }
 }
