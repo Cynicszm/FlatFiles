@@ -44,8 +44,8 @@ jobs:
           $lines = [math]::Round(100 * [double] $root.'line-rate')
           $branches = [math]::Round(100 * [double] $root.'branch-rate')
           Write-Host "Coverage of FlatFiles: $lines% of lines ($($root.'lines-covered') of $($root.'lines-valid')), $branches% of branches ($($root.'branches-covered') of $($root.'branches-valid'))"
-          if ($lines -lt 80) { throw "Line coverage is $lines%, below the 80% the pull request template requires." }
-          if ($branches -lt 80) { throw "Branch coverage is $branches%, below the 80% the pull request template requires." }
+          if ($lines -lt 90) { throw "Line coverage is $lines%, below the 90% Conventions.md requires." }
+          if ($branches -lt 90) { throw "Branch coverage is $branches%, below the 90% Conventions.md requires." }
 
       - name: Pack
         # Runs package validation against the baseline version named in the project file.

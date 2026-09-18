@@ -94,7 +94,10 @@ namespace FlatFiles.TypeMapping
             var values = reader.GetValues();
             IReaderWithMetadata metadataReader = reader;
             var recordContext = metadataReader.GetMetadata();
-            current = Deserializer!(recordContext, values);
+            // No matcher accepted the record and no default took it, so the underlying reader parsed it with a schema
+            // built from its own values and there is nothing to make an entity with.
+            var deserializer = Deserializer ?? throw new FlatFileException( Properties.Resources.MissingMatcher );
+            current = deserializer( recordContext, values );
         }
 
         public bool Skip()

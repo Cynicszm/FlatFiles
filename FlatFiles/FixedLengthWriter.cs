@@ -84,9 +84,12 @@ namespace FlatFiles
             {
                 return;
             }
-            recordWriter.WriteSchema();
-            recordWriter.WriteRecordSeparator();
-            ++recordWriter.PhysicalRecordNumber;
+            if (recordWriter.ActualSchema is not null)
+            {
+                recordWriter.WriteSchema();
+                recordWriter.WriteRecordSeparator();
+                ++recordWriter.PhysicalRecordNumber;
+            }
             isSchemaWritten = true;
         }
 
@@ -111,9 +114,12 @@ namespace FlatFiles
             {
                 return;
             }
-            await recordWriter.WriteSchemaAsync( cancellationToken ).ConfigureAwait( false );
-            await recordWriter.WriteRecordSeparatorAsync( cancellationToken ).ConfigureAwait( false );
-            ++recordWriter.PhysicalRecordNumber;
+            if (recordWriter.ActualSchema is not null)
+            {
+                await recordWriter.WriteSchemaAsync( cancellationToken ).ConfigureAwait( false );
+                await recordWriter.WriteRecordSeparatorAsync( cancellationToken ).ConfigureAwait( false );
+                ++recordWriter.PhysicalRecordNumber;
+            }
             isSchemaWritten = true;
         }
 
