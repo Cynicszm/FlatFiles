@@ -10,15 +10,28 @@
     <RepositoryUrl>https://github.com/Cynicszm/FlatFiles.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>csv;comma;tab;separated;value;delimited;flat;file;fixed;width;fixed-width;length;fixed-length;parser;parsing;parse</PackageTags>
-    <PackageReleaseNotes>FixedLengthOptions.IsRaggedRight reads ragged-right fixed-length files: every column but the last has a fixed width and the last runs from its offset to the end of the record, however long or short. A record that ends before the last column is read as far as it goes, a window it ends inside taking the characters present and a window it never reaches being null. IsLongRecordRejected has no effect alongside it. When writing, the last column is written as formatted, neither padded nor truncated. Defaults to false; existing behaviour unchanged. Source-compatible with 7.2.0.</PackageReleaseNotes>
+    <PackageReleaseNotes>The package now carries the XML documentation for every public member, so IntelliSense shows the same text as the source, and a symbol package (.snupkg) with Source Link to the tagged commit, so a debugger can step into the library. No code changes. Source- and binary-compatible with 7.3.0, and validated against it at pack time.</PackageReleaseNotes>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>FlatFiles.snk</AssemblyOriginatorKeyFile>
-    <Version>7.3.0</Version>
+    <Version>7.4.0</Version>
   </PropertyGroup>
 
   <PropertyGroup>
-    <AssemblyVersion>7.3.0.0</AssemblyVersion>
-    <FileVersion>7.3.0.0</FileVersion>
+    <!-- Ships with the package: IntelliSense text, and a symbol package whose Source Link points at the commit. -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <!-- Pack fails if the public API loses or changes a member relative to the last release, so a breaking
+         change has to be declared here by moving the baseline, not discovered by a consumer. -->
+    <EnablePackageValidation>true</EnablePackageValidation>
+    <PackageValidationBaselineVersion>7.3.0</PackageValidationBaselineVersion>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <AssemblyVersion>7.4.0.0</AssemblyVersion>
+    <FileVersion>7.4.0.0</FileVersion>
     <PackageLicenseFile>UNLICENSE.txt</PackageLicenseFile>
     <PackageIcon>icon.png</PackageIcon>
     <Nullable>enable</Nullable>

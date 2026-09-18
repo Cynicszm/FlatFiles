@@ -164,6 +164,12 @@ scoped to the library module so the tests and benchmarks never count towards the
 The root `CoveragePercent` in the report is the number. dotCover is a global tool
 (`dotnet tool install -g JetBrains.dotCover.CommandLineTools`); nothing in the test project is needed.
 
+The `Build and test` workflow runs the same build, tests, coverage measurement and pack on every pull
+request and fails below 80%, so the figure in a PR description is the one the workflow printed. The pack
+step also runs package validation against the last released version named in the project file
+(`PackageValidationBaselineVersion`); a public API change that fails it is declared by moving the baseline
+in the same PR, with the reason in the changelog, not by suppressing the error.
+
 The cheapest coverage is rarely the most valuable, so prefer tests that assert behaviour and let coverage
 follow. The exception that proves it: the twenty-one property mapping classes are near-identical fluent
 setters, and one reflective test drives every method on all of them precisely so that a new mapping or

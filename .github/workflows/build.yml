@@ -1,0 +1,54 @@
+# Builds, tests, measures coverage and packs on every pull request and every push to master, so a
+# change is verified by the same steps the release runs before anyone merges it. Nothing is
+# published here; that is publish.yml, which runs on a release.
+name: Build and test
+on:
+  pull_request:
+    branches: [master]
+  push:
+    branches: [master]
+
+jobs:
+  build:
+    # Matches publish.yml and where the suite is verified locally. The tests pin the culture to
+    # en-US, but Linux resolves those formats through ICU rather than Windows NLS.
+    runs-on: windows-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Check out
+        uses: actions/checkout@v7
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Build
+        run: dotnet build FlatFiles.sln --configuration Release -p:ContinuousIntegrationBuild=true
+
+      - name: Test
+        run: dotnet test FlatFiles.sln --configuration Release --no-build
+
+      - name: Measure coverage
+        # The bar the pull request template asks for. dotCover's command line tools are free to
+        # use; the JSON report is read back rather than the console summary, which is not stable.
+        shell: pwsh
+        run: |
+          dotnet tool install --global JetBrains.dotCover.CommandLineTools
+          dotCover cover-dotnet --Output=coverage.json --ReportType=JSON --Filters="+:module=FlatFiles;-:module=FlatFiles.Test;-:module=FlatFiles.Benchmark" -- test FlatFiles.Test --configuration Release --no-build
+          if ($LASTEXITCODE -ne 0) { throw "dotCover failed with exit code $LASTEXITCODE." }
+          $report = Get-Content coverage.json -Raw | ConvertFrom-Json
+          $percent = [int] $report.CoveragePercent
+          Write-Host "Statement coverage of FlatFiles: $percent% ($($report.CoveredStatements) of $($report.TotalStatements))"
+          if ($percent -lt 80) { throw "Coverage is $percent%, below the 80% the pull request template requires." }
+
+      - name: Pack
+        # Runs package validation against the baseline version named in the project file.
+        run: dotnet pack FlatFiles/FlatFiles.csproj --configuration Release --no-build --output artifacts -p:ContinuousIntegrationBuild=true
+
+      - name: Upload the package
+        uses: actions/upload-artifact@v7
+        with:
+          name: nupkg
+          path: artifacts/*nupkg
