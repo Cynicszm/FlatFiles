@@ -335,6 +335,80 @@ namespace FlatFiles
 
 #endregion
 
+#region GetDateOnly
+
+        extension( IFlatFileDataRecord record )
+        {
+            /// <summary>
+            ///     Gets the DateOnly value of the specified column.
+            /// </summary>
+            /// <param name="name">The name of the column to find.</param>
+            /// <returns>The DateOnly value of the specified column.</returns>
+            public DateOnly GetDateOnly( string name )
+            {
+                return Get( record, name, record.GetDateOnly );
+            }
+
+            /// <summary>
+            ///     Gets the value of the specified column as a DateOnly -or- null if the column is null.
+            /// </summary>
+            /// <param name="i">The zero-based column ordinal.</param>
+            /// <returns>The value of the column -or- null if the column is null.</returns>
+            public DateOnly? GetNullableDateOnly( int i )
+            {
+                return GetNullable( record, i, record.GetDateOnly );
+            }
+
+            /// <summary>
+            ///     Gets the value of the specified column as a DateOnly -or- null if the column is null.
+            /// </summary>
+            /// <param name="name">The name of the column to find.</param>
+            /// <returns>The value of the column -or- null if the column is null.</returns>
+            public DateOnly? GetNullableDateOnly( string name )
+            {
+                return GetNullable( record, name, record.GetDateOnly );
+            }
+        }
+
+#endregion
+
+#region GetTimeOnly
+
+        extension( IFlatFileDataRecord record )
+        {
+            /// <summary>
+            ///     Gets the TimeOnly value of the specified column.
+            /// </summary>
+            /// <param name="name">The name of the column to find.</param>
+            /// <returns>The TimeOnly value of the specified column.</returns>
+            public TimeOnly GetTimeOnly( string name )
+            {
+                return Get( record, name, record.GetTimeOnly );
+            }
+
+            /// <summary>
+            ///     Gets the value of the specified column as a TimeOnly -or- null if the column is null.
+            /// </summary>
+            /// <param name="i">The zero-based column ordinal.</param>
+            /// <returns>The value of the column -or- null if the column is null.</returns>
+            public TimeOnly? GetNullableTimeOnly( int i )
+            {
+                return GetNullable( record, i, record.GetTimeOnly );
+            }
+
+            /// <summary>
+            ///     Gets the value of the specified column as a TimeOnly -or- null if the column is null.
+            /// </summary>
+            /// <param name="name">The name of the column to find.</param>
+            /// <returns>The value of the column -or- null if the column is null.</returns>
+            public TimeOnly? GetNullableTimeOnly( string name )
+            {
+                return GetNullable( record, name, record.GetTimeOnly );
+            }
+        }
+
+#endregion
+
 #region GetDateTimeOffset
 
         extension( IFlatFileDataRecord record )
