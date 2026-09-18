@@ -162,7 +162,9 @@ scoped to the library module so the tests and benchmarks never count towards the
     dotCover cover-dotnet --Output=coverage.json --ReportType=JSON --Filters="+:module=FlatFiles" -- test FlatFiles.sln -c Release
 
 The root `CoveragePercent` in the report is the number. dotCover is a global tool
-(`dotnet tool install -g JetBrains.dotCover.CommandLineTools`); nothing in the test project is needed.
+(`dotnet tool install -g JetBrains.dotCover.CommandLineTools --version 2025.1.1`); nothing in the test project
+is needed. The version matters: 2026.2 renamed `cover-dotnet` to `cover` with different parameters, and the
+workflow pins 2025.1.1 for that reason.
 
 The `Build and test` workflow runs the same build, tests, coverage measurement and pack on every pull
 request and fails below 80%, so the figure in a PR description is the one the workflow printed. The pack

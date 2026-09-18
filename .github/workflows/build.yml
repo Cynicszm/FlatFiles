@@ -33,11 +33,14 @@ jobs:
       - name: Measure coverage
         # The bar the pull request template asks for. dotCover's command line tools are free to
         # use; the JSON report is read back rather than the console summary, which is not stable.
+        # The version is pinned: 2026.2 renamed cover-dotnet to cover with different parameters
+        # and exits 0 on an unrecognised command, so an unpinned install fails only at Get-Content.
         shell: pwsh
         run: |
-          dotnet tool install --global JetBrains.dotCover.CommandLineTools
+          dotnet tool install --global JetBrains.dotCover.CommandLineTools --version 2025.1.1
           dotCover cover-dotnet --Output=coverage.json --ReportType=JSON --Filters="+:module=FlatFiles;-:module=FlatFiles.Test;-:module=FlatFiles.Benchmark" -- test FlatFiles.Test --configuration Release --no-build
           if ($LASTEXITCODE -ne 0) { throw "dotCover failed with exit code $LASTEXITCODE." }
+          if (-not (Test-Path coverage.json)) { throw 'dotCover produced no coverage.json.' }
           $report = Get-Content coverage.json -Raw | ConvertFrom-Json
           $percent = [int] $report.CoveragePercent
           Write-Host "Statement coverage of FlatFiles: $percent% ($($report.CoveredStatements) of $($report.TotalStatements))"
