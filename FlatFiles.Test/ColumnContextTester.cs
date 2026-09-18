@@ -128,12 +128,10 @@ namespace FlatFiles.Test
         }
 
         internal class IndexTrackingColumn(
-            IColumnDefinition columnDefinition,
+            IColumnDefinition column,
             List<int> physicalIndexes,
             List<int> logicalIndexes ) : IColumnDefinition
         {
-            private readonly IColumnDefinition column = columnDefinition;
-
             public string ColumnName => column.ColumnName;
 
             public bool IsIgnored => column.IsIgnored;

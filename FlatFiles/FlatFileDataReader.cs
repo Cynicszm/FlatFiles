@@ -111,7 +111,7 @@ namespace FlatFiles
 
         private static DataTable GetEmptySchemaDataTable( ISchema schema )
         {
-            var schemaTable = new DataTable()
+            var schemaTable = new DataTable
             {
                 Locale = CultureInfo.InvariantCulture,
                 MinimumCapacity = schema.ColumnDefinitions.PhysicalCount

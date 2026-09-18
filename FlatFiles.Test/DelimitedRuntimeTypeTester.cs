@@ -154,10 +154,6 @@ namespace FlatFiles.Test
 
         internal class InternalPerson
         {
-            internal InternalPerson()
-            {
-            }
-
             internal string Name { get; set; }
         }
     }

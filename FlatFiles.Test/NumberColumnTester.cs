@@ -89,8 +89,6 @@ namespace FlatFiles.Test
         /// <summary>
         ///     A numeric type the library does not ship a column for, added by a caller in a constructor's worth of code.
         /// </summary>
-        private sealed class BigIntegerColumn( string columnName ) : NumberColumn<BigInteger>( columnName, NumberStyles.Integer )
-        {
-        }
+        private sealed class BigIntegerColumn( string columnName ) : NumberColumn<BigInteger>( columnName, NumberStyles.Integer );
     }
 }

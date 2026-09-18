@@ -28,24 +28,23 @@ namespace FlatFiles.TypeMapping
 
         public static IMemberAccessor? GetMember( Type entityType, string[] memberNames, int nameIndex, IMemberAccessor? parent )
         {
-            if (nameIndex == memberNames.Length)
+            var currentType = entityType;
+            var accessor = parent;
+            for (var index = nameIndex; index != memberNames.Length; ++index)
             {
-                return parent;
+                var memberName = memberNames[index];
+                var propertyInfo = GetProperty( currentType, memberName );
+                if (propertyInfo is not null)
+                {
+                    accessor = new PropertyAccessor( propertyInfo, accessor );
+                    currentType = propertyInfo.PropertyType;
+                    continue;
+                }
+                var fieldInfo = GetField( currentType, memberName ) ?? throw new ArgumentException( Resources.BadPropertySelector, nameof( memberNames ) );
+                accessor = new FieldAccessor( fieldInfo, accessor );
+                currentType = fieldInfo.FieldType;
             }
-            var memberName = memberNames[nameIndex];
-            var propertyInfo = GetProperty( entityType, memberName );
-            if (propertyInfo is not null)
-            {
-                var accessor = new PropertyAccessor( propertyInfo, parent );
-                return GetMember( propertyInfo.PropertyType, memberNames, nameIndex + 1, accessor );
-            }
-            var fieldInfo = GetField( entityType, memberName );
-            if (fieldInfo is null)
-            {
-                throw new ArgumentException( Resources.BadPropertySelector, nameof( memberName ) );
-            }
-            var fieldAccessor = new FieldAccessor( fieldInfo, parent );
-            return GetMember( fieldInfo.FieldType, memberNames, nameIndex + 1, fieldAccessor );
+            return accessor;
         }
 
         private static PropertyInfo? GetProperty( Type type, string propertyName )

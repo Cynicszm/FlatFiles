@@ -397,16 +397,14 @@ namespace FlatFiles
         /// </summary>
         private string[]? PartitionRecord( FixedLengthSchema currentSchema, string record )
         {
-            if (!options.IsRaggedRight && record.Length < currentSchema.TotalWidth)
+            var lengthError = options.IsRaggedRight ? null
+                : record.Length < currentSchema.TotalWidth ? Resources.FixedLengthRecordTooShort
+                : options.IsLongRecordRejected && record.Length > currentSchema.TotalWidth ? Resources.FixedLengthRecordTooLong
+                : null;
+            if (lengthError is not null)
             {
                 var metadata = NewRecordContext( currentSchema, record, null );
-                ProcessError( new RecordProcessingException( metadata, Resources.FixedLengthRecordTooShort ) );
-                return null;
-            }
-            if (!options.IsRaggedRight && options.IsLongRecordRejected && record.Length > currentSchema.TotalWidth)
-            {
-                var metadata = NewRecordContext( currentSchema, record, null );
-                ProcessError( new RecordProcessingException( metadata, Resources.FixedLengthRecordTooLong ) );
+                ProcessError( new RecordProcessingException( metadata, lengthError ) );
                 return null;
             }
             var windows = currentSchema.Windows;

@@ -36,15 +36,15 @@ namespace FlatFiles.Benchmark
             var quotedRecord = string.Join( ",", quotedValues );
             quotedData = string.Join( Environment.NewLine, new[] { header }.Concat( Enumerable.Repeat( 0, 10000 ).Select( _ => quotedRecord ) ) );
 
-            people = GetMapper().Read( new StringReader( data ), new DelimitedOptions { IsFirstRecordSchema = true } ).ToList();
+            sample = [.. GetMapper().Read( new StringReader( data ), new DelimitedOptions { IsFirstRecordSchema = true } )];
             var fixedLengthWriter = new StringWriter();
-            GetFixedLengthMapper().Write( fixedLengthWriter, people, FixedLengthOptions );
+            GetFixedLengthMapper().Write( fixedLengthWriter, sample, FixedLengthOptions );
             fixedLengthData = fixedLengthWriter.ToString();
         }
 
         private static readonly FixedLengthOptions FixedLengthOptions = new() { RecordSeparator = Environment.NewLine };
 
-        private readonly List<Person> people;
+        private readonly List<Person> sample;
         private readonly string fixedLengthData;
 
         private static IDelimitedTypeMapper<Person> GetMapper()
@@ -89,7 +89,7 @@ namespace FlatFiles.Benchmark
         public string RunFlatFiles_TypeMapper_Write()
         {
             var writer = new StringWriter();
-            GetMapper().Write( writer, people, new DelimitedOptions { IsFirstRecordSchema = true } );
+            GetMapper().Write( writer, sample, new DelimitedOptions { IsFirstRecordSchema = true } );
             return writer.ToString();
         }
 
@@ -103,7 +103,7 @@ namespace FlatFiles.Benchmark
         public string RunFlatFiles_FixedLength_TypeMapper_Write()
         {
             var writer = new StringWriter();
-            GetFixedLengthMapper().Write( writer, people, FixedLengthOptions );
+            GetFixedLengthMapper().Write( writer, sample, FixedLengthOptions );
             return writer.ToString();
         }
 
@@ -112,7 +112,7 @@ namespace FlatFiles.Benchmark
         {
             var writer = new StringWriter();
             var csvWriter = new CsvHelper.CsvWriter( writer, CultureInfo.InvariantCulture );
-            csvWriter.WriteRecords( people );
+            csvWriter.WriteRecords( sample );
             csvWriter.Flush();
             return writer.ToString();
         }

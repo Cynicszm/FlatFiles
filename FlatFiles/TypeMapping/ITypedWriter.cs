@@ -8,7 +8,7 @@ namespace FlatFiles.TypeMapping
     ///     Represents a writer that will write entities.
     /// </summary>
     /// <typeparam name="TEntity">The type of the entity being written.</typeparam>
-    public interface ITypedWriter<TEntity>
+    public interface ITypedWriter<in TEntity>
     {
         /// <summary>
         ///     Gets the underlying writer.

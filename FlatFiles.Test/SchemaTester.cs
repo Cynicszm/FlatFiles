@@ -103,7 +103,7 @@ namespace FlatFiles.Test
             IColumnDefinition name = new StringColumn( "name" );
             IColumnDefinition created = new DateTimeColumn( "created" );
             schema.AddColumn( id ).AddColumn( name ).AddColumn( created );
-            IEnumerable collection = schema.ColumnDefinitions;
+            Assert.IsInstanceOfType<IEnumerable>( schema.ColumnDefinitions );
         }
     }
 }

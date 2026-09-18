@@ -11,7 +11,7 @@ namespace FlatFiles.Test
     public class FlatFileDataReaderTester
     {
         [TestMethod]
-        public void ShouldGetDefaultSchemaForCSVFile()
+        public void ShouldGetDefaultSchemaForCsvFile()
         {
             var dataReader = GetFlatFileReaderWithDefaultSchema();
             var schema = dataReader.GetSchemaTable();
@@ -67,7 +67,7 @@ namespace FlatFiles.Test
         }
 
         [TestMethod]
-        public void ShouldGetSpecifiedSchemaForCSVFile()
+        public void ShouldGetSpecifiedSchemaForCsvFile()
         {
             var dataReader = GetFlatFileReader();
             var schemaTable = dataReader.GetSchemaTable();
