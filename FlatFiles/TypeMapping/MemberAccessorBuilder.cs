@@ -122,28 +122,9 @@ namespace FlatFiles.TypeMapping
             return propertyInfo.DeclaringType!.GetTypeInfo().IsAssignableFrom( typeof( TEntity ) ) ? propertyInfo : null;
         }
 
-        public static FieldInfo? GetField<TEntity, TValue>( Expression<Func<TEntity, TValue>> accessor )
-        {
-            var memberInfo = GetMemberInfo( accessor );
-            if (memberInfo is not FieldInfo fieldInfo) 
-            {
-                return null;
-            }
-            return fieldInfo.DeclaringType!.GetTypeInfo().IsAssignableFrom( typeof( TEntity ) ) ? fieldInfo : null;
-        }
-
         public static MemberInfo? GetMemberInfo<TEntity, TValue>( Expression<Func<TEntity, TValue>> accessor )
         {
             return accessor.Body is MemberExpression member ? member.Member : null;
-        }
-
-        public static MethodInfo? GetMethod<TEntity, TReturn>( Expression<Func<TEntity, TReturn>> accessor )
-        {
-            if (accessor.Body is not MethodCallExpression method)
-            {
-                return null;
-            }
-            return method.Method.DeclaringType!.GetTypeInfo().IsAssignableFrom( typeof( TEntity ) ) ? method.Method : null;
         }
 
         public static MethodInfo? GetMethod<TEntity>( Expression<Action<TEntity>> accessor )

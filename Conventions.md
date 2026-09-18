@@ -156,7 +156,7 @@ older forms are flagged by the MSTest analysers and removed in MSTest 4.
 
 ## Coverage
 
-Line and branch coverage of the library both stay at or above 80%. Measure them with `dotnet-coverage` over
+Line and branch coverage of the library both stay at or above 90%. Measure them with `dotnet-coverage` over
 the test project, scoped to the library assembly so the tests and benchmarks never count towards their own
 figure:
 
@@ -168,7 +168,7 @@ in a PR are those two, rounded. `dotnet-coverage` is Microsoft's collector, inst
 been stable across releases, which is why it replaced dotCover here.
 
 The `Build and test` workflow runs the same build, tests, coverage measurement and pack on every pull
-request and fails if either rate is below 80%, so the figures in a PR description are the ones the workflow
+request and fails if either rate is below 90%, so the figures in a PR description are the ones the workflow
 printed. The pack
 step also runs package validation against the last released version named in the project file
 (`PackageValidationBaselineVersion`). A public API change that fails it is declared in the same PR, with the
