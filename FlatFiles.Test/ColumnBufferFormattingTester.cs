@@ -54,7 +54,7 @@ namespace FlatFiles.Test
             AssertSameAsString( new GuidColumn( "c" ) { OutputFormat = "B" }, SampleGuid );
             AssertSameAsString( new CharColumn( "c" ), 'x' );
             AssertSameAsString( new CharArrayColumn( "c" ), "chars".ToCharArray() );
-            AssertSameAsString( new ByteArrayColumn( "c" ) { Encoding = Encoding.UTF8 }, Encoding.UTF8.GetBytes( "naïve" ) );
+            AssertSameAsString( new ByteArrayColumn( "c" ) { Encoding = Encoding.UTF8 }, "naïve"u8.ToArray() );
             AssertSameAsString( new BooleanColumn( "c" ) { TrueString = "yes", FalseString = "no" }, true );
             AssertSameAsString( new BooleanColumn( "c" ) { TrueString = "yes", FalseString = "no" }, false );
             AssertSameAsString( new StringColumn( "c" ), "plain text" );

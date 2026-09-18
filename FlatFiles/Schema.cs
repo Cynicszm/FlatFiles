@@ -86,21 +86,21 @@ namespace FlatFiles
             {
                 return ParseWithoutContext( definition, destinationIndex, rawValue );
             }
-            if (!definition.IsColumnContextRequired && options.FormatProvider is null)
+            if (definition.IsColumnContextRequired || options.FormatProvider is not null)
             {
-                // Nothing on this column can look at its context, so none is built unless the parse fails and the
-                // error has to be reported with one. The options' format provider reaches a column only through the
-                // context, so its presence keeps the context.
-                try
-                {
-                    return definition.Parse( null, rawValue );
-                }
-                catch (Exception exception)
-                {
-                    return RecoverParse( NewColumnContext( context, columnIndex, destinationIndex ), rawValue, exception );
-                }
+                // The options' format provider reaches a column only through the context, so its presence keeps it.
+                return ParseWithContext( NewColumnContext( context, columnIndex, destinationIndex ), rawValue );
             }
-            return ParseWithContext( NewColumnContext( context, columnIndex, destinationIndex ), rawValue );
+            // Nothing on this column can look at its context, so none is built unless the parse fails and the error
+            // has to be reported with one.
+            try
+            {
+                return definition.Parse( null, rawValue );
+            }
+            catch (Exception exception)
+            {
+                return RecoverParse( NewColumnContext( context, columnIndex, destinationIndex ), rawValue, exception );
+            }
         }
 
         private object? ParseWithContext( IColumnContext columnContext, string rawValue )

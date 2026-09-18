@@ -116,15 +116,15 @@ namespace FlatFiles.TypeMapping
 
         private sealed class TypeMapperMatcher( IDynamicFixedLengthTypeMapper typeMapper, Func<object, bool> predicate ) : ITypeMatcherContext
         {
-            public IDynamicFixedLengthTypeMapper TypeMapper { get; } = typeMapper;
+            private IDynamicFixedLengthTypeMapper TypeMapper { get; } = typeMapper;
 
             public Func<object, bool> Predicate { get; } = predicate;
 
             public bool IsMatch { get; set; }
 
-            public int LogicalCount { get; set; }
+            public int LogicalCount { get; private set; }
 
-            public Action<IRecordContext, object?, object?[]>? Serializer { get; set; }
+            private Action<IRecordContext, object?, object?[]>? Serializer { get; set; }
 
             void ITypeMatcherContext.Serialize( IRecordContext context, object? value, object?[] values )
             {

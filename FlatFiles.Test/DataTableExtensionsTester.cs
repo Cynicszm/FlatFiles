@@ -22,7 +22,7 @@ namespace FlatFiles.Test
             DataTable table = null;
             var stringReader = new StringReader( string.Empty );
             IReader parser = new DelimitedReader( stringReader );
-            Assert.ThrowsExactly<ArgumentNullException>( () => DataTableExtensions.ReadFlatFile( table, parser ) );
+            Assert.ThrowsExactly<ArgumentNullException>( () => table.ReadFlatFile( parser ) );
         }
 
         /// <summary>
@@ -175,7 +175,7 @@ namespace FlatFiles.Test
             schema.AddColumn( new DateTimeColumn( "created" ) );
             schema.AddColumn( new DecimalColumn( "avg" ) );
             IReader csvReader = new DelimitedReader( stringReader, schema, options );
-            table.ReadFlatFile( csvReader, LoadOption.PreserveChanges );
+            table.ReadFlatFile( csvReader );
 
             Assert.AreEqual( 4, table.Columns.Count );
             Assert.IsTrue( table.Columns.Contains( "id" ), "The ID column was not extracted." );
