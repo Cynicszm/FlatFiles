@@ -10,7 +10,7 @@
     <RepositoryUrl>https://github.com/Cynicszm/FlatFiles.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>csv;comma;tab;separated;value;delimited;flat;file;fixed;width;fixed-width;length;fixed-length;parser;parsing;parse</PackageTags>
-    <PackageReleaseNotes>The package now carries the XML documentation for every public member, so IntelliSense shows the same text as the source, and a symbol package (.snupkg) with Source Link to the tagged commit, so a debugger can step into the library. No code changes. Source- and binary-compatible with 7.3.0, and validated against it at pack time.</PackageReleaseNotes>
+    <PackageReleaseNotes>Mappers now detect a runtime without dynamic code (Native AOT, or the IsDynamicCodeSupported switch off) and use reflection instead of Reflection.Emit, so a published AOT application maps entities without throwing. A column is given a ColumnContext only when a hook, a custom null formatter or default value, a complex column or a subclass could read it; errors still carry a full context. Typed reads allocate about a third less. The package carries the XML documentation for every public member and a symbol package with Source Link. Source-compatible with 7.3.0 and validated against it at pack time.</PackageReleaseNotes>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>FlatFiles.snk</AssemblyOriginatorKeyFile>
     <Version>7.4.0</Version>
