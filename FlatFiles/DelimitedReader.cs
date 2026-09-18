@@ -85,12 +85,15 @@ namespace FlatFiles
         /// </summary>
         public event EventHandler<DelimitedRecordParsedEventArgs>? RecordParsed;
 
+        private EventHandler<IRecordParsedEventArgs>? recordParsedUntyped;
+
         event EventHandler<IRecordParsedEventArgs>? IReader.RecordParsed
         {
-            // EventHandler<T> is contravariant, so the interface handler subscribes to the typed event as it is and can
-            // be removed again. Wrapping it in a lambda made every removal a silent no-op.
-            add => RecordParsed += value;
-            remove => RecordParsed -= value;
+            // Kept apart from the typed event. EventHandler<T> is contravariant, so an interface handler converts to
+            // the typed delegate type, but Delegate.Combine refuses to join delegates of two runtime types once both
+            // kinds are subscribed. A list of its own lets each be added and removed as itself.
+            add => recordParsedUntyped += value;
+            remove => recordParsedUntyped -= value;
         }
 
         /// <summary>
@@ -350,7 +353,12 @@ namespace FlatFiles
             {
                 return null;
             }
-            RecordParsed?.Invoke( this, new DelimitedRecordParsedEventArgs( currentContext, currentValues ) );
+            if (RecordParsed is not null || recordParsedUntyped is not null)
+            {
+                var parsedArgs = new DelimitedRecordParsedEventArgs( currentContext, currentValues );
+                RecordParsed?.Invoke( this, parsedArgs );
+                recordParsedUntyped?.Invoke( this, parsedArgs );
+            }
             return currentValues;
         }
 
