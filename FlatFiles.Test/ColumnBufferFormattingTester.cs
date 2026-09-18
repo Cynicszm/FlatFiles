@@ -48,6 +48,10 @@ namespace FlatFiles.Test
             AssertSameAsString( new DateTimeColumn( "c" ), when );
             AssertSameAsString( new DateTimeColumn( "c" ) { OutputFormat = "'The date is' dddd, dd MMMM yyyy 'at' HH:mm:ss.fffffff 'precisely'" }, when );
             AssertSameAsString( new DateTimeOffsetColumn( "c" ) { OutputFormat = "o" }, new DateTimeOffset( when, TimeSpan.FromHours( 1 ) ) );
+            AssertSameAsString( new DateOnlyColumn( "c" ), DateOnly.FromDateTime( when ) );
+            AssertSameAsString( new DateOnlyColumn( "c" ) { OutputFormat = "dddd, dd MMMM yyyy", FormatProvider = german }, DateOnly.FromDateTime( when ) );
+            AssertSameAsString( new TimeOnlyColumn( "c" ), TimeOnly.FromDateTime( when ) );
+            AssertSameAsString( new TimeOnlyColumn( "c" ) { OutputFormat = "HH:mm:ss.fffffff" }, TimeOnly.FromDateTime( when ) );
             AssertSameAsString( new TimeSpanColumn( "c" ), new TimeSpan( 1, 2, 3, 4, 5 ) );
             AssertSameAsString( new TimeSpanColumn( "c" ) { OutputFormat = @"hh\:mm" }, new TimeSpan( 1, 2, 3 ) );
             AssertSameAsString( new GuidColumn( "c" ), SampleGuid );

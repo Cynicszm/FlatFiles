@@ -233,6 +233,52 @@ namespace FlatFiles.TypeMapping
             return GetDateTimeMapping( member, window, true );
         }
 
+        public IDateOnlyPropertyMapping Property( Expression<Func<TEntity, DateOnly>> accessor, Window window )
+        {
+            var member = GetMember( accessor );
+            return GetDateOnlyMapping( member, window, false );
+        }
+
+        public IDateOnlyPropertyMapping Property( Expression<Func<TEntity, DateOnly?>> accessor, Window window )
+        {
+            var member = GetMember( accessor );
+            return GetDateOnlyMapping( member, window, true );
+        }
+
+        private IDateOnlyPropertyMapping GetDateOnlyMapping( IMemberAccessor member, Window window, bool isNullable )
+        {
+            var mapping = lookup.GetOrAddMember( member, ( physicalIndex, logicalIndex ) =>
+            {
+                var column = new DateOnlyColumn( member.Name ) { IsNullable = isNullable };
+                return new DateOnlyPropertyMapping( column, member, physicalIndex, logicalIndex );
+            } );
+            windowLookup[mapping] = window;
+            return mapping;
+        }
+
+        public ITimeOnlyPropertyMapping Property( Expression<Func<TEntity, TimeOnly>> accessor, Window window )
+        {
+            var member = GetMember( accessor );
+            return GetTimeOnlyMapping( member, window, false );
+        }
+
+        public ITimeOnlyPropertyMapping Property( Expression<Func<TEntity, TimeOnly?>> accessor, Window window )
+        {
+            var member = GetMember( accessor );
+            return GetTimeOnlyMapping( member, window, true );
+        }
+
+        private ITimeOnlyPropertyMapping GetTimeOnlyMapping( IMemberAccessor member, Window window, bool isNullable )
+        {
+            var mapping = lookup.GetOrAddMember( member, ( physicalIndex, logicalIndex ) =>
+            {
+                var column = new TimeOnlyColumn( member.Name ) { IsNullable = isNullable };
+                return new TimeOnlyPropertyMapping( column, member, physicalIndex, logicalIndex );
+            } );
+            windowLookup[mapping] = window;
+            return mapping;
+        }
+
         private IDateTimePropertyMapping GetDateTimeMapping( IMemberAccessor member, Window window, bool isNullable )
         {
             var mapping = lookup.GetOrAddMember( member, ( physicalIndex, logicalIndex ) =>
@@ -750,6 +796,18 @@ namespace FlatFiles.TypeMapping
         {
             var member = GetMember<DateTime?>( memberName );
             return GetDateTimeMapping( member, window, IsNullable( member ) );
+        }
+
+        IDateOnlyPropertyMapping IDynamicFixedLengthTypeConfiguration.DateOnlyProperty( string memberName, Window window )
+        {
+            var member = GetMember<DateOnly?>( memberName );
+            return GetDateOnlyMapping( member, window, IsNullable( member ) );
+        }
+
+        ITimeOnlyPropertyMapping IDynamicFixedLengthTypeConfiguration.TimeOnlyProperty( string memberName, Window window )
+        {
+            var member = GetMember<TimeOnly?>( memberName );
+            return GetTimeOnlyMapping( member, window, IsNullable( member ) );
         }
 
         IDateTimeOffsetPropertyMapping IDynamicFixedLengthTypeConfiguration.DateTimeOffsetProperty( string memberName, Window window )

@@ -31,6 +31,10 @@ namespace FlatFiles.TypeMapping
             { typeof( DateTime? ), n => new DateTimeColumn( n ) },
             { typeof( DateTimeOffset ), n => new DateTimeOffsetColumn( n ) },
             { typeof( DateTimeOffset? ), n => new DateTimeOffsetColumn( n ) },
+            { typeof( DateOnly ), n => new DateOnlyColumn( n ) },
+            { typeof( DateOnly? ), n => new DateOnlyColumn( n ) },
+            { typeof( TimeOnly ), n => new TimeOnlyColumn( n ) },
+            { typeof( TimeOnly? ), n => new TimeOnlyColumn( n ) },
             { typeof( decimal ), n => new DecimalColumn( n ) },
             { typeof( decimal? ), n => new DecimalColumn( n ) },
             { typeof( double ), n => new DoubleColumn( n ) },
@@ -464,6 +468,48 @@ namespace FlatFiles.TypeMapping
             {
                 var column = new DateTimeColumn( member.Name ) { IsNullable = isNullable };
                 return new DateTimePropertyMapping( column, member, fileIndex, workIndex );
+            } );
+        }
+
+        public IDateOnlyPropertyMapping Property( Expression<Func<TEntity, DateOnly>> accessor )
+        {
+            var member = GetMember( accessor );
+            return GetDateOnlyMapping( member, false );
+        }
+
+        public IDateOnlyPropertyMapping Property( Expression<Func<TEntity, DateOnly?>> accessor )
+        {
+            var member = GetMember( accessor );
+            return GetDateOnlyMapping( member, true );
+        }
+
+        private IDateOnlyPropertyMapping GetDateOnlyMapping( IMemberAccessor member, bool isNullable )
+        {
+            return lookup.GetOrAddMember( member, ( fileIndex, workIndex ) =>
+            {
+                var column = new DateOnlyColumn( member.Name ) { IsNullable = isNullable };
+                return new DateOnlyPropertyMapping( column, member, fileIndex, workIndex );
+            } );
+        }
+
+        public ITimeOnlyPropertyMapping Property( Expression<Func<TEntity, TimeOnly>> accessor )
+        {
+            var member = GetMember( accessor );
+            return GetTimeOnlyMapping( member, false );
+        }
+
+        public ITimeOnlyPropertyMapping Property( Expression<Func<TEntity, TimeOnly?>> accessor )
+        {
+            var member = GetMember( accessor );
+            return GetTimeOnlyMapping( member, true );
+        }
+
+        private ITimeOnlyPropertyMapping GetTimeOnlyMapping( IMemberAccessor member, bool isNullable )
+        {
+            return lookup.GetOrAddMember( member, ( fileIndex, workIndex ) =>
+            {
+                var column = new TimeOnlyColumn( member.Name ) { IsNullable = isNullable };
+                return new TimeOnlyPropertyMapping( column, member, fileIndex, workIndex );
             } );
         }
 
@@ -943,6 +989,18 @@ namespace FlatFiles.TypeMapping
         {
             var member = GetMember<DateTime?>( memberName );
             return GetDateTimeMapping( member, IsNullable( member ) );
+        }
+
+        IDateOnlyPropertyMapping IDynamicDelimitedTypeConfiguration.DateOnlyProperty( string memberName )
+        {
+            var member = GetMember<DateOnly?>( memberName );
+            return GetDateOnlyMapping( member, IsNullable( member ) );
+        }
+
+        ITimeOnlyPropertyMapping IDynamicDelimitedTypeConfiguration.TimeOnlyProperty( string memberName )
+        {
+            var member = GetMember<TimeOnly?>( memberName );
+            return GetTimeOnlyMapping( member, IsNullable( member ) );
         }
 
         IDateTimeOffsetPropertyMapping IDynamicDelimitedTypeConfiguration.DateTimeOffsetProperty( string memberName )
