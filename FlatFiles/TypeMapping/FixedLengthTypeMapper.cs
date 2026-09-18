@@ -890,13 +890,13 @@ namespace FlatFiles.TypeMapping
 
         IDelimitedComplexPropertyMapping IDynamicFixedLengthTypeConfiguration.ComplexProperty<TProp>( string memberName, IDelimitedTypeMapper<TProp> mapper, Window window )
         {
-            var member = GetMember<string>( memberName );
+            var member = GetMember<TProp>( memberName );
             return GetComplexMapping( member, mapper, window );
         }
 
         IFixedLengthComplexPropertyMapping IDynamicFixedLengthTypeConfiguration.ComplexProperty<TProp>( string memberName, IFixedLengthTypeMapper<TProp> mapper, Window window )
         {
-            var member = GetMember<string>( memberName );
+            var member = GetMember<TProp>( memberName );
             return GetComplexMapping( member, mapper, window );
         }
 

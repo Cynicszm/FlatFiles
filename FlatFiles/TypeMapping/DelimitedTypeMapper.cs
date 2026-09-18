@@ -1083,13 +1083,13 @@ namespace FlatFiles.TypeMapping
 
         IDelimitedComplexPropertyMapping IDynamicDelimitedTypeConfiguration.ComplexProperty<TProp>( string memberName, IDelimitedTypeMapper<TProp> mapper )
         {
-            var member = GetMember<string>( memberName );
+            var member = GetMember<TProp>( memberName );
             return GetComplexMapping( member, mapper );
         }
 
         IFixedLengthComplexPropertyMapping IDynamicDelimitedTypeConfiguration.ComplexProperty<TProp>( string memberName, IFixedLengthTypeMapper<TProp> mapper )
         {
-            var member = GetMember<string>( memberName );
+            var member = GetMember<TProp>( memberName );
             return GetComplexMapping( member, mapper );
         }
 
