@@ -31,20 +31,21 @@ jobs:
         run: dotnet test FlatFiles.sln --configuration Release --no-build
 
       - name: Measure coverage
-        # The bar the pull request template asks for. dotCover's command line tools are free to
-        # use; the JSON report is read back rather than the console summary, which is not stable.
-        # The version is pinned: 2026.2 renamed cover-dotnet to cover with different parameters
-        # and exits 0 on an unrecognised command, so an unpinned install fails only at Get-Content.
+        # The bar the pull request template asks for, on lines and on branches. dotnet-coverage is
+        # Microsoft's collector, installed as a tool with nothing added to the test project; it wraps
+        # the test run and writes a Cobertura report whose root carries both rates.
         shell: pwsh
         run: |
-          dotnet tool install --global JetBrains.dotCover.CommandLineTools --version 2025.1.1
-          dotCover cover-dotnet --Output=coverage.json --ReportType=JSON --Filters="+:module=FlatFiles;-:module=FlatFiles.Test;-:module=FlatFiles.Benchmark" -- test FlatFiles.Test --configuration Release --no-build
-          if ($LASTEXITCODE -ne 0) { throw "dotCover failed with exit code $LASTEXITCODE." }
-          if (-not (Test-Path coverage.json)) { throw 'dotCover produced no coverage.json.' }
-          $report = Get-Content coverage.json -Raw | ConvertFrom-Json
-          $percent = [int] $report.CoveragePercent
-          Write-Host "Statement coverage of FlatFiles: $percent% ($($report.CoveredStatements) of $($report.TotalStatements))"
-          if ($percent -lt 80) { throw "Coverage is $percent%, below the 80% the pull request template requires." }
+          dotnet tool install --global dotnet-coverage
+          dotnet-coverage collect -f cobertura -o coverage.xml --include-files "**/FlatFiles.dll" -- dotnet test FlatFiles.Test --configuration Release --no-build
+          if ($LASTEXITCODE -ne 0) { throw "dotnet-coverage failed with exit code $LASTEXITCODE." }
+          if (-not (Test-Path coverage.xml)) { throw 'dotnet-coverage produced no coverage.xml.' }
+          $root = ([xml] (Get-Content coverage.xml -Raw)).coverage
+          $lines = [math]::Round(100 * [double] $root.'line-rate')
+          $branches = [math]::Round(100 * [double] $root.'branch-rate')
+          Write-Host "Coverage of FlatFiles: $lines% of lines ($($root.'lines-covered') of $($root.'lines-valid')), $branches% of branches ($($root.'branches-covered') of $($root.'branches-valid'))"
+          if ($lines -lt 80) { throw "Line coverage is $lines%, below the 80% the pull request template requires." }
+          if ($branches -lt 80) { throw "Branch coverage is $branches%, below the 80% the pull request template requires." }
 
       - name: Pack
         # Runs package validation against the baseline version named in the project file.

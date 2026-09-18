@@ -156,18 +156,20 @@ older forms are flagged by the MSTest analysers and removed in MSTest 4.
 
 ## Coverage
 
-Statement coverage of the library stays at or above 80%. Measure it with dotCover over the full suite,
-scoped to the library module so the tests and benchmarks never count towards their own figure:
+Line and branch coverage of the library both stay at or above 80%. Measure them with `dotnet-coverage` over
+the test project, scoped to the library assembly so the tests and benchmarks never count towards their own
+figure:
 
-    dotCover cover-dotnet --Output=coverage.json --ReportType=JSON --Filters="+:module=FlatFiles" -- test FlatFiles.sln -c Release
+    dotnet-coverage collect -f cobertura -o coverage.xml --include-files "**/FlatFiles.dll" -- dotnet test FlatFiles.Test -c Release
 
-The root `CoveragePercent` in the report is the number. dotCover is a global tool
-(`dotnet tool install -g JetBrains.dotCover.CommandLineTools --version 2025.1.1`); nothing in the test project
-is needed. The version matters: 2026.2 renamed `cover-dotnet` to `cover` with different parameters, and the
-workflow pins 2025.1.1 for that reason.
+The root `coverage` element of the Cobertura report carries `line-rate` and `branch-rate`; the figures quoted
+in a PR are those two, rounded. `dotnet-coverage` is Microsoft's collector, installed as a global tool
+(`dotnet tool install -g dotnet-coverage`); nothing in the test project is needed, and its command line has
+been stable across releases, which is why it replaced dotCover here.
 
 The `Build and test` workflow runs the same build, tests, coverage measurement and pack on every pull
-request and fails below 80%, so the figure in a PR description is the one the workflow printed. The pack
+request and fails if either rate is below 80%, so the figures in a PR description are the ones the workflow
+printed. The pack
 step also runs package validation against the last released version named in the project file
 (`PackageValidationBaselineVersion`); a public API change that fails it is declared by moving the baseline
 in the same PR, with the reason in the changelog, not by suppressing the error.
