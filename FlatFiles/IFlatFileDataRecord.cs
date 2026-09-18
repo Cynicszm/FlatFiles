@@ -4,50 +4,64 @@ using System.Data;
 namespace FlatFiles
 {
     /// <summary>
-    /// Provides access to the column values within each row for a <see cref="FlatFileDataReader"/>.
+    ///     Provides access to the column values within each row for a <see cref="FlatFileDataReader"/>.
     /// </summary>
     public interface IFlatFileDataRecord : IDataRecord
     {
         /// <summary>
-        /// Gets the DateTime value from the current record at the given index.
+        ///     Gets the DateTime value from the current record at the given index.
         /// </summary>
         /// <param name="i">The index of the value.</param>
         /// <returns>The DateTime value at the given index.</returns>
-        DateTimeOffset GetDateTimeOffset(int i);
+        DateTimeOffset GetDateTimeOffset( int i );
 
         /// <summary>
-        /// Gets the sbyte value from the current record at the given index.
+        ///     Gets the value of the specified column as a <see cref="DateOnly" />.
+        /// </summary>
+        /// <param name="i">The zero-based column ordinal.</param>
+        /// <returns>The value of the specified column.</returns>
+        DateOnly GetDateOnly( int i ) => (DateOnly) GetValue( i );
+
+        /// <summary>
+        ///     Gets the value of the specified column as a <see cref="TimeOnly" />.
+        /// </summary>
+        /// <param name="i">The zero-based column ordinal.</param>
+        /// <returns>The value of the specified column.</returns>
+        TimeOnly GetTimeOnly( int i ) => (TimeOnly) GetValue( i );
+
+        /// <summary>
+        ///     Gets the sbyte value from the current record at the given index.
         /// </summary>
         /// <param name="i">The index of the value.</param>
         /// <returns>The sbyte value at the given index.</returns>
-        sbyte GetSByte(int i);
+        sbyte GetSByte( int i );
 
         /// <summary>
-        /// Gets the <see cref="TimeSpan"/> from the current record at the given index.
+        ///     Gets the <see cref="TimeSpan"/> from the current record at the given index.
         /// </summary>
         /// <param name="i">The index of the value.</param>
         /// <returns>The string at the given index.</returns>
-        TimeSpan GetTimeSpan(int i);
+        TimeSpan GetTimeSpan( int i );
 
         /// <summary>
-        /// Gets the unsigned short value from the current record at the given index.
+        ///     Gets the unsigned short value from the current record at the given index.
         /// </summary>
         /// <param name="i">The index of the value.</param>
         /// <returns>The unsigned short value at the given index.</returns>
-        ushort GetUInt16(int i);
+        ushort GetUInt16( int i );
 
         /// <summary>
-        /// Gets the unsigned int value from the current record at the given index.
+        ///     Gets the unsigned int value from the current record at the given index.
         /// </summary>
         /// <param name="i">The index of the value.</param>
         /// <returns>The unsigned int value at the given index.</returns>
-        uint GetUInt32(int i);
+        uint GetUInt32( int i );
 
         /// <summary>
-        /// Gets the unsigned long value from the current record at the given index.
+        ///     Gets the unsigned long value from the current record at the given index.
         /// </summary>
         /// <param name="i">The index of the value.</param>
         /// <returns>The unsigned long value at the given index.</returns>
-        ulong GetUInt64(int i);
+        ulong GetUInt64( int i );
     }
 }
