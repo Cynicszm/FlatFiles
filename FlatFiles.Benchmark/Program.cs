@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using BenchmarkDotNet.Columns;
 using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Running;
@@ -12,8 +10,6 @@ namespace FlatFiles.Benchmark
         private static void Main()
         {
             RunBenchmarks();
-
-            //RunPerformanceMonitor();
         }
 
         private static void RunBenchmarks()
@@ -35,33 +31,6 @@ namespace FlatFiles.Benchmark
 
             Console.Out.Write( "Hit <enter> to exit..." );
             Console.In.ReadLine();
-        }
-
-        [SuppressMessage( "CodeQuality", "IDE0051" )]
-        private static void RunPerformanceMonitor()
-        {
-            var tester = new AsyncVsSyncTest();
-            for (var i = 0; i != 10; ++i)
-            {
-                tester.SyncTest();
-            }
-
-            var stopwatch = Stopwatch.StartNew();
-            var syncResult = tester.SyncTest();
-            stopwatch.Stop();
-            Console.Out.WriteLine( $"Sync Execution Time: {stopwatch.Elapsed}" );
-            Console.Out.WriteLine( $"Sync Result Count: {syncResult.Length}" );
-
-            for (var i = 0; i != 10; ++i)
-            {
-                tester.AsyncTest().Wait();
-            }
-
-            stopwatch.Restart();
-            var asyncResult = tester.AsyncTest().Result;
-            stopwatch.Stop();
-            Console.Out.WriteLine( $"Async Execution Time: {stopwatch.Elapsed}" );
-            Console.Out.WriteLine( $"Async Result Count: {asyncResult.Length}" );
         }
     }
 }

@@ -93,7 +93,7 @@ namespace FlatFiles.Test
             return mapper.GetSchema();
         }
 
-        private FixedLengthSchema GetFooterSchema()
+        private static FixedLengthSchema GetFooterSchema()
         {
             var mapper = GetFooterTypeMapper();
             return mapper.GetSchema();
@@ -169,7 +169,7 @@ namespace FlatFiles.Test
             Assert.IsFalse( reader.Read() );
         }
 
-        private FixedLengthTypeMapperSelector GetTypeMapperSelector()
+        private static FixedLengthTypeMapperSelector GetTypeMapperSelector()
         {
             var selector = new FixedLengthTypeMapperSelector();
             selector.WithDefault( GetRecordTypeMapper() );
@@ -178,7 +178,7 @@ namespace FlatFiles.Test
             return selector;
         }
 
-        private FixedLengthTypeMapperInjector GetTypeMapperInjector()
+        private static FixedLengthTypeMapperInjector GetTypeMapperInjector()
         {
             var selector = new FixedLengthTypeMapperInjector();
             selector.WithDefault( GetRecordTypeMapper() );
@@ -218,19 +218,19 @@ namespace FlatFiles.Test
         public void TestWriter_DynamicMapper_CustomMapping()
         {
             var headerMapping = FixedLengthTypeMapper.DefineDynamic( typeof( Header ) );
-            headerMapping.CustomMapping( new StringColumn( "Name" ), 10 ).WithWriter( writeProperty );
+            headerMapping.CustomMapping( new StringColumn( "Name" ), 10 ).WithWriter( WriteProperty );
             var headerCreatedColumn = new DateTimeColumn( "DateCreated" ) { OutputFormat = "yyyyMMdd" };
-            headerMapping.CustomMapping( headerCreatedColumn, 10 ).WithWriter( writeProperty );
+            headerMapping.CustomMapping( headerCreatedColumn, 10 ).WithWriter( WriteProperty );
 
             var detailMapping = FixedLengthTypeMapper.DefineDynamic( typeof( DetailRow ) );
-            detailMapping.CustomMapping( new Int64Column( "CustomerId" ), 10 ).WithWriter( writeProperty );
-            detailMapping.CustomMapping( new StringColumn( "Name2" ), 20 ).WithWriter( writeProperty );
+            detailMapping.CustomMapping( new Int64Column( "CustomerId" ), 10 ).WithWriter( WriteProperty );
+            detailMapping.CustomMapping( new StringColumn( "Name2" ), 20 ).WithWriter( WriteProperty );
             var detailCreatedColumn = new DateTimeColumn( "Created" ) { OutputFormat = "yyyyMMdd" };
-            detailMapping.CustomMapping( detailCreatedColumn, 10 ).WithWriter( writeProperty );
-            detailMapping.CustomMapping( new DecimalColumn( "AverageSales" ), 10 ).WithWriter( writeProperty );
+            detailMapping.CustomMapping( detailCreatedColumn, 10 ).WithWriter( WriteProperty );
+            detailMapping.CustomMapping( new DecimalColumn( "AverageSales" ), 10 ).WithWriter( WriteProperty );
 
             var trailerMapping = FixedLengthTypeMapper.DefineDynamic( typeof( Trailer ) );
-            trailerMapping.CustomMapping( new Int64Column( "RecordCount" ), 10 ).WithWriter( writeProperty );
+            trailerMapping.CustomMapping( new Int64Column( "RecordCount" ), 10 ).WithWriter( WriteProperty );
 
             var selector = new FixedLengthTypeMapperInjector();
             selector.When( x => x is Header ).Use( headerMapping );
@@ -278,7 +278,7 @@ namespace FlatFiles.Test
             Assert.AreEqual( expected, stringWriter.ToString() );
         }
 
-        static void writeProperty( IColumnContext ctx, object record, object[] values )
+        private static void WriteProperty( IColumnContext ctx, object record, object[] values )
         {
             var prop = record.GetType().GetProperties()[ctx.LogicalIndex];
             values[ctx.LogicalIndex] = prop.GetValue( record, null );

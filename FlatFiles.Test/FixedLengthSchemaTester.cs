@@ -109,7 +109,7 @@ namespace FlatFiles.Test
             schema.AddColumn( id, new Window( 10 ) )
                 .AddColumn( name, new Window( 25 ) )
                 .AddColumn( created, new Window( 10 ) );
-            IEnumerable collection = schema.ColumnDefinitions;
+            Assert.IsInstanceOfType<IEnumerable>( schema.ColumnDefinitions );
         }
     }
 }

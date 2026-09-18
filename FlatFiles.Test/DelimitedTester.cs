@@ -642,7 +642,7 @@ namespace FlatFiles.Test
         }
 
         [TestMethod]
-        public void ShouldThrowSyntaxExceptionIfQuoteFollowedByEOS()
+        public void ShouldThrowSyntaxExceptionIfQuoteFollowedByEos()
         {
             const string source = "'";
             var stringReader = new StringReader( source );
@@ -685,11 +685,11 @@ Mary,Smith,'1821 Grover''s Village',West Chattingham,WA,43221,'Likes cats.'";
             var reader = new DelimitedReader( stringReader, options );
             object[][] expected =
             [
-                new object[]
-                { "John", "Smith", "123 Playtown Place", "Grangewood", "CA", "12345", @"John likes to travel to far away places.
+                [
+                    "John", "Smith", "123 Playtown Place", "Grangewood", "CA", "12345", @"John likes to travel to far away places.
 His favorite travel spots are Tannis, Venice and Chicago.
 When he's not traveling, he's at home with his lovely wife, children and leather armchair."
-                },
+                ],
                 [ "Mary", "Smith", "1821 Grover's Village", "West Chattingham", "WA", "43221", "Likes cats." ]
             ];
             AssertRecords( expected, reader );
@@ -790,10 +790,13 @@ When he's not traveling, he's at home with his lovely wife, children and leather
             AssertRecords( expected, reader );
         }
 
-        //[TestMethod]
-#pragma warning disable CA1822 // Mark members as static
-        public void ShouldHandleNonTerminatingEmbeddedQuotes()
-#pragma warning restore CA1822 // Mark members as static
+        /// <summary>
+        ///     A quoted field must end at its closing quote. Text between the closing quote and the separator has no
+        ///     meaning, so the record is a syntax error rather than a guess at where the field was meant to end. This
+        ///     test sat disabled for years with an expectation the parser never met; it now pins what the parser does.
+        /// </summary>
+        [TestMethod]
+        public void ShouldRejectTextBetweenAClosingQuoteAndTheSeparator()
         {
             const string source = "This\tis\t\"not\"the\tend\"\tof\tthe\tmessage";
             var stringReader = new StringReader( source );
@@ -803,13 +806,10 @@ When he's not traveling, he's at home with his lovely wife, children and leather
                 Separator = "\t"
             };
             var reader = new DelimitedReader( stringReader, options );
-            object[][] expected =
-            [
-                [
-                    "This", "is", "not\"the\tend", "of", "the", "message"
-                ]
-            ];
-            AssertRecords( expected, reader );
+
+            var exception = Assert.ThrowsExactly<RecordProcessingException>( () => reader.Read() );
+
+            Assert.IsInstanceOfType<DelimitedSyntaxException>( exception.InnerException );
         }
 
         private static void AssertRecords( object[][] expected, DelimitedReader reader )

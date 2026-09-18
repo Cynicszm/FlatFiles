@@ -36,7 +36,7 @@ namespace FlatFiles
         /// <summary>
         ///     Gets whether the value should be trimmed prior to parsing.
         /// </summary>
-        protected override bool IsTrimmed { get => Trim; }
+        protected override bool IsTrimmed => Trim;
 
         /// <summary>
         ///     Formats the given object.

@@ -71,7 +71,7 @@ namespace FlatFiles
         public virtual bool IsColumnContextRequired =>
             OnParsing is not null || OnParsed is not null || OnFormatting is not null || OnFormatted is not null
             || NullFormatter is not FlatFiles.NullFormatter
-            || DefaultValue is not FlatFiles.DefaultValue { UsesColumnContext: false }
+            || DefaultValue is not DefaultValue { UsesColumnContext: false }
             || IsComplex
             || this is IMetadataColumn
             || !IsLibraryColumn;

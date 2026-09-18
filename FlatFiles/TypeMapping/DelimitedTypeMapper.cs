@@ -17,7 +17,7 @@ namespace FlatFiles.TypeMapping
     /// </summary>
     public static class DelimitedTypeMapper
     {
-        private static readonly FrozenDictionary<Type, Func<string, IColumnDefinition>> ColumnLookup = new Dictionary<Type, Func<string, IColumnDefinition>>()
+        private static readonly FrozenDictionary<Type, Func<string, IColumnDefinition>> ColumnLookup = new Dictionary<Type, Func<string, IColumnDefinition>>
         {
             { typeof( bool ), n => new BooleanColumn( n ) },
             { typeof( bool? ), n => new BooleanColumn( n ) },
@@ -249,10 +249,10 @@ namespace FlatFiles.TypeMapping
         public static ITypedWriter<TEntity> GetAutoMappedWriter<TEntity>( TextWriter writer, DelimitedOptions? options = null, IAutoMapResolver? resolver = null )
         {
             var optionsCopy = options is null
-                ? new DelimitedOptions() { IsFirstRecordSchema = true }
+                ? new DelimitedOptions { IsFirstRecordSchema = true }
                 : options.Clone();
             var entityType = typeof( TEntity );
-            var typedMapper = Define<TEntity>( () => throw new InvalidOperationException( "Unexpected entity creation within autom-mapped writer." ) );
+            var typedMapper = Define<TEntity>( () => throw new InvalidOperationException( "Unexpected entity creation within auto-mapped writer." ) );
             var dynamicMapper = (IDynamicDelimitedTypeMapper) typedMapper;
             var nameResolver = resolver ?? AutoMapResolver.Default;
 
