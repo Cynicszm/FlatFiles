@@ -29,6 +29,17 @@ namespace FlatFiles
         bool IsComplex { get; }
 
         /// <summary>
+        ///     Gets whether the column reads its <see cref="IColumnContext" /> while parsing or formatting, so that a
+        ///     reader or writer must build one for it on every record.
+        /// </summary>
+        /// <remarks>
+        ///     The default is true, which is always safe. <see cref="ColumnDefinition" /> answers false for the
+        ///     library's own columns when nothing that could look at the context is attached, and a column error still
+        ///     carries a context in that case, because one is built when the error occurs.
+        /// </remarks>
+        bool IsColumnContextRequired => true;
+
+        /// <summary>
         ///     Gets or sets the default value to use when a null is encountered on a non-nullable column.
         /// </summary>
         IDefaultValue DefaultValue { get; set; }
