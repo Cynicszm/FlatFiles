@@ -1164,7 +1164,7 @@ namespace FlatFiles.TypeMapping
 
         private ICodeGenerator GetCodeGenerator()
         {
-            return isOptimized
+            return isOptimized && DynamicCode.IsSupported
                 ? new EmitCodeGenerator()
                 : new ReflectionCodeGenerator();
         }
