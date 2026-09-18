@@ -40,13 +40,13 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Build
-        run: dotnet build FlatFiles.sln --configuration Release
+        run: dotnet build FlatFiles.sln --configuration Release -p:ContinuousIntegrationBuild=true
 
       - name: Test
         run: dotnet test FlatFiles.sln --configuration Release --no-build
 
       - name: Pack
-        run: dotnet pack FlatFiles/FlatFiles.csproj --configuration Release --output artifacts
+        run: dotnet pack FlatFiles/FlatFiles.csproj --configuration Release --output artifacts -p:ContinuousIntegrationBuild=true
 
       - name: Check the package version matches the release tag
         if: github.event_name == 'release'
@@ -69,7 +69,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: nupkg
-          path: artifacts/*.nupkg
+          path: artifacts/*nupkg
 
       - name: Get a short-lived NuGet key
         # Requested immediately before the push: the key expires after an hour, and each

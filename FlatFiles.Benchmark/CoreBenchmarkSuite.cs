@@ -33,7 +33,88 @@ namespace FlatFiles.Benchmark
             [
                 "Joe", "Smith", "29", "\"West Street Rd, Apt. 23\"", "ATTN: Will Smith", "Lexington", "DE", "001569", "Blue", "\"Cheese, and Crackers\"", "Soccer", "2017-01-01", "true"
             ];
-            quotedData = string.Join( Environment.NewLine, new[] { header }.Concat( Enumerable.Repeat( 0, 10000 ).Select( _ => record ) ) );
+            var quotedRecord = string.Join( ",", quotedValues );
+            quotedData = string.Join( Environment.NewLine, new[] { header }.Concat( Enumerable.Repeat( 0, 10000 ).Select( _ => quotedRecord ) ) );
+
+            people = GetMapper().Read( new StringReader( data ), new DelimitedOptions { IsFirstRecordSchema = true } ).ToList();
+            var fixedLengthWriter = new StringWriter();
+            GetFixedLengthMapper().Write( fixedLengthWriter, people, FixedLengthOptions );
+            fixedLengthData = fixedLengthWriter.ToString();
+        }
+
+        private static readonly FixedLengthOptions FixedLengthOptions = new() { RecordSeparator = Environment.NewLine };
+
+        private readonly List<Person> people;
+        private readonly string fixedLengthData;
+
+        private static IDelimitedTypeMapper<Person> GetMapper()
+        {
+            var mapper = DelimitedTypeMapper.Define( () => new Person() );
+            mapper.Property( x => x.FirstName );
+            mapper.Property( x => x.LastName );
+            mapper.Property( x => x.Age );
+            mapper.Property( x => x.Street1 );
+            mapper.Property( x => x.Street2 );
+            mapper.Property( x => x.City );
+            mapper.Property( x => x.State );
+            mapper.Property( x => x.Zip );
+            mapper.Property( x => x.FavoriteColor );
+            mapper.Property( x => x.FavoriteFood );
+            mapper.Property( x => x.FavoriteSport );
+            mapper.Property( x => x.CreatedOn );
+            mapper.Property( x => x.IsActive );
+            return mapper;
+        }
+
+        private static IFixedLengthTypeMapper<Person> GetFixedLengthMapper()
+        {
+            var mapper = FixedLengthTypeMapper.Define( () => new Person() );
+            mapper.Property( x => x.FirstName, 10 );
+            mapper.Property( x => x.LastName, 10 );
+            mapper.Property( x => x.Age, 3 );
+            mapper.Property( x => x.Street1, 20 );
+            mapper.Property( x => x.Street2, 10 );
+            mapper.Property( x => x.City, 12 );
+            mapper.Property( x => x.State, 2 );
+            mapper.Property( x => x.Zip, 6 );
+            mapper.Property( x => x.FavoriteColor, 8 );
+            mapper.Property( x => x.FavoriteFood, 20 );
+            mapper.Property( x => x.FavoriteSport, 8 );
+            mapper.Property( x => x.CreatedOn, 10 ).OutputFormat( "yyyy-MM-dd" );
+            mapper.Property( x => x.IsActive, 5 );
+            return mapper;
+        }
+
+        [Benchmark]
+        public string RunFlatFiles_TypeMapper_Write()
+        {
+            var writer = new StringWriter();
+            GetMapper().Write( writer, people, new DelimitedOptions { IsFirstRecordSchema = true } );
+            return writer.ToString();
+        }
+
+        [Benchmark]
+        public int RunFlatFiles_FixedLength_TypeMapper()
+        {
+            return GetFixedLengthMapper().Read( new StringReader( fixedLengthData ), FixedLengthOptions ).Count();
+        }
+
+        [Benchmark]
+        public string RunFlatFiles_FixedLength_TypeMapper_Write()
+        {
+            var writer = new StringWriter();
+            GetFixedLengthMapper().Write( writer, people, FixedLengthOptions );
+            return writer.ToString();
+        }
+
+        [Benchmark]
+        public string RunCsvHelper_Write()
+        {
+            var writer = new StringWriter();
+            var csvWriter = new CsvHelper.CsvWriter( writer, CultureInfo.InvariantCulture );
+            csvWriter.WriteRecords( people );
+            csvWriter.Flush();
+            return writer.ToString();
         }
 
         [Benchmark]

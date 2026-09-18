@@ -1,3 +1,12 @@
+## 7.4.0 (2026-09-18)
+**Summary** - The package carries its XML documentation and a symbol package with Source Link; pull requests are built, tested, coverage-checked and package-validated by a workflow.
+
+No code changes. Until now the package shipped without the XML documentation file, so the hundred and forty-odd public types had no IntelliSense text in a consumer's editor even though every member is documented in the source. The file is now generated and packed. A `.snupkg` symbol package is published alongside, with Source Link pointing at the tagged commit and untracked sources embedded, so a debugger can step into the library.
+
+Pack now runs package validation against the previous release named in the project file, so a public API that loses or changes a member fails the build rather than reaching a consumer; a deliberate change moves the baseline in the same pull request. A `Build and test` workflow runs the build, the tests, the dotCover coverage measurement with the 80% bar, and the pack on every pull request and push to master.
+
+The benchmark suite's quoted-field case had been built from the unquoted record since it was written, so it measured nothing about quoting; it now uses the quoted record. Delimited write, fixed-length read and write, and a CsvHelper write baseline are added to the suite.
+
 ## 7.3.0 (2026-09-17)
 **Summary** - Ragged-right fixed-length files: with `FixedLengthOptions.IsRaggedRight` the last column runs from its offset to the end of the record, and a record that ends before it is read as far as it goes.
 

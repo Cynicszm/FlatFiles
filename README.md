@@ -1,5 +1,7 @@
 # FlatFiles
 
+[![Build and test](https://github.com/Cynicszm/FlatFiles/actions/workflows/build.yml/badge.svg?branch=master)](https://github.com/Cynicszm/FlatFiles/actions/workflows/build.yml) [![NuGet](https://img.shields.io/nuget/v/Cynicszm.FlatFiles.svg)](https://www.nuget.org/packages/Cynicszm.FlatFiles)
+
 Reads and writes CSV, fixed-length and other flat file formats with a focus on schema definition, configuration and speed. Supports mapping directly between files and classes.
 
 Download using NuGet: [Cynicszm.FlatFiles](https://nuget.org/packages/Cynicszm.FlatFiles)
