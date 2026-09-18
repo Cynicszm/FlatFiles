@@ -10,7 +10,7 @@
     <RepositoryUrl>https://github.com/Cynicszm/FlatFiles.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>csv;comma;tab;separated;value;delimited;flat;file;fixed;width;fixed-width;length;fixed-length;parser;parsing;parse</PackageTags>
-    <PackageReleaseNotes>Fixes: subscribing to both IReader.RecordParsed and a reader's typed RecordParsed no longer throws; the dynamic mappers' ComplexProperty accepts a nested object member of any type rather than only string; an injector-based FixedLengthWriter no longer writes a blank line for WriteSchema; a selector-based typed reader with no matching mapper throws FlatFileException instead of NullReferenceException; FixedLengthReader's IReader.GetSchemaAsync honours its cancellation token. No API changes. Source- and binary-compatible with 7.4.0.</PackageReleaseNotes>
+    <PackageReleaseNotes>Fixes: subscribing to both IReader.RecordParsed and a reader's typed RecordParsed no longer throws; the dynamic mappers' ComplexProperty accepts a nested object member of any type rather than only string; an injector-based FixedLengthWriter no longer writes a blank line for WriteSchema; a DelimitedReader whose schema selector matches nothing skips the record once the error is handled, as FixedLengthReader does, instead of returning it parsed with an invented schema; FixedLengthReader's IReader.GetSchemaAsync honours its cancellation token. No API changes. Source- and binary-compatible with 7.4.0.</PackageReleaseNotes>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>FlatFiles.snk</AssemblyOriginatorKeyFile>
     <Version>7.4.1</Version>

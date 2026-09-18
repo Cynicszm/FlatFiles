@@ -287,7 +287,7 @@ namespace FlatFiles.Test
             var reader = selector.GetReader( new StringReader( "1\n" ) );
             reader.RecordError += ( _, e ) => e.IsHandled = true;
 
-            Assert.ThrowsExactly<FlatFileException>( () => reader.Read(), "With no default the record is reported, read with a schema built from its values, and then has no mapper to become an entity." );
+            Assert.IsFalse( reader.Read(), "With no default the record is reported and, the report handled, skipped; nothing is left to read." );
 
             var fixedMapper = FixedLengthTypeMapper.Define<Inner>();
             fixedMapper.Property( i => i.Id, 2 );

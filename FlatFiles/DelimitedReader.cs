@@ -336,7 +336,18 @@ namespace FlatFiles
             {
                 return null;
             }
-            var currentSchema = GetSchema( record, rawValues ) ?? DelimitedSchema.BuildDynamicSchema( parser.Options, rawValues.Length );
+            var currentSchema = GetSchema( record, rawValues );
+            if (currentSchema is null)
+            {
+                // A selector that matched nothing has already reported the record, and a handler that let reading
+                // continue means skip it, as it does for every other record error. Only a reader given neither a
+                // schema nor a selector builds one from the record itself.
+                if (schemaSelector is not null)
+                {
+                    return null;
+                }
+                currentSchema = DelimitedSchema.BuildDynamicSchema( parser.Options, rawValues.Length );
+            }
             var currentContext = NewRecordContext( currentSchema, record, rawValues );
             recordContext = currentContext;
             if (IsSkipped( currentContext, rawValues ))
