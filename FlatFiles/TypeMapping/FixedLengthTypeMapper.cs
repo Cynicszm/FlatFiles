@@ -971,8 +971,8 @@ namespace FlatFiles.TypeMapping
 
         private ICodeGenerator GetCodeGenerator()
         {
-            return isOptimized 
-                ? new EmitCodeGenerator() 
+            return isOptimized && DynamicCode.IsSupported
+                ? new EmitCodeGenerator()
                 : new ReflectionCodeGenerator();
         }
     }

@@ -80,36 +80,51 @@ namespace FlatFiles
 
         private object? ParseValue( IRecoverableRecordContext context, int columnIndex, int destinationIndex, string rawValue )
         {
-            var isContextDisabled = context.ExecutionContext.Options.IsColumnContextDisabled;
-            if (isContextDisabled)
+            var options = context.ExecutionContext.Options;
+            var definition = ColumnDefinitions[columnIndex];
+            if (options.IsColumnContextDisabled)
             {
-                var definition = ColumnDefinitions[columnIndex];
                 return ParseWithoutContext( definition, destinationIndex, rawValue );
             }
-            var columnContext = NewColumnContext( context, columnIndex, destinationIndex );
-            return ParseWithContext( columnContext, rawValue );
+            if (!definition.IsColumnContextRequired && options.FormatProvider is null)
+            {
+                // Nothing on this column can look at its context, so none is built unless the parse fails and the
+                // error has to be reported with one. The options' format provider reaches a column only through the
+                // context, so its presence keeps the context.
+                try
+                {
+                    return definition.Parse( null, rawValue );
+                }
+                catch (Exception exception)
+                {
+                    return RecoverParse( NewColumnContext( context, columnIndex, destinationIndex ), rawValue, exception );
+                }
+            }
+            return ParseWithContext( NewColumnContext( context, columnIndex, destinationIndex ), rawValue );
         }
 
         private object? ParseWithContext( IColumnContext columnContext, string rawValue )
         {
             try
             {
-                var definition = columnContext.ColumnDefinition;
-                var parsedValue = definition.Parse( columnContext, rawValue );
-                return parsedValue;
+                return columnContext.ColumnDefinition.Parse( columnContext, rawValue );
             }
             catch (Exception exception)
             {
-                var columnException = new ColumnProcessingException( columnContext, rawValue, exception );
-                if (columnContext.RecordContext is not IRecoverableRecordContext { HasHandler: true } recordContext)
-                {
-                    throw columnException;
-                }
-                var e = new ColumnErrorEventArgs( columnException );
-                recordContext.ProcessError( this, e );
-
-                return !e.IsHandled ? throw columnException : e.Substitution;
+                return RecoverParse( columnContext, rawValue, exception );
             }
+        }
+
+        private object? RecoverParse( IColumnContext columnContext, string rawValue, Exception exception )
+        {
+            var columnException = new ColumnProcessingException( columnContext, rawValue, exception );
+            if (columnContext.RecordContext is not IRecoverableRecordContext { HasHandler: true } recordContext)
+            {
+                throw columnException;
+            }
+            var e = new ColumnErrorEventArgs( columnException );
+            recordContext.ProcessError( this, e );
+            return !e.IsHandled ? throw columnException : e.Substitution;
         }
 
         private static object? ParseWithoutContext( IColumnDefinition definition, int position, string rawValue )
@@ -163,15 +178,29 @@ namespace FlatFiles
 
         private void FormatValue( IRecoverableRecordContext context, int columnIndex, int valueIndex, object? value, RecordBuffer destination )
         {
-            if (context.ExecutionContext.Options.IsColumnContextDisabled)
+            var options = context.ExecutionContext.Options;
+            var definition = ColumnDefinitions[columnIndex];
+            if (options.IsColumnContextDisabled)
             {
-                FormatWithoutContext( ColumnDefinitions[columnIndex], valueIndex, value, destination );
+                FormatWithoutContext( definition, valueIndex, value, destination );
+                return;
             }
-            else
+            if (!definition.IsColumnContextRequired && options.FormatProvider is null)
             {
-                var columnContext = NewColumnContext( context, columnIndex, valueIndex );
-                FormatWithContext( columnContext, value, destination );
+                // As when parsing: no context unless the column fails and the error needs one.
+                var start = destination.Length;
+                try
+                {
+                    definition.Format( null, value, destination );
+                }
+                catch (Exception exception)
+                {
+                    destination.Truncate( start );
+                    RecoverFormat( NewColumnContext( context, columnIndex, valueIndex ), value, destination, exception );
+                }
+                return;
             }
+            FormatWithContext( NewColumnContext( context, columnIndex, valueIndex ), value, destination );
         }
 
         private void FormatWithContext( IColumnContext columnContext, object? value, RecordBuffer destination )
@@ -185,19 +214,24 @@ namespace FlatFiles
             {
                 // Whatever the column managed to write before it failed must not leak into the record.
                 destination.Truncate( start );
-                var columnException = new ColumnProcessingException( columnContext, value, exception );
-                if (columnContext.RecordContext is not IRecoverableRecordContext { HasHandler: true } recordContext)
-                {
-                    throw columnException;
-                }
-                var e = new ColumnErrorEventArgs( columnException );
-                recordContext.ProcessError( this, e );
-                if (!e.IsHandled)
-                {
-                    throw columnException;
-                }
-                destination.Write( ((string?) e.Substitution ?? string.Empty).AsSpan() );
+                RecoverFormat( columnContext, value, destination, exception );
             }
+        }
+
+        private void RecoverFormat( IColumnContext columnContext, object? value, RecordBuffer destination, Exception exception )
+        {
+            var columnException = new ColumnProcessingException( columnContext, value, exception );
+            if (columnContext.RecordContext is not IRecoverableRecordContext { HasHandler: true } recordContext)
+            {
+                throw columnException;
+            }
+            var e = new ColumnErrorEventArgs( columnException );
+            recordContext.ProcessError( this, e );
+            if (!e.IsHandled)
+            {
+                throw columnException;
+            }
+            destination.Write( ((string?) e.Substitution ?? string.Empty).AsSpan() );
         }
 
         private static void FormatWithoutContext( IColumnDefinition definition, int position, object? value, RecordBuffer destination )

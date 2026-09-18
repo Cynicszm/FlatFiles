@@ -10,10 +10,17 @@ namespace FlatFiles
     {
         private readonly Func<IColumnContext?, object?> valueFactory;
 
-        private DefaultValue( Func<IColumnContext?, object?> factory )
+        private DefaultValue( Func<IColumnContext?, object?> factory, bool usesColumnContext )
         {
             valueFactory = factory;
+            UsesColumnContext = usesColumnContext;
         }
+
+        /// <summary>
+        ///     Whether the default value may read the column context it is given: true for a caller's delegate, false
+        ///     for a fixed value and for the disabled default, which never look at it.
+        /// </summary>
+        internal bool UsesColumnContext { get; }
 
         /// <summary>
         ///     Use the given value as a default.
@@ -22,7 +29,7 @@ namespace FlatFiles
         /// <returns>An instance of a <see cref="IDefaultValue"/> that returns the given value.</returns>
         public static IDefaultValue Use( object? value )
         {
-            return new DefaultValue( _ => value );
+            return new DefaultValue( _ => value, false );
         }
 
         /// <summary>
@@ -33,7 +40,7 @@ namespace FlatFiles
         public static IDefaultValue Use( Func<IColumnContext?, object?> factory )
         {
             ArgumentNullException.ThrowIfNull( factory );
-            return new DefaultValue( factory );
+            return new DefaultValue( factory, true );
         }
 
         /// <summary>
@@ -42,7 +49,7 @@ namespace FlatFiles
         /// <returns>An instance of a <see cref="IDefaultValue"/> that throws an exception.</returns>
         public static IDefaultValue Disabled()
         {
-            return new DefaultValue( _ => throw new InvalidCastException( Resources.AssignNullToNonNullable ) );
+            return new DefaultValue( _ => throw new InvalidCastException( Resources.AssignNullToNonNullable ), false );
         }
 
         /// <summary>
