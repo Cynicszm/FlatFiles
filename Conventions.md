@@ -171,8 +171,15 @@ The `Build and test` workflow runs the same build, tests, coverage measurement a
 request and fails if either rate is below 80%, so the figures in a PR description are the ones the workflow
 printed. The pack
 step also runs package validation against the last released version named in the project file
-(`PackageValidationBaselineVersion`); a public API change that fails it is declared by moving the baseline
-in the same PR, with the reason in the changelog, not by suppressing the error.
+(`PackageValidationBaselineVersion`). A public API change that fails it is declared in the same PR, with the
+reason in the changelog: after a release, by moving the baseline; before one, by regenerating
+`FlatFiles/CompatibilitySuppressions.xml` with `dotnet pack -p:ApiCompatGenerateSuppressionFile=true` and
+reviewing that every entry is the change intended. The one break accepted without a major version is a new
+member on a configuration interface (`IDelimitedTypeConfiguration<TEntity>`, `IFixedLengthTypeConfiguration<TEntity>`
+and the two dynamic ones), because the library's own mappers are their only implementations. Removing or
+changing a member, or adding one to `IReader`, `IWriter`, `ISchema`, `IColumnDefinition` or the typed reader
+and writer interfaces, gets a default implementation or a major version instead. The suppression file is
+emptied when the baseline moves to the release that shipped the members.
 
 The cheapest coverage is rarely the most valuable, so prefer tests that assert behaviour and let coverage
 follow. The exception that proves it: the twenty-one property mapping classes are near-identical fluent
