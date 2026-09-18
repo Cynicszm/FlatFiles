@@ -278,6 +278,26 @@ namespace FlatFiles
         }
 
         /// <summary>
+        ///     Gets the value of the specified column as a <see cref="DateOnly" />.
+        /// </summary>
+        /// <param name="i">The zero-based column ordinal.</param>
+        /// <returns>The value of the specified column.</returns>
+        public DateOnly GetDateOnly( int i )
+        {
+            return GetValue<DateOnly>( i );
+        }
+
+        /// <summary>
+        ///     Gets the value of the specified column as a <see cref="TimeOnly" />.
+        /// </summary>
+        /// <param name="i">The zero-based column ordinal.</param>
+        /// <returns>The value of the specified column.</returns>
+        public TimeOnly GetTimeOnly( int i )
+        {
+            return GetValue<TimeOnly>( i );
+        }
+
+        /// <summary>
         ///     Gets the decimal value from the current record at the given index.
         /// </summary>
         /// <param name="i">The index of the value.</param>

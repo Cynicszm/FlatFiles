@@ -67,6 +67,14 @@ namespace FlatFiles.Test
 
             public DateTimeOffset? NullableDateTimeOffset { get; set; }
 
+            public DateOnly DateOnly { get; set; }
+
+            public DateOnly? NullableDateOnly { get; set; }
+
+            public TimeOnly TimeOnly { get; set; }
+
+            public TimeOnly? NullableTimeOnly { get; set; }
+
             public decimal Decimal { get; set; }
 
             public decimal? NullableDecimal { get; set; }
@@ -141,6 +149,10 @@ namespace FlatFiles.Test
                 mapper.Property( x => x.NullableDateTime ),
                 mapper.Property( x => x.DateTimeOffset ),
                 mapper.Property( x => x.NullableDateTimeOffset ),
+                mapper.Property( x => x.DateOnly ),
+                mapper.Property( x => x.NullableDateOnly ),
+                mapper.Property( x => x.TimeOnly ),
+                mapper.Property( x => x.NullableTimeOnly ),
                 mapper.Property( x => x.Decimal ),
                 mapper.Property( x => x.NullableDecimal ),
                 mapper.Property( x => x.Double ),
@@ -191,6 +203,10 @@ namespace FlatFiles.Test
                 mapper.Property( x => x.NullableDateTime, window ),
                 mapper.Property( x => x.DateTimeOffset, window ),
                 mapper.Property( x => x.NullableDateTimeOffset, window ),
+                mapper.Property( x => x.DateOnly, window ),
+                mapper.Property( x => x.NullableDateOnly, window ),
+                mapper.Property( x => x.TimeOnly, window ),
+                mapper.Property( x => x.NullableTimeOnly, window ),
                 mapper.Property( x => x.Decimal, window ),
                 mapper.Property( x => x.NullableDecimal, window ),
                 mapper.Property( x => x.Double, window ),
@@ -291,7 +307,7 @@ namespace FlatFiles.Test
         {
             var mappings = DelimitedMappings();
 
-            Assert.AreEqual( 41, mappings.Count, "One mapping was expected per property overload, enum overload and complex overload." );
+            Assert.AreEqual( 45, mappings.Count, "One mapping was expected per property overload, enum overload and complex overload." );
             var invoked = mappings.Sum( ExerciseFluentSurface );
             Assert.IsTrue( invoked >= mappings.Count * 8, $"Only {invoked} fluent methods were driven across {mappings.Count} mappings." );
         }
@@ -301,7 +317,7 @@ namespace FlatFiles.Test
         {
             var mappings = FixedLengthMappings();
 
-            Assert.AreEqual( 41, mappings.Count, "One mapping was expected per property overload, enum overload and complex overload." );
+            Assert.AreEqual( 45, mappings.Count, "One mapping was expected per property overload, enum overload and complex overload." );
             var invoked = mappings.Sum( ExerciseFluentSurface );
             Assert.IsTrue( invoked >= mappings.Count * 8, $"Only {invoked} fluent methods were driven across {mappings.Count} mappings." );
         }
