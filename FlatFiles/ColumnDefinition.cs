@@ -61,6 +61,29 @@ namespace FlatFiles
         /// <inheritdoc/>
         public virtual bool IsComplex => false;
 
+        /// <inheritdoc/>
+        /// <remarks>
+        ///     One of the library's own columns needs its context only when something that can look at it is attached:
+        ///     a parsing or formatting hook, a null formatter or default value from outside the library, or a default
+        ///     value built from a delegate. A subclass declared outside the library may read the context in its own
+        ///     parsing or formatting, so it is always given one.
+        /// </remarks>
+        public virtual bool IsColumnContextRequired =>
+            OnParsing is not null || OnParsed is not null || OnFormatting is not null || OnFormatted is not null
+            || NullFormatter is not FlatFiles.NullFormatter
+            || DefaultValue is not FlatFiles.DefaultValue { UsesColumnContext: false }
+            || IsComplex
+            || this is IMetadataColumn
+            || !IsLibraryColumn;
+
+        /// <summary>
+        ///     Whether this column's type is declared in the library. Asked once per column rather than once per value,
+        ///     because the type's assembly is a reflection lookup and the answer never changes.
+        /// </summary>
+        private bool IsLibraryColumn => isLibraryColumn ??= GetType().Assembly == typeof( ColumnDefinition ).Assembly;
+
+        private bool? isLibraryColumn;
+
         /// <summary>
         ///     Gets or sets the default value to use when a null is encountered on a non-nullable column.
         /// </summary>
