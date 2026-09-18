@@ -161,7 +161,7 @@ namespace FlatFiles.Test
 
         private class FakeDataRecord( object[] source ) : IDataRecord
         {
-            public object[] Values { get; } = source;
+            private object[] Values { get; } = source;
 
             public bool GetBoolean( int i )
             {
@@ -274,15 +274,9 @@ namespace FlatFiles.Test
 
             public int FieldCount => Values.Length;
 
-            public object this[int i]
-            {
-                get { throw new NotImplementedException(); }
-            }
+            public object this[int i] => throw new NotImplementedException();
 
-            public object this[string name]
-            {
-                get { throw new NotImplementedException(); }
-            }
+            public object this[string name] => throw new NotImplementedException();
         }
     }
 }

@@ -31,7 +31,7 @@ namespace FlatFiles
         /// <returns>An object for configuring how nulls are handled.</returns>
         public static NullFormatter ForValue( string? value )
         {
-            return new NullFormatter( ( _, v ) => v is null || v == value, ctx => value );
+            return new NullFormatter( ( _, v ) => v is null || v == value, _ => value );
         }
 
         /// <inheritdoc/>

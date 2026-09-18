@@ -35,8 +35,8 @@ namespace FlatFiles.Test
             const string input = @"=""12345.67"",=""$123""";
 
             var mapper = DelimitedTypeMapper.Define<Numbers>();
-            mapper.Property( x => x.Value ).ColumnName( "value" ).OnParsing( ( ctx, x ) => x.Trim( '"', '=' ) ).NumberStyles( NumberStyles.AllowDecimalPoint );
-            mapper.Property( x => x.Money ).ColumnName( "money" ).OnParsing( ( ctx, x ) => x.Trim( '"', '=' ) ).NumberStyles( NumberStyles.Currency );
+            mapper.Property( x => x.Value ).ColumnName( "value" ).OnParsing( ( _, x ) => x.Trim( '"', '=' ) ).NumberStyles( NumberStyles.AllowDecimalPoint );
+            mapper.Property( x => x.Money ).ColumnName( "money" ).OnParsing( ( _, x ) => x.Trim( '"', '=' ) ).NumberStyles( NumberStyles.Currency );
 
             var reader = new StringReader( input );
             Numbers[] results = [.. mapper.Read( reader )];

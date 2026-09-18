@@ -97,7 +97,7 @@ namespace FlatFiles.Test
         [TestMethod]
         public void TestWrite_ManyColumns_AreAllSeparated()
         {
-            var values = new string[100];
+            var values = new object[100];
             for (var index = 0; index != values.Length; ++index)
             {
                 values[index] = "value" + index;
