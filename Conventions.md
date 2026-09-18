@@ -162,7 +162,15 @@ scoped to the library module so the tests and benchmarks never count towards the
     dotCover cover-dotnet --Output=coverage.json --ReportType=JSON --Filters="+:module=FlatFiles" -- test FlatFiles.sln -c Release
 
 The root `CoveragePercent` in the report is the number. dotCover is a global tool
-(`dotnet tool install -g JetBrains.dotCover.CommandLineTools`); nothing in the test project is needed.
+(`dotnet tool install -g JetBrains.dotCover.CommandLineTools --version 2025.1.1`); nothing in the test project
+is needed. The version matters: 2026.2 renamed `cover-dotnet` to `cover` with different parameters, and the
+workflow pins 2025.1.1 for that reason.
+
+The `Build and test` workflow runs the same build, tests, coverage measurement and pack on every pull
+request and fails below 80%, so the figure in a PR description is the one the workflow printed. The pack
+step also runs package validation against the last released version named in the project file
+(`PackageValidationBaselineVersion`); a public API change that fails it is declared by moving the baseline
+in the same PR, with the reason in the changelog, not by suppressing the error.
 
 The cheapest coverage is rarely the most valuable, so prefer tests that assert behaviour and let coverage
 follow. The exception that proves it: the twenty-one property mapping classes are near-identical fluent
