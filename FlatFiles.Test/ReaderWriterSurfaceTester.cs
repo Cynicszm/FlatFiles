@@ -160,10 +160,10 @@ namespace FlatFiles.Test
             var skipped = 0;
             reader.RecordError += ( _, e ) => { skipped++; e.IsHandled = true; };
 
-            var records = reader.ReadAll().ToList();
+            var batches = reader.ReadAll().Cast<Header>().Select( h => h.Batch ).ToList();
 
             Assert.AreEqual( 1, skipped, "The unmatched record is reported once." );
-            Assert.HasCount( 3, records, "After a handled report the delimited reader still returns the record, parsed with a schema built from its own values." );
+            CollectionAssert.AreEqual( new[] { "B1", "B2" }, batches, "A handled report skips the record, as it does for every other record error." );
 
             var fixedLength = new FixedLengthTypeMapperSelector();
             fixedLength.When( r => r.StartsWith( 'B' ) ).Use( FixedHeaderMapper() );
