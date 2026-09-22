@@ -4,7 +4,9 @@ namespace FlatFiles
 {
     internal sealed class FixedLengthRecordContext( FixedLengthExecutionContext executionContext ) : IFixedLengthRecordContext, IRecoverableRecordContext
     {
-        private ValueRange[]? ranges;
+        private IRawValueSource? source;
+
+        private int generation;
 
         public event EventHandler<ColumnErrorEventArgs>? ColumnError;
 
@@ -17,23 +19,24 @@ namespace FlatFiles
         public string? Record { get; set; }
 
         /// <summary>
-        ///     The raw values of the record. Where the reader parsed the record without copying its values out of the
-        ///     text they were read from, they are copied out here, the first time anything asks for them.
+        ///     The raw values of the record. They are copied out of the characters they were read from the first
+        ///     time anything asks for them, and only while the reader is still on this record: a context kept past
+        ///     that reports null, because those characters are gone.
         /// </summary>
         public string[]? Values
         {
-            get => field ??= Record is null || ranges is null ? null : ValueRange.Materialise( Record, string.Empty, ranges );
+            get => field ??= source is not null && source.Generation == generation ? source.MaterialiseValues() : null;
             set => field = value;
         }
 
         /// <summary>
-        ///     Records where each raw value sits within the record, so that <see cref="Values" /> can be built from
-        ///     the record if something asks for it and left unbuilt if nothing does.
+        ///     Records where the raw values can be had from, so that they are copied out only if something asks.
         /// </summary>
-        /// <param name="currentRanges">Where each value sits within the record.</param>
-        public void SetPartitions( ValueRange[] currentRanges )
+        /// <param name="currentSource">The reader, which answers for the record it is on.</param>
+        public void SetValueSource( IRawValueSource currentSource )
         {
-            ranges = currentRanges;
+            source = currentSource;
+            generation = currentSource.Generation;
         }
 
         IFixedLengthExecutionContext IFixedLengthRecordContext.ExecutionContext => ExecutionContext;

@@ -1,4 +1,6 @@
-﻿namespace FlatFiles
+﻿using System;
+
+namespace FlatFiles
 {
     /// <summary>
     ///     Where one raw value sits within the record it was read from, so that a reader can partition a record
@@ -42,7 +44,7 @@
         /// <param name="escaped">The text holding the values the record itself could not hold, if any.</param>
         /// <param name="ranges">Where each value sits.</param>
         /// <returns>The values as strings.</returns>
-        public static string[] Materialise( string record, string escaped, ValueRange[] ranges )
+        public static string[] Materialise( string record, string escaped, ReadOnlySpan<ValueRange> ranges )
         {
             var values = new string[ranges.Length];
             for (var index = 0; index != ranges.Length; ++index)

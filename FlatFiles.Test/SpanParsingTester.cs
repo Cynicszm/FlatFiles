@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Text;
@@ -380,6 +381,53 @@ namespace FlatFiles.Test
 
             Assert.AreEqual( 7, reader.GetValues()[1],
                 "The array a hook reads is a copy of the record's values, not the one the columns are parsed from. A record partitioned handler is what replaces a value before parsing." );
+        }
+
+        [TestMethod]
+        public void TestRead_ContextKeptPastItsRecord_ReportsNoValuesButKeepsItsRecord()
+        {
+            List<IRecordContext> contexts = [];
+            var schema = new FixedLengthSchema();
+            schema.AddColumn( new StringColumn( "a" ), new Window( 4 ) );
+            schema.AddColumn( new StringColumn( "b" ), new Window( 4 ) );
+            var reader = new FixedLengthReader( new StringReader( "A001one \r\nB002two \r\n" ), schema );
+            reader.RecordParsed += ( _, e ) => contexts.Add( e.RecordContext );
+
+            while (reader.Read())
+            {
+            }
+
+            Assert.HasCount( 2, contexts );
+            Assert.IsNull( contexts[0].Values, "The ranges the values sat in belong to the reader, which has moved on." );
+            Assert.IsNull( contexts[1].Values );
+            Assert.AreEqual( "A001one ", contexts[0].Record, "The record's own text belongs to the context and stays." );
+            Assert.AreEqual( "B002two ", contexts[1].Record );
+        }
+
+        [TestMethod]
+        public void TestRead_ContextReadWhileItsRecordIsCurrent_KeepsWhatItWasGiven()
+        {
+            List<IRecordContext> contexts = [];
+            List<string[]> readWhileCurrent = [];
+            var schema = new FixedLengthSchema();
+            schema.AddColumn( new StringColumn( "a" ), new Window( 4 ) );
+            schema.AddColumn( new StringColumn( "b" ), new Window( 4 ) );
+            var reader = new FixedLengthReader( new StringReader( "A001one \r\nB002two \r\n" ), schema );
+            reader.RecordParsed += ( _, e ) =>
+            {
+                contexts.Add( e.RecordContext );
+                readWhileCurrent.Add( e.RecordContext.Values );
+            };
+
+            while (reader.Read())
+            {
+            }
+
+            CollectionAssert.AreEqual( new[] { "A001", "one" }, readWhileCurrent[0] );
+            CollectionAssert.AreEqual( new[] { "B002", "two" }, readWhileCurrent[1] );
+            // Once copied out, the array belongs to the context and outlives the record it came from.
+            CollectionAssert.AreEqual( new[] { "A001", "one" }, contexts[0].Values );
+            CollectionAssert.AreEqual( new[] { "B002", "two" }, contexts[1].Values );
         }
 
         [TestMethod]
