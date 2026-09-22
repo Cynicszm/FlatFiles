@@ -1,5 +1,9 @@
 ## 8.0.0 (planned)
-**Not released.** Where breaking changes collect until there is a major version to put them in. Nothing here is in a published package, and the list is expected to grow before it ships.
+**Not released.** What the next major version is for. Nothing here is in a published package, and the list is expected to grow before it ships.
+
+The first three are breaking, which is what forces a major version; the rest are the features the release is meant to carry. Only the breaks have to wait for it. Anything under **Also planned** could ship in a 7.x the day it is written, and should, if it is finished first - holding a feature back to make a release look bigger helps nobody.
+
+### Breaking
 
 - **`TimeSpanColumn.FromMillseconds` becomes `FromMilliseconds`.** The name has been misspelled since the method was written, and correcting it breaks every caller, so it has to wait for a major version. The fix at a call site is one letter. Its five siblings - `FromDays`, `FromHours`, `FromMinutes`, `FromSeconds` and `FromTicks` - are unaffected.
 - **The obsolete `Preprocessor` members are removed.** `IColumnDefinition.Preprocessor` and its implementations, and the `Preprocessor` method on all twenty-six property mapping interfaces, have carried `[Obsolete]` pointing at `OnParsing` since before this fork. `OnParsing` is otherwise a drop-in replacement that also receives the column context: `column.Preprocessor = v => v.Trim()` becomes `column.OnParsing = ( _, v ) => v.Trim()`, and `mapper.Property( x => x.Name ).Preprocessor( f )` becomes `.OnParsing( ( _, v ) => f( v ) )`. Removing them takes sixty `#pragma warning disable CS0618` suppressions out of twenty-eight files with them.
@@ -10,6 +14,19 @@
   A context asked for `Values` after the reader has moved on gets null - not a stale array, and not an exception, because reaching for the values of a record you no longer hold is a question with an answer rather than a mistake. The fixed-length reader narrows to match. It does not have to: it parses from the record's own string, so its values could stay good for ever. But a rule that holds for one reader and not the other is a rule nobody remembers, and narrowing it buys something back, because the reader can then reuse one set of ranges across every record instead of allocating a set per record - another 128 bytes a record on thirteen columns. Both readers drop the record's text and ranges when they read the next one, and that single act is what the whole contract rests on.
 
 The first two are breaks that package validation will report, which is the point of putting them here rather than in a minor version. The third changes no signature at all, so validation will pass it in silence - it is a break in what a member promises rather than in what it looks like, which is exactly the kind 7.5.0 shipped without noticing. The release that ships these regenerates `FlatFiles/CompatibilitySuppressions.xml` against the last 7.x baseline with every entry reviewed, as Conventions.md requires, and empties it again when the baseline moves to 8.0.0.
+
+### Also planned
+
+From the product and architecture review of 2026-09-17, in the order recommended then. None of these breaks anything, so none of them needs to wait for 8.0.0.
+
+- **Header-driven column matching against a supplied schema.** The header row is read and thrown away: never checked against the schema, never used to order it. A file whose columns have been reordered since the schema was written is read straight into the wrong properties, silently, because position is all the reader has. Matching the header by name, and saying what happens when it disagrees - reorder, refuse, or ignore - is the largest gap left against CsvHelper, Sylvan and Sep, all of which map by name. Reading by position stays the default, since a file with no header has nothing else to go on.
+- **Constructor, positional record and init-only mapping.** `Define<T>()` needs a parameterless constructor and a settable property for every column, so a record, a type with `init` accessors, or anything that validates in its constructor cannot be mapped without giving it a second, looser shape to be deserialised into.
+- **Attribute-based mapping.** The library has no attribute types at all. Every mapping is written out in fluent calls, which is the right default for a file whose shape is not the class's business, and the wrong one for the common case where a class exists to mirror a file.
+- **Comment and blank-line skipping.** Both option classes can express it today only through a `RecordRead` handler on every reader. A comment prefix and a skip-blank-lines flag on the options would cover most of what those handlers are written for. Small, and the least glamorous thing on this list.
+- **A source generator for mappings.** Would remove the start-up cost of emitting a deserialiser, and the reflection fallback's per-value penalty on runtimes without dynamic code, neither of which a trimmer can follow. 7.4.0's `RuntimeFeature.IsDynamicCodeSupported` fallback made the library work under Native AOT; this would make it fast there.
+- **UTF-8 `Stream` input.** Parsing bytes without first decoding them to characters. Everything above `TextReader` is decided by that one choice, so it is the largest change on the list, and the only one that would take allocation below CsvHelper rather than level with it. It also subsumes the zero-copy item above, which is why that item settles its contract above rather than leaving it to whichever starts first.
+
+**Declined, and worth recording as declined:** multi-character separators, configurable quoting behaviour, whitespace preservation, cancellation, multi-schema files, ragged right and `IDataReader` all came out of the same review and are already covered, most of them by releases since.
 
 ## 7.6.0 (2026-09-22)
 **Summary** - A delimited record is copied out of the parser's buffer once, as one string, and its values are parsed as slices of it rather than copied into a string each: around 8% less allocation on a delimited read and eleven fewer objects per record, with unchanged results and unchanged time.
