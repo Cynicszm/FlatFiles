@@ -213,8 +213,6 @@ namespace FlatFiles.Test
             public INullFormatter NullFormatter { get; set; } = FlatFiles.NullFormatter.Default;
 
             [Obsolete( "This property has been superseded by the OnParsing delegate." )]
-            public Func<string, string> Preprocessor { get; set; }
-
             public Func<IColumnContext, string, string> OnParsing { get; set; }
 
             public Func<IColumnContext, object, object> OnParsed { get; set; }
