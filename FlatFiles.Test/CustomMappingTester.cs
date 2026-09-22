@@ -13,7 +13,7 @@ namespace FlatFiles.Test
         public void ShouldManuallyReadWriteEntity_WithReflection()
         {
             var mapper = GetTypeMapper();
-            mapper.OptimizeMapping( false );
+            mapper.OptimiseMapping( false );
 
             var writer = new StringWriter();
             Person[] data = [
@@ -100,7 +100,7 @@ namespace FlatFiles.Test
         public void ShouldManuallyReadWriteEntityWithCollection_WithReflection()
         {
             var mapper = GetCollectionTypeMapper();
-            mapper.OptimizeMapping( false );
+            mapper.OptimiseMapping( false );
 
             var data = GetContacts();
             var writer = new StringWriter();
@@ -235,7 +235,7 @@ namespace FlatFiles.Test
         public void ShouldManuallyReadWriteEntityWithNestedMember_WithReflection()
         {
             var mapper = GetNestedTypeMapper();
-            mapper.OptimizeMapping( false );
+            mapper.OptimiseMapping( false );
 
             var data = GetRealtyProperties();
             var writer = new StringWriter();

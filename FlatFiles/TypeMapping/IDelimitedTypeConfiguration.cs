@@ -355,8 +355,8 @@ namespace FlatFiles.TypeMapping
         ///     However, some environments do not support runtime JIT, so disabling optimization will allow
         ///     FlatFiles to work.
         /// </summary>
-        /// <param name="isOptimized">Specifies whether the mapping process should be optimized.</param>
-        void OptimizeMapping( bool isOptimized = true );
+        /// <param name="isOptimised">Specifies whether the mapping process should be optimized.</param>
+        void OptimiseMapping( bool isOptimised = true );
 
         /// <summary>
         ///     Specifies a different factory method to use when initializing nested members.

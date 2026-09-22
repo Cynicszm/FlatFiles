@@ -316,7 +316,7 @@ namespace FlatFiles.TypeMapping
         IMapperSource<TEntity>
     {
         private readonly MemberLookup lookup = new();
-        private bool isOptimized = true;
+        private bool isMappingOptimised = true;
 
         public DelimitedTypeMapper()
             : this( null )
@@ -1190,14 +1190,14 @@ namespace FlatFiles.TypeMapping
             return new UntypedWriter<TEntity>( GetWriter( writer, options ) );
         }
 
-        public void OptimizeMapping( bool optimize = true )
+        public void OptimiseMapping( bool isOptimised = true )
         {
-            isOptimized = optimize;
+            isMappingOptimised = isOptimised;
         }
 
-        void IDynamicDelimitedTypeConfiguration.OptimizeMapping( bool optimize )
+        void IDynamicDelimitedTypeConfiguration.OptimiseMapping( bool isOptimised )
         {
-            OptimizeMapping( optimize );
+            OptimiseMapping( isOptimised );
         }
 
         public void UseFactory<TOther>( Func<TOther> factory )
@@ -1222,7 +1222,7 @@ namespace FlatFiles.TypeMapping
 
         private ICodeGenerator GetCodeGenerator()
         {
-            return isOptimized && DynamicCode.IsSupported
+            return isMappingOptimised && DynamicCode.IsSupported
                 ? new EmitCodeGenerator()
                 : new ReflectionCodeGenerator();
         }
