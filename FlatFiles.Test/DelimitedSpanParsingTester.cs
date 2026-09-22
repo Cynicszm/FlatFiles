@@ -174,19 +174,28 @@ namespace FlatFiles.Test
         }
 
         [TestMethod]
-        public void TestRead_RebuiltValueKeptPastItsRecord_StillReadsBack()
+        public void TestRead_RebuiltValueReadDuringItsRecord_IsKeptAfterwards()
         {
             List<IRecordContext> contexts = [];
+            List<string[]> readWhileCurrent = [];
             var schema = new DelimitedSchema();
             schema.AddColumn( new StringColumn( "a" ) );
             schema.AddColumn( new StringColumn( "b" ) );
             var reader = new DelimitedReader( new StringReader( "\"a\"\"b\",one\r\n\"c\"\"d\",two\r\n" ), schema );
-            reader.RecordParsed += ( _, e ) => contexts.Add( e.RecordContext );
+            reader.RecordParsed += ( _, e ) =>
+            {
+                contexts.Add( e.RecordContext );
+                readWhileCurrent.Add( e.RecordContext.Values );
+            };
 
             while (reader.Read())
             {
             }
 
+            // Asked for while its record was current, a rebuilt value is copied out and the copy is the context's
+            // to keep, whatever the parser does with its buffers afterwards.
+            CollectionAssert.AreEqual( new[] { "a\"b", "one" }, readWhileCurrent[0] );
+            CollectionAssert.AreEqual( new[] { "c\"d", "two" }, readWhileCurrent[1] );
             CollectionAssert.AreEqual( new[] { "a\"b", "one" }, contexts[0].Values );
             CollectionAssert.AreEqual( new[] { "c\"d", "two" }, contexts[1].Values );
         }
@@ -252,7 +261,7 @@ namespace FlatFiles.Test
         }
 
         [TestMethod]
-        public void TestRead_ContextKeptPastItsRecord_StillCarriesItsOwnValues()
+        public void TestRead_ContextKeptPastItsRecord_ReportsNoValues()
         {
             List<IRecordContext> contexts = [];
             var schema = new DelimitedSchema();
@@ -265,11 +274,38 @@ namespace FlatFiles.Test
             {
             }
 
-            // The values are read only now, with every record long since parsed and the parser's buffer reused.
+            // Nothing asked for the values while each record was current, and the characters they would have been
+            // copied from are long gone, so the contexts say so rather than inventing an answer.
             Assert.HasCount( 3, contexts );
+            Assert.IsNull( contexts[0].Values );
+            Assert.IsNull( contexts[1].Values );
+            Assert.IsNull( contexts[2].Values );
+        }
+
+        [TestMethod]
+        public void TestRead_ContextReadWhileItsRecordIsCurrent_KeepsWhatItWasGiven()
+        {
+            List<IRecordContext> contexts = [];
+            List<string[]> readWhileCurrent = [];
+            var schema = new DelimitedSchema();
+            schema.AddColumn( new StringColumn( "a" ) );
+            schema.AddColumn( new StringColumn( "b" ) );
+            var reader = new DelimitedReader( new StringReader( "one,two\r\nthree,four\r\n" ), schema );
+            reader.RecordParsed += ( _, e ) =>
+            {
+                contexts.Add( e.RecordContext );
+                readWhileCurrent.Add( e.RecordContext.Values );
+            };
+
+            while (reader.Read())
+            {
+            }
+
+            CollectionAssert.AreEqual( new[] { "one", "two" }, readWhileCurrent[0] );
+            CollectionAssert.AreEqual( new[] { "three", "four" }, readWhileCurrent[1] );
+            // Once copied out, the array belongs to the context and outlives the record it came from.
             CollectionAssert.AreEqual( new[] { "one", "two" }, contexts[0].Values );
             CollectionAssert.AreEqual( new[] { "three", "four" }, contexts[1].Values );
-            CollectionAssert.AreEqual( new[] { "five", "six" }, contexts[2].Values );
         }
 
         [TestMethod]

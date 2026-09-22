@@ -21,7 +21,7 @@ namespace FlatFiles.Test
             while (!parser.IsEndOfStream())
             {
                 var record = parser.ReadRecord();
-                records.Add( (record, ValueRange.Materialise( parser.RecordText, parser.EscapedText, parser.Ranges )) );
+                records.Add( (record, parser.Values.Materialise()) );
             }
             return records;
         }
@@ -33,7 +33,7 @@ namespace FlatFiles.Test
             while (!await parser.IsEndOfStreamAsync())
             {
                 var record = await parser.ReadRecordAsync();
-                records.Add( (record, ValueRange.Materialise( parser.RecordText, parser.EscapedText, parser.Ranges )) );
+                records.Add( (record, parser.Values.Materialise()) );
             }
             return records;
         }

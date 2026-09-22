@@ -10,18 +10,23 @@ namespace FlatFiles
     /// <summary>
     ///     Splits delimited text into records and their values. The parser scans the buffered text as a span, jumping
     ///     from one candidate separator or quote to the next with a vectorised search rather than examining every
-    ///     character. A record is copied out of the buffer once, as one string, with a range saying where each value
-    ///     sits within it, so a record costs one string rather than one per value and a column can parse its value
-    ///     from those characters without a string of its own. A record that runs off the end of the buffer is scanned again
-    ///     from its start once more text has been read, which keeps a single state machine for both the synchronous
-    ///     and the asynchronous reader.
+    ///     character. Nothing is copied out of the buffer: a record is a set of ranges into the buffered text, which
+    ///     a column parses straight from, so a record whose values nobody asks to see as strings costs nothing at all.
+    ///     A record that runs off the end of the buffer is scanned again from its start once more text has been read,
+    ///     which keeps a single state machine for both the synchronous and the asynchronous reader.
     /// </summary>
+    /// <remarks>
+    ///     The characters of a record stay in the buffer only until the next call on this parser, which is what makes
+    ///     the reader's record context report its raw values for the record being processed and null afterwards. The
+    ///     release of the previous record is deferred to the start of the next call for exactly that reason.
+    /// </remarks>
     internal sealed class DelimitedRecordParser
     {
         private readonly CharBufferReader reader;
         private readonly RecordBuffer escaped = new();
         private ValueRange[] valueRanges = new ValueRange[16];
         private int valueCount;
+        private int pending;
         private readonly string separator;
         private readonly RecordSeparatorMatcher recordSeparator;
         private readonly string? postfix;
@@ -60,8 +65,22 @@ namespace FlatFiles
 
         internal DelimitedOptions Options { get; }
 
+        /// <summary>
+        ///     Releases the record read last, which is kept in the buffer until the caller has finished with it.
+        /// </summary>
+        private void Release()
+        {
+            if (pending == 0)
+            {
+                return;
+            }
+            reader.Consume( pending );
+            pending = 0;
+        }
+
         public bool IsEndOfStream()
         {
+            Release();
             if (reader is { Available: 0, IsEndOfStream: false })
             {
                 reader.Fill();
@@ -71,6 +90,7 @@ namespace FlatFiles
 
         public async ValueTask<bool> IsEndOfStreamAsync( CancellationToken cancellationToken = default )
         {
+            Release();
             if (reader is { Available: 0, IsEndOfStream: false })
             {
                 await reader.FillAsync( cancellationToken ).ConfigureAwait( false );
@@ -79,29 +99,15 @@ namespace FlatFiles
         }
 
         /// <summary>
-        ///     The text of the record last read, which is what most of its values are slices of.
+        ///     The raw values of the record last read, as ranges into the buffered text and, for the few values the
+        ///     record's own characters cannot give, into the buffer they were rebuilt in. Valid until the next call
+        ///     on this parser.
         /// </summary>
-        public string RecordText { get; private set; } = string.Empty;
-
-        /// <summary>
-        ///     The values of the record last read that the record's own text could not hold, one after another. Empty
-        ///     unless the record carried a doubled quote or whitespace kept from around a quoted value.
-        /// </summary>
-        public string EscapedText { get; private set; } = string.Empty;
-
-        /// <summary>
-        ///     Where each value of the record last read sits, in <see cref="RecordText" /> or, for the few that need
-        ///     it, in <see cref="EscapedText" />.
-        /// </summary>
-        public ValueRange[] Ranges { get; private set; } = [];
-
-        /// <summary>
-        ///     The raw values of the record last read.
-        /// </summary>
-        public RawRecord Values => new( RecordText, EscapedText, Ranges );
+        public RawRecord Values => new( reader.Span, escaped.WrittenSpan, valueRanges.AsSpan( 0, valueCount ) );
 
         public string ReadRecord()
         {
+            Release();
             string record;
             while (!TryReadRecord( out record ))
             {
@@ -112,6 +118,7 @@ namespace FlatFiles
 
         public async Task<string> ReadRecordAsync( CancellationToken cancellationToken = default )
         {
+            Release();
             string record;
             while (!TryReadRecord( out record ))
             {
@@ -141,13 +148,9 @@ namespace FlatFiles
                     case TokenEnd.Token:
                         continue;
                 }
-                // The record is copied out of the buffer whether or not the caller asked for its text, because the
-                // values are slices of it and the buffer is reused as soon as the next record is read.
-                RecordText = new string( text[..separatorStart] );
-                EscapedText = escaped.Length == 0 ? string.Empty : new string( escaped.WrittenSpan );
-                Ranges = valueCount == 0 ? [] : valueRanges.AsSpan( 0, valueCount ).ToArray();
-                record = preserveRecordText ? RecordText : string.Empty;
-                reader.Consume( position );
+                record = preserveRecordText ? new string( text[..separatorStart] ) : string.Empty;
+                // The record stays in the buffer until the next call, because its values are ranges into it.
+                pending = position;
                 return true;
             }
         }
