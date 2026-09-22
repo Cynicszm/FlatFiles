@@ -123,11 +123,11 @@ namespace FlatFiles
 
         private bool NeedsEscaping( ReadOnlySpan<char> value )
         {
-            switch (Options.QuoteBehavior)
+            switch (Options.QuoteBehaviour)
             {
-                case QuoteBehavior.AlwaysQuote:
+                case QuoteBehaviour.AlwaysQuote:
                     return true;
-                case QuoteBehavior.Never:
+                case QuoteBehaviour.Never:
                     return false;
             }
             // Don't escape empty strings.

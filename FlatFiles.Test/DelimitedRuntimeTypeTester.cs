@@ -124,7 +124,7 @@ namespace FlatFiles.Test
         {
             var mapper = DelimitedTypeMapper.DefineDynamic( typeof( InternalPerson ) );
             mapper.StringProperty( "Name" ).ColumnName( "Name" );
-            mapper.OptimizeMapping( false );
+            mapper.OptimiseMapping( false );
 
             var expected = $"John{Environment.NewLine}Susan{Environment.NewLine}";
 

@@ -32,7 +32,7 @@ namespace FlatFiles.Benchmark
         [Benchmark( Description = "SerializeEmit" )]
         public string SerializeEmit()
         {
-            mapper.OptimizeMapping();
+            mapper.OptimiseMapping();
             var writer = new StringWriter();
             mapper.Write( writer, people );
             return writer.ToString();
@@ -41,7 +41,7 @@ namespace FlatFiles.Benchmark
         [Benchmark( Description = "SerializeReflection" )]
         public string SerializeReflection()
         {
-            mapper.OptimizeMapping( false );
+            mapper.OptimiseMapping( false );
             var writer = new StringWriter();
             mapper.Write( writer, people );
             return writer.ToString();

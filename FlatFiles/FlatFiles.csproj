@@ -10,7 +10,7 @@
     <RepositoryUrl>https://github.com/Cynicszm/FlatFiles.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>csv;comma;tab;separated;value;delimited;flat;file;fixed;width;fixed-width;length;fixed-length;parser;parsing;parse</PackageTags>
-    <PackageReleaseNotes>Breaking: TimeSpanColumn.FromMillseconds is renamed FromMilliseconds. The name was misspelled since the method was written and correcting it needs a major version; the fix at a call site is one letter, and its five siblings FromDays, FromHours, FromMinutes, FromSeconds and FromTicks are unaffected. No other API change in this release so far; six documentation-comment spellings are corrected alongside it, and every public name was read for the same thing.</PackageReleaseNotes>
+    <PackageReleaseNotes>Breaking: TimeSpanColumn.FromMillseconds is renamed FromMilliseconds. The name was misspelled since the method was written and correcting it needs a major version; the fix at a call site is one letter, and its five siblings FromDays, FromHours, FromMinutes, FromSeconds and FromTicks are unaffected. The three American spellings left in the public API are also now British: QuoteBehavior becomes QuoteBehaviour, OptimizeMapping becomes OptimiseMapping, and its isOptimized parameter becomes isOptimised. Each is a find and replace at a call site with no behaviour change. Six documentation-comment spellings are corrected too, and every public name was read for the same fault.</PackageReleaseNotes>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>FlatFiles.snk</AssemblyOriginatorKeyFile>
     <Version>8.0.0</Version>
