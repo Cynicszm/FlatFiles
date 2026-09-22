@@ -4,7 +4,7 @@ using System.IO;
 namespace FlatFiles
 {
     /// <summary>
-    ///     Represents a string column that has contains multiple, nested values
+    ///     Represents a string column that contains multiple, nested values
     /// </summary>
     public sealed class FixedLengthComplexColumn : ColumnDefinition<object?[]?>
     {

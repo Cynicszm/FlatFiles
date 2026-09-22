@@ -1,13 +1,20 @@
-## 8.0.0 (planned)
-**Not released.** What the next major version is for. Nothing here is in a published package, and the list is expected to grow before it ships.
+## 8.0.0 (unreleased)
+**Not released.** The next major version, being built. What is written up here has landed on master; what is under **Still to come** has not.
 
-The first three are breaking, which is what forces a major version; the rest are the features the release is meant to carry. Only the breaks have to wait for it.
+**`TimeSpanColumn.FromMillseconds` is now `FromMilliseconds`.** The name was misspelled the day the method was written and stayed that way through every release since, because correcting it breaks every caller and a rename cannot go into a minor version. Its five siblings - `FromDays`, `FromHours`, `FromMinutes`, `FromSeconds` and `FromTicks` - were always spelled correctly, which is part of why the odd one out went unnoticed for so long; it surfaced while writing the README's column table, where the table had to print the wrong spelling because that was the published name. The fix at a call site is one letter.
+
+Six spellings in the documentation comments are corrected with it, since those ship in the package as the text a consumer's editor shows: "equivilent" on both of `BooleanColumn`'s parsing methods, "a new instance instance of" on `ByteArrayColumn` and `CharArrayColumn`, and "a string column that has contains multiple, nested values" on both complex columns. Every public type, member and parameter name was read for the same thing and nothing else was misspelled; `QuoteBehavior` and `OptimizeMapping` keep their American spelling, which Conventions.md already settles.
+
+Package validation reports the removal as CP0002, and `FlatFiles/CompatibilitySuppressions.xml` carries that single entry, declaring it as Conventions.md requires. The file is emptied again when the baseline moves to 8.0.0.
+
+### Still to come
+
+Two breaks remain, and they are what keeps this a major version; the rest are features, which do not need one.
 
 **This library puts performance first.** Where a performance change and a feature want the same release, the performance change goes in and the feature waits. That is the whole reason the last several releases read as they do - buffer writers, a span tokeniser, a column context built only when something can read it, span parsing on both readers - and it is worth stating, because the list below is ordered by the review that produced it rather than by what will be built next.
 
-### Breaking
+#### Breaking
 
-- **`TimeSpanColumn.FromMillseconds` becomes `FromMilliseconds`.** The name has been misspelled since the method was written, and correcting it breaks every caller, so it has to wait for a major version. The fix at a call site is one letter. Its five siblings - `FromDays`, `FromHours`, `FromMinutes`, `FromSeconds` and `FromTicks` - are unaffected.
 - **The obsolete `Preprocessor` members are removed.** `IColumnDefinition.Preprocessor` and its implementations, and the `Preprocessor` method on all twenty-six property mapping interfaces, have carried `[Obsolete]` pointing at `OnParsing` since before this fork. `OnParsing` is otherwise a drop-in replacement that also receives the column context: `column.Preprocessor = v => v.Trim()` becomes `column.OnParsing = ( _, v ) => v.Trim()`, and `mapper.Property( x => x.Name ).Preprocessor( f )` becomes `.OnParsing( ( _, v ) => f( v ) )`. Removing them takes sixty `#pragma warning disable CS0618` suppressions out of twenty-eight files with them.
 - **A delimited record is parsed straight from the parser's buffer, and `IRecordContext.Values` is only good while the record is.** 7.6.0 copies each record out of the buffer once and parses its values as slices of that copy, which is what lets the record context hand them back whenever it is asked. Dropping the copy and parsing the buffer itself removes the last string a delimited record costs, an estimated 350 bytes a record on top of 7.6.0's 1,171 - about a third again - but the characters are gone as soon as the next record is read.
 
@@ -15,9 +22,9 @@ The first three are breaking, which is what forces a major version; the rest are
 
   A context asked for `Values` after the reader has moved on gets null - not a stale array, and not an exception, because reaching for the values of a record you no longer hold is a question with an answer rather than a mistake. The fixed-length reader narrows to match. It does not have to: it parses from the record's own string, so its values could stay good for ever. But a rule that holds for one reader and not the other is a rule nobody remembers, and narrowing it buys something back, because the reader can then reuse one set of ranges across every record instead of allocating a set per record - another 128 bytes a record on thirteen columns. Both readers drop the record's text and ranges when they read the next one, and that single act is what the whole contract rests on.
 
-The first two are breaks that package validation will report, which is the point of putting them here rather than in a minor version. The third changes no signature at all, so validation will pass it in silence - it is a break in what a member promises rather than in what it looks like, which is exactly the kind 7.5.0 shipped without noticing. The release that ships these regenerates `FlatFiles/CompatibilitySuppressions.xml` against the last 7.x baseline with every entry reviewed, as Conventions.md requires, and empties it again when the baseline moves to 8.0.0.
+Removing `Preprocessor` is a break package validation will report, and it is declared in the suppression file when it lands, as the rename above was. The zero-copy change reports nothing: it alters no signature, so validation passes it in silence. That is a break in what a member promises rather than in what it looks like - exactly the kind 7.5.0 shipped without anybody noticing - so it is described here instead of being caught by a tool.
 
-### Also planned
+#### Also planned
 
 From the product and architecture review of 2026-09-17, in the order that review recommended. None of these breaks anything, so none of them needs 8.0.0 to happen. The one that is also a performance change, UTF-8 `Stream` input, is last here and first in any argument about what to do next.
 

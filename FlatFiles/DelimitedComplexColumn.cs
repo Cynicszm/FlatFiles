@@ -5,7 +5,7 @@ namespace FlatFiles
 {
     /// <inheritdoc />
     /// <summary>
-    ///     Represents a string column that has contains multiple, nested values
+    ///     Represents a string column that contains multiple, nested values
     /// </summary>
     public sealed class DelimitedComplexColumn : ColumnDefinition<object?[]?>
     {
