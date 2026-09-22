@@ -10,10 +10,10 @@
     <RepositoryUrl>https://github.com/Cynicszm/FlatFiles.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>csv;comma;tab;separated;value;delimited;flat;file;fixed;width;fixed-width;length;fixed-length;parser;parsing;parse</PackageTags>
-    <PackageReleaseNotes>A fixed-length record is parsed from the characters of the record itself rather than from a string per column: a value is cut and trimmed as a range within the record, and the column reads it from there, so nothing is copied for a number, date, boolean, character, enumeration or ignored column, and a string column copies once instead of twice. Around 39% less allocation on a fixed-length read and 36% through a type mapper. IColumnDefinition gains Parse( IColumnContext?, ReadOnlySpan&lt;char&gt; ) and INullFormatter gains IsNullValue( IColumnContext?, ReadOnlySpan&lt;char&gt; ), both default interface members, so an implementation outside the library is unaffected. Source- and binary-compatible with 7.4.1.</PackageReleaseNotes>
+    <PackageReleaseNotes>A delimited record is copied out of the parser's buffer once, as one string, and each of its values is parsed as a slice of that string rather than copied into a string of its own; a value whose characters are not next to each other in the record, because of a doubled quote or whitespace kept from around it, is rebuilt as before. Around 8% less allocation on a delimited read and eleven fewer objects per record, with unchanged results and unchanged time. PreserveRecordText now costs nothing. No API changes. Source- and binary-compatible with 7.5.0.</PackageReleaseNotes>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>FlatFiles.snk</AssemblyOriginatorKeyFile>
-    <Version>7.5.0</Version>
+    <Version>7.6.0</Version>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -30,8 +30,8 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <AssemblyVersion>7.5.0.0</AssemblyVersion>
-    <FileVersion>7.5.0.0</FileVersion>
+    <AssemblyVersion>7.6.0.0</AssemblyVersion>
+    <FileVersion>7.6.0.0</FileVersion>
     <PackageLicenseFile>UNLICENSE.txt</PackageLicenseFile>
     <PackageIcon>icon.png</PackageIcon>
     <Nullable>enable</Nullable>

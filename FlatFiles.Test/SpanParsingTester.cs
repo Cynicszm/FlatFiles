@@ -11,7 +11,8 @@ namespace FlatFiles.Test
     ///     value, and that nothing observable changes because of it: every column type reads the same value, the hooks
     ///     and the obsolete preprocessor still receive a string, a column written against an earlier version still
     ///     sees every value through whichever overload it implemented, and the raw values are still there for a
-    ///     handler or an error that asks for them.
+    ///     handler or an error that asks for them. <see cref="DelimitedSpanParsingTester" /> covers the same ground
+    ///     for a delimited record.
     /// </summary>
     [TestClass]
     public class SpanParsingTester
@@ -96,6 +97,70 @@ namespace FlatFiles.Test
             Assert.AreEqual( new TimeOnly( 13, 45, 56 ), values[2] );
             Assert.AreEqual( new TimeSpan( 1, 2, 3 ), values[3] );
             Assert.AreEqual( Guid.Parse( "0f8fad5b-d9cb-469f-a165-70867728950e" ), values[4] );
+        }
+
+        [TestMethod]
+        public void TestRead_BooleanColumn_ReadsBothWordsAndRefusesAnythingElse()
+        {
+            var schema = new FixedLengthSchema();
+            schema.AddColumn( new BooleanColumn( "a" ), new Window( 5 ) );
+            schema.AddColumn( new BooleanColumn( "b" ), new Window( 5 ) );
+            var reader = new FixedLengthReader( new StringReader( "TRUE falseno   \r\n" ), schema );
+
+            Assert.IsTrue( reader.Read() );
+            var values = reader.GetValues();
+
+            Assert.AreEqual( true, values[0], "The words are matched without regard to case." );
+            Assert.AreEqual( false, values[1] );
+
+            var refusing = new FixedLengthSchema();
+            refusing.AddColumn( new BooleanColumn( "a" ), new Window( 5 ) );
+            var second = new FixedLengthReader( new StringReader( "maybe\r\n" ), refusing );
+
+            Assert.ThrowsExactly<RecordProcessingException>( () => second.Read() );
+        }
+
+        [TestMethod]
+        public void TestRead_BooleanColumnWithNoWords_RefusesEveryValue()
+        {
+            var schema = new FixedLengthSchema();
+            schema.AddColumn( new BooleanColumn( "a" ) { TrueString = null, FalseString = null }, new Window( 4 ) );
+            var reader = new FixedLengthReader( new StringReader( "True\r\n" ), schema );
+
+            Assert.ThrowsExactly<RecordProcessingException>( () => reader.Read() );
+        }
+
+        [TestMethod]
+        public void TestRead_CharColumn_TakesTheFirstCharacterOnlyWhenTrailingIsAllowed()
+        {
+            var schema = new FixedLengthSchema();
+            schema.AddColumn( new CharColumn( "a" ) { AllowTrailing = true }, new Window( 3 ) );
+            var reader = new FixedLengthReader( new StringReader( "xyz\r\n" ), schema );
+
+            Assert.IsTrue( reader.Read() );
+
+            Assert.AreEqual( 'x', reader.GetValues()[0] );
+
+            var refusing = new FixedLengthSchema();
+            refusing.AddColumn( new CharColumn( "a" ), new Window( 3 ) );
+            var second = new FixedLengthReader( new StringReader( "xyz\r\n" ), refusing );
+
+            Assert.ThrowsExactly<RecordProcessingException>( () => second.Read() );
+        }
+
+        [TestMethod]
+        public void TestRead_EnumColumn_ReadsANameOrItsNumber()
+        {
+            var schema = new FixedLengthSchema();
+            schema.AddColumn( new EnumColumn<Colour>( "a" ), new Window( 6 ) );
+            schema.AddColumn( new EnumColumn<Colour>( "b" ), new Window( 6 ) );
+            var reader = new FixedLengthReader( new StringReader( "red   2     \r\n" ), schema );
+
+            Assert.IsTrue( reader.Read() );
+            var values = reader.GetValues();
+
+            Assert.AreEqual( Colour.Red, values[0] );
+            Assert.AreEqual( Colour.Green, values[1] );
         }
 
         [TestMethod]
@@ -243,21 +308,6 @@ namespace FlatFiles.Test
         }
 
         [TestMethod]
-        public void TestRead_Delimited_StillParsesFromTheStringsItsParserProduced()
-        {
-            var column = new SpanCountingColumn( "a" );
-            var schema = new DelimitedSchema();
-            schema.AddColumn( column );
-            var reader = new DelimitedReader( new StringReader( "abcd\r\n" ), schema );
-
-            Assert.IsTrue( reader.Read() );
-
-            Assert.AreEqual( "abcd", reader.GetValues()[0] );
-            Assert.AreEqual( 0, column.SpanCalls, "The delimited parser copies each value out of its buffer already." );
-            Assert.AreEqual( 1, column.StringCalls );
-        }
-
-        [TestMethod]
         public void TestRead_EnumColumnWithItsOwnParser_TheParserStillReceivesAString()
         {
             var schema = new FixedLengthSchema();
@@ -329,6 +379,20 @@ namespace FlatFiles.Test
             Assert.IsTrue( reader.Read() );
 
             CollectionAssert.AreEqual( new[] { "A001", string.Empty, string.Empty }, seen );
+        }
+
+        [TestMethod]
+        public void TestRead_HookWritesToTheRawValues_TheWriteDoesNotReachTheNextColumn()
+        {
+            var schema = new FixedLengthSchema();
+            schema.AddColumn( new StringColumn( "a" ) { OnParsed = ( context, v ) => { context.RecordContext.Values[1] = "99"; return v; } }, new Window( 4 ) );
+            schema.AddColumn( new Int32Column( "b" ), new Window( 4 ) );
+            var reader = new FixedLengthReader( new StringReader( "A0010007\r\n" ), schema );
+
+            Assert.IsTrue( reader.Read() );
+
+            Assert.AreEqual( 7, reader.GetValues()[1],
+                "The array a hook reads is a copy of the record's values, not the one the columns are parsed from. A record partitioned handler is what replaces a value before parsing." );
         }
 
         [TestMethod]

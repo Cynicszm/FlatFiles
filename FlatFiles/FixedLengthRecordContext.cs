@@ -17,12 +17,12 @@ namespace FlatFiles
         public string? Record { get; set; }
 
         /// <summary>
-        ///     The raw values of the record. Where the reader parsed the record without copying its values out, they
-        ///     are copied out here, the first time anything asks for them.
+        ///     The raw values of the record. Where the reader parsed the record without copying its values out of the
+        ///     text they were read from, they are copied out here, the first time anything asks for them.
         /// </summary>
         public string[]? Values
         {
-            get => field ??= Record is null || ranges is null ? null : ValueRange.Materialise( Record, ranges );
+            get => field ??= Record is null || ranges is null ? null : ValueRange.Materialise( Record, string.Empty, ranges );
             set => field = value;
         }
 
