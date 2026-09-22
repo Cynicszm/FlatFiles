@@ -150,6 +150,15 @@ namespace FlatFiles.Properties {
                 return ResourceManager.GetString("InvalidAlignment", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Encountered an invalid quote behaviour..
+        /// </summary>
+        internal static string InvalidQuoteBehaviour {
+            get {
+                return ResourceManager.GetString("InvalidQuoteBehaviour", resourceCulture);
+            }
+        }
         
         /// <summary>
         ///   Looks up a localized string similar to Failed to convert &apos;{0}&apos; to &apos;{1}&apos;. Column: {2}, Position: {3}..

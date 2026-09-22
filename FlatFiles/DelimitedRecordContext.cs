@@ -4,11 +4,9 @@ namespace FlatFiles
 {
     internal sealed class DelimitedRecordContext( DelimitedExecutionContext executionContext ) : IDelimitedRecordContext, IRecoverableRecordContext
     {
-        private string? recordText;
+        private IRawValueSource? source;
 
-        private string escapedText = string.Empty;
-
-        private ValueRange[]? ranges;
+        private int generation;
 
         public event EventHandler<ColumnErrorEventArgs>? ColumnError;
 
@@ -21,27 +19,24 @@ namespace FlatFiles
         public string? Record { get; set; }
 
         /// <summary>
-        ///     The raw values of the record. Where the reader parsed the record without copying its values out of the
-        ///     text they were read from, they are copied out here, the first time anything asks for them.
+        ///     The raw values of the record. They are copied out of the characters they were read from the first
+        ///     time anything asks for them, and only while the reader is still on this record: a context kept past
+        ///     that reports null, because those characters are gone.
         /// </summary>
         public string[]? Values
         {
-            get => field ??= recordText is null || ranges is null ? null : ValueRange.Materialise( recordText, escapedText, ranges );
+            get => field ??= source is not null && source.Generation == generation ? source.MaterialiseValues() : null;
             set => field = value;
         }
 
         /// <summary>
-        ///     Records the text the raw values were read from and where each sits within it, so that
-        ///     <see cref="Values" /> can be built from them if something asks for it and left unbuilt if nothing does.
+        ///     Records where the raw values can be had from, so that they are copied out only if something asks.
         /// </summary>
-        /// <param name="currentText">The text of the record the values were read from.</param>
-        /// <param name="currentEscaped">The text holding the values the record itself could not hold.</param>
-        /// <param name="currentRanges">Where each value sits.</param>
-        public void SetPartitions( string currentText, string currentEscaped, ValueRange[] currentRanges )
+        /// <param name="currentSource">The reader, which answers for the record it is on.</param>
+        public void SetValueSource( IRawValueSource currentSource )
         {
-            recordText = currentText;
-            escapedText = currentEscaped;
-            ranges = currentRanges;
+            source = currentSource;
+            generation = currentSource.Generation;
         }
 
         IDelimitedExecutionContext IDelimitedRecordContext.ExecutionContext => ExecutionContext;

@@ -23,21 +23,25 @@ Fifty-one members went, and with them every `#pragma warning disable CS0618` in 
 
 Package validation reports thirty removals, which with the renames above brings the suppression file to forty-two entries, each one read before it was kept.
 
+**A delimited record is parsed straight from the parser's buffer, and `IRecordContext.Values` is only good while its record is.** 7.6.0 copied each record out of the buffer once and parsed its values as slices of that copy. Nothing is copied now: a record is a set of ranges into the buffered text, and a column reads its value where it lies, so a record whose values nobody asks to see as strings costs nothing at all. A delimited read allocated 1,171 bytes a record and now allocates 741; through a type mapper, 1,309 and now 879.
+
+The catch is what pays for it. Those characters are gone as soon as the next record is read, so `Values` reports the record's values while that record is being processed - which covers every hook, every handler, every error and anything reached through `GetMetadata` - and null afterwards to a context something kept. Asked for while its record is current, the values are copied out and that array belongs to the context for ever; it is only the never-asked case that becomes null. `IRecordContext.Record` is unaffected: the fixed-length reader's record is a string the context owns, and a delimited reader's is one too when `PreserveRecordText` is set.
+
+**`PreserveRecordText` is worth setting deliberately again.** 7.6.0 said it cost nothing, and for 7.6.0 that was true: the record was copied out of the buffer whether or not anybody wanted its text, because the values were slices of that copy. Nothing is copied now, so the option is the only thing that makes the string, and it is the difference between 741 and 1,035 bytes a record on the measurement above. Leave it off unless something reads `IRecordContext.Record`.
+
+Nothing about this reaches package validation. No signature changes, so the tool passes it in silence; it is a break in what a member promises rather than in what it looks like, which is exactly the kind 7.5.0 shipped without anybody noticing, and is why it is written down here rather than left to be discovered.
+
+The fixed-length reader narrows to match, though it need not: it parses from the record's own string, so its values could have stayed good for ever. One rule that holds for both readers is worth more than a rule that holds for one, and narrowing pays for itself, because the reader can now reuse a single set of ranges across every record instead of allocating one per record. A fixed-length read allocated 1,269 bytes a record and now allocates 1,157; through a type mapper, 1,407 and now 1,319. Both readers drop what a context can report when they read the next record, and that single act is what the whole contract rests on.
+
+Time is unchanged on both readers, within the noise this machine produces.
+
+**The two option classes were read through while this was written, and three things in them were wrong.** Setting `DelimitedOptions.QuoteBehaviour` to a value outside the enumeration threw "Encountered an invalid fixed width column alignment", which is the message for a different setting on a different reader and sends anyone who hits it looking in the wrong place; it now has a message of its own. `FixedLengthOptions` misspelled "column" and "truncation" in two remarks, and both classes, along with their constructors, named types that have never existed - `DelimitedParser`, `DelimitedParserOptions`, `FixedLengthParser`, `FixedLengthParserOptions` - so every one of them now names the reader and writer it belongs to. `DelimitedOptions.Quote` said it quoted records rather than values, `IsColumnContextDisabled` said "Gets" of a property with a setter, and the record separator's remark had its slashes the wrong way round and a word missing.
+
+`FixedLengthOptions.RecordSeparator` gains the remark its delimited twin already had, saying what null means and that it is ignored when `HasRecordSeparator` is false. `FillCharacter` said it buffered values rather than padding them, and the three remarks that pointed at "the Window class" now point at the property on it.
+
 ### Still to come
 
-One break remains, and it is what keeps this a major version; the rest are features, which do not need one.
-
 **This library puts performance first.** Where a performance change and a feature want the same release, the performance change goes in and the feature waits. That is the whole reason the last several releases read as they do - buffer writers, a span tokeniser, a column context built only when something can read it, span parsing on both readers - and it is worth stating, because the list below is ordered by the review that produced it rather than by what will be built next.
-
-#### Breaking
-
-- **A delimited record is parsed straight from the parser's buffer, and `IRecordContext.Values` is only good while the record is.** 7.6.0 copies each record out of the buffer once and parses its values as slices of that copy, which is what lets the record context hand them back whenever it is asked. Dropping the copy and parsing the buffer itself removes the last string a delimited record costs, an estimated 350 bytes a record on top of 7.6.0's 1,171 - about a third again - but the characters are gone as soon as the next record is read.
-
-  So `Values` has to narrow: it reports the record's values while that record is being processed, which covers every hook, every handler and every error, and reports null afterwards to a context something kept. In a minor version that would have to be bought back with an escape analysis - materialising the strings up front whenever an event, a schema selector, a column that can read its context, `GetMetadata` or the error path could reach them - which is four mechanisms holding up one invariant. A major version can simply say what `Values` means instead, and the code stays the shape it is. Being able to make that trade is the reason this is here rather than done.
-
-  A context asked for `Values` after the reader has moved on gets null - not a stale array, and not an exception, because reaching for the values of a record you no longer hold is a question with an answer rather than a mistake. The fixed-length reader narrows to match. It does not have to: it parses from the record's own string, so its values could stay good for ever. But a rule that holds for one reader and not the other is a rule nobody remembers, and narrowing it buys something back, because the reader can then reuse one set of ranges across every record instead of allocating a set per record - another 128 bytes a record on thirteen columns. Both readers drop the record's text and ranges when they read the next one, and that single act is what the whole contract rests on.
-
-The zero-copy change reports nothing to package validation: it alters no signature, so validation passes it in silence. That is a break in what a member promises rather than in what it looks like - exactly the kind 7.5.0 shipped without anybody noticing - so it is described here instead of being caught by a tool.
 
 #### Also planned
 

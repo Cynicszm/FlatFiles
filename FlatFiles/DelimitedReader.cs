@@ -9,7 +9,7 @@ namespace FlatFiles
     /// <summary>
     ///     Extracts records from a file containing delimited values.
     /// </summary>
-    public sealed class DelimitedReader : IReaderWithMetadata
+    public sealed class DelimitedReader : IReaderWithMetadata, IRawValueSource
     {
         private readonly DelimitedRecordParser parser;
         private readonly DelimitedSchemaSelector? schemaSelector;
@@ -20,6 +20,14 @@ namespace FlatFiles
         private object?[]? values;
         private bool endOfFile;
         private bool hasError;
+        private int generation;
+
+        int IRawValueSource.Generation => generation;
+
+        string[] IRawValueSource.MaterialiseValues()
+        {
+            return parser.Values.Materialise();
+        }
 
         /// <summary>
         ///     Initialises a new DelimitedReader with no schema.
@@ -259,7 +267,7 @@ namespace FlatFiles
                 // Do not treat a missing schema in an empty file as an error.
                 return null;
             }
-            schema = CreateSchemaFromHeader( ValueRange.Materialise( parser.RecordText, parser.EscapedText, parser.Ranges ) );
+            schema = CreateSchemaFromHeader( parser.Values.Materialise() );
             return schema;
         }
 
@@ -284,7 +292,7 @@ namespace FlatFiles
                 // Do not treat a missing schema in an empty file as an error.
                 return null;
             }
-            schema = CreateSchemaFromHeader( ValueRange.Materialise( parser.RecordText, parser.EscapedText, parser.Ranges ) );
+            schema = CreateSchemaFromHeader( parser.Values.Materialise() );
             return schema;
         }
 
@@ -336,15 +344,13 @@ namespace FlatFiles
             {
                 return null;
             }
-            var recordText = parser.RecordText;
-            var escapedText = parser.EscapedText;
-            var ranges = parser.Ranges;
+            var rawRecord = parser.Values;
             // A schema selector is given the raw values, and a handler for the record read is given them as an array
             // it can write into, where what it leaves behind is what gets parsed. Either way they are copied out of
-            // the record before it is parsed; otherwise the columns read them from the record itself and the record
-            // context copies them out only if something asks it for them.
+            // the buffer before the record is parsed; otherwise the columns read them where they lie and the record
+            // context copies them out only if something asks it for them, and only while this record is current.
             var rawValues = schemaSelector is not null || RecordRead is not null
-                ? ValueRange.Materialise( recordText, escapedText, ranges )
+                ? rawRecord.Materialise()
                 : null;
             var currentSchema = rawValues is null ? schema : GetSchema( record, rawValues );
             if (currentSchema is null)
@@ -356,20 +362,20 @@ namespace FlatFiles
                 {
                     return null;
                 }
-                currentSchema = DelimitedSchema.BuildDynamicSchema( parser.Options, ranges.Length );
+                currentSchema = DelimitedSchema.BuildDynamicSchema( parser.Options, rawRecord.Count );
             }
-            var currentContext = NewRecordContext( currentSchema, record, recordText, escapedText, ranges, rawValues );
+            var currentContext = NewRecordContext( currentSchema, record, rawValues );
             recordContext = currentContext;
             if (rawValues is not null && IsSkipped( currentContext, rawValues ))
             {
                 return null;
             }
-            if (HasWrongNumberOfColumns( currentSchema, ranges.Length ))
+            if (HasWrongNumberOfColumns( currentSchema, rawRecord.Count ))
             {
                 ProcessError( new RecordProcessingException( currentContext, Resources.DelimitedRecordWrongNumberOfColumns ) );
                 return null;
             }
-            var currentValues = ParseValues( currentContext, recordText, escapedText, ranges, rawValues );
+            var currentValues = ParseValues( currentContext, rawRecord, rawValues );
             if (currentValues is null)
             {
                 return null;
@@ -413,7 +419,7 @@ namespace FlatFiles
 
         private ExecutionContextCache<DelimitedSchema, DelimitedExecutionContext>? executionContexts;
 
-        private DelimitedRecordContext NewRecordContext( DelimitedSchema currentSchema, string record, string recordText, string escapedText, ValueRange[] ranges, string[]? currentValues )
+        private DelimitedRecordContext NewRecordContext( DelimitedSchema currentSchema, string record, string[]? currentValues )
         {
             var executionContext = (executionContexts ??= new ExecutionContextCache<DelimitedSchema, DelimitedExecutionContext>( s => new DelimitedExecutionContext( s!, parser.Options.Clone() ) )).Get( currentSchema );
             var currentContext = new DelimitedRecordContext( executionContext )
@@ -425,9 +431,9 @@ namespace FlatFiles
             };
             if (currentValues is null)
             {
-                // Nothing has asked for the values as strings, so the context is told where they sit and copies them
-                // out only if a handler or an error reaches for them.
-                currentContext.SetPartitions( recordText, escapedText, ranges );
+                // Nothing has asked for the values as strings, so the context is pointed at the reader and copies
+                // them out only if a handler or an error reaches for them while this record is still current.
+                currentContext.SetValueSource( this );
             }
             return currentContext;
         }
@@ -438,14 +444,14 @@ namespace FlatFiles
             return valueCount + columnDefinitions.MetadataCount < columnDefinitions.PhysicalCount;
         }
 
-        private object?[]? ParseValues( DelimitedRecordContext currentContext, string recordText, string escapedText, ValueRange[] ranges, string[]? rawValues )
+        private object?[]? ParseValues( DelimitedRecordContext currentContext, RawRecord rawRecord, string[]? rawValues )
         {
             try
             {
                 currentContext.ColumnError += ColumnError;
                 var currentSchema = currentContext.ExecutionContext.Schema;
                 return rawValues is null
-                    ? currentSchema.ParseValues( currentContext, new RawRecord( recordText, escapedText, ranges ) )
+                    ? currentSchema.ParseValues( currentContext, rawRecord )
                     : currentSchema.ParseValues( currentContext, rawValues );
             }
             catch (FlatFileException exception)
@@ -530,6 +536,8 @@ namespace FlatFiles
 
         private string? ReadNextRecord()
         {
+            // Everything the last record's context could report goes with the buffer the parser is about to reuse.
+            ++generation;
             if (parser.IsEndOfStream())
             {
                 endOfFile = true;
@@ -553,6 +561,7 @@ namespace FlatFiles
 
         private async Task<string?> ReadNextRecordAsync( CancellationToken cancellationToken = default )
         {
+            ++generation;
             if (await parser.IsEndOfStreamAsync( cancellationToken ).ConfigureAwait( false ))
             {
                 endOfFile = true;

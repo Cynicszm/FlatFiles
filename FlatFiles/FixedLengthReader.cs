@@ -9,7 +9,7 @@ namespace FlatFiles
     /// <summary>
     ///     Extracts records from a file that has value in fixed-length columns.
     /// </summary>
-    public sealed class FixedLengthReader : IReaderWithMetadata
+    public sealed class FixedLengthReader : IReaderWithMetadata, IRawValueSource
     {
         private readonly FixedLengthRecordParser parser;
         private readonly FixedLengthSchemaSelector? schemaSelector;
@@ -21,6 +21,21 @@ namespace FlatFiles
         private object?[]? values;
         private bool endOfFile;
         private bool hasError;
+        private int generation;
+        // One set of ranges for the whole read. A record context only reads them while its record is current, so
+        // there is no reason to hand each record an array of its own.
+        private ValueRange[] valueRanges = new ValueRange[16];
+        private int valueCount;
+        private string? currentRecord;
+
+        int IRawValueSource.Generation => generation;
+
+        string[] IRawValueSource.MaterialiseValues()
+        {
+            return currentRecord is null
+                ? []
+                : ValueRange.Materialise( currentRecord, string.Empty, valueRanges.AsSpan( 0, valueCount ) );
+        }
 
         /// <summary>
         ///     Initialises a new FixedLengthReader with the given schema.
@@ -198,7 +213,7 @@ namespace FlatFiles
 
         private ExecutionContextCache<FixedLengthSchema, FixedLengthExecutionContext>? executionContexts;
 
-        private FixedLengthRecordContext NewRecordContext( FixedLengthSchema currentSchema, string record, ValueRange[]? ranges, string[]? currentValues )
+        private FixedLengthRecordContext NewRecordContext( FixedLengthSchema currentSchema, string record, bool hasPartitions, string[]? currentValues )
         {
             var executionContext = (executionContexts ??= new ExecutionContextCache<FixedLengthSchema, FixedLengthExecutionContext>( s => new FixedLengthExecutionContext( s!, options.Clone() ) )).Get( currentSchema );
             var currentContext = new FixedLengthRecordContext( executionContext )
@@ -208,11 +223,11 @@ namespace FlatFiles
                 Record = record,
                 Values = currentValues
             };
-            if (currentValues is null && ranges is not null)
+            if (currentValues is null && hasPartitions)
             {
-                // Nothing has asked for the values as strings, so the context is told where they sit and copies them
-                // out of the record only if a handler or an error reaches for them.
-                currentContext.SetPartitions( ranges );
+                // Nothing has asked for the values as strings, so the context is pointed at the reader and copies
+                // them out of the record only if a handler or an error reaches for them while it is still current.
+                currentContext.SetValueSource( this );
             }
             return currentContext;
         }
@@ -291,8 +306,7 @@ namespace FlatFiles
             {
                 return null;
             }
-            var ranges = PartitionRecord( currentSchema, record );
-            if (ranges is null)
+            if (!PartitionRecord( currentSchema, record ))
             {
                 return null;
             }
@@ -301,18 +315,18 @@ namespace FlatFiles
             string[]? rawValues = null;
             if (RecordPartitioned is not null)
             {
-                rawValues = ValueRange.Materialise( record, string.Empty, ranges );
+                rawValues = ValueRange.Materialise( record, string.Empty, valueRanges.AsSpan( 0, valueCount ) );
                 if (IsSkipped( currentSchema, record, rawValues ))
                 {
                     return null;
                 }
             }
-            var currentValues = ParseValues( currentSchema, record, ranges, rawValues );
+            var currentValues = ParseValues( currentSchema, record, rawValues );
             if (currentValues is null)
             {
                 return null;
             }
-            var metadata = NewRecordContext( currentSchema, record, ranges, rawValues );
+            var metadata = NewRecordContext( currentSchema, record, true, rawValues );
             recordContext = metadata;
             if (RecordParsed is not null || recordParsedUntyped is not null)
             {
@@ -340,20 +354,20 @@ namespace FlatFiles
             {
                 return false;
             }
-            var metadata = NewRecordContext( currentSchema, record, null, currentValues );
+            var metadata = NewRecordContext( currentSchema, record, false, currentValues );
             var e = new FixedLengthRecordPartitionedEventArgs( metadata, currentValues );
             RecordPartitioned( this, e );
             return e.IsSkipped;
         }
 
-        private object?[]? ParseValues( FixedLengthSchema currentSchema, string record, ValueRange[] ranges, string[]? rawValues )
+        private object?[]? ParseValues( FixedLengthSchema currentSchema, string record, string[]? rawValues )
         {
-            var metadata = NewRecordContext( currentSchema, record, ranges, rawValues );
+            var metadata = NewRecordContext( currentSchema, record, true, rawValues );
             metadata.ColumnError += ColumnError;
             try
             {
                 return rawValues is null
-                    ? currentSchema.ParseValues( metadata, new RawRecord( record, default, ranges ) )
+                    ? currentSchema.ParseValues( metadata, new RawRecord( record, default, valueRanges.AsSpan( 0, valueCount ) ) )
                     : currentSchema.ParseValues( metadata, rawValues );
             }
             catch (FlatFileException exception)
@@ -419,12 +433,12 @@ namespace FlatFiles
 
         /// <summary>
         ///     Finds where each raw value sits within the record, one per window, without copying any of them out of
-        ///     it. With a ragged right the last column runs from its offset to the end of the record, however long or
+        ///     it, into the set of ranges the reader keeps for whichever record it is on. With a ragged right the last column runs from its offset to the end of the record, however long or
         ///     short that is, a window the record ends inside takes the characters that are there, and a window past
         ///     the end of the record is empty. Otherwise a record shorter than the schema is refused, and a longer one
         ///     when the options say so.
         /// </summary>
-        private ValueRange[]? PartitionRecord( FixedLengthSchema currentSchema, string record )
+        private bool PartitionRecord( FixedLengthSchema currentSchema, string record )
         {
             var lengthError = options.IsRaggedRight ? null
                 : record.Length < currentSchema.TotalWidth ? Resources.FixedLengthRecordTooShort
@@ -432,16 +446,21 @@ namespace FlatFiles
                 : null;
             if (lengthError is not null)
             {
-                var metadata = NewRecordContext( currentSchema, record, null, null );
+                var metadata = NewRecordContext( currentSchema, record, false, null );
                 ProcessError( new RecordProcessingException( metadata, lengthError ) );
-                return null;
+                return false;
             }
             var windows = currentSchema.Windows;
-            var ranges = new ValueRange[currentSchema.ColumnDefinitions.Count - currentSchema.ColumnDefinitions.MetadataCount];
+            valueCount = currentSchema.ColumnDefinitions.Count - currentSchema.ColumnDefinitions.MetadataCount;
+            if (valueRanges.Length < valueCount)
+            {
+                valueRanges = new ValueRange[valueCount];
+            }
+            currentRecord = record;
             // The ragged column is the last window unless a trailing column follows it and already runs to the end.
             var raggedIndex = options.IsRaggedRight && windows.Count == currentSchema.ColumnDefinitions.Count ? windows.Count - 1 : -1;
             var offset = 0;
-            for (int valueIndex = 0, columnIndex = 0; valueIndex != ranges.Length; ++columnIndex)
+            for (int valueIndex = 0, columnIndex = 0; valueIndex != valueCount; ++columnIndex)
             {
                 var definition = currentSchema.ColumnDefinitions[columnIndex];
                 if (definition is IMetadataColumn)
@@ -474,10 +493,10 @@ namespace FlatFiles
                     }
                     offset += window.Width;
                 }
-                ranges[valueIndex] = new ValueRange( start, length );
+                valueRanges[valueIndex] = new ValueRange( start, length );
                 ++valueIndex;
             }
-            return ranges;
+            return true;
         }
 
         private FixedLengthSchema? GetSchema( string record )
@@ -498,6 +517,8 @@ namespace FlatFiles
 
         private string? ReadNextRecord()
         {
+            // Everything the last record's context could report goes with the record the reader is leaving.
+            ++generation;
             if (parser.IsEndOfStream())
             {
                 endOfFile = true;
@@ -510,6 +531,7 @@ namespace FlatFiles
 
         private async Task<string?> ReadNextRecordAsync( CancellationToken cancellationToken = default )
         {
+            ++generation;
             if (await parser.IsEndOfStreamAsync( cancellationToken ).ConfigureAwait( false ))
             {
                 endOfFile = true;
