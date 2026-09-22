@@ -153,12 +153,6 @@ namespace FlatFiles.Test
             }
 
             [Obsolete]
-            public Func<string, string> Preprocessor
-            {
-                get => column.Preprocessor;
-                set => column.Preprocessor = value;
-            }
-
             public Func<IColumnContext, string, string> OnParsing
             {
                 get => column.OnParsing;

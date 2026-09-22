@@ -38,14 +38,6 @@ namespace FlatFiles
         ICharPropertyMapping DefaultValue(IDefaultValue defaultValue);
 
         /// <summary>
-        /// Sets a function to preprocess in the input before parsing it.
-        /// </summary>
-        /// <param name="preprocessor">A preprocessor function.</param>
-        /// <returns>The property mapping for further configuration.</returns>
-        [Obsolete("This function has been superseded by the OnParsing function.")]
-        ICharPropertyMapping Preprocessor(Func<string, string?>? preprocessor);
-
-        /// <summary>
         /// Sets the function to run before the input is parsed.
         /// </summary>
         /// <param name="handler">A function to call before the textual value is parsed.</param>
