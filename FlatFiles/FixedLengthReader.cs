@@ -198,7 +198,7 @@ namespace FlatFiles
 
         private ExecutionContextCache<FixedLengthSchema, FixedLengthExecutionContext>? executionContexts;
 
-        private FixedLengthRecordContext NewRecordContext( FixedLengthSchema currentSchema, string record, string[]? currentValues )
+        private FixedLengthRecordContext NewRecordContext( FixedLengthSchema currentSchema, string record, ValueRange[]? ranges, string[]? currentValues )
         {
             var executionContext = (executionContexts ??= new ExecutionContextCache<FixedLengthSchema, FixedLengthExecutionContext>( s => new FixedLengthExecutionContext( s!, options.Clone() ) )).Get( currentSchema );
             var currentContext = new FixedLengthRecordContext( executionContext )
@@ -208,6 +208,12 @@ namespace FlatFiles
                 Record = record,
                 Values = currentValues
             };
+            if (currentValues is null && ranges is not null)
+            {
+                // Nothing has asked for the values as strings, so the context is told where they sit and copies them
+                // out of the record only if a handler or an error reaches for them.
+                currentContext.SetPartitions( ranges );
+            }
             return currentContext;
         }
 
@@ -285,17 +291,28 @@ namespace FlatFiles
             {
                 return null;
             }
-            var rawValues = PartitionRecord( currentSchema, record );
-            if (rawValues is null || IsSkipped( currentSchema, record, rawValues ))
+            var ranges = PartitionRecord( currentSchema, record );
+            if (ranges is null)
             {
                 return null;
             }
-            var currentValues = ParseValues( currentSchema, record, rawValues );
+            // A handler for the partitioned record is given the raw values as an array it can write into, and what it
+            // leaves there is what gets parsed, so the values are copied out of the record whenever one is listening.
+            string[]? rawValues = null;
+            if (RecordPartitioned is not null)
+            {
+                rawValues = ValueRange.Materialise( record, ranges );
+                if (IsSkipped( currentSchema, record, rawValues ))
+                {
+                    return null;
+                }
+            }
+            var currentValues = ParseValues( currentSchema, record, ranges, rawValues );
             if (currentValues is null)
             {
                 return null;
             }
-            var metadata = NewRecordContext( currentSchema, record, rawValues );
+            var metadata = NewRecordContext( currentSchema, record, ranges, rawValues );
             recordContext = metadata;
             if (RecordParsed is not null || recordParsedUntyped is not null)
             {
@@ -323,19 +340,21 @@ namespace FlatFiles
             {
                 return false;
             }
-            var metadata = NewRecordContext( currentSchema, record, currentValues );
+            var metadata = NewRecordContext( currentSchema, record, null, currentValues );
             var e = new FixedLengthRecordPartitionedEventArgs( metadata, currentValues );
             RecordPartitioned( this, e );
             return e.IsSkipped;
         }
 
-        private object?[]? ParseValues( FixedLengthSchema currentSchema, string record, string[] rawValues )
+        private object?[]? ParseValues( FixedLengthSchema currentSchema, string record, ValueRange[] ranges, string[]? rawValues )
         {
-            var metadata = NewRecordContext( currentSchema, record, rawValues );
+            var metadata = NewRecordContext( currentSchema, record, ranges, rawValues );
             metadata.ColumnError += ColumnError;
             try
             {
-                return currentSchema.ParseValues( metadata, rawValues );
+                return rawValues is null
+                    ? currentSchema.ParseValues( metadata, record, ranges )
+                    : currentSchema.ParseValues( metadata, rawValues );
             }
             catch (FlatFileException exception)
             {
@@ -399,12 +418,13 @@ namespace FlatFiles
         }
 
         /// <summary>
-        ///     Cuts the record into one raw value per window. With a ragged right the last column runs from its offset
-        ///     to the end of the record, however long or short that is, a window the record ends inside takes the
-        ///     characters that are there, and a window past the end of the record is empty. Otherwise a record shorter
-        ///     than the schema is refused, and a longer one when the options say so.
+        ///     Finds where each raw value sits within the record, one per window, without copying any of them out of
+        ///     it. With a ragged right the last column runs from its offset to the end of the record, however long or
+        ///     short that is, a window the record ends inside takes the characters that are there, and a window past
+        ///     the end of the record is empty. Otherwise a record shorter than the schema is refused, and a longer one
+        ///     when the options say so.
         /// </summary>
-        private string[]? PartitionRecord( FixedLengthSchema currentSchema, string record )
+        private ValueRange[]? PartitionRecord( FixedLengthSchema currentSchema, string record )
         {
             var lengthError = options.IsRaggedRight ? null
                 : record.Length < currentSchema.TotalWidth ? Resources.FixedLengthRecordTooShort
@@ -412,16 +432,16 @@ namespace FlatFiles
                 : null;
             if (lengthError is not null)
             {
-                var metadata = NewRecordContext( currentSchema, record, null );
+                var metadata = NewRecordContext( currentSchema, record, null, null );
                 ProcessError( new RecordProcessingException( metadata, lengthError ) );
                 return null;
             }
             var windows = currentSchema.Windows;
-            var currentValues = new string[currentSchema.ColumnDefinitions.Count - currentSchema.ColumnDefinitions.MetadataCount];
+            var ranges = new ValueRange[currentSchema.ColumnDefinitions.Count - currentSchema.ColumnDefinitions.MetadataCount];
             // The ragged column is the last window unless a trailing column follows it and already runs to the end.
             var raggedIndex = options.IsRaggedRight && windows.Count == currentSchema.ColumnDefinitions.Count ? windows.Count - 1 : -1;
             var offset = 0;
-            for (int valueIndex = 0, columnIndex = 0; valueIndex != currentValues.Length; ++columnIndex)
+            for (int valueIndex = 0, columnIndex = 0; valueIndex != ranges.Length; ++columnIndex)
             {
                 var definition = currentSchema.ColumnDefinitions[columnIndex];
                 if (definition is IMetadataColumn)
@@ -429,34 +449,35 @@ namespace FlatFiles
                     continue;
                 }
                 var window = columnIndex < windows.Count ? windows[columnIndex] : null;
-                var available = record.Length - offset;
+                // A window the record never reaches starts at its end, so that its value is empty rather than out of
+                // the record altogether.
+                var start = offset < record.Length ? offset : record.Length;
+                var available = record.Length - start;
                 var runsToTheEnd = window is null || columnIndex == raggedIndex;
-                string value;
-                if (runsToTheEnd)
-                {
-                    value = available > 0 ? record[offset..] : string.Empty;
-                }
-                else
-                {
-                    value = available >= window!.Width ? record.Substring( offset, window.Width )
-                        : available > 0 ? record[offset..]
-                        : string.Empty;
-                }
+                var length = runsToTheEnd || available < window!.Width ? available : window.Width;
                 if (window is not null)
                 {
                     if (!definition.IsComplex)
                     {
-                        var alignment = window.Alignment ?? options.Alignment;
-                        value = alignment == FixedAlignment.LeftAligned
-                            ? value.TrimEnd( window.FillCharacter ?? options.FillCharacter )
-                            : value.TrimStart( window.FillCharacter ?? options.FillCharacter );
+                        var fillCharacter = window.FillCharacter ?? options.FillCharacter;
+                        var value = record.AsSpan( start, length );
+                        if ((window.Alignment ?? options.Alignment) == FixedAlignment.LeftAligned)
+                        {
+                            length = value.TrimEnd( fillCharacter ).Length;
+                        }
+                        else
+                        {
+                            var trimmed = value.TrimStart( fillCharacter );
+                            start += length - trimmed.Length;
+                            length = trimmed.Length;
+                        }
                     }
                     offset += window.Width;
                 }
-                currentValues[valueIndex] = value;
+                ranges[valueIndex] = new ValueRange( start, length );
                 ++valueIndex;
             }
-            return currentValues;
+            return ranges;
         }
 
         private FixedLengthSchema? GetSchema( string record )

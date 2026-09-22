@@ -46,6 +46,25 @@ namespace FlatFiles
         }
 
         /// <summary>
+        ///     Parses the given value into its equivilent boolean value, without copying it out of the record it sits
+        ///     in.
+        /// </summary>
+        /// <param name="context">Holds information about the column current being processed.</param>
+        /// <param name="value">The value to parse.</param>
+        /// <returns>True if the value equals the TrueString; otherwise, false.</returns>
+        protected override bool OnParse( IColumnContext? context, ReadOnlySpan<char> value )
+        {
+            if (TrueString is not null && value.Equals( TrueString, StringComparison.CurrentCultureIgnoreCase ))
+            {
+                return true;
+            }
+
+            return FalseString is not null && value.Equals( FalseString, StringComparison.CurrentCultureIgnoreCase ) ?
+                false :
+                throw new InvalidCastException();
+        }
+
+        /// <summary>
         ///     Formats the given object.
         /// </summary>
         /// <param name="context">Holds information about the column current being processed.</param>
