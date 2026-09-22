@@ -35,6 +35,10 @@ The fixed-length reader narrows to match, though it need not: it parses from the
 
 Time is unchanged on both readers, within the noise this machine produces.
 
+**The two option classes were read through while this was written, and three things in them were wrong.** Setting `DelimitedOptions.QuoteBehaviour` to a value outside the enumeration threw "Encountered an invalid fixed width column alignment", which is the message for a different setting on a different reader and sends anyone who hits it looking in the wrong place; it now has a message of its own. `FixedLengthOptions` misspelled "column" and "truncation" in two remarks, and both classes, along with their constructors, named types that have never existed - `DelimitedParser`, `DelimitedParserOptions`, `FixedLengthParser`, `FixedLengthParserOptions` - so every one of them now names the reader and writer it belongs to. `DelimitedOptions.Quote` said it quoted records rather than values, `IsColumnContextDisabled` said "Gets" of a property with a setter, and the record separator's remark had its slashes the wrong way round and a word missing.
+
+`FixedLengthOptions.RecordSeparator` gains the remark its delimited twin already had, saying what null means and that it is ignored when `HasRecordSeparator` is false. `FillCharacter` said it buffered values rather than padding them, and the three remarks that pointed at "the Window class" now point at the property on it.
+
 ### Still to come
 
 **This library puts performance first.** Where a performance change and a feature want the same release, the performance change goes in and the feature waits. That is the whole reason the last several releases read as they do - buffer writers, a span tokeniser, a column context built only when something can read it, span parsing on both readers - and it is worth stating, because the list below is ordered by the review that produced it rather than by what will be built next.
