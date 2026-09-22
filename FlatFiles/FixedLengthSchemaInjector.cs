@@ -13,7 +13,7 @@ namespace FlatFiles
         private SchemaMatcher? defaultMatcher;
 
         /// <summary>
-        ///     Initializes a new instance of a FixedLengthSchemaInjector.
+        ///     Initialises a new instance of a FixedLengthSchemaInjector.
         /// </summary>
         public FixedLengthSchemaInjector()
         {
@@ -36,7 +36,7 @@ namespace FlatFiles
         ///     Provides the schema to use by default when no other matches are found.
         /// </summary>
         /// <param name="schema">The default schema to use.</param>
-        /// <returns>The current selector to allow for further customization.</returns>
+        /// <returns>The current selector to allow for further customisation.</returns>
         public void WithDefault( FixedLengthSchema? schema )
         {
             defaultMatcher = schema is null ? null : new SchemaMatcher( schema, _ => true );

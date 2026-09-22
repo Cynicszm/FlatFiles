@@ -14,7 +14,7 @@ namespace FlatFiles.TypeMapping
         private TypeMapperMatcher? defaultMatcher;
 
         /// <summary>
-        ///     Initializes a new instance of a DelimitedTypeMapperInjector.
+        ///     Initialises a new instance of a DelimitedTypeMapperInjector.
         /// </summary>
         public DelimitedTypeMapperInjector()
         {

@@ -126,7 +126,7 @@ namespace FlatFiles.TypeMapping
         /// <remarks>
         ///     The first line of the input file must contain the schema, whose column names must match the property
         ///     names in the provided entity type. The data for each column must be in a format that .NET can
-        ///     parse without customization.
+        ///     parse without customisation.
         /// </remarks>
         public static ITypedReader<TEntity> GetAutoMappedReader<TEntity>( TextReader reader, DelimitedOptions? options = null, IAutoMapMatcher? matcher = null )
             where TEntity : new()
@@ -149,7 +149,7 @@ namespace FlatFiles.TypeMapping
         /// <remarks>
         ///     The first line of the input file must contain the schema, whose column names must match the property
         ///     names in the provided entity type. The data for each column must be in a format that .NET can
-        ///     parse without customization.
+        ///     parse without customisation.
         /// </remarks>
         public static async Task<ITypedReader<TEntity>> GetAutoMappedReaderAsync<TEntity>( TextReader reader, DelimitedOptions? options = null, IAutoMapMatcher? matcher = null )
             where TEntity : new()
@@ -244,7 +244,7 @@ namespace FlatFiles.TypeMapping
         /// <param name="writer">The text writer to write the schema and records to.</param>
         /// <param name="options">Options used to read the data.</param>
         /// <param name="resolver">An object that will determine the name of the generated columns.</param>
-        /// <returns>A writer object for serializing entities.</returns>
+        /// <returns>A writer object for serialising entities.</returns>
         /// <remarks>Unless options are provided, by default this method will write the schema before the first record.</remarks>
         public static ITypedWriter<TEntity> GetAutoMappedWriter<TEntity>( TextWriter writer, DelimitedOptions? options = null, IAutoMapResolver? resolver = null )
         {

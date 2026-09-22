@@ -9,7 +9,7 @@ namespace FlatFiles
     {
         /// <inheritdoc />
         /// <summary>
-        /// Initializes a new instance of a DelimitedSyntaxException.
+        /// Initialises a new instance of a DelimitedSyntaxException.
         /// </summary>
         /// <param name="message">The details of the syntax error.</param>
         internal DelimitedSyntaxException(string message)

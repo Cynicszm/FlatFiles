@@ -10,7 +10,7 @@ namespace FlatFiles
     public abstract class MetadataColumn<T> : ColumnDefinition, IMetadataColumn
     {
         /// <summary>
-        ///     Initializes a new instance of a MetadataColumn.
+        ///     Initialises a new instance of a MetadataColumn.
         /// </summary>
         /// <param name="columnName">The name of the metadata column.</param>
         protected MetadataColumn( string columnName )

@@ -25,7 +25,7 @@ namespace FlatFiles
         event EventHandler<RecordErrorEventArgs>? RecordError;
 
         /// <summary>
-        ///     Gets the options controlling the behavior of the reader.
+        ///     Gets the options controlling the behaviour of the reader.
         /// </summary>
         IOptions Options { get; }
 

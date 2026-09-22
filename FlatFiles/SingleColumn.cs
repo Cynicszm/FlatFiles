@@ -8,7 +8,7 @@ namespace FlatFiles
     public sealed class SingleColumn : NumberColumn<float>
     {
         /// <summary>
-        ///     Initializes a new instance of a SingleColumn.
+        ///     Initialises a new instance of a SingleColumn.
         /// </summary>
         /// <param name="columnName">The name of the column.</param>
         public SingleColumn( string columnName )

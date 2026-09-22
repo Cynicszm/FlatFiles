@@ -8,7 +8,7 @@ namespace FlatFiles
     public sealed class UInt16Column : NumberColumn<ushort>
     {
         /// <summary>
-        ///     Initializes a new instance of an UInt16Column.
+        ///     Initialises a new instance of an UInt16Column.
         /// </summary>
         /// <param name="columnName">The name of the column.</param>
         public UInt16Column( string columnName )

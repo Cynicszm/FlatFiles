@@ -23,7 +23,7 @@ namespace FlatFiles
         private bool hasError;
 
         /// <summary>
-        ///     Initializes a new FixedLengthReader with the given schema.
+        ///     Initialises a new FixedLengthReader with the given schema.
         /// </summary>
         /// <param name="reader">A reader over the fixed-length document.</param>
         /// <param name="schema">The schema of the fixed-length document.</param>
@@ -36,7 +36,7 @@ namespace FlatFiles
         }
 
         /// <summary>
-        ///     Initializes a new FixedLengthReader with the given schema.
+        ///     Initialises a new FixedLengthReader with the given schema.
         /// </summary>
         /// <param name="reader">A reader over the fixed-length document.</param>
         /// <param name="schemaSelector">The schema selector configured to determine the schema dynamically.</param>

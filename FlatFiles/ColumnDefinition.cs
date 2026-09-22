@@ -12,7 +12,7 @@ namespace FlatFiles
     public abstract class ColumnDefinition : IColumnDefinition
     {
         /// <summary>
-        ///     Initializes a new instance of a ColumnDefinition.
+        ///     Initialises a new instance of a ColumnDefinition.
         /// </summary>
         /// <param name="columnName">The name of the column to define.</param>
         protected ColumnDefinition( string columnName )
@@ -21,7 +21,7 @@ namespace FlatFiles
         }
 
         /// <summary>
-        ///     Initializes a new instance of a ColumnDefinition.
+        ///     Initialises a new instance of a ColumnDefinition.
         /// </summary>
         /// <param name="columnName">The name of the column to define.</param>
         /// <param name="isIgnored">Specifies whether the value in the column appears in the parsed record.</param>
@@ -237,7 +237,7 @@ namespace FlatFiles
     public abstract class ColumnDefinition<T> : ColumnDefinition
     {
         /// <summary>
-        ///     Initializes a new instance of a ColumnDefinition.
+        ///     Initialises a new instance of a ColumnDefinition.
         /// </summary>
         /// <param name="columnName">The name of the column to define.</param>
         protected ColumnDefinition( string columnName ) 

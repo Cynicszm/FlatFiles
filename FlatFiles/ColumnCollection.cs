@@ -14,14 +14,14 @@ namespace FlatFiles
         private readonly Dictionary<string, int> ordinals = new( StringComparer.OrdinalIgnoreCase );
 
         /// <summary>
-        ///     Initializes a new ColumnCollection.
+        ///     Initialises a new ColumnCollection.
         /// </summary>
         internal ColumnCollection()
         {
         }
 
         /// <summary>
-        ///     Initializes a new ColumnCollection by copying another.
+        ///     Initialises a new ColumnCollection by copying another.
         /// </summary>
         /// <param name="other">The ColumnCollection to copy.</param>
         internal ColumnCollection( ColumnCollection other )

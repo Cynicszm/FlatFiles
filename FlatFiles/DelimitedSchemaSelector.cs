@@ -13,7 +13,7 @@ namespace FlatFiles
         private SchemaMatcher defaultMatcher = NonMatcher;
 
         /// <summary>
-        ///     Initializes a new instance of a DelimitedSchemaSelector.
+        ///     Initialises a new instance of a DelimitedSchemaSelector.
         /// </summary>
         public DelimitedSchemaSelector()
         {
@@ -36,7 +36,7 @@ namespace FlatFiles
         ///     Provides the schema to use by default when no other matches are found.
         /// </summary>
         /// <param name="schema">The default schema to use.</param>
-        /// <returns>The current selector to allow for further customization.</returns>
+        /// <returns>The current selector to allow for further customisation.</returns>
         public IDelimitedSchemaSelectorUseBuilder WithDefault( DelimitedSchema? schema )
         {
             defaultMatcher = schema is null ? NonMatcher : new SchemaMatcher( schema, _ => true );
