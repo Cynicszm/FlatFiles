@@ -1,4 +1,5 @@
-﻿using System.Buffers;
+﻿using System;
+using System.Buffers;
 using System.Text;
 
 namespace FlatFiles
@@ -32,6 +33,20 @@ namespace FlatFiles
         {
             var actualEncoding = Encoding ?? Encoding.UTF8;
             return actualEncoding.GetBytes( value );
+        }
+
+        /// <summary>
+        ///     Parses the given value as a byte array, without first copying it into a string.
+        /// </summary>
+        /// <param name="context">Holds information about the column current being processed.</param>
+        /// <param name="value">The value to parse.</param>
+        /// <returns>The parsed byte array.</returns>
+        protected override byte[] OnParse( IColumnContext? context, ReadOnlySpan<char> value )
+        {
+            var actualEncoding = Encoding ?? Encoding.UTF8;
+            var bytes = new byte[actualEncoding.GetByteCount( value )];
+            actualEncoding.GetBytes( value, bytes );
+            return bytes;
         }
 
         /// <summary>

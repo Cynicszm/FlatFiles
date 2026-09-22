@@ -89,6 +89,19 @@ namespace FlatFiles
         object? Parse( IColumnContext? context, string value );
 
         /// <summary>
+        ///     Parses the given value and returns the parsed object, without the caller first copying it out of the
+        ///     record it sits in. Readers use this for a record whose raw values nothing has asked to see as strings;
+        ///     the default copies the text and parses the string.
+        /// </summary>
+        /// <param name="context">Holds information about the column current being processed.</param>
+        /// <param name="value">The value to parse.</param>
+        /// <returns>The parsed value.</returns>
+        object? Parse( IColumnContext? context, ReadOnlySpan<char> value )
+        {
+            return Parse( context, value.ToString() );
+        }
+
+        /// <summary>
         ///     Formats the given object.
         /// </summary>
         /// <param name="context">Holds information about the column current being processed.</param>

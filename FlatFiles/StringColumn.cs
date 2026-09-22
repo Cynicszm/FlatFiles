@@ -39,6 +39,18 @@ namespace FlatFiles
         }
 
         /// <summary>
+        ///     Returns the given value as a string. This is the one column whose value has to be copied out of the
+        ///     record, because the string is the parsed value.
+        /// </summary>
+        /// <param name="context">Holds information about the column current being processed.</param>
+        /// <param name="value">The value to copy.</param>
+        /// <returns>The value as a string.</returns>
+        protected override string OnParse( IColumnContext? context, ReadOnlySpan<char> value )
+        {
+            return value.ToString();
+        }
+
+        /// <summary>
         ///     Gets whether the value should be trimmed prior to parsing.
         /// </summary>
         protected override bool IsTrimmed => Trim;

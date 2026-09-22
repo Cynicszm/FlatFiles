@@ -1,3 +1,25 @@
+## 7.5.0 (2026-09-22)
+**Summary** - A fixed-length record is parsed from the characters of the record itself rather than from a string per column, for around two fifths less allocation on a fixed-length read and a third less through a type mapper, with unchanged results.
+
+Until now every value in a fixed-length record was copied out of it twice before anything looked at it: once to cut the window out, and again to trim the fill character off what that left. Thirteen columns meant twenty-six strings per record, most of which were handed to a number, date or boolean column that read them and threw them away.
+
+The reader now partitions a record into ranges - where each value starts within the record and how long it is, the fill character already trimmed off the range rather than out of a string - and the column reads its value from the record itself. Nothing is copied for a number, date, time, `Guid`, `TimeSpan`, boolean, character, enumeration or ignored column; a `string`, `char[]` or `byte[]` column copies once, because the copy is the parsed value. The raw values are still there for anything that asks: a `RecordPartitioned` handler is given them as strings, and may replace one as before, in which case the record is parsed from the strings; a column error carries the value it failed on and the whole partitioned record; and `IRecordContext.Values` copies them out of the record the first time it is read and not at all if it never is.
+
+`IColumnDefinition` gains `Parse( IColumnContext?, ReadOnlySpan<char> )` and `INullFormatter` gains `IsNullValue( IColumnContext?, ReadOnlySpan<char> )`. Both are default interface members that copy the text and call the string overload, so a column or a null formatter implemented outside the library keeps compiling and keeps behaving as it did; package validation reports no break. A column deriving from `ColumnDefinition<T>` has the same choice one step lower: overriding the new `OnParse( IColumnContext?, ReadOnlySpan<char> )` reads the characters, and leaving it alone means the value arrives at the existing `OnParse` as a string. A column that replaced `Parse( IColumnContext?, string )` itself rather than `OnParse` still receives every value through it, because the library asks the type once whether it did.
+
+The obsolete `Preprocessor` and the `OnParsing` hook are handed the whole value as a string, so a column carrying either of them is parsed from a string as before; `OnParsed`, the null formatters, the default values, trimming and the ragged-right option are all unaffected.
+
+Measured on 10,000 records of 13 columns, best of eight runs with the two builds alternated on the same machine:
+
+| 10,000 records, 13 columns | 7.4.1 | 7.5.0 |
+|---|---|---|
+| fixed-length read | 13.2 ms, 2,076 bytes per record | 11.6 ms, 1,269 |
+| fixed-length through the type mapper | 20.2 ms, 2,214 | 14.7 ms, 1,407 |
+| delimited read | 12.3 ms, 1,268 | 11.9 ms, 1,268 |
+| delimited through the type mapper | 14.0 ms, 1,406 | 13.9 ms, 1,406 |
+
+The delimited reader is deliberately unchanged, and its figures are there to show it: its parser copies each value out of the buffered text as it tokenises, so a delimited column is already handed a string that exists whatever it does with it. Handing the parser's own buffer to the columns is a separate change, and a larger one, because a quoted value is unescaped into a second buffer and both have to stay put until the record is parsed.
+
 ## 7.4.1 (2026-09-18)
 **Summary** - Four defects found while raising the coverage bar to 90% of lines and branches: subscribing to both `RecordParsed` events threw, a dynamic `ComplexProperty` required a string member, an injector-based fixed-length writer wrote a blank line for its schema, and a delimited reader whose selector matched nothing returned the record anyway once the error was handled.
 
