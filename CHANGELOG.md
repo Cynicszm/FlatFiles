@@ -1,3 +1,27 @@
+## 7.6.0 (2026-09-22)
+**Summary** - A delimited record is copied out of the parser's buffer once, as one string, and its values are parsed as slices of it rather than copied into a string each: around 8% less allocation on a delimited read and eleven fewer objects per record, with unchanged results and unchanged time.
+
+7.5.0 gave every column a way to parse its value from characters rather than from a string, and the fixed-length reader a way to hand it one, because a fixed-length record is already a string and a value is a slice of it. A delimited record had no such string: the parser cut each value out of its buffer into a string of its own as it tokenised, thirteen values meaning thirteen strings plus the array holding them, and the column was handed a string whatever it did with it.
+
+The parser now copies the record out of its buffer once, as one string, and records where each value sits within it. A value is a slice of that string, so a number, date, boolean, character or enumeration column reads the characters and makes nothing, and a string column makes the one string that is its value. Both readers now work the same way, and `IRecordContext.Values` is built from the record the first time anything asks for it, exactly as the fixed-length reader has done since 7.5.0.
+
+Two kinds of value are not slices of their record, and both are still rebuilt as they were: one carrying a doubled quote, whose characters are interrupted by the quote that is dropped, and a quoted value followed by whitespace that `PreserveWhiteSpace` keeps, which the closing quote separates from it. The parser writes those into a buffer of its own and the record's ranges say which of the two texts each value came from, so a record can mix them freely.
+
+A schema selector is handed the values as strings, as its predicates take them, and so is a handler for `RecordRead`, which may replace one and have the replacement parsed. Either of those means the strings are built before the record is parsed, exactly as before. Everything else - the parsing hooks, the null formatters, `ColumnError` handlers, a stored record context - reads them through `IRecordContext.Values`, which builds them on demand from the record the context owns, so a context kept long after its record still reports the right values.
+
+`PreserveRecordText` now costs nothing: the record's text is copied out of the buffer whether or not the option is set, because the values are slices of it. The option still decides whether `IRecordContext.Record` carries that text or is empty, so nothing about it changes except its price.
+
+Measured on 10,000 records of 13 columns, with the two builds alternated on the same machine. Time was unchanged within the noise on this machine, so only allocation is quoted:
+
+| 10,000 records, 13 columns | 7.5.0 | 7.6.0 |
+|---|---|---|
+| delimited read | 1,268 bytes per record | 1,171 |
+| delimited through the type mapper | 1,406 | 1,309 |
+| fixed-length read | 1,269 | 1,269 |
+| fixed-length through the type mapper | 1,407 | 1,407 |
+
+The remaining copy is the record itself, and removing it would mean parsing straight from the parser's buffer, where the characters live only until the next record is read. That is a change to what `IRecordContext.Values` promises rather than a change of implementation - a context kept past its record could no longer report them - so it is not made here. The larger prize is reading UTF-8 bytes without decoding them to characters at all, which would remove this copy along the way.
+
 ## 7.5.0 (2026-09-22)
 **Summary** - A fixed-length record is parsed from the characters of the record itself rather than from a string per column, for around two fifths less allocation on a fixed-length read and a third less through a type mapper, with unchanged results.
 
