@@ -46,6 +46,18 @@ namespace FlatFiles
         }
 
         /// <summary>
+        ///     Parses the given value without copying it out of the record it sits in.
+        /// </summary>
+        /// <param name="context">Holds information about the column current being processed.</param>
+        /// <param name="value">The value to parse.</param>
+        /// <returns>The parsed value.</returns>
+        protected override DateTime OnParse( IColumnContext? context, ReadOnlySpan<char> value )
+        {
+            var provider = FormatProvider ?? CultureInfo.CurrentCulture;
+            return InputFormat is null ? DateTime.Parse( value, provider ) : DateTime.ParseExact( value, InputFormat, provider );
+        }
+
+        /// <summary>
         ///     Formats the given object.
         /// </summary>
         /// <param name="context">Holds information about the column current being processed.</param>

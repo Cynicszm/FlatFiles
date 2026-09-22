@@ -26,8 +26,8 @@ namespace FlatFiles
         public Func<string, TEnum> Parser
         {
             get;
-            set => field = value ?? DefaultParser;
-        } = DefaultParser;
+            set => field = value ?? DefaultParserDelegate;
+        } = DefaultParserDelegate;
 
         /// <summary>
         ///     Gets or sets the formatter used to convert enumeration values into strings. Setting null restores the
@@ -39,6 +39,12 @@ namespace FlatFiles
             get;
             set => field = value ?? DefaultFormatter;
         } = DefaultFormatter;
+
+        /// <summary>
+        ///     The default parser, held so that the column can recognise it and read a value straight out of the
+        ///     record where it has not been replaced.
+        /// </summary>
+        private static readonly Func<string, TEnum> DefaultParserDelegate = DefaultParser;
 
         private static TEnum DefaultParser( string value )
         {
@@ -61,6 +67,22 @@ namespace FlatFiles
         protected override TEnum OnParse( IColumnContext? context, string value )
         {
             return Parser( value );
+        }
+
+        /// <summary>
+        ///     Parses the given value and returns the enumeration value. A parser supplied by the caller takes a
+        ///     string, so the value is only read straight out of the record while the default parser is in place.
+        /// </summary>
+        /// <param name="context">Holds information about the column current being processed.</param>
+        /// <param name="value">The value to parse.</param>
+        /// <returns>The parsed enumeration value.</returns>
+        protected override TEnum OnParse( IColumnContext? context, ReadOnlySpan<char> value )
+        {
+            if (!ReferenceEquals( Parser, DefaultParserDelegate ))
+            {
+                return Parser( value.ToString() );
+            }
+            return (TEnum) Enum.Parse( typeof( TEnum ), value, true );
         }
 
         /// <summary>

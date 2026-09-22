@@ -29,6 +29,18 @@ namespace FlatFiles
         }
 
         /// <inheritdoc />
+        public override object? Parse( IColumnContext? context, ReadOnlySpan<char> value )
+        {
+            var sourceValue = columnDefinition.Parse( context, value );
+            if (sourceValue is null)
+            {
+                return null;
+            }
+            var destinationValue = parser( (TSource) sourceValue );
+            return destinationValue;
+        }
+
+        /// <inheritdoc />
         public override string Format( IColumnContext? context, object? value )
         {
             var destinationValue = value is null ? (object?) null : formatter( (TDestination) value );

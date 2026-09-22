@@ -38,6 +38,21 @@ namespace FlatFiles
         }
 
         /// <summary>
+        ///     Parses the given value as a char, without copying it out of the record it sits in.
+        /// </summary>
+        /// <param name="context">Holds information about the column current being processed.</param>
+        /// <param name="value">The value to parse.</param>
+        /// <returns>The parsed char.</returns>
+        protected override char OnParse( IColumnContext? context, ReadOnlySpan<char> value )
+        {
+            if (AllowTrailing || value.Length == 1)
+            {
+                return value[0];
+            }
+            throw new InvalidCastException();
+        }
+
+        /// <summary>
         ///     Formats the given object.
         /// </summary>
         /// <param name="context">Holds information about the column current being processed.</param>

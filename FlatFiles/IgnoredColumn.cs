@@ -57,6 +57,25 @@ namespace FlatFiles
         }
 
         /// <summary>
+        ///     Ignores the value that was parsed from the document, without copying it out of the record it sits in
+        ///     unless a hook is waiting to be handed it.
+        /// </summary>
+        /// <param name="context">Holds information about the column current being processed.</param>
+        /// <param name="value">The value that was parsed from the document.</param>
+        /// <returns>A null.</returns>
+        public override object? Parse( IColumnContext? context, ReadOnlySpan<char> value )
+        {
+#pragma warning disable CS0618 // Type or member is obsolete
+            var needsString = Preprocessor is not null || OnParsing is not null;
+#pragma warning restore CS0618 // Type or member is obsolete
+            if (needsString)
+            {
+                return Parse( context, value.ToString() );
+            }
+            return OnParsed is null ? null : OnParsed( context, null );
+        }
+
+        /// <summary>
         ///     Returns null so nothing is written to the document.
         /// </summary>
         /// <param name="context">Holds information about the column current being processed.</param>
