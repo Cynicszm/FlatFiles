@@ -8,7 +8,7 @@ namespace FlatFiles
     public sealed class ByteColumn : NumberColumn<byte>
     {
         /// <summary>
-        ///     Initializes a new instance of a ByteColumn.
+        ///     Initialises a new instance of a ByteColumn.
         /// </summary>
         /// <param name="columnName">The name of the column.</param>
         public ByteColumn( string columnName )

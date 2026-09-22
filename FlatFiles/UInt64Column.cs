@@ -8,7 +8,7 @@ namespace FlatFiles
     public sealed class UInt64Column : NumberColumn<ulong>
     {
         /// <summary>
-        ///     Initializes a new instance of an UInt64Column.
+        ///     Initialises a new instance of an UInt64Column.
         /// </summary>
         /// <param name="columnName">The name of the column.</param>
         public UInt64Column( string columnName )

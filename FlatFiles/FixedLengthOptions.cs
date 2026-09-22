@@ -9,7 +9,7 @@ namespace FlatFiles
     public sealed class FixedLengthOptions : IOptions
     {
         /// <summary>
-        ///     Initializes a new instance of a FixedLengthParserOptions.
+        ///     Initialises a new instance of a FixedLengthParserOptions.
         /// </summary>
         public FixedLengthOptions()
         {

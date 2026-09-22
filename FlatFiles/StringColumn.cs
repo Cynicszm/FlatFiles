@@ -9,7 +9,7 @@ namespace FlatFiles
     public sealed class StringColumn : ColumnDefinition<string>
     {
         /// <summary>
-        ///     Initializes a new instance of a StringColumnDefinition.
+        ///     Initialises a new instance of a StringColumnDefinition.
         /// </summary>
         /// <param name="columnName">The name of the column.</param>
         public StringColumn( string columnName )

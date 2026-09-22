@@ -16,7 +16,7 @@ namespace FlatFiles
         private object?[]? cachedValues;
 
         /// <summary>
-        ///     Initializes a new instance of a FlatFileParser.
+        ///     Initialises a new instance of a FlatFileParser.
         /// </summary>
         /// <param name="reader">The reader to use to parse the underlying file.</param>
         /// <param name="options">The options to use to control how the file is read.</param>

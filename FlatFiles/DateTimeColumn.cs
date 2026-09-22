@@ -10,7 +10,7 @@ namespace FlatFiles
     public sealed class DateTimeColumn : ColumnDefinition<DateTime>
     {
         /// <summary>
-        ///     Initializes a new instance of a DateTimeColumn.
+        ///     Initialises a new instance of a DateTimeColumn.
         /// </summary>
         /// <param name="columnName">The name of the column.</param>
         public DateTimeColumn( string columnName )

@@ -9,7 +9,7 @@ namespace FlatFiles
     public sealed class BooleanColumn : ColumnDefinition<bool>
     {
         /// <summary>
-        ///     Initializes a new instance of a BooleanColumn.
+        ///     Initialises a new instance of a BooleanColumn.
         /// </summary>
         /// <param name="columnName">The name of the column.</param>
         public BooleanColumn( string columnName )

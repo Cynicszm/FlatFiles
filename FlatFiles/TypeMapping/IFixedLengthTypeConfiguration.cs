@@ -396,16 +396,16 @@ namespace FlatFiles.TypeMapping
         ICustomMapping<TEntity> CustomMapping( IColumnDefinition column, Window window );
 
         /// <summary>
-        ///     When optimized (the default), mappers will use System.Reflection.Emit to generate
+        ///     When optimised (the default), mappers will use System.Reflection.Emit to generate
         ///     code to get and set entity properties, resulting in significant performance improvements.
-        ///     However, some environments do not support runtime JIT, so disabling optimization will allow
+        ///     However, some environments do not support runtime JIT, so disabling optimisation will allow
         ///     FlatFiles to work.
         /// </summary>
-        /// <param name="isOptimised">Specifies whether the mapping process should be optimized.</param>
+        /// <param name="isOptimised">Specifies whether the mapping process should be optimised.</param>
         void OptimiseMapping( bool isOptimised = true );
 
         /// <summary>
-        ///     Specifies a different factory method to use when initializing nested members.
+        ///     Specifies a different factory method to use when initialising nested members.
         /// </summary>
         /// <typeparam name="TOther">The type of the entity created by the factory.</typeparam>
         /// <param name="factory">A method that generates an instance of the entity.</param>

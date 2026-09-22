@@ -19,7 +19,7 @@ namespace FlatFiles.Benchmark
         {
             string[] headers =
             [
-                "FirstName", "LastName", "Age", "Street1", "Street2", "City", "State", "Zip", "FavoriteColor", "FavoriteFood", "FavoriteSport", "CreatedOn", "IsActive"
+                "FirstName", "LastName", "Age", "Street1", "Street2", "City", "State", "Zip", "FavouriteColour", "FavouriteFood", "FavouriteSport", "CreatedOn", "IsActive"
             ];
             string[] values =
             [
@@ -58,9 +58,9 @@ namespace FlatFiles.Benchmark
             mapper.Property( x => x.City );
             mapper.Property( x => x.State );
             mapper.Property( x => x.Zip );
-            mapper.Property( x => x.FavoriteColor );
-            mapper.Property( x => x.FavoriteFood );
-            mapper.Property( x => x.FavoriteSport );
+            mapper.Property( x => x.FavouriteColour );
+            mapper.Property( x => x.FavouriteFood );
+            mapper.Property( x => x.FavouriteSport );
             mapper.Property( x => x.CreatedOn );
             mapper.Property( x => x.IsActive );
             return mapper;
@@ -77,9 +77,9 @@ namespace FlatFiles.Benchmark
             mapper.Property( x => x.City, 12 );
             mapper.Property( x => x.State, 2 );
             mapper.Property( x => x.Zip, 6 );
-            mapper.Property( x => x.FavoriteColor, 8 );
-            mapper.Property( x => x.FavoriteFood, 20 );
-            mapper.Property( x => x.FavoriteSport, 8 );
+            mapper.Property( x => x.FavouriteColour, 8 );
+            mapper.Property( x => x.FavouriteFood, 20 );
+            mapper.Property( x => x.FavouriteSport, 8 );
             mapper.Property( x => x.CreatedOn, 10 ).OutputFormat( "yyyy-MM-dd" );
             mapper.Property( x => x.IsActive, 5 );
             return mapper;
@@ -141,9 +141,9 @@ namespace FlatFiles.Benchmark
             mapper.Property( x => x.City );
             mapper.Property( x => x.State );
             mapper.Property( x => x.Zip );
-            mapper.Property( x => x.FavoriteColor );
-            mapper.Property( x => x.FavoriteFood );
-            mapper.Property( x => x.FavoriteSport );
+            mapper.Property( x => x.FavouriteColour );
+            mapper.Property( x => x.FavouriteFood );
+            mapper.Property( x => x.FavouriteSport );
             mapper.Property( x => x.CreatedOn );
             mapper.Property( x => x.IsActive );
 
@@ -163,9 +163,9 @@ namespace FlatFiles.Benchmark
             mapper.Property( x => x.City );
             mapper.Property( x => x.State );
             mapper.Property( x => x.Zip );
-            mapper.Property( x => x.FavoriteColor );
-            mapper.Property( x => x.FavoriteFood );
-            mapper.Property( x => x.FavoriteSport );
+            mapper.Property( x => x.FavouriteColour );
+            mapper.Property( x => x.FavouriteFood );
+            mapper.Property( x => x.FavouriteSport );
             mapper.Property( x => x.CreatedOn );
             mapper.Property( x => x.IsActive );
 
@@ -190,9 +190,9 @@ namespace FlatFiles.Benchmark
             mapper.Property( x => x.City );
             mapper.Property( x => x.State );
             mapper.Property( x => x.Zip );
-            mapper.Property( x => x.FavoriteColor );
-            mapper.Property( x => x.FavoriteFood );
-            mapper.Property( x => x.FavoriteSport );
+            mapper.Property( x => x.FavouriteColour );
+            mapper.Property( x => x.FavouriteFood );
+            mapper.Property( x => x.FavouriteSport );
             mapper.Property( x => x.CreatedOn );
             mapper.Property( x => x.IsActive );
 
@@ -212,9 +212,9 @@ namespace FlatFiles.Benchmark
             mapper.Property( x => x.City );
             mapper.Property( x => x.State );
             mapper.Property( x => x.Zip );
-            mapper.Property( x => x.FavoriteColor );
-            mapper.Property( x => x.FavoriteFood );
-            mapper.Property( x => x.FavoriteSport );
+            mapper.Property( x => x.FavouriteColour );
+            mapper.Property( x => x.FavouriteFood );
+            mapper.Property( x => x.FavouriteSport );
             mapper.Property( x => x.CreatedOn );
             mapper.Property( x => x.IsActive );
 
@@ -235,9 +235,9 @@ namespace FlatFiles.Benchmark
             mapper.Property( x => x.City );
             mapper.Property( x => x.State );
             mapper.Property( x => x.Zip );
-            mapper.Property( x => x.FavoriteColor );
-            mapper.Property( x => x.FavoriteFood );
-            mapper.Property( x => x.FavoriteSport );
+            mapper.Property( x => x.FavouriteColour );
+            mapper.Property( x => x.FavouriteFood );
+            mapper.Property( x => x.FavouriteSport );
             mapper.Property( x => x.CreatedOn );
             mapper.Property( x => x.IsActive );
 
@@ -257,9 +257,9 @@ namespace FlatFiles.Benchmark
             mapper.CustomMapping( new StringColumn( "City" ) ).WithReader( p => p.City );
             mapper.CustomMapping( new StringColumn( "State" ) ).WithReader( p => p.State );
             mapper.CustomMapping( new StringColumn( "Zip" ) ).WithReader( p => p.Zip );
-            mapper.CustomMapping( new StringColumn( "FavoriteColor" ) ).WithReader( p => p.FavoriteColor );
-            mapper.CustomMapping( new StringColumn( "FavoriteFood)" ) ).WithReader( p => p.FavoriteFood );
-            mapper.CustomMapping( new StringColumn( "FavoriteSport" ) ).WithReader( p => p.FavoriteSport );
+            mapper.CustomMapping( new StringColumn( "FavouriteColour" ) ).WithReader( p => p.FavouriteColour );
+            mapper.CustomMapping( new StringColumn( "FavouriteFood)" ) ).WithReader( p => p.FavouriteFood );
+            mapper.CustomMapping( new StringColumn( "FavouriteSport" ) ).WithReader( p => p.FavouriteSport );
             mapper.CustomMapping( new DateTimeColumn( "CreatedOn" ) ).WithReader( p => p.CreatedOn );
             mapper.CustomMapping( new BooleanColumn( "IsActive" ) ).WithReader( p => p.IsActive );
 
@@ -280,9 +280,9 @@ namespace FlatFiles.Benchmark
             mapper.CustomMapping( new StringColumn( "City" ) ).WithReader( p => p.City );
             mapper.CustomMapping( new StringColumn( "State" ) ).WithReader( p => p.State );
             mapper.CustomMapping( new StringColumn( "Zip" ) ).WithReader( p => p.Zip );
-            mapper.CustomMapping( new StringColumn( "FavoriteColor" ) ).WithReader( p => p.FavoriteColor );
-            mapper.CustomMapping( new StringColumn( "FavoriteFood)" ) ).WithReader( p => p.FavoriteFood );
-            mapper.CustomMapping( new StringColumn( "FavoriteSport" ) ).WithReader( p => p.FavoriteSport );
+            mapper.CustomMapping( new StringColumn( "FavouriteColour" ) ).WithReader( p => p.FavouriteColour );
+            mapper.CustomMapping( new StringColumn( "FavouriteFood)" ) ).WithReader( p => p.FavouriteFood );
+            mapper.CustomMapping( new StringColumn( "FavouriteSport" ) ).WithReader( p => p.FavouriteSport );
             mapper.CustomMapping( new DateTimeColumn( "CreatedOn" ) ).WithReader( p => p.CreatedOn );
             mapper.CustomMapping( new BooleanColumn( "IsActive" ) ).WithReader( p => p.IsActive );
 
@@ -334,9 +334,9 @@ namespace FlatFiles.Benchmark
                     City = dataReader.GetString( 5 ),
                     State = dataReader.GetString( 6 ),
                     Zip = dataReader.GetString( 7 ),
-                    FavoriteColor = dataReader.GetString( 8 ),
-                    FavoriteFood = dataReader.GetString( 9 ),
-                    FavoriteSport = dataReader.GetString( 10 ),
+                    FavouriteColour = dataReader.GetString( 8 ),
+                    FavouriteFood = dataReader.GetString( 9 ),
+                    FavouriteSport = dataReader.GetString( 10 ),
                     CreatedOn = dataReader.GetDateTime( 11 ),
                     IsActive = dataReader.GetBoolean( 12 )
                 };
@@ -364,9 +364,9 @@ namespace FlatFiles.Benchmark
                     City = dataReader.GetString( "City" ),
                     State = dataReader.GetString( "State" ),
                     Zip = dataReader.GetString( "Zip" ),
-                    FavoriteColor = dataReader.GetString( "FavoriteColor" ),
-                    FavoriteFood = dataReader.GetString( "FavoriteFood" ),
-                    FavoriteSport = dataReader.GetString( "FavoriteSport" ),
+                    FavouriteColour = dataReader.GetString( "FavouriteColour" ),
+                    FavouriteFood = dataReader.GetString( "FavouriteFood" ),
+                    FavouriteSport = dataReader.GetString( "FavouriteSport" ),
                     CreatedOn = dataReader.GetDateTime( "CreatedOn" ),
                     IsActive = dataReader.GetBoolean( "IsActive" )
                 };
@@ -394,9 +394,9 @@ namespace FlatFiles.Benchmark
                     City = dataReader.GetValue<string>( 5 ),
                     State = dataReader.GetValue<string>( 6 ),
                     Zip = dataReader.GetValue<string>( 7 ),
-                    FavoriteColor = dataReader.GetValue<string>( 8 ),
-                    FavoriteFood = dataReader.GetValue<string>( 9 ),
-                    FavoriteSport = dataReader.GetValue<string>( 10 ),
+                    FavouriteColour = dataReader.GetValue<string>( 8 ),
+                    FavouriteFood = dataReader.GetValue<string>( 9 ),
+                    FavouriteSport = dataReader.GetValue<string>( 10 ),
                     CreatedOn = dataReader.GetValue<DateTime?>( 11 ),
                     IsActive = dataReader.GetValue<bool>( 12 )
                 };
@@ -425,9 +425,9 @@ namespace FlatFiles.Benchmark
             schema.AddColumn( new StringColumn( "City" ) );
             schema.AddColumn( new StringColumn( "State" ) );
             schema.AddColumn( new StringColumn( "Zip" ) );
-            schema.AddColumn( new StringColumn( "FavoriteColor" ) );
-            schema.AddColumn( new StringColumn( "FavoriteFood" ) );
-            schema.AddColumn( new StringColumn( "FavoriteSport" ) );
+            schema.AddColumn( new StringColumn( "FavouriteColour" ) );
+            schema.AddColumn( new StringColumn( "FavouriteFood" ) );
+            schema.AddColumn( new StringColumn( "FavouriteSport" ) );
             schema.AddColumn( new DateTimeColumn( "CreatedOn" ) );
             schema.AddColumn( new BooleanColumn( "IsActive" ) );
             return schema;
@@ -489,9 +489,9 @@ namespace FlatFiles.Benchmark
                     City = record[5],
                     State = record[6],
                     Zip = record[7],
-                    FavoriteColor = record[8],
-                    FavoriteFood = record[9],
-                    FavoriteSport = record[10],
+                    FavouriteColour = record[8],
+                    FavouriteFood = record[9],
+                    FavouriteSport = record[10],
                     CreatedOn = DateTime.Parse( record[11] ),
                     IsActive = bool.Parse( record[12] )
                 };
@@ -517,11 +517,11 @@ namespace FlatFiles.Benchmark
 
             public string Zip { get; set; }
 
-            public string FavoriteColor { get; set; }
+            public string FavouriteColour { get; set; }
 
-            public string FavoriteFood { get; set; }
+            public string FavouriteFood { get; set; }
 
-            public string FavoriteSport { get; set; }
+            public string FavouriteSport { get; set; }
 
             public DateTime? CreatedOn { get; set; }
 
@@ -538,9 +538,9 @@ namespace FlatFiles.Benchmark
             public string City;
             public string State;
             public string Zip;
-            public string FavoriteColor;
-            public string FavoriteFood;
-            public string FavoriteSport;
+            public string FavouriteColour;
+            public string FavouriteFood;
+            public string FavouriteSport;
             public DateTime? CreatedOn;
             public bool IsActive;
         }

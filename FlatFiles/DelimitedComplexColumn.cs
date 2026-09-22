@@ -12,7 +12,7 @@ namespace FlatFiles
         private readonly DelimitedSchema? schema;
 
         /// <summary>
-        ///     Initializes a new DelimitedComplexColumn with no schema.
+        ///     Initialises a new DelimitedComplexColumn with no schema.
         /// </summary>
         /// <param name="columnName">The name of the column.</param>
         /// <param name="options">The options to use when parsing the embedded data.</param>
@@ -22,7 +22,7 @@ namespace FlatFiles
         }
 
         /// <summary>
-        ///     Initializes a new DelimitedComplexColumn with the given schema and options.
+        ///     Initialises a new DelimitedComplexColumn with the given schema and options.
         /// </summary>
         /// <param name="columnName">The name of the column.</param>
         /// <param name="schema">The schema of the data embedded in the column.</param>

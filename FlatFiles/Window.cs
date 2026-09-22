@@ -15,7 +15,7 @@ namespace FlatFiles
         public static readonly Window Trailing = new();
 
         /// <summary>
-        ///     Initializes a new instance of a Window representing the trailing data in a record.
+        ///     Initialises a new instance of a Window representing the trailing data in a record.
         /// </summary>
         private Window()
         {
@@ -23,7 +23,7 @@ namespace FlatFiles
         }
 
         /// <summary>
-        ///     Initializes a new instance of a Window.
+        ///     Initialises a new instance of a Window.
         /// </summary>
         /// <param name="width">The maximum possible width of the column.</param>
         public Window( int width )

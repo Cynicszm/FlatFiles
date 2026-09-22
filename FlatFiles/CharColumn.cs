@@ -9,7 +9,7 @@ namespace FlatFiles
     public sealed class CharColumn : ColumnDefinition<char>
     {
         /// <summary>
-        ///     Initializes a new instance of a CharColumn.
+        ///     Initialises a new instance of a CharColumn.
         /// </summary>
         /// <param name="columnName">The name of the column.</param>
         public CharColumn( string columnName )
