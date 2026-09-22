@@ -105,12 +105,6 @@ namespace FlatFiles
         } = FlatFiles.NullFormatter.Default;
 
         /// <summary>
-        ///     Gets or sets a function used to preprocess input before trying to parse it.
-        /// </summary>
-        [Obsolete( "This property has been superseded by the OnParsing delegate." )]
-        public Func<string, string?>? Preprocessor { get; set; }
-
-        /// <summary>
         ///     Gets or sets a function used to pre-process input before trying to parse it.
         /// </summary>
         public Func<IColumnContext?, string, string?>? OnParsing { get; set; }
@@ -258,12 +252,6 @@ namespace FlatFiles
         /// <returns>The parsed value.</returns>
         public override object? Parse( IColumnContext? context, string value )
         {
-#pragma warning disable CS0618 // Type or member is obsolete
-            if (Preprocessor is not null)
-            {
-                value = Preprocessor( value ) ?? string.Empty;
-            }
-#pragma warning restore CS0618 // Type or member is obsolete
             if (OnParsing is not null)
             {
                 value = OnParsing( context, value ) ?? string.Empty;
@@ -296,12 +284,9 @@ namespace FlatFiles
         /// <returns>The parsed value.</returns>
         public override object? Parse( IColumnContext? context, ReadOnlySpan<char> value )
         {
-#pragma warning disable CS0618 // Type or member is obsolete
-            var needsString = Preprocessor is not null || OnParsing is not null;
-#pragma warning restore CS0618 // Type or member is obsolete
-            if (needsString || OverridesStringParse)
+            if (OnParsing is not null || OverridesStringParse)
             {
-                // Both hooks are handed the whole value as a string, and a derived column that replaced the string
+                // The hook is handed the whole value as a string, and a derived column that replaced the string
                 // overload has to keep seeing every value through it.
                 return Parse( context, value.ToString() );
             }

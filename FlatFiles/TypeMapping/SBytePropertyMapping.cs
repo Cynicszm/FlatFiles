@@ -47,14 +47,6 @@ namespace FlatFiles.TypeMapping
             return this;
         }
 
-        public ISBytePropertyMapping Preprocessor(Func<string, string?>? preprocessor)
-        {
-#pragma warning disable CS0618 // Type or member is obsolete
-            column.Preprocessor = preprocessor;
-#pragma warning restore CS0618 // Type or member is obsolete
-            return this;
-        }
-
         public ISBytePropertyMapping OnParsing(Func<IColumnContext?, string, string?>? handler)
         {
             column.OnParsing = handler;

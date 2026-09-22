@@ -15,6 +15,20 @@
   </Suppression>
   <Suppression>
     <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:FlatFiles.ColumnDefinition.get_Preprocessor</Target>
+    <Left>lib/net10.0/FlatFiles.dll</Left>
+    <Right>lib/net10.0/FlatFiles.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:FlatFiles.ColumnDefinition.set_Preprocessor(System.Func{System.String,System.String})</Target>
+    <Left>lib/net10.0/FlatFiles.dll</Left>
+    <Right>lib/net10.0/FlatFiles.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
     <Target>M:FlatFiles.DelimitedOptions.get_QuoteBehavior</Target>
     <Left>lib/net10.0/FlatFiles.dll</Left>
     <Right>lib/net10.0/FlatFiles.dll</Right>
@@ -29,6 +43,27 @@
   </Suppression>
   <Suppression>
     <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:FlatFiles.ICharPropertyMapping.Preprocessor(System.Func{System.String,System.String})</Target>
+    <Left>lib/net10.0/FlatFiles.dll</Left>
+    <Right>lib/net10.0/FlatFiles.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:FlatFiles.IColumnDefinition.get_Preprocessor</Target>
+    <Left>lib/net10.0/FlatFiles.dll</Left>
+    <Right>lib/net10.0/FlatFiles.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:FlatFiles.IColumnDefinition.set_Preprocessor(System.Func{System.String,System.String})</Target>
+    <Left>lib/net10.0/FlatFiles.dll</Left>
+    <Right>lib/net10.0/FlatFiles.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
     <Target>M:FlatFiles.TimeSpanColumn.FromMillseconds(FlatFiles.DoubleColumn)</Target>
     <Left>lib/net10.0/FlatFiles.dll</Left>
     <Right>lib/net10.0/FlatFiles.dll</Right>
@@ -36,7 +71,77 @@
   </Suppression>
   <Suppression>
     <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:FlatFiles.TypeMapping.IBooleanPropertyMapping.Preprocessor(System.Func{System.String,System.String})</Target>
+    <Left>lib/net10.0/FlatFiles.dll</Left>
+    <Right>lib/net10.0/FlatFiles.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:FlatFiles.TypeMapping.IByteArrayPropertyMapping.Preprocessor(System.Func{System.String,System.String})</Target>
+    <Left>lib/net10.0/FlatFiles.dll</Left>
+    <Right>lib/net10.0/FlatFiles.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:FlatFiles.TypeMapping.IBytePropertyMapping.Preprocessor(System.Func{System.String,System.String})</Target>
+    <Left>lib/net10.0/FlatFiles.dll</Left>
+    <Right>lib/net10.0/FlatFiles.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:FlatFiles.TypeMapping.ICharArrayPropertyMapping.Preprocessor(System.Func{System.String,System.String})</Target>
+    <Left>lib/net10.0/FlatFiles.dll</Left>
+    <Right>lib/net10.0/FlatFiles.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:FlatFiles.TypeMapping.IDateOnlyPropertyMapping.Preprocessor(System.Func{System.String,System.String})</Target>
+    <Left>lib/net10.0/FlatFiles.dll</Left>
+    <Right>lib/net10.0/FlatFiles.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:FlatFiles.TypeMapping.IDateTimeOffsetPropertyMapping.Preprocessor(System.Func{System.String,System.String})</Target>
+    <Left>lib/net10.0/FlatFiles.dll</Left>
+    <Right>lib/net10.0/FlatFiles.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:FlatFiles.TypeMapping.IDateTimePropertyMapping.Preprocessor(System.Func{System.String,System.String})</Target>
+    <Left>lib/net10.0/FlatFiles.dll</Left>
+    <Right>lib/net10.0/FlatFiles.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:FlatFiles.TypeMapping.IDecimalPropertyMapping.Preprocessor(System.Func{System.String,System.String})</Target>
+    <Left>lib/net10.0/FlatFiles.dll</Left>
+    <Right>lib/net10.0/FlatFiles.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:FlatFiles.TypeMapping.IDelimitedComplexPropertyMapping.Preprocessor(System.Func{System.String,System.String})</Target>
+    <Left>lib/net10.0/FlatFiles.dll</Left>
+    <Right>lib/net10.0/FlatFiles.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
     <Target>M:FlatFiles.TypeMapping.IDelimitedTypeConfiguration`1.OptimizeMapping(System.Boolean)</Target>
+    <Left>lib/net10.0/FlatFiles.dll</Left>
+    <Right>lib/net10.0/FlatFiles.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:FlatFiles.TypeMapping.IDoublePropertyMapping.Preprocessor(System.Func{System.String,System.String})</Target>
     <Left>lib/net10.0/FlatFiles.dll</Left>
     <Right>lib/net10.0/FlatFiles.dll</Right>
     <IsBaselineSuppression>true</IsBaselineSuppression>
@@ -57,7 +162,112 @@
   </Suppression>
   <Suppression>
     <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:FlatFiles.TypeMapping.IEnumPropertyMapping`1.Preprocessor(System.Func{System.String,System.String})</Target>
+    <Left>lib/net10.0/FlatFiles.dll</Left>
+    <Right>lib/net10.0/FlatFiles.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:FlatFiles.TypeMapping.IFixedLengthComplexPropertyMapping.Preprocessor(System.Func{System.String,System.String})</Target>
+    <Left>lib/net10.0/FlatFiles.dll</Left>
+    <Right>lib/net10.0/FlatFiles.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
     <Target>M:FlatFiles.TypeMapping.IFixedLengthTypeConfiguration`1.OptimizeMapping(System.Boolean)</Target>
+    <Left>lib/net10.0/FlatFiles.dll</Left>
+    <Right>lib/net10.0/FlatFiles.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:FlatFiles.TypeMapping.IGuidPropertyMapping.Preprocessor(System.Func{System.String,System.String})</Target>
+    <Left>lib/net10.0/FlatFiles.dll</Left>
+    <Right>lib/net10.0/FlatFiles.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:FlatFiles.TypeMapping.IIgnoredMapping.Preprocessor(System.Func{System.String,System.String})</Target>
+    <Left>lib/net10.0/FlatFiles.dll</Left>
+    <Right>lib/net10.0/FlatFiles.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:FlatFiles.TypeMapping.IInt16PropertyMapping.Preprocessor(System.Func{System.String,System.String})</Target>
+    <Left>lib/net10.0/FlatFiles.dll</Left>
+    <Right>lib/net10.0/FlatFiles.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:FlatFiles.TypeMapping.IInt32PropertyMapping.Preprocessor(System.Func{System.String,System.String})</Target>
+    <Left>lib/net10.0/FlatFiles.dll</Left>
+    <Right>lib/net10.0/FlatFiles.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:FlatFiles.TypeMapping.IInt64PropertyMapping.Preprocessor(System.Func{System.String,System.String})</Target>
+    <Left>lib/net10.0/FlatFiles.dll</Left>
+    <Right>lib/net10.0/FlatFiles.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:FlatFiles.TypeMapping.ISBytePropertyMapping.Preprocessor(System.Func{System.String,System.String})</Target>
+    <Left>lib/net10.0/FlatFiles.dll</Left>
+    <Right>lib/net10.0/FlatFiles.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:FlatFiles.TypeMapping.ISinglePropertyMapping.Preprocessor(System.Func{System.String,System.String})</Target>
+    <Left>lib/net10.0/FlatFiles.dll</Left>
+    <Right>lib/net10.0/FlatFiles.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:FlatFiles.TypeMapping.IStringPropertyMapping.Preprocessor(System.Func{System.String,System.String})</Target>
+    <Left>lib/net10.0/FlatFiles.dll</Left>
+    <Right>lib/net10.0/FlatFiles.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:FlatFiles.TypeMapping.ITimeOnlyPropertyMapping.Preprocessor(System.Func{System.String,System.String})</Target>
+    <Left>lib/net10.0/FlatFiles.dll</Left>
+    <Right>lib/net10.0/FlatFiles.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:FlatFiles.TypeMapping.ITimeSpanPropertyMapping.Preprocessor(System.Func{System.String,System.String})</Target>
+    <Left>lib/net10.0/FlatFiles.dll</Left>
+    <Right>lib/net10.0/FlatFiles.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:FlatFiles.TypeMapping.IUInt16PropertyMapping.Preprocessor(System.Func{System.String,System.String})</Target>
+    <Left>lib/net10.0/FlatFiles.dll</Left>
+    <Right>lib/net10.0/FlatFiles.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:FlatFiles.TypeMapping.IUInt32PropertyMapping.Preprocessor(System.Func{System.String,System.String})</Target>
+    <Left>lib/net10.0/FlatFiles.dll</Left>
+    <Right>lib/net10.0/FlatFiles.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:FlatFiles.TypeMapping.IUInt64PropertyMapping.Preprocessor(System.Func{System.String,System.String})</Target>
     <Left>lib/net10.0/FlatFiles.dll</Left>
     <Right>lib/net10.0/FlatFiles.dll</Right>
     <IsBaselineSuppression>true</IsBaselineSuppression>

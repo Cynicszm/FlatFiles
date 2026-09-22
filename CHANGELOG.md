@@ -17,22 +17,27 @@ The thirty-two error messages in `Resources.resx` needed no respelling - not one
 
 Package validation reports the removal as CP0002, and `FlatFiles/CompatibilitySuppressions.xml` carries that single entry, declaring it as Conventions.md requires. The file is emptied again when the baseline moves to 8.0.0.
 
+**The obsolete `Preprocessor` members are removed.** `IColumnDefinition.Preprocessor`, the implementation on `ColumnDefinition`, and the `Preprocessor` method on all twenty-six property mapping interfaces have carried `[Obsolete]` pointing at `OnParsing` since before this fork. `OnParsing` is a drop-in replacement that also receives the column context: `column.Preprocessor = v => v.Trim()` becomes `column.OnParsing = ( _, v ) => v.Trim()`, and `mapper.Property( x => x.Name ).Preprocessor( f )` becomes `.OnParsing( ( _, v ) => f( v ) )`. Where a column carried both, the preprocessor ran first and the hook second; a caller that used both now chains them in one hook.
+
+Fifty-one members went, and with them every `#pragma warning disable CS0618` in the repository - sixty of them across twenty-eight files, each existing only so the library could compile against something it was telling everybody else to stop using. The parse path is shorter for it: `ColumnDefinition<T>.Parse` and `IgnoredColumn.Parse` each dropped a branch on both the string and the span overload.
+
+Package validation reports thirty removals, which with the renames above brings the suppression file to forty-two entries, each one read before it was kept.
+
 ### Still to come
 
-Two breaks remain, and they are what keeps this a major version; the rest are features, which do not need one.
+One break remains, and it is what keeps this a major version; the rest are features, which do not need one.
 
 **This library puts performance first.** Where a performance change and a feature want the same release, the performance change goes in and the feature waits. That is the whole reason the last several releases read as they do - buffer writers, a span tokeniser, a column context built only when something can read it, span parsing on both readers - and it is worth stating, because the list below is ordered by the review that produced it rather than by what will be built next.
 
 #### Breaking
 
-- **The obsolete `Preprocessor` members are removed.** `IColumnDefinition.Preprocessor` and its implementations, and the `Preprocessor` method on all twenty-six property mapping interfaces, have carried `[Obsolete]` pointing at `OnParsing` since before this fork. `OnParsing` is otherwise a drop-in replacement that also receives the column context: `column.Preprocessor = v => v.Trim()` becomes `column.OnParsing = ( _, v ) => v.Trim()`, and `mapper.Property( x => x.Name ).Preprocessor( f )` becomes `.OnParsing( ( _, v ) => f( v ) )`. Removing them takes sixty `#pragma warning disable CS0618` suppressions out of twenty-eight files with them.
 - **A delimited record is parsed straight from the parser's buffer, and `IRecordContext.Values` is only good while the record is.** 7.6.0 copies each record out of the buffer once and parses its values as slices of that copy, which is what lets the record context hand them back whenever it is asked. Dropping the copy and parsing the buffer itself removes the last string a delimited record costs, an estimated 350 bytes a record on top of 7.6.0's 1,171 - about a third again - but the characters are gone as soon as the next record is read.
 
   So `Values` has to narrow: it reports the record's values while that record is being processed, which covers every hook, every handler and every error, and reports null afterwards to a context something kept. In a minor version that would have to be bought back with an escape analysis - materialising the strings up front whenever an event, a schema selector, a column that can read its context, `GetMetadata` or the error path could reach them - which is four mechanisms holding up one invariant. A major version can simply say what `Values` means instead, and the code stays the shape it is. Being able to make that trade is the reason this is here rather than done.
 
   A context asked for `Values` after the reader has moved on gets null - not a stale array, and not an exception, because reaching for the values of a record you no longer hold is a question with an answer rather than a mistake. The fixed-length reader narrows to match. It does not have to: it parses from the record's own string, so its values could stay good for ever. But a rule that holds for one reader and not the other is a rule nobody remembers, and narrowing it buys something back, because the reader can then reuse one set of ranges across every record instead of allocating a set per record - another 128 bytes a record on thirteen columns. Both readers drop the record's text and ranges when they read the next one, and that single act is what the whole contract rests on.
 
-Removing `Preprocessor` is a break package validation will report, and it is declared in the suppression file when it lands, as the rename above was. The zero-copy change reports nothing: it alters no signature, so validation passes it in silence. That is a break in what a member promises rather than in what it looks like - exactly the kind 7.5.0 shipped without anybody noticing - so it is described here instead of being caught by a tool.
+The zero-copy change reports nothing to package validation: it alters no signature, so validation passes it in silence. That is a break in what a member promises rather than in what it looks like - exactly the kind 7.5.0 shipped without anybody noticing - so it is described here instead of being caught by a tool.
 
 #### Also planned
 
