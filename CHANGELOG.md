@@ -1,7 +1,9 @@
 ## 8.0.0 (planned)
 **Not released.** What the next major version is for. Nothing here is in a published package, and the list is expected to grow before it ships.
 
-The first three are breaking, which is what forces a major version; the rest are the features the release is meant to carry. Only the breaks have to wait for it. Anything under **Also planned** could ship in a 7.x the day it is written, and should, if it is finished first - holding a feature back to make a release look bigger helps nobody.
+The first three are breaking, which is what forces a major version; the rest are the features the release is meant to carry. Only the breaks have to wait for it.
+
+**This library puts performance first.** Where a performance change and a feature want the same release, the performance change goes in and the feature waits. That is the whole reason the last several releases read as they do - buffer writers, a span tokeniser, a column context built only when something can read it, span parsing on both readers - and it is worth stating, because the list below is ordered by the review that produced it rather than by what will be built next.
 
 ### Breaking
 
@@ -17,7 +19,7 @@ The first two are breaks that package validation will report, which is the point
 
 ### Also planned
 
-From the product and architecture review of 2026-09-17, in the order recommended then. None of these breaks anything, so none of them needs to wait for 8.0.0.
+From the product and architecture review of 2026-09-17, in the order that review recommended. None of these breaks anything, so none of them needs 8.0.0 to happen. The one that is also a performance change, UTF-8 `Stream` input, is last here and first in any argument about what to do next.
 
 - **Header-driven column matching against a supplied schema.** The header row is read and thrown away: never checked against the schema, never used to order it. A file whose columns have been reordered since the schema was written is read straight into the wrong properties, silently, because position is all the reader has. Matching the header by name, and saying what happens when it disagrees - reorder, refuse, or ignore - is the largest gap left against CsvHelper, Sylvan and Sep, all of which map by name. Reading by position stays the default, since a file with no header has nothing else to go on.
 - **Constructor, positional record and init-only mapping.** `Define<T>()` needs a parameterless constructor and a settable property for every column, so a record, a type with `init` accessors, or anything that validates in its constructor cannot be mapped without giving it a second, looser shape to be deserialised into.
