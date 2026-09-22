@@ -34,6 +34,17 @@ namespace FlatFiles
         }
 
         /// <summary>
+        ///     Parses the given value as a char array, without first copying it into a string.
+        /// </summary>
+        /// <param name="context">Holds information about the column current being processed.</param>
+        /// <param name="value">The value to parse.</param>
+        /// <returns>The parsed char array.</returns>
+        protected override char[] OnParse( IColumnContext? context, ReadOnlySpan<char> value )
+        {
+            return value.ToArray();
+        }
+
+        /// <summary>
         ///     Gets whether the value should be trimmed prior to parsing.
         /// </summary>
         protected override bool IsTrimmed => Trim;

@@ -78,6 +78,89 @@ namespace FlatFiles
             return parsedValues;
         }
 
+        /// <summary>
+        ///     Parses the values sitting at the given positions within the record, assuming that they are in the same
+        ///     order as the column definitions. Nothing is copied out of the record for a column that can read its
+        ///     value from the characters themselves.
+        /// </summary>
+        /// <param name="context">The metadata for the current record being processed.</param>
+        /// <param name="record">The record the values were partitioned from.</param>
+        /// <param name="ranges">Where each value sits within the record.</param>
+        /// <returns>The parsed objects.</returns>
+        internal object?[] ParseValues( IRecoverableRecordContext context, string record, ValueRange[] ranges )
+        {
+            var parsedValues = new object?[ColumnDefinitions.PhysicalCount];
+            for (int columnIndex = 0, sourceIndex = 0, destinationIndex = 0, columnCount = ColumnDefinitions.Count;
+                columnIndex != columnCount;
+                ++columnIndex)
+            {
+                var definition = ColumnDefinitions[columnIndex];
+                if (definition is IMetadataColumn)
+                {
+                    var columnContext = NewColumnContext( context, columnIndex, destinationIndex );
+                    var metadata = ParseWithContext( columnContext, string.Empty );
+                    parsedValues[destinationIndex] = metadata;
+                    ++destinationIndex;
+                }
+                else if (!definition.IsIgnored)
+                {
+                    var range = ranges[sourceIndex];
+                    var parsedValue = ParseValue( context, columnIndex, destinationIndex, record.AsSpan( range.Start, range.Length ) );
+                    parsedValues[destinationIndex] = parsedValue;
+                    ++sourceIndex;
+                    ++destinationIndex;
+                }
+                else
+                {
+                    var range = ranges[sourceIndex];
+                    ParseValue( context, columnIndex, -1, record.AsSpan( range.Start, range.Length ) );
+                    ++sourceIndex;
+                }
+            }
+            return parsedValues;
+        }
+
+        private object? ParseValue( IRecoverableRecordContext context, int columnIndex, int destinationIndex, ReadOnlySpan<char> rawValue )
+        {
+            var options = context.ExecutionContext.Options;
+            var definition = ColumnDefinitions[columnIndex];
+            if (options.IsColumnContextDisabled)
+            {
+                try
+                {
+                    return definition.Parse( null, rawValue );
+                }
+                catch (Exception exception)
+                {
+                    throw new ColumnProcessingException( definition, destinationIndex, rawValue.ToString(), exception );
+                }
+            }
+            if (definition.IsColumnContextRequired || options.FormatProvider is not null)
+            {
+                // The options' format provider reaches a column only through the context, so its presence keeps it.
+                var columnContext = NewColumnContext( context, columnIndex, destinationIndex );
+                try
+                {
+                    return definition.Parse( columnContext, rawValue );
+                }
+                catch (Exception exception)
+                {
+                    // The value is only copied here, where the error carries it to the handler.
+                    return RecoverParse( columnContext, rawValue.ToString(), exception );
+                }
+            }
+            // Nothing on this column can look at its context, so none is built unless the parse fails and the error
+            // has to be reported with one.
+            try
+            {
+                return definition.Parse( null, rawValue );
+            }
+            catch (Exception exception)
+            {
+                return RecoverParse( NewColumnContext( context, columnIndex, destinationIndex ), rawValue.ToString(), exception );
+            }
+        }
+
         private object? ParseValue( IRecoverableRecordContext context, int columnIndex, int destinationIndex, string rawValue )
         {
             var options = context.ExecutionContext.Options;

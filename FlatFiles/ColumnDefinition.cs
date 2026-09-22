@@ -144,6 +144,19 @@ namespace FlatFiles
         public abstract object? Parse( IColumnContext? context, string value );
 
         /// <summary>
+        ///     Parses the given value without the caller first copying it out of the record it sits in. The default
+        ///     copies the text and parses the string; <see cref="ColumnDefinition{T}" /> parses the characters
+        ///     themselves wherever the column's type can be read from them.
+        /// </summary>
+        /// <param name="context">Holds information about the column current being processed.</param>
+        /// <param name="value">The value to parse.</param>
+        /// <returns>The parsed value.</returns>
+        public virtual object? Parse( IColumnContext? context, ReadOnlySpan<char> value )
+        {
+            return Parse( context, value.ToString() );
+        }
+
+        /// <summary>
         ///     Removes any leading or trailing whitespace from the value.
         /// </summary>
         /// <param name="value">The value to trim.</param>
@@ -274,6 +287,52 @@ namespace FlatFiles
         }
 
         /// <summary>
+        ///     Parses the given value without the caller first copying it out of the record it sits in. Everything
+        ///     the string overload does happens here too; the value is copied only where something needs it as a
+        ///     string.
+        /// </summary>
+        /// <param name="context">Holds information about the column current being processed.</param>
+        /// <param name="value">The value to parse.</param>
+        /// <returns>The parsed value.</returns>
+        public override object? Parse( IColumnContext? context, ReadOnlySpan<char> value )
+        {
+#pragma warning disable CS0618 // Type or member is obsolete
+            var needsString = Preprocessor is not null || OnParsing is not null;
+#pragma warning restore CS0618 // Type or member is obsolete
+            if (needsString || OverridesStringParse)
+            {
+                // Both hooks are handed the whole value as a string, and a derived column that replaced the string
+                // overload has to keep seeing every value through it.
+                return Parse( context, value.ToString() );
+            }
+            var result = ParseValue( context, value );
+            if (OnParsed is not null)
+            {
+                result = OnParsed( context, result );
+            }
+            return result;
+        }
+
+        private object? ParseValue( IColumnContext? context, ReadOnlySpan<char> value )
+        {
+            if (NullFormatter.IsNullValue( context, value ))
+            {
+                return IsNullable ? null : DefaultValue.GetDefaultValue( context );
+            }
+            return OnParse( context, IsTrimmed ? value.Trim() : value );
+        }
+
+        /// <summary>
+        ///     Whether the runtime type replaced <see cref="Parse(IColumnContext?, string)" />, in which case the
+        ///     value has to reach it as a string. Asked once per column rather than once per value, because the
+        ///     answer is a reflection lookup and never changes.
+        /// </summary>
+        private bool OverridesStringParse => overridesStringParse ??=
+            GetType().GetMethod( nameof( Parse ), [typeof( IColumnContext ), typeof( string )] )?.DeclaringType != typeof( ColumnDefinition<T> );
+
+        private bool? overridesStringParse;
+
+        /// <summary>
         ///     Gets whether the value should be trimmed prior to parsing.
         /// </summary>
         protected virtual bool IsTrimmed => true;
@@ -285,6 +344,19 @@ namespace FlatFiles
         /// <param name="value">The value to parse.</param>
         /// <returns>The parsed value.</returns>
         protected abstract T OnParse( IColumnContext? context, string value );
+
+        /// <summary>
+        ///     Parses the given value without the caller first copying it out of the record it sits in. The default
+        ///     copies the text and parses the string; override it where the column's type can be read from the
+        ///     characters themselves.
+        /// </summary>
+        /// <param name="context">Holds information about the column current being processed.</param>
+        /// <param name="value">The value to parse.</param>
+        /// <returns>The parsed value.</returns>
+        protected virtual T OnParse( IColumnContext? context, ReadOnlySpan<char> value )
+        {
+            return OnParse( context, value.ToString() );
+        }
 
         /// <summary>
         ///     Formats the given object.

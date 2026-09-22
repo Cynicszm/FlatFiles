@@ -39,6 +39,17 @@ namespace FlatFiles
         }
 
         /// <summary>
+        ///     Parses the given value without copying it out of the record it sits in.
+        /// </summary>
+        /// <param name="context">Holds information about the column current being processed.</param>
+        /// <param name="value">The value to parse.</param>
+        /// <returns>The parsed value.</returns>
+        protected override Guid OnParse( IColumnContext? context, ReadOnlySpan<char> value )
+        {
+            return InputFormat is null ? Guid.Parse( value ) : Guid.ParseExact( value, InputFormat );
+        }
+
+        /// <summary>
         ///     Formats the given object.
         /// </summary>
         /// <param name="context">Holds information about the column current being processed.</param>
