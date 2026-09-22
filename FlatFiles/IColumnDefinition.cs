@@ -50,12 +50,6 @@ namespace FlatFiles
         INullFormatter NullFormatter { get; set; }
 
         /// <summary>
-        ///     Gets or sets a function used to preprocess input before trying to parse it.
-        /// </summary>
-        [Obsolete( "This property has been superseded by the OnParsing delegate." )]
-        Func<string, string?>? Preprocessor { get; set; }
-
-        /// <summary>
         ///     Gets or sets a function used to pre-process input before trying to parse it.
         /// </summary>
         Func<IColumnContext?, string, string?>? OnParsing { get; set; }

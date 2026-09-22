@@ -64,24 +64,6 @@ namespace FlatFiles.Test
             Assert.IsNull( actual );
         }
 
-        /// <summary>
-        ///     If the value is blank and the field is not required, null will be returned.
-        /// </summary>
-        [TestMethod]
-        public void TestParse_Preprocessor_ShouldBeCalledOnce()
-        {
-            var preprocessorCallCount = 0;
-
-            var column = new TimeSpanColumn( "created" );
-#pragma warning disable CS0618 // Type or member is obsolete
-            column.Preprocessor = value => { preprocessorCallCount++; return value; };
-#pragma warning restore CS0618 // Type or member is obsolete
-
-            var actual = (TimeSpan?) column.Parse( null, "    " );
-            Assert.AreEqual( 1, preprocessorCallCount, "Preprocessor function should be called exactly once" );
-            Assert.IsNull( actual );
-        }
-
         [TestMethod]
         public void TestFromDays_FromDouble()
         {

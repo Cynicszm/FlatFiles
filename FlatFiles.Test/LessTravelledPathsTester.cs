@@ -76,9 +76,6 @@ namespace FlatFiles.Test
                 OnFormatted = ( _, v ) => { calls++; return v; },
                 NullFormatter = NullFormatter.ForValue( "-" )
             };
-#pragma warning disable CS0618 // Type or member is obsolete
-            column.Preprocessor = v => { calls++; return v; };
-#pragma warning restore CS0618 // Type or member is obsolete
             var schema = new DelimitedSchema();
             schema.AddColumn( new StringColumn( "a" ) );
             schema.AddColumn( column );
@@ -91,7 +88,7 @@ namespace FlatFiles.Test
 
             Assert.HasCount( 1, values, "The ignored column takes no slot in the values." );
             Assert.AreEqual( "x,-\n", text.ToString(), "The ignored column is written as its null formatter's text." );
-            Assert.AreEqual( 5, calls );
+            Assert.AreEqual( 4, calls );
             Assert.IsNull( column.Parse( null, "anything" ) );
         }
 

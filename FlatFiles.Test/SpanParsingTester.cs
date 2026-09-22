@@ -252,19 +252,6 @@ namespace FlatFiles.Test
         }
 
         [TestMethod]
-        [Obsolete( "Covers the obsolete preprocessor, which still has to be applied." )]
-        public void TestRead_ObsoletePreprocessor_StillReceivesTheValueAsAString()
-        {
-            var schema = new FixedLengthSchema();
-            schema.AddColumn( new Int32Column( "a" ) { Preprocessor = v => v.Replace( "x", "1" ) }, new Window( 4 ) );
-            var reader = new FixedLengthReader( new StringReader( "x2  \r\n" ), schema );
-
-            Assert.IsTrue( reader.Read() );
-
-            Assert.AreEqual( 12, reader.GetValues()[0] );
-        }
-
-        [TestMethod]
         public void TestRead_ColumnWithOnlyTheStringOverload_StillParsesEveryValue()
         {
             var column = new StringOnlyColumn( "a" );
@@ -567,9 +554,6 @@ namespace FlatFiles.Test
             public IDefaultValue DefaultValue { get; set; } = FlatFiles.DefaultValue.Disabled();
 
             public INullFormatter NullFormatter { get; set; } = FlatFiles.NullFormatter.Default;
-
-            [Obsolete( "Part of the interface." )]
-            public Func<string, string> Preprocessor { get; set; }
 
             public Func<IColumnContext, string, string> OnParsing { get; set; }
 
