@@ -20,7 +20,8 @@ namespace FlatFiles.Test
             List<(string, string[])> records = [];
             while (!parser.IsEndOfStream())
             {
-                records.Add( parser.ReadRecord() );
+                var record = parser.ReadRecord();
+                records.Add( (record, ValueRange.Materialise( parser.RecordText, parser.EscapedText, parser.Ranges )) );
             }
             return records;
         }
@@ -31,7 +32,8 @@ namespace FlatFiles.Test
             List<(string, string[])> records = [];
             while (!await parser.IsEndOfStreamAsync())
             {
-                records.Add( await parser.ReadRecordAsync() );
+                var record = await parser.ReadRecordAsync();
+                records.Add( (record, ValueRange.Materialise( parser.RecordText, parser.EscapedText, parser.Ranges )) );
             }
             return records;
         }
@@ -66,6 +68,38 @@ namespace FlatFiles.Test
         public void TestReadRecord_QuotedValue_KeepsSeparatorsAndLineBreaksAndUndoublesQuotes()
         {
             AssertValues( "\"x,\"\"y\"\"\r\nz\",1\r\n", null, [ "x,\"y\"\r\nz", "1" ] );
+        }
+
+        [TestMethod]
+        public void TestReadRecord_SeveralRebuiltValuesInOneRecord_StayApart()
+        {
+            AssertValues( "\"a\"\"b\",\"c\"\"d\"\r\n", null, [ "a\"b", "c\"d" ] );
+            AssertValues( "\"a\"\"b\",plain,\"c\"\"d\"\"e\"\r\n", null, [ "a\"b", "plain", "c\"d\"e" ] );
+        }
+
+        [TestMethod]
+        public void TestReadRecord_RebuiltValueFollowedByAPlainRecord_DoesNotLeakIntoIt()
+        {
+            AssertValues( "\"a\"\"b\",c\r\nd,e", null, [ "a\"b", "c" ], [ "d", "e" ] );
+        }
+
+        [TestMethod]
+        public void TestReadRecord_RebuiltValueAtTheEndOfTheStream_IsStillRead()
+        {
+            AssertValues( "a,\"b\"\"c\"", null, [ "a", "b\"c" ] );
+        }
+
+        [TestMethod]
+        public void TestReadRecord_QuotedValueOfNothingOrOnlyQuotes_IsRead()
+        {
+            AssertValues( "\"\",a", null, [ "", "a" ] );
+            AssertValues( "\"\"\"\"\"\",a", null, [ "\"\"", "a" ] );
+        }
+
+        [TestMethod]
+        public void TestReadRecord_DoubledQuoteAndPreservedTrailingWhiteSpace_AreBothKept()
+        {
+            AssertValues( "\"a\"\"b\"  ,c", new DelimitedOptions { PreserveWhiteSpace = true }, [ "a\"b  ", "c" ] );
         }
 
         [TestMethod]
