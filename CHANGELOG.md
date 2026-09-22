@@ -1,3 +1,11 @@
+## 8.0.0 (planned)
+**Not released.** Where breaking changes collect until there is a major version to put them in. Nothing here is in a published package, and the list is expected to grow before it ships.
+
+- **`TimeSpanColumn.FromMillseconds` becomes `FromMilliseconds`.** The name has been misspelled since the method was written, and correcting it breaks every caller, so it has to wait for a major version. The fix at a call site is one letter. Its five siblings - `FromDays`, `FromHours`, `FromMinutes`, `FromSeconds` and `FromTicks` - are unaffected.
+- **The obsolete `Preprocessor` members are removed.** `IColumnDefinition.Preprocessor` and its implementations, and the `Preprocessor` method on all twenty-six property mapping interfaces, have carried `[Obsolete]` pointing at `OnParsing` since before this fork. `OnParsing` is otherwise a drop-in replacement that also receives the column context: `column.Preprocessor = v => v.Trim()` becomes `column.OnParsing = ( _, v ) => v.Trim()`, and `mapper.Property( x => x.Name ).Preprocessor( f )` becomes `.OnParsing( ( _, v ) => f( v ) )`. Removing them takes sixty `#pragma warning disable CS0618` suppressions out of twenty-eight files with them.
+
+Both are breaks that package validation will report, which is the point of putting them here rather than in a minor version. The release that ships them regenerates `FlatFiles/CompatibilitySuppressions.xml` against the last 7.x baseline with every entry reviewed, as Conventions.md requires, and empties it again when the baseline moves to 8.0.0.
+
 ## 7.6.0 (2026-09-22)
 **Summary** - A delimited record is copied out of the parser's buffer once, as one string, and its values are parsed as slices of it rather than copied into a string each: around 8% less allocation on a delimited read and eleven fewer objects per record, with unchanged results and unchanged time.
 
