@@ -5,7 +5,7 @@
     <NeutralLanguage>en-US</NeutralLanguage>
     <PackageId>Cynicszm.FlatFiles</PackageId>
     <Authors>Cynicszm</Authors>
-    <Description>Reads and writes CSV, fixed-length and other flat file formats with a focus on schema definition, configuration and speed. Supports mapping directly between files and classes. A fork of FlatFiles by Travis Parks, continued for .NET 10; the assembly and namespaces are unchanged, so only the package reference differs.</Description>
+    <Description>Reads and writes CSV, fixed-length and other flat file formats with a focus on schema definition, configuration and speed. Supports mapping directly between files and classes. A fork of FlatFiles by Travis Parks, continued for .NET 10. The assembly and namespaces are unchanged, and through 7.6.0 every type and member name was too, so only the package reference differed; 8.0.0 renames a few of them, each named in the changelog.</Description>
     <PackageProjectUrl>https://github.com/Cynicszm/FlatFiles</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Cynicszm/FlatFiles.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
