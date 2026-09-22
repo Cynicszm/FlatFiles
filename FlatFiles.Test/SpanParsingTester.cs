@@ -382,6 +382,20 @@ namespace FlatFiles.Test
         }
 
         [TestMethod]
+        public void TestRead_HookWritesToTheRawValues_TheWriteDoesNotReachTheNextColumn()
+        {
+            var schema = new FixedLengthSchema();
+            schema.AddColumn( new StringColumn( "a" ) { OnParsed = ( context, v ) => { context.RecordContext.Values[1] = "99"; return v; } }, new Window( 4 ) );
+            schema.AddColumn( new Int32Column( "b" ), new Window( 4 ) );
+            var reader = new FixedLengthReader( new StringReader( "A0010007\r\n" ), schema );
+
+            Assert.IsTrue( reader.Read() );
+
+            Assert.AreEqual( 7, reader.GetValues()[1],
+                "The array a hook reads is a copy of the record's values, not the one the columns are parsed from. A record partitioned handler is what replaces a value before parsing." );
+        }
+
+        [TestMethod]
         public void TestRead_ParseError_CarriesTheValueAndThePartitionedRecord()
         {
             var schema = new FixedLengthSchema();

@@ -273,6 +273,20 @@ namespace FlatFiles.Test
         }
 
         [TestMethod]
+        public void TestRead_HookWritesToTheRawValues_TheWriteDoesNotReachTheNextColumn()
+        {
+            var schema = new DelimitedSchema();
+            schema.AddColumn( new StringColumn( "a" ) { OnParsed = ( context, v ) => { context.RecordContext.Values[1] = "99"; return v; } } );
+            schema.AddColumn( new Int32Column( "b" ) );
+            var reader = new DelimitedReader( new StringReader( "x,7\r\n" ), schema );
+
+            Assert.IsTrue( reader.Read() );
+
+            Assert.AreEqual( 7, reader.GetValues()[1],
+                "The array a hook reads is a copy of the record's values, not the one the columns are parsed from. A record read handler is what replaces a value before parsing." );
+        }
+
+        [TestMethod]
         public void TestRead_RecordReadHandlerReplacesAValue_TheReplacementIsParsed()
         {
             var schema = new DelimitedSchema();
