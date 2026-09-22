@@ -3,7 +3,7 @@
     /// <summary>
     ///  Specifies how FlatFiles should quote delimited file fields.
     /// </summary>
-    public enum QuoteBehavior
+    public enum QuoteBehaviour
     {
         /// <summary>
         /// FlatFiles will only put quotes around values that need to be quoted.

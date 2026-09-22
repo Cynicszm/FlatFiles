@@ -47,7 +47,7 @@ namespace FlatFiles
         /// </summary>
         /// <param name="column">The column for reading/writing doubles from the file.</param>
         /// <returns>A column for reading/writing <see cref="TimeSpan"/> values.</returns>
-        public static IColumnDefinition FromMillseconds( DoubleColumn column )
+        public static IColumnDefinition FromMilliseconds( DoubleColumn column )
         {
             ArgumentNullException.ThrowIfNull( column );
             return new ConversionColumn<double, TimeSpan>( column, TimeSpan.FromMilliseconds, ts => ts.TotalMilliseconds );

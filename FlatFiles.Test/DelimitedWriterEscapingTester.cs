@@ -62,13 +62,13 @@ namespace FlatFiles.Test
         [TestMethod]
         public void TestWrite_AlwaysQuote_QuotesEvenEmptyValues()
         {
-            Assert.AreEqual( "\"\",\"x\"\n", Write( new DelimitedOptions { QuoteBehavior = QuoteBehavior.AlwaysQuote }, "", "x" ) );
+            Assert.AreEqual( "\"\",\"x\"\n", Write( new DelimitedOptions { QuoteBehaviour = QuoteBehaviour.AlwaysQuote }, "", "x" ) );
         }
 
         [TestMethod]
         public void TestWrite_NeverQuote_LeavesTheSeparatorInPlace()
         {
-            Assert.AreEqual( "a,b,c\n", Write( new DelimitedOptions { QuoteBehavior = QuoteBehavior.Never }, "a,b", "c" ) );
+            Assert.AreEqual( "a,b,c\n", Write( new DelimitedOptions { QuoteBehaviour = QuoteBehaviour.Never }, "a,b", "c" ) );
         }
 
         [TestMethod]

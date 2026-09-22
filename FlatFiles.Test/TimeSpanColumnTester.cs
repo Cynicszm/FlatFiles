@@ -146,7 +146,7 @@ namespace FlatFiles.Test
         public void TestFromMilliseconds_FromDouble()
         {
             var msColumn = new DoubleColumn( "Duration" );
-            var durationColumn = TimeSpanColumn.FromMillseconds( msColumn );
+            var durationColumn = TimeSpanColumn.FromMilliseconds( msColumn );
 
             var actual = (TimeSpan) durationColumn.Parse( null, "86400000" );
             Assert.AreEqual( TimeSpan.FromDays( 1 ), actual );
@@ -156,7 +156,7 @@ namespace FlatFiles.Test
         public void TestFromMilliseconds_ToDouble()
         {
             var msColumn = new DoubleColumn( "Duration" );
-            var durationColumn = TimeSpanColumn.FromMillseconds( msColumn );
+            var durationColumn = TimeSpanColumn.FromMilliseconds( msColumn );
 
             var actual = durationColumn.Format( null, TimeSpan.FromDays( 1 ) );
             Assert.AreEqual( "86400000", actual );
