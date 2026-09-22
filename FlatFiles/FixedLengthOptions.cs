@@ -4,21 +4,25 @@ using FlatFiles.Properties;
 namespace FlatFiles
 {
     /// <summary>
-    ///     Holds configuration settings for the FixedLengthParser class.
+    ///     Holds the options controlling how <see cref="FixedLengthReader" /> and <see cref="FixedLengthWriter" />
+    ///     read and write a fixed-length file.
     /// </summary>
     public sealed class FixedLengthOptions : IOptions
     {
         /// <summary>
-        ///     Initialises a new instance of a FixedLengthParserOptions.
+        ///     Initialises a new instance of FixedLengthOptions.
         /// </summary>
         public FixedLengthOptions()
         {
         }
         
         /// <summary>
-        ///     Gets or sets the character used to buffer values in a column.
+        ///     Gets or sets the character used to pad a value out to the width of its column.
         /// </summary>
-        /// <remarks>The fill character can be controlled at the column level using the Window class.</remarks>
+        /// <remarks>
+        ///     Reading trims it from the end of a left-aligned value and the start of a right-aligned one; writing
+        ///     pads with it. It can be set for one column at a time on <see cref="Window.FillCharacter" />.
+        /// </remarks>
         public char FillCharacter { get; set; } = ' ';
 
         /// <summary>
@@ -34,6 +38,11 @@ namespace FlatFiles
         /// <summary>
         ///     Gets or sets the string that indicates the end of a record.
         /// </summary>
+        /// <remarks>
+        ///     Null means any of <c>\r</c>, <c>\n</c> or <c>\r\n</c> when reading and
+        ///     <see cref="Environment.NewLine" /> when writing. It is ignored when
+        ///     <see cref="HasRecordSeparator" /> is false, where every record is the width of the schema.
+        /// </remarks>
         public string? RecordSeparator { get; set; }
 
         /// <summary>
@@ -80,7 +89,7 @@ namespace FlatFiles
         /// <summary>
         ///     Gets or sets the default alignment for the values in the fixed length file.
         /// </summary>
-        /// <remarks>The alignment can be controlled at the columnm level using the Window class.</remarks>
+        /// <remarks>The alignment can be set for one column at a time on <see cref="Window.Alignment" />.</remarks>
         public FixedAlignment Alignment
         {
             get;
@@ -97,7 +106,9 @@ namespace FlatFiles
         /// <summary>
         ///     Gets or sets the default overflow truncation policy to use when a value exceeds the maximum length of its column.
         /// </summary>
-        /// <remarks>The trunaction policy can be controlled at the column level using the Window class.</remarks>
+        /// <remarks>
+        ///     The truncation policy can be set for one column at a time on <see cref="Window.TruncationPolicy" />.
+        /// </remarks>
         public OverflowTruncationPolicy TruncationPolicy
         {
             get;

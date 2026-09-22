@@ -132,6 +132,9 @@
   <data name="InvalidAlignment" xml:space="preserve">
     <value>Encountered an invalid fixed width column alignment.</value>
   </data>
+  <data name="InvalidQuoteBehaviour" xml:space="preserve">
+    <value>Encountered an invalid quote behaviour.</value>
+  </data>
   <data name="InvalidColumnWidth" xml:space="preserve">
     <value>An attempt was made to define a column with a negative width.</value>
   </data>

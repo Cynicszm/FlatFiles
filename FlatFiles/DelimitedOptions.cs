@@ -5,12 +5,13 @@ namespace FlatFiles
 {
     /// <inheritdoc />
     /// <summary>
-    ///     Holds configuration options for the DelimitedParser.
+    ///     Holds the options controlling how <see cref="DelimitedReader" /> and <see cref="DelimitedWriter" />
+    ///     read and write a delimited file.
     /// </summary>
     public sealed class DelimitedOptions : IOptions
     {
         /// <summary>
-        ///     Initialises a new instance of a DelimitedParserOptions.
+        ///     Initialises a new instance of DelimitedOptions.
         /// </summary>
         public DelimitedOptions()
         {
@@ -36,14 +37,14 @@ namespace FlatFiles
         ///     Gets or sets the character or characters used to separate the records.
         /// </summary>
         /// <remarks>
-        ///     By default, FlatFiles will look a combination of /r, /n, or /r/n. Setting
-        ///     the record separator to null will enable this default behaviour. When writing,
-        ///     FlatFiles will use Environment.NewLine as the default record separator.
+        ///     By default, FlatFiles looks for any of <c>\r</c>, <c>\n</c> or <c>\r\n</c>, so a file may mix
+        ///     them; setting this to null restores that. When writing, the default is
+        ///     <see cref="Environment.NewLine" />.
         /// </remarks>
         public string? RecordSeparator { get; set; }
 
         /// <summary>
-        ///     Gets or sets the character used to quote records containing special characters.
+        ///     Gets or sets the character used to quote a value that contains a separator, a quote or a line break.
         /// </summary>
         public char Quote { get; set; } = '"';
 
@@ -57,7 +58,7 @@ namespace FlatFiles
             {
                 if (!Enum.IsDefined( value ))
                 {
-                    throw new ArgumentException( Resources.InvalidAlignment, nameof( value ) );
+                    throw new ArgumentException( Resources.InvalidQuoteBehaviour, nameof( value ) );
                 }
                 field = value;
             }
@@ -74,7 +75,7 @@ namespace FlatFiles
         public bool PreserveWhiteSpace { get; set; }
 
         /// <summary>
-        ///     Gets whether column-level metadata should be disabled for non-metadata columns.
+        ///     Gets or sets whether column-level metadata should be disabled for non-metadata columns.
         /// </summary>
         public bool IsColumnContextDisabled { get; set; }
 
@@ -89,14 +90,12 @@ namespace FlatFiles
         ///     get the text back.
         /// </para>
         /// <para>
-        ///     The reader can build a string of each record's original text so it can be exposed through
-        /// <see cref="IRecordContext.Record" />. Nothing in parsing needs it - the column values are
-        ///     tokenised separately, and a schema selector is handed those values rather than the text -
-        ///     so for a caller that never reads it, that string is the single largest avoidable cost of
-        ///     reading a file. Measured over 50,000 records it was a fifth of everything the reader
-        ///     allocated. Throughput is unchanged either way - the difference is a millisecond or two
-        ///     on a 50,000 record read, which is noise - so what this buys is allocation and the GC
-        ///     pressure that comes with it, which is why the default favours it.
+        ///     Nothing in parsing needs it. The reader takes each value straight from the characters it has
+        ///     buffered, and a schema selector is handed those values rather than the text, so the string this
+        ///     builds exists only to be reported. Measured over 10,000 records of thirteen columns, a read
+        ///     allocated 741 bytes a record with the option off and 1,035 with it on. Throughput is unchanged
+        ///     either way, so what it costs is allocation and the collection pressure that comes with it, which
+        ///     is why the default is off.
         /// </para>
         /// <para>
         ///     Fixed-length files are unaffected: that reader takes its column values out of the record
