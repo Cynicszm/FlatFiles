@@ -145,7 +145,7 @@
     <value>An attempt to view values was made after all of the records were read.</value>
   </data>
   <data name="NotEnumType" xml:space="preserve">
-    <value>The type provided is not a an enumeration type.</value>
+    <value>The type provided is not an enumeration type.</value>
   </data>
   <data name="ReadingWithErrors" xml:space="preserve">
     <value>An attempt was made to work with a parser after an invalid record was encountered.</value>
@@ -154,7 +154,7 @@
     <value>An attempt to view values was made before reading the first record.</value>
   </data>
   <data name="WrongNumberOfValues" xml:space="preserve">
-    <value>The wrong number of values were passed.</value>
+    <value>The wrong number of values was passed.</value>
   </data>
   <data name="EmptySeparator" xml:space="preserve">
     <value>The column separator cannot be null or empty.</value>
@@ -163,7 +163,7 @@
     <value>The record separator cannot be null or empty.</value>
   </data>
   <data name="SameSeparator" xml:space="preserve">
-    <value>The column and record separator are the same string.</value>
+    <value>The column and record separators are the same string.</value>
   </data>
   <data name="SchemaNotDefined" xml:space="preserve">
     <value>An attempt was made to retrieve the schema when none was extracted or provided.</value>
