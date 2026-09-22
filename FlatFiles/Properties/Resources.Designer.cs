@@ -242,7 +242,7 @@ namespace FlatFiles.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The type provided is not a an enumeration type..
+        ///   Looks up a localized string similar to The type provided is not an enumeration type..
         /// </summary>
         internal static string NotEnumType {
             get {
@@ -287,7 +287,7 @@ namespace FlatFiles.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The column and record separator are the same string..
+        ///   Looks up a localized string similar to The column and record separators are the same string..
         /// </summary>
         internal static string SameSeparator {
             get {
@@ -332,7 +332,7 @@ namespace FlatFiles.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The wrong number of values were passed..
+        ///   Looks up a localized string similar to The wrong number of values was passed..
         /// </summary>
         internal static string WrongNumberOfValues {
             get {
