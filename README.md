@@ -22,6 +22,7 @@ If you are working with data classes, defining schemas is even easier. You can u
 * [Type Mappers](#type-mappers)
     * [Auto-mapping](#auto-mapping)
 * [Schemas](#schemas)
+    * [Column types](#column-types)
     * [Creating your own columns](#creating-your-own-columns)
 * [Delimited Files](#delimited-files)
 * [Fixed Length Files](#fixed-length-files)
@@ -118,6 +119,50 @@ schema.AddColumn(new Int64Column("customer_id"), 10)
 The `FixedLengthSchema` class is the same as the `DelimitedSchema` class, except it associates a `Window` to each column. A `Window` records the `Width` of the column in the file. It also allows you to specify the `Alignment` (left or right) in cases where the value doesn't fill the entire width of the column (the default is left aligned). The `FillCharacter` property can be used to say what character is used as padding. You can also set the `TruncationPolicy` to say whether to chop off the front or the back of values that exceed their width.
 
 *Note* Some fixed-length files may have columns that are not used. The fixed-length schema doesn't provide a way to specify a starting index for a column. Look at the [Ignored Fields](#ignored-fields) section below to learn about ways to to handle this.
+
+### Column types
+Every column below reads and writes one .NET type. The type mappers' `Property` method has an overload for each of these types, and a second for the nullable form of each value type, and the dynamic mappers have a matching `...Property` method, so you rarely name a column class yourself unless you are building a schema by hand.
+
+| Column | .NET type | Settings of its own |
+| --- | --- | --- |
+| `BooleanColumn` | `bool` | `TrueString`, `FalseString` |
+| `ByteColumn` | `byte` | the number settings below |
+| `SByteColumn` | `sbyte` | the number settings below |
+| `Int16Column` | `short` | the number settings below |
+| `UInt16Column` | `ushort` | the number settings below |
+| `Int32Column` | `int` | the number settings below |
+| `UInt32Column` | `uint` | the number settings below |
+| `Int64Column` | `long` | the number settings below |
+| `UInt64Column` | `ulong` | the number settings below |
+| `SingleColumn` | `float` | the number settings below |
+| `DoubleColumn` | `double` | the number settings below |
+| `DecimalColumn` | `decimal` | the number settings below |
+| `StringColumn` | `string` | `Trim` |
+| `CharColumn` | `char` | `AllowTrailing` |
+| `CharArrayColumn` | `char[]` | `Trim` |
+| `ByteArrayColumn` | `byte[]` | `Encoding` |
+| `DateTimeColumn` | `DateTime` | `InputFormat`, `OutputFormat`, `FormatProvider` |
+| `DateTimeOffsetColumn` | `DateTimeOffset` | `InputFormat`, `OutputFormat`, `FormatProvider` |
+| `DateOnlyColumn` | `DateOnly` | `InputFormat`, `OutputFormat`, `FormatProvider` |
+| `TimeOnlyColumn` | `TimeOnly` | `InputFormat`, `OutputFormat`, `FormatProvider` |
+| `TimeSpanColumn` | `TimeSpan` | `InputFormat`, `OutputFormat`, `FormatProvider` |
+| `GuidColumn` | `Guid` | `InputFormat`, `OutputFormat` |
+| `EnumColumn<TEnum>` | `TEnum` | `Parser`, `Formatter` |
+
+The numeric columns share `FormatProvider`, `NumberStyles` and `OutputFormat`. A date or time column with an `InputFormat` parses exactly, using `ParseExact`; without one it parses generically, which accepts more but is slower and culture-dependent. `EnumColumn<TEnum>` reads a member's name or its number without regard to case unless you give it a `Parser`, and writes its number unless you give it a `Formatter`.
+
+Every column also carries the settings that belong to all of them: `ColumnName`, `IsNullable`, `DefaultValue` and `NullFormatter`, covered under [Handling Nulls](#handling-nulls), and the `OnParsing`, `OnParsed`, `OnFormatting` and `OnFormatted` hooks for stepping in either side of a value being converted.
+
+`TimeSpanColumn` also has static methods for files that store a duration as a plain number: `TimeSpanColumn.FromSeconds(new DoubleColumn("elapsed"))` and its `FromDays`, `FromHours`, `FromMinutes`, `FromMillseconds` and `FromTicks` counterparts wrap a numeric column and convert what it reads.
+
+Four columns do not map to a value of their own:
+
+| Column | What it does |
+| --- | --- |
+| `IgnoredColumn` | Occupies a position in the file whose value is thrown away. See [Ignored Fields](#ignored-fields). |
+| `RecordNumberColumn` | Supplies the record's number rather than reading anything. See [Metadata](#metadata). |
+| `DelimitedComplexColumn` | Reads a whole delimited record out of a single field, using its own `DelimitedOptions`. |
+| `FixedLengthComplexColumn` | Reads a whole fixed-length record out of a single field, using its own `FixedLengthOptions`. |
 
 ### Creating your own columns
 The column types that ship with FlatFiles cover the usual types, but you can add your own by deriving from `ColumnDefinition<T>` and implementing two methods:
