@@ -770,7 +770,7 @@ When he's not traveling, he's at home with his lovely wife, children and leather
                 IsFirstRecordSchema = false,
                 Separator = "\t",
                 PreserveWhiteSpace = false,
-                QuoteBehavior = QuoteBehavior.Never
+                QuoteBehaviour = QuoteBehaviour.Never
             };
             var reader = new DelimitedReader( stringReader, options );
             object[][] expected =

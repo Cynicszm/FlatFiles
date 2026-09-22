@@ -28,7 +28,7 @@ namespace FlatFiles
         public string? FalseString { get; set; } = bool.FalseString;
 
         /// <summary>
-        ///     Parses the given value into its equivilent boolean value.
+        ///     Parses the given value into its equivalent boolean value.
         /// </summary>
         /// <param name="context">Holds information about the column current being processed.</param>
         /// <param name="value">The value to parse.</param>
@@ -46,7 +46,7 @@ namespace FlatFiles
         }
 
         /// <summary>
-        ///     Parses the given value into its equivilent boolean value, without copying it out of the record it sits
+        ///     Parses the given value into its equivalent boolean value, without copying it out of the record it sits
         ///     in.
         /// </summary>
         /// <param name="context">Holds information about the column current being processed.</param>

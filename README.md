@@ -153,7 +153,7 @@ The numeric columns share `FormatProvider`, `NumberStyles` and `OutputFormat`. A
 
 Every column also carries the settings that belong to all of them: `ColumnName`, `IsNullable`, `DefaultValue` and `NullFormatter`, covered under [Handling Nulls](#handling-nulls), and the `OnParsing`, `OnParsed`, `OnFormatting` and `OnFormatted` hooks for stepping in either side of a value being converted.
 
-`TimeSpanColumn` also has static methods for files that store a duration as a plain number: `TimeSpanColumn.FromSeconds(new DoubleColumn("elapsed"))` and its `FromDays`, `FromHours`, `FromMinutes`, `FromMillseconds` and `FromTicks` counterparts wrap a numeric column and convert what it reads.
+`TimeSpanColumn` also has static methods for files that store a duration as a plain number: `TimeSpanColumn.FromSeconds(new DoubleColumn("elapsed"))` and its `FromDays`, `FromHours`, `FromMinutes`, `FromMilliseconds` and `FromTicks` counterparts wrap a numeric column and convert what it reads.
 
 Four columns do not map to a value of their own:
 
@@ -574,13 +574,13 @@ FlatFile's type mappers can serialize and deserialize extremely quickly by gener
 
 Where the runtime cannot generate code at all, as under Native AOT or with the `System.Runtime.IsDynamicCodeSupported` feature switch off, the mappers detect it through `RuntimeFeature.IsDynamicCodeSupported` and use reflection without being asked, so a published AOT application maps entities without throwing and without a code change.
 
-Elsewhere, mappers support a method `OptimizeMapping` that can be used to switch to (A.K.A., slow) reflection. For example:
+Elsewhere, mappers support a method `OptimiseMapping` that can be used to switch to (A.K.A., slow) reflection. For example:
 
 ```csharp
 var mapper = DelimitedTypeMapper.Define<Person>(() => new Person());
 mapper.Property(x => x.Id);
 mapper.Property(x => x.Name);
-mapper.OptimizeMapping(false);  // Use normal reflection to get and set properties
+mapper.OptimiseMapping(false);  // Use normal reflection to get and set properties
 ```
 
 ## Non-Public Classes and Members

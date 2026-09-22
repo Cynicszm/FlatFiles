@@ -50,7 +50,7 @@ namespace FlatFiles
         /// <summary>
         ///     Gets or sets how FlatFiles will handle quoting values.
         /// </summary>
-        public QuoteBehavior QuoteBehavior 
+        public QuoteBehaviour QuoteBehaviour 
         {
             get;
             set
@@ -61,7 +61,7 @@ namespace FlatFiles
                 }
                 field = value;
             }
-        } = QuoteBehavior.Default;
+        } = QuoteBehaviour.Default;
 
         /// <summary>
         ///     Gets or sets whether the first record is the schema.

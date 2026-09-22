@@ -162,7 +162,7 @@ namespace FlatFiles.Test
         {
             var mapper = DelimitedTypeMapper.DefineDynamic( typeof( Everything ) );
             mapper.UseFactory( typeof( Everything ), () => new Everything() );
-            mapper.OptimizeMapping( optimized );
+            mapper.OptimiseMapping( optimized );
             mapper.BooleanProperty( "Bool" );
             mapper.ByteArrayProperty( "Bytes" );
             mapper.ByteProperty( "Byte" );
@@ -205,7 +205,7 @@ namespace FlatFiles.Test
         {
             var mapper = FixedLengthTypeMapper.DefineDynamic( typeof( Everything ) );
             mapper.UseFactory( typeof( Everything ), () => new Everything() );
-            mapper.OptimizeMapping( optimized );
+            mapper.OptimiseMapping( optimized );
             mapper.BooleanProperty( "Bool", 5 );
             mapper.ByteArrayProperty( "Bytes", 6 );
             mapper.ByteProperty( "Byte", 3 );

@@ -226,7 +226,7 @@ namespace FlatFiles.Benchmark
         public void RunFlatFiles_TypeMapper_Unoptimized()
         {
             var mapper = DelimitedTypeMapper.Define( () => new Person() );
-            mapper.OptimizeMapping( false );
+            mapper.OptimiseMapping( false );
             mapper.Property( x => x.FirstName );
             mapper.Property( x => x.LastName );
             mapper.Property( x => x.Age );
@@ -271,7 +271,7 @@ namespace FlatFiles.Benchmark
         public void RunFlatFiles_TypeMapper_CustomMapping_Unoptimized()
         {
             var mapper = DelimitedTypeMapper.Define( () => new Person() );
-            mapper.OptimizeMapping( false );
+            mapper.OptimiseMapping( false );
             mapper.CustomMapping( new StringColumn( "FirstName" ) ).WithReader( p => p.FirstName );
             mapper.CustomMapping( new StringColumn( "LastName" ) ).WithReader( p => p.LastName );
             mapper.CustomMapping( new Int32Column( "Age" ) ).WithReader( p => p.Age );

@@ -9,7 +9,7 @@ namespace FlatFiles
     public sealed class CharArrayColumn : ColumnDefinition<char[]>
     {
         /// <summary>
-        ///     Initializes a new instance instance of a CharArrayColumn.
+        ///     Initializes a new instance of a CharArrayColumn.
         /// </summary>
         /// <param name="columnName">The name of the column.</param>
         public CharArrayColumn( string columnName )

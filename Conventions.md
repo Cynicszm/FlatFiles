@@ -31,10 +31,15 @@ Names somebody else owns keep the spelling their author gave them, so `[Assembly
 MSTest declares it even where our own `AssemblyInitialiser` and `Initialise` sit directly around it.
 The same goes for BCL members such as `CultureInfo.DefaultThreadCurrentCulture`.
 
-**Published API keeps its spelling.** `Initialize`, `OptimizeMapping` and `Serializer` are public and
-American, and renaming them would break every caller for no functional gain. They stay until there is
-a reason to break the API anyway, and a new member added beside one of them is still spelled the
-British way — a mixed pair is better than a broken consumer.
+**Published API keeps its spelling until a major version is being cut anyway.** Renaming a public
+member breaks every caller for no functional gain, so `QuoteBehavior`, `OptimizeMapping` and the
+`isOptimized` parameter kept their American spelling for the whole 7.x line, and a new member added
+beside one of them was still spelled the British way — a mixed pair is better than a broken consumer.
+8.0.0 was breaking the API for other reasons, which is the condition this rule named, so they became
+`QuoteBehaviour`, `OptimiseMapping` and `isOptimised`. No public name is spelled the American way now.
+The next one found waits the same way: recorded under **Breaking** in the changelog's planned section,
+not fixed on sight. The documentation comments are still mixed, and follow the convert-on-touch rule
+above.
 
 The changelog entries written before this rule was adopted are left as their authors wrote them.
 

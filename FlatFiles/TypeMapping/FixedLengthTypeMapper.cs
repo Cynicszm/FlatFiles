@@ -75,7 +75,7 @@ namespace FlatFiles.TypeMapping
     {
         private readonly MemberLookup lookup = new();
         private readonly Dictionary<IMemberMapping, Window> windowLookup = new();
-        private bool isOptimized = true;
+        private bool isMappingOptimised = true;
 
         public FixedLengthTypeMapper()
             : this( null )
@@ -997,14 +997,14 @@ namespace FlatFiles.TypeMapping
             return new UntypedWriter<TEntity>( GetWriter( writer, options ) );
         }
 
-        public void OptimizeMapping( bool optimize = true )
+        public void OptimiseMapping( bool isOptimised = true )
         {
-            isOptimized = optimize;
+            isMappingOptimised = isOptimised;
         }
 
-        void IDynamicFixedLengthTypeConfiguration.OptimizeMapping( bool optimize )
+        void IDynamicFixedLengthTypeConfiguration.OptimiseMapping( bool isOptimised )
         {
-            OptimizeMapping( optimize );
+            OptimiseMapping( isOptimised );
         }
 
         public void UseFactory<TOther>( Func<TOther> factory )
@@ -1029,7 +1029,7 @@ namespace FlatFiles.TypeMapping
 
         private ICodeGenerator GetCodeGenerator()
         {
-            return isOptimized && DynamicCode.IsSupported
+            return isMappingOptimised && DynamicCode.IsSupported
                 ? new EmitCodeGenerator()
                 : new ReflectionCodeGenerator();
         }
