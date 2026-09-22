@@ -1,5 +1,14 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <!-- https://learn.microsoft.com/dotnet/fundamentals/package-validation/diagnostic-ids -->
-<!-- Empty: every member the last entries declared shipped in the release the baseline now names. Regenerate
-     with dotnet pack -p:ApiCompatGenerateSuppressionFile=true and review each entry; see Conventions.md. -->
-<Suppressions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" />
+<!-- Every entry here is a break declared in the 8.0.0 changelog entry and accepted there; a break that is not
+     described there does not belong in this file. Regenerate with dotnet pack -p:ApiCompatGenerateSuppressionFile=true
+     and read each entry before committing it. Emptied again when the baseline moves to 8.0.0. See Conventions.md. -->
+<Suppressions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:FlatFiles.TimeSpanColumn.FromMillseconds(FlatFiles.DoubleColumn)</Target>
+    <Left>lib/net10.0/FlatFiles.dll</Left>
+    <Right>lib/net10.0/FlatFiles.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+</Suppressions>

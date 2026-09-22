@@ -10,7 +10,7 @@ namespace FlatFiles
     public sealed class ByteArrayColumn : ColumnDefinition<byte[]>
     {
         /// <summary>
-        ///     Initializes a new instance instance of a ByteArrayColumn.
+        ///     Initializes a new instance of a ByteArrayColumn.
         /// </summary>
         /// <param name="columnName">The name of the column.</param>
         public ByteArrayColumn( string columnName )

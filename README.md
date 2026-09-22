@@ -153,7 +153,7 @@ The numeric columns share `FormatProvider`, `NumberStyles` and `OutputFormat`. A
 
 Every column also carries the settings that belong to all of them: `ColumnName`, `IsNullable`, `DefaultValue` and `NullFormatter`, covered under [Handling Nulls](#handling-nulls), and the `OnParsing`, `OnParsed`, `OnFormatting` and `OnFormatted` hooks for stepping in either side of a value being converted.
 
-`TimeSpanColumn` also has static methods for files that store a duration as a plain number: `TimeSpanColumn.FromSeconds(new DoubleColumn("elapsed"))` and its `FromDays`, `FromHours`, `FromMinutes`, `FromMillseconds` and `FromTicks` counterparts wrap a numeric column and convert what it reads.
+`TimeSpanColumn` also has static methods for files that store a duration as a plain number: `TimeSpanColumn.FromSeconds(new DoubleColumn("elapsed"))` and its `FromDays`, `FromHours`, `FromMinutes`, `FromMilliseconds` and `FromTicks` counterparts wrap a numeric column and convert what it reads.
 
 Four columns do not map to a value of their own:
 
