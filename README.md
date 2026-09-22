@@ -6,14 +6,14 @@ Reads and writes CSV, fixed-length and other flat file formats with a focus on s
 
 Download using NuGet: [Cynicszm.FlatFiles](https://nuget.org/packages/Cynicszm.FlatFiles)
 
-This is a fork of [FlatFiles](https://github.com/jehugaleahsa/FlatFiles) by Travis Parks, continued for .NET 10 after the original was archived. The assembly is still `FlatFiles.dll` and every namespace and type name is unchanged, so only the package reference differs.
+This is a fork of [FlatFiles](https://github.com/jehugaleahsa/FlatFiles) by Travis Parks, continued for .NET 10 after the original was archived. The assembly is still `FlatFiles.dll` and the namespaces are unchanged. Through 7.6.0 every type and member name was unchanged too, so only the package reference differed; 8.0.0 renames a few of them, and the [CHANGELOG](https://github.com/Cynicszm/FlatFiles/blob/master/CHANGELOG.md) names each one.
 
 You can check out all of the awesome enhancements and new features in the [CHANGELOG](https://github.com/Cynicszm/FlatFiles/blob/master/CHANGELOG.md). 
 
 ## Overview
 Plain-text formats primarily come in two variations: delimited (CSV, TSV, etc.) and fixed-width. FlatFiles comes with support for working with both formats. Unlike most other libraries, FlatFiles puts a focus on schema definition. You build and pass a schema to a reader or writer and it will use the schema to extract or write out your values.
 
-A schema is defined by specifying what data columns are in your file. A column has a name, a type and an ordinal position in the file. The order matches whatever order you add the columns to the schema, so you're left just specifying the name and the type. Beyond that, you have a lot of control over the parsing/formatting behavior when reading and writing, respectively. Most of the time, the out-of-the-box options will *just work*, too. But when you need that level of extra control, you don't have to bend over backward to work around the API, like with many other libraries. FlatFiles was designed to make handling oddball edge cases easier.
+A schema is defined by specifying what data columns are in your file. A column has a name, a type and an ordinal position in the file. The order matches whatever order you add the columns to the schema, so you're left just specifying the name and the type. Beyond that, you have a lot of control over the parsing/formatting behaviour when reading and writing, respectively. Most of the time, the out-of-the-box options will *just work*, too. But when you need that level of extra control, you don't have to bend over backward to work around the API, like with many other libraries. FlatFiles was designed to make handling oddball edge cases easier.
 
 If you are working with data classes, defining schemas is even easier. You can use the type mappers to map your properties directly. This saves you from having to specify column names or types, since both can be derived from the property. For those working with ADO.NET, there's even support for `DataTable`s and `IDataReader`. If you really want to, you can read and write values using raw `object[]`.
 
@@ -39,7 +39,7 @@ If you are working with data classes, defining schemas is even easier. You can u
 * [Files Containing Multiple Schemas](#files-containing-multiple-schemas)
 * [Custom Mapping](#custom-mapping)
 * [Runtime Mapping](#runtime-mapping)
-* [Disabling Optimization](#disabling-optimization)
+* [Disabling Optimisation](#disabling-optimisation)
 * [Non-Public Classes and Members](#non-public-classes-and-members)
 * [ADO.NET DataTables](#adonet-datatables)
 * [FlatFileDataReader](#flatfiledatareader)
@@ -84,10 +84,10 @@ using (var writer = new StreamWriter(File.OpenCreate(@"C:\path\to\file2.csv")))
 }
 ```
 
-*Note* I was able to customize the `OutputFormat` of properties that were previously configured. The first time `Property` is called on a property, FlatFiles assumes it's the next column to appear in the flat file. However, subsequent configuration on the property doesn't change the order of the columns or reset any other settings.
+*Note* I was able to customise the `OutputFormat` of properties that were previously configured. The first time `Property` is called on a property, FlatFiles assumes it's the next column to appear in the flat file. However, subsequent configuration on the property doesn't change the order of the columns or reset any other settings.
 
 ### Auto-mapping
-If your delimited file (CSV, TSV, etc.) has a schema with column names that match your class's property names, you can use the `GetAutoMappedReader` method as a shortcut. This method will read the schema from your file and map the columns to the properties automatically, returning a reader for retrieving the data. It's important to note that you cannot customize the parsing behavior of any of the columns, at which point you are better off explicitly defining the schema. Fortunately, FlatFiles uses pretty liberal parsing out-of-the-box, so most common formats will work.
+If your delimited file (CSV, TSV, etc.) has a schema with column names that match your class's property names, you can use the `GetAutoMappedReader` method as a shortcut. This method will read the schema from your file and map the columns to the properties automatically, returning a reader for retrieving the data. It's important to note that you cannot customise the parsing behaviour of any of the columns, at which point you are better off explicitly defining the schema. Fortunately, FlatFiles uses pretty liberal parsing out-of-the-box, so most common formats will work.
 
 By default, columns and properties are matched by name (case-insensitive). If you need more control over how columns and properties are matched, you can pass in your own `IAutoMapMatcher`. Given an `IColumnDefinition` and a `MemberInfo`, a matcher must determine whether the two map to one another. For convenience, you can also use the `AutoMapMatcher.For` method to pass a `Func<IColumnDefinition, MemberInfo, bool>` delegate rather than implement the interface.
 
@@ -186,7 +186,7 @@ protected override void OnFormat(IColumnContext? context, T value, IBufferWriter
 The readers hand a column the characters of its value where they can, rather than a string cut out of the record, and the writers let a column format straight into the record buffer rather than return a string to be copied. Implement these and no string is created for the value in either direction. Leave either one out and FlatFiles falls back to the string overload, so a column written against an earlier version keeps working unchanged.
 
 ## Delimited Files
-If you are working with delimited files, such as comma-separated (CSV) or tab-separated (TSV) files, you want to use the `DelimitedTypeMapper`. Internally, the mapper uses the `DelimitedReader` and `DelimitedWriter` classes, both of which work in terms of raw `object` arrays. In effect, all the mapper does is map the values in the array to the properties in your data objects. These classes read data from a `TextReader`, such as a `StreamReader` or a `StringReader`, and write data to a `TextWriter`, such as a `StreamWriter` or a `StringWriter`. Internally, the mapper will build a `DelimitedSchema` based on the property/column configuration; this is where you customize the schema to match your file format. For more global settings, there is also a `DelimitedOptions` object that allows you to customize the read/write behavior to suit your needs.
+If you are working with delimited files, such as comma-separated (CSV) or tab-separated (TSV) files, you want to use the `DelimitedTypeMapper`. Internally, the mapper uses the `DelimitedReader` and `DelimitedWriter` classes, both of which work in terms of raw `object` arrays. In effect, all the mapper does is map the values in the array to the properties in your data objects. These classes read data from a `TextReader`, such as a `StreamReader` or a `StringReader`, and write data to a `TextWriter`, such as a `StreamWriter` or a `StringWriter`. Internally, the mapper will build a `DelimitedSchema` based on the property/column configuration; this is where you customise the schema to match your file format. For more global settings, there is also a `DelimitedOptions` object that allows you to customise the read/write behaviour to suit your needs.
 
 Within delimited files, fields can be surrounded with double quotes (`"`). This way they can include the separator within the field. You can override the "quote" character in the `DelimitedOptions` class, if needed. The `DelimitedOptions` class supports a `Separator` property for specifying the string/character that separates your fields. A comma (`,`) is the default separator; you'd obviously want to change this to tab (`\t`) for a TSV file.
 
@@ -197,7 +197,7 @@ When working directly with the `DelimitedReader` class, the `IsFirstRecordSchema
 When working directly with the `DelimitedWriter` class, setting `IsFirstRecordSchema` to `true` option causes a header to be written to the file upon writing the first record.
 
 ## Fixed Length Files
-If you have a file with fixed length columns, you will want to use the `FixedLengthTypeMapper` class. Internally, the mapper uses the `FixedLengthReader` and `FixedLengthWriter` classes, both of which work in terms of raw `object` arrays. In effect, all the mapper does is map the values in the array to the properties in your data objects. These classes read data from a `TextReader`, such as `StreamReader` or `StringReader`, and write data to a `TextWriter`, such as `StreamWriter` or `StringWriter`. Internally, the mapper will build a `FixedLengthSchema` based on the property/column configuration; this is where you customize the schema to match your file format. For more global settings, there is also a `FixedLengthOptions` object that allows you to customize the read/write behavior to suit your needs.
+If you have a file with fixed length columns, you will want to use the `FixedLengthTypeMapper` class. Internally, the mapper uses the `FixedLengthReader` and `FixedLengthWriter` classes, both of which work in terms of raw `object` arrays. In effect, all the mapper does is map the values in the array to the properties in your data objects. These classes read data from a `TextReader`, such as `StreamReader` or `StringReader`, and write data to a `TextWriter`, such as `StreamWriter` or `StringWriter`. Internally, the mapper will build a `FixedLengthSchema` based on the property/column configuration; this is where you customise the schema to match your file format. For more global settings, there is also a `FixedLengthOptions` object that allows you to customise the read/write behaviour to suit your needs.
 
 Since each column has a fixed length, FlatFiles provides configuration options to specify how to handle values that are too short or too long: `FillCharacter`, `Alignment` and `TruncationPolicy`. `FillCharacter` specifies what character is used to pad values on the left or the right, using space (` `) by default. You can configure whether the padding should go to the left or the right using the `Alignment` property, putting padding to the right by default (`LeftAligned`). `TruncationPolicy` tells FlatFiles how to crop values that exceed the width of their column when writing out to a file, removing leading characters by default. These options can be specified globally in the `FixedLengthOptions` object or overridden at the column level using the `Window` object.
 
@@ -485,7 +485,7 @@ writer.Write(new FooterRecord() { TotalAmount = 46.9m, AverageAmount = 23.45m, I
 The `When` method accepts a predicate if you need more than just the record type to decide what type mapper/schema to use.
 
 ## Custom Mapping
-The `Property` methods are best when your file's schema pretty much matches one-to-one with your classes. One column goes to one property. Frequently, though, your classes are more structured than your flat files. Starting with FlatFiles 3.0, you can provide your own mapping logic to control serializing and deserializing your objects.
+The `Property` methods are best when your file's schema pretty much matches one-to-one with your classes. One column goes to one property. Frequently, though, your classes are more structured than your flat files. Starting with FlatFiles 3.0, you can provide your own mapping logic to control serialising and deserialising your objects.
 
 First, let's see how to use the `CustomMapping` method to simulate the `Property` methods:
 
@@ -553,7 +553,7 @@ public void PhoneReader(Contact contact, string phoneNumber)
 
 In benchmarks, using `CustomMapping` is only slightly slower than using `Property`, making it a great option when you need a little extra control. 
 
-There are versions of `WithReader` and `WithWriter` that provide contextual information (`IColumnContext`), so you can access metadata while reading and writing. The `WithWriter` method also provides an overload passing along the underlying array being written to, so you can write to multiple columns simultaneously or inspect previously serialized values.
+There are versions of `WithReader` and `WithWriter` that provide contextual information (`IColumnContext`), so you can access metadata while reading and writing. The `WithWriter` method also provides an overload passing along the underlying array being written to, so you can write to multiple columns simultaneously or inspect previously serialised values.
 
 ## Runtime Mapping
 Even if you don't know the type of a class at compile time, it can still be beneficial to use the type mappers to populate these objects from a file. Or, if you are working in a language without support for expression trees, you'll be glad to know FlatFiles provides an alternative way to configure type mappers.
@@ -569,8 +569,8 @@ var entities = mapper.Read(reader).ToArray();
 // Do something with the entities.
 ```
 
-## Disabling Optimization
-FlatFile's type mappers can serialize and deserialize extremely quickly by generating code at runtime, using classes in the  `System.Reflection.Emit` namespace. For most of us, that's awesome news because it means mapping values to and from your entities is almost as fast as if you had done the mapping by hand. However, there are some environments, like Mono running on iOS, that do not support runtime JIT'ing, so FlatFiles would not work.
+## Disabling Optimisation
+FlatFile's type mappers can serialise and deserialise extremely quickly by generating code at runtime, using classes in the  `System.Reflection.Emit` namespace. For most of us, that's awesome news because it means mapping values to and from your entities is almost as fast as if you had done the mapping by hand. However, there are some environments, like Mono running on iOS, that do not support runtime JIT'ing, so FlatFiles would not work.
 
 Where the runtime cannot generate code at all, as under Native AOT or with the `System.Runtime.IsDynamicCodeSupported` feature switch off, the mappers detect it through `RuntimeFeature.IsDynamicCodeSupported` and use reflection without being asked, so a published AOT application maps entities without throwing and without a code change.
 
@@ -584,7 +584,7 @@ mapper.OptimiseMapping(false);  // Use normal reflection to get and set properti
 ```
 
 ## Non-Public Classes and Members
-As of FlatFiles 3.0, you can no longer map to non-public classes and members (aka., `internal`, `protected` or `private`) without taking additional steps. The simplest solution is to make your classes and members `public`. Alternatively, you can [disable optimizations](#disabling-optimization) which will cause FlatFiles to use normal reflection, which should be able to access anything, at the cost of some runtime overhead.
+As of FlatFiles 3.0, you can no longer map to non-public classes and members (aka., `internal`, `protected` or `private`) without taking additional steps. The simplest solution is to make your classes and members `public`. Alternatively, you can [disable optimisations](#disabling-optimisation) which will cause FlatFiles to use normal reflection, which should be able to access anything, at the cost of some runtime overhead.
 
 Another option is to grant FlatFiles access to your `internal` classes and members by adding the following line to you `Assembly.cs` file:
 
