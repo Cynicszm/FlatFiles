@@ -47,5 +47,19 @@ namespace FlatFiles
                 return source.Slice( range.Start, range.Length );
             }
         }
+
+        /// <summary>
+        ///     Copies every value out as a string, for the callers that need them that way.
+        /// </summary>
+        /// <returns>The values of the record.</returns>
+        public string[] Materialise()
+        {
+            var values = new string[ranges.Length];
+            for (var index = 0; index != values.Length; ++index)
+            {
+                values[index] = this[index].ToString();
+            }
+            return values;
+        }
     }
 }
