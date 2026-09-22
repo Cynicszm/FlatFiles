@@ -71,6 +71,38 @@ namespace FlatFiles.Test
         }
 
         [TestMethod]
+        public void TestReadRecord_SeveralRebuiltValuesInOneRecord_StayApart()
+        {
+            AssertValues( "\"a\"\"b\",\"c\"\"d\"\r\n", null, [ "a\"b", "c\"d" ] );
+            AssertValues( "\"a\"\"b\",plain,\"c\"\"d\"\"e\"\r\n", null, [ "a\"b", "plain", "c\"d\"e" ] );
+        }
+
+        [TestMethod]
+        public void TestReadRecord_RebuiltValueFollowedByAPlainRecord_DoesNotLeakIntoIt()
+        {
+            AssertValues( "\"a\"\"b\",c\r\nd,e", null, [ "a\"b", "c" ], [ "d", "e" ] );
+        }
+
+        [TestMethod]
+        public void TestReadRecord_RebuiltValueAtTheEndOfTheStream_IsStillRead()
+        {
+            AssertValues( "a,\"b\"\"c\"", null, [ "a", "b\"c" ] );
+        }
+
+        [TestMethod]
+        public void TestReadRecord_QuotedValueOfNothingOrOnlyQuotes_IsRead()
+        {
+            AssertValues( "\"\",a", null, [ "", "a" ] );
+            AssertValues( "\"\"\"\"\"\",a", null, [ "\"\"", "a" ] );
+        }
+
+        [TestMethod]
+        public void TestReadRecord_DoubledQuoteAndPreservedTrailingWhiteSpace_AreBothKept()
+        {
+            AssertValues( "\"a\"\"b\"  ,c", new DelimitedOptions { PreserveWhiteSpace = true }, [ "a\"b  ", "c" ] );
+        }
+
+        [TestMethod]
         public void TestReadRecord_QuoteInsideUnquotedValue_IsLiteral()
         {
             AssertValues( "a\"b,c", null, [ "a\"b", "c" ] );
