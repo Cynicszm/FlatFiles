@@ -8,7 +8,7 @@ namespace FlatFiles
     public abstract class Schema : ISchema
     {
         /// <summary>
-        ///     Initializes a new instance of a Schema.
+        ///     Initialises a new instance of a Schema.
         /// </summary>
         protected Schema()
         {

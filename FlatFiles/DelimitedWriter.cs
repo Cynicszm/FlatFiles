@@ -15,7 +15,7 @@ namespace FlatFiles
         private bool isSchemaWritten;
 
         /// <summary>
-        ///     Initializes a new DelimitedWriter without a schema.
+        ///     Initialises a new DelimitedWriter without a schema.
         /// </summary>
         /// <param name="writer">A writer over the delimited document.</param>
         /// <param name="options">The options used to format the output.</param>
@@ -26,7 +26,7 @@ namespace FlatFiles
         }
 
         /// <summary>
-        ///     Initializes a new DelimitedWriter with the given schema.
+        ///     Initialises a new DelimitedWriter with the given schema.
         /// </summary>
         /// <param name="writer">A writer over the delimited document.</param>
         /// <param name="schema">The schema of the delimited document.</param>
@@ -49,7 +49,7 @@ namespace FlatFiles
         }
 
         /// <summary>
-        ///     Initializes a new DelimitedWriter with the given schema.
+        ///     Initialises a new DelimitedWriter with the given schema.
         /// </summary>
         /// <param name="writer">A writer over the delimited document.</param>
         /// <param name="injector">The schema injector to use to determine the schema.</param>

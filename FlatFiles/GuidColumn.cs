@@ -9,7 +9,7 @@ namespace FlatFiles
     public sealed class GuidColumn : ColumnDefinition<Guid>
     {
         /// <summary>
-        ///     Initializes a new instance of a GuidColumn.
+        ///     Initialises a new instance of a GuidColumn.
         /// </summary>
         /// <param name="columnName">The name of the column.</param>
         public GuidColumn( string columnName )

@@ -11,7 +11,7 @@ namespace FlatFiles
         private static readonly ConcurrentDictionary<ValueTuple<int, bool>, DelimitedSchema> DynamicSchemas = new();
 
         /// <summary>
-        ///     Initializes a new instance of a Schema.
+        ///     Initialises a new instance of a Schema.
         /// </summary>
         public DelimitedSchema()
         {

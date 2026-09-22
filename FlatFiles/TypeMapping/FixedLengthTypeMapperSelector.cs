@@ -13,7 +13,7 @@ namespace FlatFiles.TypeMapping
         private IDynamicFixedLengthTypeMapper? defaultMapper;
 
         /// <summary>
-        ///     Initializes a new instance of a FixedLengthTypeMapperSelector.
+        ///     Initialises a new instance of a FixedLengthTypeMapperSelector.
         /// </summary>
         public FixedLengthTypeMapperSelector()
         {
@@ -36,7 +36,7 @@ namespace FlatFiles.TypeMapping
         ///     Provides the schema to use by default when no other matches are found.
         /// </summary>
         /// <param name="typeMapper">The default type mapper to use.</param>
-        /// <returns>The current selector to allow for further customization.</returns>
+        /// <returns>The current selector to allow for further customisation.</returns>
         public void WithDefault<TEntity>( IFixedLengthTypeMapper<TEntity>? typeMapper )
         {
             defaultMapper = (IDynamicFixedLengthTypeMapper?) typeMapper;
@@ -46,7 +46,7 @@ namespace FlatFiles.TypeMapping
         ///     Provides the schema to use by default when no other matches are found.
         /// </summary>
         /// <param name="typeMapper">The default schema to use.</param>
-        /// <returns>The current selector to allow for further customization.</returns>
+        /// <returns>The current selector to allow for further customisation.</returns>
         public void WithDefault( IDynamicFixedLengthTypeMapper? typeMapper )
         {
             defaultMapper = typeMapper;

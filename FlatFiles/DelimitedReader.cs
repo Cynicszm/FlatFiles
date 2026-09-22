@@ -22,7 +22,7 @@ namespace FlatFiles
         private bool hasError;
 
         /// <summary>
-        ///     Initializes a new DelimitedReader with no schema.
+        ///     Initialises a new DelimitedReader with no schema.
         /// </summary>
         /// <param name="reader">A reader over the delimited document.</param>
         /// <param name="options">The options controlling how the delimited document is read.</param>
@@ -33,7 +33,7 @@ namespace FlatFiles
         }
 
         /// <summary>
-        ///     Initializes a new DelimitedReader with the given schema.
+        ///     Initialises a new DelimitedReader with the given schema.
         /// </summary>
         /// <param name="reader">A reader over the delimited document.</param>
         /// <param name="schema">The schema of the delimited document.</param>
@@ -46,7 +46,7 @@ namespace FlatFiles
         }
 
         /// <summary>
-        ///     Initializes a new DelimitedReader with the given schema.
+        ///     Initialises a new DelimitedReader with the given schema.
         /// </summary>
         /// <param name="reader">A reader over the delimited document.</param>
         /// <param name="schemaSelector">The schema selector configured to determine the schema dynamically.</param>

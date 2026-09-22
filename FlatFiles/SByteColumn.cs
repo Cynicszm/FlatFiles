@@ -8,7 +8,7 @@ namespace FlatFiles
     public sealed class SByteColumn : NumberColumn<sbyte>
     {
         /// <summary>
-        ///     Initializes a new instance of a SByteColumn.
+        ///     Initialises a new instance of a SByteColumn.
         /// </summary>
         /// <param name="columnName">The name of the column.</param>
         public SByteColumn( string columnName )

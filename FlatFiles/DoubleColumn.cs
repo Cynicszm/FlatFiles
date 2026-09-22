@@ -8,7 +8,7 @@ namespace FlatFiles
     public sealed class DoubleColumn : NumberColumn<double>
     {
         /// <summary>
-        ///     Initializes a new instance of a DoubleColumn.
+        ///     Initialises a new instance of a DoubleColumn.
         /// </summary>
         /// <param name="columnName">The name of the column.</param>
         public DoubleColumn( string columnName )

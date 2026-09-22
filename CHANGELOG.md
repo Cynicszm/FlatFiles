@@ -9,7 +9,9 @@ Six spellings in the documentation comments are corrected with it, since those s
 
 The implementations named that parameter `optimize` while the interfaces named it `isOptimized`, so a named argument meant different things depending on which type the call was made through. Both are now `isOptimised`, and the field behind them is renamed rather than the parameter, as Conventions.md directs when a parameter belongs to a public member.
 
-Every public type, member and parameter name was then read for the same fault, by reflecting over the built assembly rather than searching the source. Nothing else in 556 public names is misspelled or American. The documentation comments still are in places, and follow the convert-on-touch rule in Conventions.md.
+Every public type, member and parameter name was then read for the same fault, by reflecting over the built assembly rather than searching the source. Nothing else in 556 public names is misspelled or American.
+
+**The documentation comments follow.** Eighty-nine American spellings across fifty-six files are now British - sixty-one of them "Initializes a new instance of" - so the text a consumer's editor shows is spelled the way the rest of the library is. Nothing outside a `///` comment changed, and nothing inside a `cref`, `name` or `langword` attribute changed either, because those name identifiers rather than read as prose. The conversion used an explicit list of words rather than a rule about `-ize` endings, which would also have caught size, prize and seize.
 
 Package validation reports the removal as CP0002, and `FlatFiles/CompatibilitySuppressions.xml` carries that single entry, declaring it as Conventions.md requires. The file is emptied again when the baseline moves to 8.0.0.
 

@@ -9,7 +9,7 @@ namespace FlatFiles
     public sealed class TimeSpanColumn : ColumnDefinition<TimeSpan>
     {
         /// <summary>
-        ///     Initializes a new instance of a TimeSpanColumn.
+        ///     Initialises a new instance of a TimeSpanColumn.
         /// </summary>
         /// <param name="columnName">The name of the column.</param>
         public TimeSpanColumn( string columnName )

@@ -20,7 +20,7 @@ namespace FlatFiles
         event EventHandler<RecordErrorEventArgs>? RecordError;
 
         /// <summary>
-        ///     Gets the options controlling the behavior of the writer.
+        ///     Gets the options controlling the behaviour of the writer.
         /// </summary>
         IOptions Options { get; }
 

@@ -9,7 +9,7 @@ namespace FlatFiles
     public sealed class IgnoredColumn : ColumnDefinition
     {
         /// <summary>
-        ///     Initializes a new IgnoredColumn.
+        ///     Initialises a new IgnoredColumn.
         /// </summary>
         public IgnoredColumn() 
             : base( string.Empty, true )
@@ -17,7 +17,7 @@ namespace FlatFiles
         }
 
         /// <summary>
-        ///     Initializes a new IgnoredColumn with a header name.
+        ///     Initialises a new IgnoredColumn with a header name.
         /// </summary>
         /// <param name="columnName"></param>
         public IgnoredColumn( string columnName )
