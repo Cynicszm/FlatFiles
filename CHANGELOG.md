@@ -26,7 +26,22 @@ From the product and architecture review of 2026-09-17, in the order recommended
 - **A source generator for mappings.** Would remove the start-up cost of emitting a deserialiser, and the reflection fallback's per-value penalty on runtimes without dynamic code, neither of which a trimmer can follow. 7.4.0's `RuntimeFeature.IsDynamicCodeSupported` fallback made the library work under Native AOT; this would make it fast there.
 - **UTF-8 `Stream` input.** Parsing bytes without first decoding them to characters. Everything above `TextReader` is decided by that one choice, so it is the largest change on the list, and the only one that would take allocation below CsvHelper rather than level with it. It also subsumes the zero-copy item above, which is why that item settles its contract above rather than leaving it to whichever starts first.
 
-**Declined, and worth recording as declined:** multi-character separators, configurable quoting behaviour, whitespace preservation, cancellation, multi-schema files, ragged right and `IDataReader` all came out of the same review and are already covered, most of them by releases since.
+**Considered and already covered.** Seven more ideas came out of the same review and turned out to need no work. They are recorded so that nobody spends an afternoon rediscovering it.
+
+Already supported when the review looked:
+
+- multi-character separators - `DelimitedOptions.Separator` is a string, not a character;
+- quoting behaviour - `QuoteBehavior` quotes only what needs it, or everything, or nothing;
+- whitespace preservation - `DelimitedOptions.PreserveWhiteSpace`, alongside `Trim` on the string and character array columns;
+- files holding more than one schema - the schema selectors and injectors, on both readers and writers;
+- `IDataReader` - `FlatFileDataReader`, with `DataTable` support beside it.
+
+Shipped since the review, by the releases named:
+
+- cancellation tokens on every asynchronous read and write - 7.2.0;
+- ragged-right fixed-length files - 7.3.0.
+
+Nothing that review raised was declined outright.
 
 ## 7.6.0 (2026-09-22)
 **Summary** - A delimited record is copied out of the parser's buffer once, as one string, and its values are parsed as slices of it rather than copied into a string each: around 8% less allocation on a delimited read and eleven fewer objects per record, with unchanged results and unchanged time.
