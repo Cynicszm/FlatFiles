@@ -253,13 +253,13 @@ namespace FlatFiles
                 SkipInternal();
                 return schema;
             }
-            var (_, columnNames) = ReadNextRecord();
-            if (columnNames is null)
+            var header = ReadNextRecord();
+            if (header is null)
             {
                 // Do not treat a missing schema in an empty file as an error.
                 return null;
             }
-            schema = CreateSchemaFromHeader( columnNames );
+            schema = CreateSchemaFromHeader( ValueRange.Materialise( parser.RecordText, parser.EscapedText, parser.Ranges ) );
             return schema;
         }
 
@@ -278,13 +278,13 @@ namespace FlatFiles
                 await SkipAsyncInternal( cancellationToken ).ConfigureAwait( false );
                 return schema;
             }
-            var (_, columnNames) = await ReadNextRecordAsync( cancellationToken ).ConfigureAwait( false );
-            if (columnNames is null)
+            var header = await ReadNextRecordAsync( cancellationToken ).ConfigureAwait( false );
+            if (header is null)
             {
                 // Do not treat a missing schema in an empty file as an error.
                 return null;
             }
-            schema = CreateSchemaFromHeader( columnNames );
+            schema = CreateSchemaFromHeader( ValueRange.Materialise( parser.RecordText, parser.EscapedText, parser.Ranges ) );
             return schema;
         }
 
@@ -306,8 +306,8 @@ namespace FlatFiles
         {
             while (!endOfFile)
             {
-                var (record, rawValues) = ReadNextRecord();
-                var currentValues = ProcessRecord( record, rawValues );
+                var record = ReadNextRecord();
+                var currentValues = ProcessRecord( record );
                 if (currentValues is not null)
                 {
                     return currentValues;
@@ -320,8 +320,8 @@ namespace FlatFiles
         {
             while (!endOfFile)
             {
-                var (record, rawValues) = await ReadNextRecordAsync( cancellationToken );
-                var currentValues = ProcessRecord( record, rawValues );
+                var record = await ReadNextRecordAsync( cancellationToken );
+                var currentValues = ProcessRecord( record );
                 if (currentValues is not null)
                 {
                     return currentValues;
@@ -330,13 +330,23 @@ namespace FlatFiles
             return null;
         }
 
-        private object?[]? ProcessRecord( string? record, string[]? rawValues )
+        private object?[]? ProcessRecord( string? record )
         {
-            if (record is null || rawValues is null)
+            if (record is null)
             {
                 return null;
             }
-            var currentSchema = GetSchema( record, rawValues );
+            var recordText = parser.RecordText;
+            var escapedText = parser.EscapedText;
+            var ranges = parser.Ranges;
+            // A schema selector is given the raw values, and a handler for the record read is given them as an array
+            // it can write into, where what it leaves behind is what gets parsed. Either way they are copied out of
+            // the record before it is parsed; otherwise the columns read them from the record itself and the record
+            // context copies them out only if something asks it for them.
+            var rawValues = schemaSelector is not null || RecordRead is not null
+                ? ValueRange.Materialise( recordText, escapedText, ranges )
+                : null;
+            var currentSchema = rawValues is null ? schema : GetSchema( record, rawValues );
             if (currentSchema is null)
             {
                 // A selector that matched nothing has already reported the record, and a handler that let reading
@@ -346,20 +356,20 @@ namespace FlatFiles
                 {
                     return null;
                 }
-                currentSchema = DelimitedSchema.BuildDynamicSchema( parser.Options, rawValues.Length );
+                currentSchema = DelimitedSchema.BuildDynamicSchema( parser.Options, ranges.Length );
             }
-            var currentContext = NewRecordContext( currentSchema, record, rawValues );
+            var currentContext = NewRecordContext( currentSchema, record, recordText, escapedText, ranges, rawValues );
             recordContext = currentContext;
-            if (IsSkipped( currentContext, rawValues ))
+            if (rawValues is not null && IsSkipped( currentContext, rawValues ))
             {
                 return null;
             }
-            if (HasWrongNumberOfColumns( currentSchema, rawValues ))
+            if (HasWrongNumberOfColumns( currentSchema, ranges.Length ))
             {
                 ProcessError( new RecordProcessingException( currentContext, Resources.DelimitedRecordWrongNumberOfColumns ) );
                 return null;
             }
-            var currentValues = ParseValues( currentContext, rawValues );
+            var currentValues = ParseValues( currentContext, recordText, escapedText, ranges, rawValues );
             if (currentValues is null)
             {
                 return null;
@@ -403,7 +413,7 @@ namespace FlatFiles
 
         private ExecutionContextCache<DelimitedSchema, DelimitedExecutionContext>? executionContexts;
 
-        private DelimitedRecordContext NewRecordContext( DelimitedSchema currentSchema, string record, string[] currentValues )
+        private DelimitedRecordContext NewRecordContext( DelimitedSchema currentSchema, string record, string recordText, string escapedText, ValueRange[] ranges, string[]? currentValues )
         {
             var executionContext = (executionContexts ??= new ExecutionContextCache<DelimitedSchema, DelimitedExecutionContext>( s => new DelimitedExecutionContext( s!, parser.Options.Clone() ) )).Get( currentSchema );
             var currentContext = new DelimitedRecordContext( executionContext )
@@ -413,22 +423,30 @@ namespace FlatFiles
                 Record = record,
                 Values = currentValues
             };
+            if (currentValues is null)
+            {
+                // Nothing has asked for the values as strings, so the context is told where they sit and copies them
+                // out only if a handler or an error reaches for them.
+                currentContext.SetPartitions( recordText, escapedText, ranges );
+            }
             return currentContext;
         }
 
-        private static bool HasWrongNumberOfColumns( DelimitedSchema currentSchema, string[] rawValues )
+        private static bool HasWrongNumberOfColumns( DelimitedSchema currentSchema, int valueCount )
         {
             var columnDefinitions = currentSchema.ColumnDefinitions;
-            return rawValues.Length + columnDefinitions.MetadataCount < columnDefinitions.PhysicalCount;
+            return valueCount + columnDefinitions.MetadataCount < columnDefinitions.PhysicalCount;
         }
 
-        private object?[]? ParseValues( DelimitedRecordContext currentContext, string[] rawValues )
+        private object?[]? ParseValues( DelimitedRecordContext currentContext, string recordText, string escapedText, ValueRange[] ranges, string[]? rawValues )
         {
             try
             {
                 currentContext.ColumnError += ColumnError;
                 var currentSchema = currentContext.ExecutionContext.Schema;
-                return currentSchema.ParseValues( currentContext, rawValues );
+                return rawValues is null
+                    ? currentSchema.ParseValues( currentContext, new RawRecord( recordText, escapedText, ranges ) )
+                    : currentSchema.ParseValues( currentContext, rawValues );
             }
             catch (FlatFileException exception)
             {
@@ -485,14 +503,14 @@ namespace FlatFiles
 
         private bool SkipInternal()
         {
-            var (_, rawValues) = ReadNextRecord();
-            return rawValues is not null;
+            var record = ReadNextRecord();
+            return record is not null;
         }
 
         private async ValueTask<bool> SkipAsyncInternal( CancellationToken cancellationToken = default )
         {
-            var (_, rawValues) = await ReadNextRecordAsync( cancellationToken ).ConfigureAwait( false );
-            return rawValues is not null;
+            var record = await ReadNextRecordAsync( cancellationToken ).ConfigureAwait( false );
+            return record is not null;
         }
 
         private void ProcessError( RecordProcessingException exception )
@@ -510,19 +528,19 @@ namespace FlatFiles
             throw exception;
         }
 
-        private (string?, string[]?) ReadNextRecord()
+        private string? ReadNextRecord()
         {
             if (parser.IsEndOfStream())
             {
                 endOfFile = true;
                 values = null;
-                return (null, null);
+                return null;
             }
             try
             {
-                var (record, results) = parser.ReadRecord();
+                var record = parser.ReadRecord();
                 ++physicalRecordNumber;
-                return (record, results);
+                return record;
             }
             catch (DelimitedSyntaxException exception)
             {
@@ -533,19 +551,19 @@ namespace FlatFiles
             }
         }
 
-        private async Task<(string?, string[]?)> ReadNextRecordAsync( CancellationToken cancellationToken = default )
+        private async Task<string?> ReadNextRecordAsync( CancellationToken cancellationToken = default )
         {
             if (await parser.IsEndOfStreamAsync( cancellationToken ).ConfigureAwait( false ))
             {
                 endOfFile = true;
                 values = null;
-                return (null, null);
+                return null;
             }
             try
             {
-                var (record, results) = await parser.ReadRecordAsync( cancellationToken ).ConfigureAwait( false );
+                var record = await parser.ReadRecordAsync( cancellationToken ).ConfigureAwait( false );
                 ++physicalRecordNumber;
-                return (record, results);
+                return record;
             }
             catch (DelimitedSyntaxException exception)
             {

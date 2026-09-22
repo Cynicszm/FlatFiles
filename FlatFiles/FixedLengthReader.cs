@@ -301,7 +301,7 @@ namespace FlatFiles
             string[]? rawValues = null;
             if (RecordPartitioned is not null)
             {
-                rawValues = ValueRange.Materialise( record, ranges );
+                rawValues = ValueRange.Materialise( record, string.Empty, ranges );
                 if (IsSkipped( currentSchema, record, rawValues ))
                 {
                     return null;
@@ -353,7 +353,7 @@ namespace FlatFiles
             try
             {
                 return rawValues is null
-                    ? currentSchema.ParseValues( metadata, record, ranges )
+                    ? currentSchema.ParseValues( metadata, new RawRecord( record, default, ranges ) )
                     : currentSchema.ParseValues( metadata, rawValues );
             }
             catch (FlatFileException exception)

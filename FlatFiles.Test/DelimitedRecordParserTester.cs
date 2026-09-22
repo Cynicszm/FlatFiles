@@ -20,7 +20,8 @@ namespace FlatFiles.Test
             List<(string, string[])> records = [];
             while (!parser.IsEndOfStream())
             {
-                records.Add( parser.ReadRecord() );
+                var record = parser.ReadRecord();
+                records.Add( (record, ValueRange.Materialise( parser.RecordText, parser.EscapedText, parser.Ranges )) );
             }
             return records;
         }
@@ -31,7 +32,8 @@ namespace FlatFiles.Test
             List<(string, string[])> records = [];
             while (!await parser.IsEndOfStreamAsync())
             {
-                records.Add( await parser.ReadRecordAsync() );
+                var record = await parser.ReadRecordAsync();
+                records.Add( (record, ValueRange.Materialise( parser.RecordText, parser.EscapedText, parser.Ranges )) );
             }
             return records;
         }

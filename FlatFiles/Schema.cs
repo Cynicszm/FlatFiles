@@ -84,10 +84,9 @@ namespace FlatFiles
         ///     value from the characters themselves.
         /// </summary>
         /// <param name="context">The metadata for the current record being processed.</param>
-        /// <param name="record">The record the values were partitioned from.</param>
-        /// <param name="ranges">Where each value sits within the record.</param>
+        /// <param name="values">The raw values of the record, as ranges within the text they were read from.</param>
         /// <returns>The parsed objects.</returns>
-        internal object?[] ParseValues( IRecoverableRecordContext context, string record, ValueRange[] ranges )
+        internal object?[] ParseValues( IRecoverableRecordContext context, RawRecord values )
         {
             var parsedValues = new object?[ColumnDefinitions.PhysicalCount];
             for (int columnIndex = 0, sourceIndex = 0, destinationIndex = 0, columnCount = ColumnDefinitions.Count;
@@ -104,16 +103,14 @@ namespace FlatFiles
                 }
                 else if (!definition.IsIgnored)
                 {
-                    var range = ranges[sourceIndex];
-                    var parsedValue = ParseValue( context, columnIndex, destinationIndex, record.AsSpan( range.Start, range.Length ) );
+                    var parsedValue = ParseValue( context, columnIndex, destinationIndex, values[sourceIndex] );
                     parsedValues[destinationIndex] = parsedValue;
                     ++sourceIndex;
                     ++destinationIndex;
                 }
                 else
                 {
-                    var range = ranges[sourceIndex];
-                    ParseValue( context, columnIndex, -1, record.AsSpan( range.Start, range.Length ) );
+                    ParseValue( context, columnIndex, -1, values[sourceIndex] );
                     ++sourceIndex;
                 }
             }

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Buffers;
-using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -11,15 +10,18 @@ namespace FlatFiles
     /// <summary>
     ///     Splits delimited text into records and their values. The parser scans the buffered text as a span, jumping
     ///     from one candidate separator or quote to the next with a vectorised search rather than examining every
-    ///     character, and copies each value out once. A record that runs off the end of the buffer is scanned again
+    ///     character. A record is copied out of the buffer once, as one string, with a range saying where each value
+    ///     sits within it, so a record costs one string rather than one per value and a column can parse its value
+    ///     from those characters without a string of its own. A record that runs off the end of the buffer is scanned again
     ///     from its start once more text has been read, which keeps a single state machine for both the synchronous
     ///     and the asynchronous reader.
     /// </summary>
     internal sealed class DelimitedRecordParser
     {
         private readonly CharBufferReader reader;
-        private readonly List<string> tokens = [];
-        private readonly RecordBuffer scratch = new();
+        private readonly RecordBuffer escaped = new();
+        private ValueRange[] valueRanges = new ValueRange[16];
+        private int valueCount;
         private readonly string separator;
         private readonly RecordSeparatorMatcher recordSeparator;
         private readonly string? postfix;
@@ -76,9 +78,31 @@ namespace FlatFiles
             return reader is { IsEndOfStream: true, Available: 0 };
         }
 
-        public (string, string[]) ReadRecord()
+        /// <summary>
+        ///     The text of the record last read, which is what most of its values are slices of.
+        /// </summary>
+        public string RecordText { get; private set; } = string.Empty;
+
+        /// <summary>
+        ///     The values of the record last read that the record's own text could not hold, one after another. Empty
+        ///     unless the record carried a doubled quote or whitespace kept from around a quoted value.
+        /// </summary>
+        public string EscapedText { get; private set; } = string.Empty;
+
+        /// <summary>
+        ///     Where each value of the record last read sits, in <see cref="RecordText" /> or, for the few that need
+        ///     it, in <see cref="EscapedText" />.
+        /// </summary>
+        public ValueRange[] Ranges { get; private set; } = [];
+
+        /// <summary>
+        ///     The raw values of the record last read.
+        /// </summary>
+        public RawRecord Values => new( RecordText, EscapedText, Ranges );
+
+        public string ReadRecord()
         {
-            (string, string[]) record;
+            string record;
             while (!TryReadRecord( out record ))
             {
                 reader.Fill();
@@ -86,9 +110,9 @@ namespace FlatFiles
             return record;
         }
 
-        public async Task<(string, string[])> ReadRecordAsync( CancellationToken cancellationToken = default )
+        public async Task<string> ReadRecordAsync( CancellationToken cancellationToken = default )
         {
-            (string, string[]) record;
+            string record;
             while (!TryReadRecord( out record ))
             {
                 await reader.FillAsync( cancellationToken ).ConfigureAwait( false );
@@ -100,10 +124,11 @@ namespace FlatFiles
         ///     Scans one record from the start of the buffered text. Returns false if the buffer ran out before the
         ///     record ended, in which case nothing is consumed and the caller reads more text and tries again.
         /// </summary>
-        private bool TryReadRecord( out (string, string[]) record )
+        private bool TryReadRecord( out string record )
         {
             var text = reader.Span;
-            tokens.Clear();
+            valueCount = 0;
+            escaped.Clear();
             var position = 0;
             while (true)
             {
@@ -111,17 +136,36 @@ namespace FlatFiles
                 switch (end)
                 {
                     case TokenEnd.NeedMore:
-                        record = default;
+                        record = string.Empty;
                         return false;
                     case TokenEnd.Token:
                         continue;
                 }
-                var recordText = preserveRecordText ? new string( text[..separatorStart] ) : string.Empty;
-                record = (recordText, [.. tokens]);
-                tokens.Clear();
+                // The record is copied out of the buffer whether or not the caller asked for its text, because the
+                // values are slices of it and the buffer is reused as soon as the next record is read.
+                RecordText = new string( text[..separatorStart] );
+                EscapedText = escaped.Length == 0 ? string.Empty : new string( escaped.WrittenSpan );
+                Ranges = valueCount == 0 ? [] : valueRanges.AsSpan( 0, valueCount ).ToArray();
+                record = preserveRecordText ? RecordText : string.Empty;
                 reader.Consume( position );
                 return true;
             }
+        }
+
+        /// <summary>
+        ///     Records where one value of the record sits.
+        /// </summary>
+        /// <param name="start">The position the value begins at.</param>
+        /// <param name="length">The number of characters in the value.</param>
+        /// <param name="isEscaped">Whether the value sits in the escape buffer rather than in the record.</param>
+        private void AddRange( int start, int length, bool isEscaped = false )
+        {
+            if (valueCount == valueRanges.Length)
+            {
+                Array.Resize( ref valueRanges, valueRanges.Length * 2 );
+            }
+            valueRanges[valueCount] = new ValueRange( start, length, isEscaped );
+            ++valueCount;
         }
 
         private TokenEnd ReadToken( ReadOnlySpan<char> text, ref int position, out int separatorStart )
@@ -141,7 +185,7 @@ namespace FlatFiles
                     var end = MatchSeparator( text, start, out var length );
                     if (end != TokenEnd.None)
                     {
-                        tokens.Add( string.Empty );
+                        AddRange( start, 0 );
                         separatorStart = start;
                         position = start + length;
                         return end;
@@ -175,7 +219,7 @@ namespace FlatFiles
                 {
                     if (reader.IsEndOfStream)
                     {
-                        tokens.Add( new string( text[start..] ) );
+                        AddRange( start, text.Length - start );
                         separatorStart = text.Length;
                         position = text.Length;
                         return TokenEnd.Stream;
@@ -192,7 +236,7 @@ namespace FlatFiles
                 var end = MatchSeparator( text, candidate, out var length );
                 if (end != TokenEnd.None)
                 {
-                    tokens.Add( new string( text[start..candidate] ) );
+                    AddRange( start, candidate - start );
                     separatorStart = candidate;
                     position = candidate + length;
                     return end;
@@ -201,9 +245,15 @@ namespace FlatFiles
             }
         }
 
+        /// <summary>
+        ///     Reads a quoted value. Stripping the quotes leaves a slice of the record, so nothing is copied unless a
+        ///     doubled quote, or whitespace kept from after the closing quote, breaks the value into pieces that are
+        ///     not next to each other in the record; only then is it rebuilt in the escape buffer.
+        /// </summary>
         private TokenEnd ReadQuotedToken( ReadOnlySpan<char> text, int contentStart, ref int position, out int separatorStart )
         {
-            scratch.Clear();
+            var escapeStart = escaped.Length;
+            var isEscaped = false;
             var scan = contentStart;
             while (true)
             {
@@ -218,7 +268,6 @@ namespace FlatFiles
                     return TokenEnd.NeedMore;
                 }
                 var quoteAt = scan + index;
-                scratch.Write( text[scan..quoteAt] );
                 var next = quoteAt + 1;
                 if (next >= text.Length && !reader.IsEndOfStream)
                 {
@@ -228,9 +277,16 @@ namespace FlatFiles
                 }
                 if (next < text.Length && text[next] == quote)
                 {
-                    scratch.Write( text.Slice( quoteAt, 1 ) );
+                    // A doubled quote stands for one, so from here the value has to be built character by character.
+                    escaped.Write( isEscaped ? text[scan..quoteAt] : text[contentStart..quoteAt] );
+                    isEscaped = true;
+                    escaped.Write( text.Slice( quoteAt, 1 ) );
                     scan = next + 1;
                     continue;
+                }
+                if (isEscaped)
+                {
+                    escaped.Write( text[scan..quoteAt] );
                 }
                 // The value has closed. Only whitespace may follow it before the separator.
                 var after = next;
@@ -244,7 +300,14 @@ namespace FlatFiles
                     var end = MatchSeparator( text, after, out var length );
                     if (end != TokenEnd.None)
                     {
-                        tokens.Add( new string( scratch.WrittenSpan ) );
+                        if (isEscaped)
+                        {
+                            AddRange( escapeStart, escaped.Length - escapeStart, true );
+                        }
+                        else
+                        {
+                            AddRange( contentStart, quoteAt - contentStart );
+                        }
                         separatorStart = after;
                         position = after + length;
                         return end;
@@ -255,7 +318,13 @@ namespace FlatFiles
                     }
                     if (preserveWhiteSpace)
                     {
-                        scratch.Write( text.Slice( after, 1 ) );
+                        // The kept whitespace is not next to the value in the record, the closing quote is in between.
+                        if (!isEscaped)
+                        {
+                            escaped.Write( text[contentStart..quoteAt] );
+                            isEscaped = true;
+                        }
+                        escaped.Write( text.Slice( after, 1 ) );
                     }
                     ++after;
                 }
