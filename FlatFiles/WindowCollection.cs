@@ -11,7 +11,7 @@ namespace FlatFiles
         private readonly List<Window> windows;
 
         /// <summary>
-        /// Initializes a new WindowCollection.
+        /// Initialises a new WindowCollection.
         /// </summary>
         /// <param name="windows">The windows making up the collection.</param>
         internal WindowCollection(List<Window> windows)

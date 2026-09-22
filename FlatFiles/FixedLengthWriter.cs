@@ -15,7 +15,7 @@ namespace FlatFiles
         private bool isSchemaWritten;
 
         /// <summary>
-        ///     Initializes a new FixedLengthBuilder with the given schema.
+        ///     Initialises a new FixedLengthBuilder with the given schema.
         /// </summary>
         /// <param name="writer">A writer over the fixed-length document.</param>
         /// <param name="schema">The schema of the fixed-length document.</param>
@@ -30,7 +30,7 @@ namespace FlatFiles
         }
 
         /// <summary>
-        ///     Initializes a new FixedLengthBuilder with the given schema.
+        ///     Initialises a new FixedLengthBuilder with the given schema.
         /// </summary>
         /// <param name="writer">A writer over the fixed-length document.</param>
         /// <param name="injector">The schema injector to use to determine the schema.</param>

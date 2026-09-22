@@ -23,9 +23,9 @@ namespace FlatFiles.Benchmark
                 City = "Lexington",
                 State = "DE",
                 Zip = "001569",
-                FavoriteColor = "Blue",
-                FavoriteFood = "Cheese and Crackers",
-                FavoriteSport = "Soccer",
+                FavouriteColour = "Blue",
+                FavouriteFood = "Cheese and Crackers",
+                FavouriteSport = "Soccer",
                 CreatedOn = new DateTime( 2017, 01, 01 ),
                 IsActive = true
             };
@@ -41,9 +41,9 @@ namespace FlatFiles.Benchmark
                 City = "Lexington",
                 State = "DE",
                 Zip = "001569",
-                FavoriteColor = "Blue",
-                FavoriteFood = "Cheese and Crackers",
-                FavoriteSport = "Soccer",
+                FavouriteColour = "Blue",
+                FavouriteFood = "Cheese and Crackers",
+                FavouriteSport = "Soccer",
                 CreatedOn = new DateTime( 2017, 01, 01 ),
                 IsActive = true
             };
@@ -62,9 +62,9 @@ namespace FlatFiles.Benchmark
             mapper.Property( x => x.City );
             mapper.Property( x => x.State );
             mapper.Property( x => x.Zip );
-            mapper.Property( x => x.FavoriteColor );
-            mapper.Property( x => x.FavoriteFood );
-            mapper.Property( x => x.FavoriteSport );
+            mapper.Property( x => x.FavouriteColour );
+            mapper.Property( x => x.FavouriteFood );
+            mapper.Property( x => x.FavouriteSport );
             mapper.Property( x => x.CreatedOn );
             mapper.Property( x => x.IsActive );
 
@@ -88,9 +88,9 @@ namespace FlatFiles.Benchmark
             mapper.Property( x => x.City );
             mapper.Property( x => x.State );
             mapper.Property( x => x.Zip );
-            mapper.Property( x => x.FavoriteColor );
-            mapper.Property( x => x.FavoriteFood );
-            mapper.Property( x => x.FavoriteSport );
+            mapper.Property( x => x.FavouriteColour );
+            mapper.Property( x => x.FavouriteFood );
+            mapper.Property( x => x.FavouriteSport );
             mapper.Property( x => x.CreatedOn );
             mapper.Property( x => x.IsActive );
 
@@ -120,11 +120,11 @@ namespace FlatFiles.Benchmark
 
             public string Zip { get; set; }
 
-            public string FavoriteColor { get; set; }
+            public string FavouriteColour { get; set; }
 
-            public string FavoriteFood { get; set; }
+            public string FavouriteFood { get; set; }
 
-            public string FavoriteSport { get; set; }
+            public string FavouriteSport { get; set; }
             
             public DateTime? CreatedOn { get; set; }
 
@@ -141,9 +141,9 @@ namespace FlatFiles.Benchmark
             public string City;
             public string State;
             public string Zip;
-            public string FavoriteColor;
-            public string FavoriteFood;
-            public string FavoriteSport;
+            public string FavouriteColour;
+            public string FavouriteFood;
+            public string FavouriteSport;
             public DateTime? CreatedOn;
             public bool IsActive;
         }

@@ -8,7 +8,7 @@ namespace FlatFiles
     public class FlatFileException : Exception
     {
         /// <summary>
-        /// Initializes a new instance of a FlatFileException, recording which record caused the error.
+        /// Initialises a new instance of a FlatFileException, recording which record caused the error.
         /// </summary>
         /// <param name="message">A message describing the cause of the error.</param>
         internal FlatFileException(string message)
@@ -17,7 +17,7 @@ namespace FlatFiles
         }
 
         /// <summary>
-        /// Initializes a new instance of a FlatFileException.
+        /// Initialises a new instance of a FlatFileException.
         /// </summary>
         /// <param name="message">A message describing the cause of the error.</param>
         /// <param name="innerException">An inner exception containing the cause of the underlying error.</param>

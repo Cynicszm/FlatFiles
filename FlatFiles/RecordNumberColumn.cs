@@ -13,7 +13,7 @@ namespace FlatFiles
         private readonly Int32Column column;
 
         /// <summary>
-        ///     Initializes a new instance of a RecordNumberColumn.
+        ///     Initialises a new instance of a RecordNumberColumn.
         /// </summary>
         /// <param name="columnName">The name of the column.</param>
         public RecordNumberColumn( string columnName )

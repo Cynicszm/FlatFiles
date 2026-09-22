@@ -9,7 +9,7 @@ namespace FlatFiles
     public sealed class DateTimeOffsetColumn : ColumnDefinition<DateTimeOffset>
     {
         /// <summary>
-        ///     Initializes a new instance of a DateTimeOffsetColumn.
+        ///     Initialises a new instance of a DateTimeOffsetColumn.
         /// </summary>
         /// <param name="columnName">The name of the column.</param>
         public DateTimeOffsetColumn( string columnName )

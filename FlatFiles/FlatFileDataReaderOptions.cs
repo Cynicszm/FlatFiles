@@ -8,7 +8,7 @@ namespace FlatFiles
     public sealed class FlatFileDataReaderOptions
     {
         /// <summary>
-        /// Initializes a new instance of FlatFileDataReaderOptions.
+        /// Initialises a new instance of FlatFileDataReaderOptions.
         /// </summary>
         public FlatFileDataReaderOptions()
         {

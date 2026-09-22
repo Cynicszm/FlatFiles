@@ -13,7 +13,7 @@ namespace FlatFiles
         private IColumnDefinition? trailing;
 
         /// <summary>
-        ///     Initializes a new instance of a FixedLengthSchema.
+        ///     Initialises a new instance of a FixedLengthSchema.
         /// </summary>
         public FixedLengthSchema()
         {

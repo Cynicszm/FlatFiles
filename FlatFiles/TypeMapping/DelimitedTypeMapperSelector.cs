@@ -13,7 +13,7 @@ namespace FlatFiles.TypeMapping
         private IDynamicDelimitedTypeMapper? defaultMapper;
 
         /// <summary>
-        ///     Initializes a new instance of a DelimitedTypeMapperSelector.
+        ///     Initialises a new instance of a DelimitedTypeMapperSelector.
         /// </summary>
         public DelimitedTypeMapperSelector()
         {

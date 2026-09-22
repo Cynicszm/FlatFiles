@@ -38,8 +38,8 @@ beside one of them was still spelled the British way — a mixed pair is better 
 8.0.0 was breaking the API for other reasons, which is the condition this rule named, so they became
 `QuoteBehaviour`, `OptimiseMapping` and `isOptimised`. No public name is spelled the American way now.
 The next one found waits the same way: recorded under **Breaking** in the changelog's planned section,
-not fixed on sight. The documentation comments are still mixed, and follow the convert-on-touch rule
-above.
+not fixed on sight. The documentation comments were swept to match in the same release, so nothing the library
+ships is spelled the American way now.
 
 The changelog entries written before this rule was adopted are left as their authors wrote them.
 

@@ -10,7 +10,7 @@ namespace FlatFiles
     public sealed class DelimitedOptions : IOptions
     {
         /// <summary>
-        ///     Initializes a new instance of a DelimitedParserOptions.
+        ///     Initialises a new instance of a DelimitedParserOptions.
         /// </summary>
         public DelimitedOptions()
         {
@@ -37,7 +37,7 @@ namespace FlatFiles
         /// </summary>
         /// <remarks>
         ///     By default, FlatFiles will look a combination of /r, /n, or /r/n. Setting
-        ///     the record separator to null will enable this default behavior. When writing,
+        ///     the record separator to null will enable this default behaviour. When writing,
         ///     FlatFiles will use Environment.NewLine as the default record separator.
         /// </remarks>
         public string? RecordSeparator { get; set; }

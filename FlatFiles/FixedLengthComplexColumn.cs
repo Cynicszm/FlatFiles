@@ -11,7 +11,7 @@ namespace FlatFiles
         private readonly FixedLengthSchema schema;
 
         /// <summary>
-        ///     Initializes a new FixedLengthComplexColumn with the given schema and options.
+        ///     Initialises a new FixedLengthComplexColumn with the given schema and options.
         /// </summary>
         /// <param name="columnName">The name of the column.</param>
         /// <param name="schema">The schema of the data embedded in the column.</param>
