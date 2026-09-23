@@ -230,6 +230,32 @@ namespace FlatFiles
             return parsedValues;
         }
 
+        // A typed reader installs this to take the record onto an entity itself, which is the only way a value
+        // reaches a property without being boxed on the way. It is used only where nothing else needs the parsed
+        // values: no handler for the parsed record, and no values already made strings of for a partitioned record
+        // handler.
+        internal IEntityAssembler? Assembler { get; set; }
+
+        private bool valuesAreParsed;
+
+        private FixedLengthSchema? recordSchema;
+
+        /// <summary>
+        ///     Parses the values the assembler took instead, for a caller that asks the reader for them anyway.
+        ///     Only a caller holding this reader can get here, because a type mapper makes its own; a column on that
+        ///     path carries no parsing hooks, so reading its value a second time changes nothing.
+        /// </summary>
+        private void EnsureValuesParsed()
+        {
+            if (valuesAreParsed || recordSchema is null || currentRecord is null || recordContext is not FixedLengthRecordContext context)
+            {
+                return;
+            }
+            var raw = new RawRecord( currentRecord, default, valueRanges.AsSpan( 0, valueCount ) );
+            values = recordSchema.ParseValues( context, raw, GetParsedValues( recordSchema ) );
+            valuesAreParsed = true;
+        }
+
         private ExecutionContextCache<FixedLengthSchema, FixedLengthExecutionContext>? executionContexts;
 
         private FixedLengthRecordContext NewRecordContext( FixedLengthSchema currentSchema, string record, bool hasPartitions, string[]? currentValues )
@@ -340,6 +366,20 @@ namespace FlatFiles
                     return null;
                 }
             }
+            recordSchema = currentSchema;
+            valuesAreParsed = true;
+            if (Assembler is not null && rawValues is null && RecordParsed is null && recordParsedUntyped is null)
+            {
+                // Nothing here needs the values as objects, so they go straight onto the entity instead.
+                var assembling = NewRecordContext( currentSchema, record, true, null );
+                recordContext = assembling;
+                if (!Assemble( assembling, currentSchema, record ))
+                {
+                    return null;
+                }
+                valuesAreParsed = false;
+                return parsedValues;
+            }
             var currentValues = ParseValues( currentSchema, record, rawValues );
             if (currentValues is null)
             {
@@ -377,6 +417,22 @@ namespace FlatFiles
             var e = new FixedLengthRecordPartitionedEventArgs( metadata, currentValues );
             RecordPartitioned( this, e );
             return e.IsSkipped;
+        }
+
+        private bool Assemble( FixedLengthRecordContext metadata, FixedLengthSchema currentSchema, string record )
+        {
+            try
+            {
+                metadata.ColumnError += ColumnError;
+                var raw = new RawRecord( record, default, valueRanges.AsSpan( 0, valueCount ) );
+                Assembler!.Assemble( metadata, currentSchema, raw );
+                return true;
+            }
+            catch (FlatFileException exception)
+            {
+                ProcessError( new RecordProcessingException( metadata, Resources.InvalidRecordConversion, exception ) );
+                return false;
+            }
         }
 
         private object?[]? ParseValues( FixedLengthSchema currentSchema, string record, string[]? rawValues )
@@ -595,11 +651,18 @@ namespace FlatFiles
             {
                 throw new InvalidOperationException( Resources.NoMoreRecords );
             }
+            EnsureValuesParsed();
             var copy = new object[values.Length];
             Array.Copy( values, copy, values.Length );
             return copy;
         }
 
+
+        IEntityAssembler? IReaderWithMetadata.Assembler
+        {
+            get => Assembler;
+            set => Assembler = value;
+        }
 
         object?[] IReaderWithMetadata.GetCurrentValues()
         {
@@ -615,6 +678,7 @@ namespace FlatFiles
             {
                 throw new InvalidOperationException( Resources.NoMoreRecords );
             }
+            EnsureValuesParsed();
             return values;
         }
 
