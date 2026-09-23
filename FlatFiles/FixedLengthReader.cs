@@ -580,6 +580,24 @@ namespace FlatFiles
             return copy;
         }
 
+
+        object?[] IReaderWithMetadata.GetCurrentValues()
+        {
+            if (hasError)
+            {
+                throw new InvalidOperationException( Resources.ReadingWithErrors );
+            }
+            if (physicalRecordNumber == 0)
+            {
+                throw new InvalidOperationException( Resources.ReadNotCalled );
+            }
+            if (endOfFile || values is null)
+            {
+                throw new InvalidOperationException( Resources.NoMoreRecords );
+            }
+            return values;
+        }
+
         private ExecutionContextCache<FixedLengthSchema, GenericExecutionContext>? metadataExecutionContexts;
 
         private IRecordContext GetMetadata( FixedLengthSchema? currentSchema, string? record )
