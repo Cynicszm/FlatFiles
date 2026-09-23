@@ -226,13 +226,15 @@ as the changelog entry and before the tag is cut.
 
 **A release that takes a new baseline carries the full table**, all six samples and all three scenarios
 apiece, so that what a version cost is recorded where it was released rather than only in a baseline
-file the next release overwrites. `run --markdown` prints it, both tables and the notes saying what
-each column measures, ready to paste:
+file the next release overwrites. The `baseline` command prints it - both tables and the notes saying
+what each column measures - from the runs it took the baseline from, so the figures in the changelog
+and the figures the gate compares are the same measurements:
 
-    dotnet run --project FlatFiles.IntegrationTest -c Release -- run --markdown
+    dotnet run --project FlatFiles.IntegrationTest -c Release -- baseline
 
-Take it against the samples the release is cut from, in the pull request that finalises the changelog
-entry.
+Paste what it prints into the entry, in the pull request that finalises the changelog. `run --markdown`
+prints the same block from a fresh set of runs, which is useful for looking but is not what the
+baseline recorded.
 
 **A release that does not change the baseline does not repeat the table.** It says the figures are
 unchanged and names the release that last recorded them. Reprinting an identical table invites the

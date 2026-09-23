@@ -119,10 +119,13 @@ a regenerated sample fails the check rather than quietly shifting every figure u
 
 A release that takes a new baseline carries the whole table in its changelog entry - six samples, three
 scenarios apiece - so what a version cost is recorded where it shipped rather than only in a baseline
-the next release overwrites. `run --markdown` prints it, both tables and the notes saying what each
-column measures, ready to paste. A release that leaves the baseline alone says the figures are
-unchanged and names the release that last recorded them, rather than reprinting a table whose
-ungated columns would differ anyway.
+the next release overwrites. `baseline` prints it: both tables and the notes saying what each column
+measures, from the very runs it took the baseline from, so the entry and the gate hold the same
+figures. `run --markdown` prints the same block from fresh runs, which is useful for looking but is
+not what the baseline recorded.
+
+A release that leaves the baseline alone says the figures are unchanged and names the release that
+last recorded them, rather than reprinting a table whose ungated columns would differ anyway.
 
 ## What the profiles pin, and what they do not
 
