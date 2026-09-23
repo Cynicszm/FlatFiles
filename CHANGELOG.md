@@ -1,26 +1,25 @@
 ## 8.1.0 (planned)
-**Not released.** What is expected next. Nothing here breaks anything, so nothing here is waiting for a major
-version; the number is simply the next one.
+**Not released.** What is expected next. Nothing here breaks anything, so nothing here is waiting for a major version; the number is simply the next one.
 
-**This library puts performance first.** Where a performance change and a feature want the same release, the performance change goes in and the feature waits. That is the whole reason the last several releases read as they do - buffer writers, a span tokeniser, a column context built only when something can read it, span parsing on both readers - and it is worth stating, because the list below is ordered by the review that produced it rather than by what will be built next.
+**This library puts performance first.** Where a performance change and a feature want the same release, the performance change goes in and the feature waits. That is the whole reason the last several releases read as they do - buffer writers, a span tokeniser, a column context built only when something can read it, span parsing on both readers - and it is why the list below leads with the one item on it that is also a performance change.
 
 ### Planned
 
-From the product and architecture review of 2026-09-17, in the order that review recommended. None of these breaks anything, so none of them needs 8.0.0 to happen. The one that is also a performance change, UTF-8 `Stream` input, is last here and first in any argument about what to do next.
+In the order they will be built, which is not the order the 2026-09-17 review recommended. Performance comes first here as it does everywhere else, so UTF-8 input leads; header-driven matching, which that review put first, goes last. None of these breaks anything, so none of them is waiting for a major version.
 
-- **Header-driven column matching against a supplied schema.** The header row is read and thrown away: never checked against the schema, never used to order it. A file whose columns have been reordered since the schema was written is read straight into the wrong properties, silently, because position is all the reader has. Matching the header by name, and saying what happens when it disagrees - reorder, refuse, or ignore - is the largest gap left against CsvHelper, which maps by name and is the one competitor this repository benchmarks against. Reading by position stays the default, since a file with no header has nothing else to go on.
+- **UTF-8 `Stream` input.** Parsing bytes without first decoding them to characters. Everything above `TextReader` is decided by that one choice, so it is the largest change on the list, and the only one that would take allocation below CsvHelper rather than level with it. 8.0.0 stopped copying a delimited record out of the parser's buffer; this stops the characters being made at all, and is why that work settled its lifetime contract rather than leaving it to whichever came second.
 - **Constructor, positional record and init-only mapping.** `Define<T>()` needs a parameterless constructor and a settable property for every column, so a record, a type with `init` accessors, or anything that validates in its constructor cannot be mapped without giving it a second, looser shape to be deserialised into.
+- **A source generator for mappings.** Would remove the start-up cost of emitting a deserialiser, and the reflection fallback's per-value penalty on runtimes without dynamic code, neither of which a trimmer can follow. 7.4.0's `RuntimeFeature.IsDynamicCodeSupported` fallback made the library work under Native AOT; this would make it fast there.
 - **Attribute-based mapping.** The library has no attribute types at all. Every mapping is written out in fluent calls, which is the right default for a file whose shape is not the class's business, and the wrong one for the common case where a class exists to mirror a file.
 - **Comment and blank-line skipping.** Both option classes can express it today only through a `RecordRead` handler on every reader. A comment prefix and a skip-blank-lines flag on the options would cover most of what those handlers are written for. Small, and the least glamorous thing on this list.
-- **A source generator for mappings.** Would remove the start-up cost of emitting a deserialiser, and the reflection fallback's per-value penalty on runtimes without dynamic code, neither of which a trimmer can follow. 7.4.0's `RuntimeFeature.IsDynamicCodeSupported` fallback made the library work under Native AOT; this would make it fast there.
-- **UTF-8 `Stream` input.** Parsing bytes without first decoding them to characters. Everything above `TextReader` is decided by that one choice, so it is the largest change on the list, and the only one that would take allocation below CsvHelper rather than level with it. It also subsumes the zero-copy item above, which is why that item settles its contract above rather than leaving it to whichever starts first.
+- **Header-driven column matching against a supplied schema.** The header row is read and thrown away: never checked against the schema, never used to order it. A file whose columns have been reordered since the schema was written is read straight into the wrong properties, silently, because position is all the reader has. Matching the header by name, and saying what happens when it disagrees - reorder, refuse, or ignore - is the largest gap left against CsvHelper, which maps by name and is the one competitor this repository benchmarks against. Reading by position stays the default, since a file with no header has nothing else to go on.
 
 **Considered and already covered.** Seven more ideas came out of the same review and turned out to need no work. They are recorded so that nobody spends an afternoon rediscovering it.
 
 Already supported when the review looked:
 
 - multi-character separators - `DelimitedOptions.Separator` is a string, not a character;
-- quoting behaviour - `QuoteBehavior` quotes only what needs it, or everything, or nothing;
+- quoting behaviour - `QuoteBehaviour` quotes only what needs it, or everything, or nothing;
 - whitespace preservation - `DelimitedOptions.PreserveWhiteSpace`, alongside `Trim` on the string and character array columns;
 - files holding more than one schema - the schema selectors and injectors, on both readers and writers;
 - `IDataReader` - `FlatFileDataReader`, with `DataTable` support beside it.
