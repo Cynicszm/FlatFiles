@@ -11,6 +11,44 @@ namespace FlatFiles.IntegrationTest
     /// </summary>
     internal static class BaselineCheck
     {
+        /// <summary>
+        ///     Whether the samples about to be read are the ones the baseline was taken from. A figure measured
+        ///     against different bytes says nothing, so this runs before anything is measured.
+        /// </summary>
+        public static bool VerifySamples( Baseline baseline, List<(string Name, string Path)> samples )
+        {
+            if (baseline.Files.Count == 0)
+            {
+                Console.WriteLine( "The baseline records no sample hashes. Take it again to have the samples pinned." );
+                return true;
+            }
+            Console.WriteLine( "{0,-14}{1,16}   {2}", "Sample", "Bytes", "" );
+            var passed = true;
+            foreach (var (name, path) in samples)
+            {
+                var expected = baseline.FindFile( name );
+                var bytes = new System.IO.FileInfo( path ).Length;
+                if (expected is null)
+                {
+                    passed = false;
+                    Console.WriteLine( "{0,-14}{1,16:N0}   FAILED: the baseline does not know this sample", name, bytes );
+                    continue;
+                }
+                var hash = FileStore.Hash( path );
+                var same = hash == expected.Sha256 && bytes == expected.Bytes;
+                passed &= same;
+                Console.WriteLine( "{0,-14}{1,16:N0}   {2}", name, bytes,
+                    same ? "as committed" : "FAILED: this is not the sample the baseline was taken from" );
+            }
+            if (!passed)
+            {
+                Console.WriteLine();
+                Console.WriteLine( "The samples have changed. If they were regenerated on purpose, take a new baseline;" );
+                Console.WriteLine( "otherwise restore them, because a figure measured against different bytes means nothing." );
+            }
+            return passed;
+        }
+
         public static bool Compare( Baseline baseline, List<RunResult> results )
         {
             Console.WriteLine();

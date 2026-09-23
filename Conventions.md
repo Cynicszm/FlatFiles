@@ -193,16 +193,21 @@ setter is covered without anyone remembering to extend a test.
 
 ## Integration check
 
-`FlatFiles.IntegrationTest` generates six large files - three delimited, three fixed-length - from
-committed profiles, reads each one end to end, and compares what it measured against
-`FlatFiles.IntegrationTest/Baseline.json`. The profiles describe the shape of real files: 379 columns,
-344,352 records, every field quoted, fourteen record layouts chosen by one character, a 3,500-character
-record. The files themselves are not committed; they are generated deterministically, so the same
-profile always yields the same bytes and the same figures.
+`FlatFiles.IntegrationTest` reads six large files - three delimited, three fixed-length - end to end,
+and compares what it measured against `FlatFiles.IntegrationTest/Baseline.json`. They are shaped after
+real files: 379 columns, 344,352 records, every field quoted, fourteen record layouts chosen by one
+character, a 3,500-character record.
+
+The files are committed, compressed, in `FlatFiles.IntegrationTest/Files`, and unpacked into the build
+output to be read. **Nothing regenerates them automatically.** `generate` is the only command that
+writes one, and rebuilding is a deliberate act that invalidates the baseline, because the samples are
+the input every figure is gated against: an input that rebuilt itself would turn a change in the
+generator into what looks like a change in the library. The baseline pins a SHA-256 of each sample, and
+a run that reads different bytes is refused rather than reported.
 
     dotnet run --project FlatFiles.IntegrationTest -c Release -- check
 
-Three figures, gated differently on purpose. Records read and records skipped are exact: a change there
+Three figures beyond the samples, gated differently on purpose. Records read and records skipped are exact: a change there
 is a change in what the library does with a real-shaped file, whether or not anybody meant it. Bytes
 allocated per record is gated at 2%, which is deterministic to the byte and has repeated to within 0.1%
 here. How long a read takes and how much memory it peaks at are reported and never gated - the same

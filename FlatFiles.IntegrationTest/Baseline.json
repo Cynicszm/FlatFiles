@@ -3,27 +3,59 @@
   "Tolerance": {
     "BytesPerRecord": 0.02
   },
+  "Files": [
+    {
+      "Name": "Set1Sample1.csv",
+      "Bytes": 38540205,
+      "Sha256": "fcd7048e02cebded15dfe554e30ee364e4cbd75e4e007bd7899d95f8e640a89c"
+    },
+    {
+      "Name": "Set1Sample2.csv",
+      "Bytes": 106501270,
+      "Sha256": "07756597602f45e76e95f63d80dcf7451966b70c6416c177676a4ed546dcf740"
+    },
+    {
+      "Name": "Set1Sample3.csv",
+      "Bytes": 46892080,
+      "Sha256": "c41760c24f8986dd43ee2879dc867b31f4dea2375092e17f2288cea614609825"
+    },
+    {
+      "Name": "Set2Sample1.txt",
+      "Bytes": 16905712,
+      "Sha256": "bce6a5a6b5f7fd8e950f12837608ca5bab142ba0911dcda1816cddbcba5b6e4e"
+    },
+    {
+      "Name": "Set2Sample2.txt",
+      "Bytes": 6268580,
+      "Sha256": "1967588b4d6f46fab40908c07680d8f7e4fa8eb46e3f9f8287306bfb94770810"
+    },
+    {
+      "Name": "Set2Sample3.txt",
+      "Bytes": 4547844,
+      "Sha256": "cc5d0fd5704899c59f7b520ed98f0f61b6620d627a89491f75922d4c209609ec"
+    }
+  ],
   "Measurements": [
     {
       "Profile": "Set1Sample1",
       "Scenario": "parse",
       "Records": 37031,
       "SkippedRecords": 0,
-      "BytesPerRecord": 5684.6
+      "BytesPerRecord": 5684.9
     },
     {
       "Profile": "Set1Sample1",
       "Scenario": "typed",
       "Records": 36883,
       "SkippedRecords": 148,
-      "BytesPerRecord": 5651.5
+      "BytesPerRecord": 5651.4
     },
     {
       "Profile": "Set1Sample1",
       "Scenario": "values",
       "Records": 36883,
       "SkippedRecords": 148,
-      "BytesPerRecord": 8707.3
+      "BytesPerRecord": 8707.5
     },
     {
       "Profile": "Set1Sample2",
@@ -51,63 +83,63 @@
       "Scenario": "parse",
       "Records": 39337,
       "SkippedRecords": 0,
-      "BytesPerRecord": 3528
+      "BytesPerRecord": 3528.3
     },
     {
       "Profile": "Set1Sample3",
       "Scenario": "typed",
       "Records": 39337,
       "SkippedRecords": 0,
-      "BytesPerRecord": 2988.2
+      "BytesPerRecord": 2988.1
     },
     {
       "Profile": "Set1Sample3",
       "Scenario": "values",
       "Records": 39337,
       "SkippedRecords": 0,
-      "BytesPerRecord": 4579.9
+      "BytesPerRecord": 4580.1
     },
     {
       "Profile": "Set2Sample1",
       "Scenario": "parse",
       "Records": 22481,
       "SkippedRecords": 0,
-      "BytesPerRecord": 3759.1
+      "BytesPerRecord": 3759
     },
     {
       "Profile": "Set2Sample1",
       "Scenario": "typed",
       "Records": 22481,
       "SkippedRecords": 0,
-      "BytesPerRecord": 3597.6
+      "BytesPerRecord": 3598.1
     },
     {
       "Profile": "Set2Sample1",
       "Scenario": "values",
       "Records": 22481,
       "SkippedRecords": 0,
-      "BytesPerRecord": 4306.3
+      "BytesPerRecord": 4306.2
     },
     {
       "Profile": "Set2Sample2",
       "Scenario": "parse",
       "Records": 1790,
       "SkippedRecords": 0,
-      "BytesPerRecord": 12093.3
+      "BytesPerRecord": 12093.2
     },
     {
       "Profile": "Set2Sample2",
       "Scenario": "typed",
       "Records": 1790,
       "SkippedRecords": 0,
-      "BytesPerRecord": 11270.4
+      "BytesPerRecord": 11276.3
     },
     {
       "Profile": "Set2Sample2",
       "Scenario": "values",
       "Records": 1790,
       "SkippedRecords": 0,
-      "BytesPerRecord": 13179.3
+      "BytesPerRecord": 13178.3
     },
     {
       "Profile": "Set2Sample3",
@@ -121,14 +153,14 @@
       "Scenario": "typed",
       "Records": 18047,
       "SkippedRecords": 0,
-      "BytesPerRecord": 1648
+      "BytesPerRecord": 1648.6
     },
     {
       "Profile": "Set2Sample3",
       "Scenario": "values",
       "Records": 18047,
       "SkippedRecords": 0,
-      "BytesPerRecord": 1916.3
+      "BytesPerRecord": 1916.2
     }
   ]
 }

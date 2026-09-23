@@ -1,8 +1,9 @@
 # FlatFiles.IntegrationTest
 
 Reads six large files end to end and reports what each one costs: time, bytes allocated per record,
-and peak memory. The files are generated rather than committed, from a profile that describes their
-shape - how many columns, how wide each runs, how often it is empty, and what its values parse as.
+and peak memory. The files are committed, compressed, and generated only when somebody asks, from a
+profile that describes their shape - how many columns, how wide each runs, how often it is empty, and
+what its values parse as.
 
 The benchmark project measures small reads precisely. This one measures large reads realistically, at
 a scale where the numbers are dominated by the work rather than by the harness, and it is also a
@@ -12,14 +13,38 @@ release gate: `check` compares every figure against a committed baseline and fai
 
     dotnet run --project FlatFiles.IntegrationTest -c Release
 
-That generates anything missing and then measures every scenario, one process per measurement. The
-files land in `bin/Release/net10.0/Files` and come to about 220 MB; they are deterministic, so the
-same profile always produces the same bytes, and they are not committed.
+That measures every scenario, one process per measurement.
 
-    dotnet run --project FlatFiles.IntegrationTest -c Release -- generate
     dotnet run --project FlatFiles.IntegrationTest -c Release -- run Set1Sample2
     dotnet run --project FlatFiles.IntegrationTest -c Release -- check
+    dotnet run --project FlatFiles.IntegrationTest -c Release -- profile
     dotnet run --project FlatFiles.IntegrationTest -c Release -- baseline
+    dotnet run --project FlatFiles.IntegrationTest -c Release -- generate
+
+## Where the samples come from
+
+The samples are **committed**, in `Files`, compressed. They are unpacked into
+`bin/Release/net10.0/Files` the first time something reads them and left there afterwards. Nothing
+rebuilds one on its own: `generate` is the only command that writes a sample, and it exists to be
+typed deliberately.
+
+That is the point. The samples are the input every figure is gated against, so an input that quietly
+rebuilt itself would make the gate meaningless - a change in the generator would move the numbers and
+look like a change in the library. Committing them fixes the bytes, and the baseline records a
+SHA-256 of each file so a run can say whether it is reading what the baseline was taken from. It
+refuses to compare if it is not.
+
+They are compressed because one of them is 102 MB, past what a repository will accept as a single
+file. The six come to 210 MB unpacked and 54 MB packed. Unpacking is deterministic, so the bytes read
+are the bytes committed.
+
+Regenerating is therefore a deliberate act with a consequence:
+
+    dotnet run --project FlatFiles.IntegrationTest -c Release -- generate
+    dotnet run --project FlatFiles.IntegrationTest -c Release -- baseline
+
+The first rewrites the samples and says so; the second takes the figures again. Both belong in the
+same pull request as the changelog entry explaining what moved and why.
 
 ## The six files
 
@@ -65,12 +90,16 @@ Three figures, gated differently on purpose:
 
 | Figure | Gate | Why |
 | --- | --- | --- |
+| The samples themselves | exact, by SHA-256 | A figure measured against different bytes says nothing, so the check verifies its input before measuring anything. |
 | Records read, records skipped | exact | A change here is a change in what the library does with a real-shaped file, whether or not anybody meant it. |
 | Bytes allocated per record | 2% | Deterministic to the byte for a given file and runtime. Repeated runs here agree to within 0.1%, so 2% absorbs a runtime's housekeeping and nothing else. |
 | Time, peak memory | not gated | Reported only. The same unchanged code has measured 11 ms and 22 ms on the same machine within a minute, and peak memory is dominated by runtime start-up rather than by the read. Gating either would fail releases at random. |
 
 When a change is intended, `baseline` rewrites the file and the change is described in the changelog
 like any other. A baseline that moves without an entry beside it is the thing this is meant to catch.
+
+The samples themselves are gated the same way and for the same reason. Until a new baseline is taken,
+a regenerated sample fails the check rather than quietly shifting every figure under it.
 
 ## What the profiles pin, and what they do not
 
