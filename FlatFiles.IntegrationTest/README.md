@@ -18,7 +18,8 @@ adding one is a matter of writing the profile rather than of finding a file.
 
     dotnet run --project FlatFiles.IntegrationTest -c Release
 
-That measures every scenario, one process per measurement.
+That measures every scenario: six samples, three scenarios each, five processes apiece, so ninety
+cold loads and about a minute and a half.
 
     dotnet run --project FlatFiles.IntegrationTest -c Release -- run Set1Sample2
     dotnet run --project FlatFiles.IntegrationTest -c Release -- check
@@ -74,10 +75,14 @@ library from a single-schema read, and one the type mapper's newer shortcuts do 
 
 Each is a step further than the last, so the difference between two of them is the cost of the step.
 
-Every sample is read five times and the figures are the mean of those reads, with the fastest and
-slowest shown beside the mean so the spread is visible. The first of the five is cold, so it carries
-whatever the runtime had left to compile - on these files that read is often twice the others, which
-the range makes plain.
+Every sample is loaded five times, each in a process that starts, reads the file once and exits, and
+the figures are the mean of those five with the quickest and slowest beside them. That is how the
+library is mostly used - a job starts, loads a file as fast as it can, and finishes - so everything a
+job pays for is inside the measurement: the runtime compiling the parse path on first use, the schema
+being built, the file being opened. Nothing is amortised over reads a real caller never performs.
+
+Measuring a warm steady state instead would flatter the library and answer a question few callers ask.
+`FlatFiles.Benchmark` is the project that measures that, properly, with statistics.
 
 - **`parse`** - every column read as `StringColumn`, no value asked for. The floor: find the records,
   find the fields, make a string of each.
@@ -104,7 +109,7 @@ whatever performs it. Three figures, gated differently on purpose:
 | Records read | exact | A change here is a change in what the library does with a real-shaped file, whether or not anybody meant it. A record refused is a record not yielded, so this catches one without needing a count of its own. |
 | Records refused | must be none | No sample is built to have a record refused. One that does means something changed, so it fails whatever the other figures say. |
 | Bytes allocated per record | 2% | Deterministic to the byte for a given file and runtime. Repeated runs here agree to within 0.1%, so 2% absorbs a runtime's housekeeping and nothing else. |
-| Time, peak memory | not gated | Reported only. The same unchanged code has measured 11 ms and 22 ms on the same machine within a minute, and peak memory is dominated by runtime start-up rather than by the read. Gating either would fail releases at random. |
+| Time, peak memory | not gated | Reported as the mean of five cold loads with the range beside it. Even averaged, the same unchanged code moves more than a gate could live with; peak memory is a whole job's footprint, most of it runtime start-up. Gating either would fail releases at random. |
 
 When a change is intended, `baseline` rewrites the file and the change is described in the changelog
 like any other. A baseline that moves without an entry beside it is the thing this is meant to catch.
