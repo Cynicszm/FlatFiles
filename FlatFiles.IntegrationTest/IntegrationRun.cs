@@ -5,7 +5,7 @@ using System.IO;
 namespace FlatFiles.IntegrationTest
 {
     /// <summary>
-    ///     What one file measured, averaged over several reads of it.
+    ///     What one file cost to load, averaged over several runs of it.
     /// </summary>
     internal sealed class RunResult
     {
@@ -14,7 +14,7 @@ namespace FlatFiles.IntegrationTest
         public string Scenario { get; set; } = string.Empty;
 
         /// <summary>
-        ///     How many times the file was read to arrive at these figures.
+        ///     How many separate runs these figures are the mean of.
         /// </summary>
         public int Reads { get; set; }
 
@@ -25,14 +25,12 @@ namespace FlatFiles.IntegrationTest
         public long FileSize { get; set; }
 
         /// <summary>
-        ///     The mean of the reads. The first of them is cold, so it carries whatever the runtime had left to
-        ///     compile; the mean says so rather than hiding it behind a warm-up that the gate would then have to
-        ///     trust.
+        ///     The mean of the runs.
         /// </summary>
         public TimeSpan Elapsed { get; set; }
 
         /// <summary>
-        ///     The shortest and longest read, so that the spread behind the mean is visible.
+        ///     The quickest and slowest of the runs, so that the spread behind the mean is visible.
         /// </summary>
         public TimeSpan FastestRead { get; set; }
 
@@ -63,11 +61,6 @@ namespace FlatFiles.IntegrationTest
     /// </remarks>
     internal static class IntegrationRun
     {
-        /// <summary>
-        ///     How many times each file is read before its figures are reported. One read is enough for
-        ///     allocation, which is deterministic, and nowhere near enough for time, which is not.
-        /// </summary>
-        public const int Reads = 5;
 
         private static DelimitedReader Delimited( FileProfile profile, TextReader text, bool typed )
         {
@@ -89,50 +82,43 @@ namespace FlatFiles.IntegrationTest
             return new FixedLengthReader( text, SchemaFactory.CreateSelector( profile, typed ), options );
         }
 
+        /// <summary>
+        ///     Reads the file once and reports what that cost.
+        /// </summary>
+        /// <remarks>
+        ///     Once, cold, and in a process that has done nothing else, because that is how the library is
+        ///     mostly used: a job starts, loads a file as fast as it can, and exits. Everything a job pays for is
+        ///     therefore inside the measurement - the runtime compiling the parse path on first use, the schema
+        ///     being built, the file being opened - and none of it is amortised over reads that a real caller
+        ///     never performs. The noise that comes with measuring a cold start is dealt with by repeating the
+        ///     whole process and averaging, which is the caller's job rather than this method's.
+        /// </remarks>
         public static RunResult Execute( FileProfile profile, string path, string scenario )
         {
             var size = new FileInfo( path ).Length;
             var records = 0L;
             var skipped = 0L;
-            var totalTicks = 0L;
-            var totalAllocated = 0L;
-            var fastest = long.MaxValue;
-            var slowest = 0L;
 
             using var watcher = new PeakMemoryWatcher();
-            for (var read = 0; read != Reads; ++read)
-            {
-                // A settled heap before each read, so its allocation figure is that read's and nothing else's.
-                GC.Collect();
-                GC.WaitForPendingFinalizers();
-                GC.Collect();
-
-                records = 0;
-                skipped = 0;
-                var before = GC.GetTotalAllocatedBytes( true );
-                var watch = Stopwatch.StartNew();
-                ReadOnce( profile, path, scenario, ref records, ref skipped );
-                watch.Stop();
-
-                totalAllocated += GC.GetTotalAllocatedBytes( true ) - before;
-                totalTicks += watch.Elapsed.Ticks;
-                fastest = Math.Min( fastest, watch.Elapsed.Ticks );
-                slowest = Math.Max( slowest, watch.Elapsed.Ticks );
-            }
+            var before = GC.GetTotalAllocatedBytes( true );
+            var watch = Stopwatch.StartNew();
+            ReadOnce( profile, path, scenario, ref records, ref skipped );
+            watch.Stop();
+            var allocated = GC.GetTotalAllocatedBytes( true ) - before;
             watcher.Dispose();
 
             return new RunResult
             {
                 Profile = profile.Name,
                 Scenario = scenario,
-                Reads = Reads,
+                Reads = 1,
                 Records = records,
                 SkippedRecords = skipped,
                 FileSize = size,
-                Elapsed = TimeSpan.FromTicks( totalTicks / Reads ),
-                FastestRead = TimeSpan.FromTicks( fastest ),
-                SlowestRead = TimeSpan.FromTicks( slowest ),
-                AllocatedBytes = totalAllocated / Reads,
+                Elapsed = watch.Elapsed,
+                FastestRead = watch.Elapsed,
+                SlowestRead = watch.Elapsed,
+                AllocatedBytes = allocated,
                 PeakManagedBytes = watcher.Peak,
                 PeakWorkingSetBytes = Process.GetCurrentProcess().PeakWorkingSet64
             };

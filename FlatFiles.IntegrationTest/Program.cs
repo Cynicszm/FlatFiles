@@ -12,6 +12,13 @@ namespace FlatFiles.IntegrationTest
     {
         private static readonly string[] Scenarios = ["parse", "typed", "values"];
 
+        /// <summary>
+        ///     How many times each measurement is taken. Each one is a process of its own doing a single cold
+        ///     read, because that is what the library is mostly asked to do - a job starts, loads a file as fast
+        ///     as it can, and exits - and the only way to measure a cold start more than once is to start again.
+        /// </summary>
+        private const int Runs = 5;
+
         private static int Main( string[] args )
         {
             var command = args.Length == 0 ? "run" : args[0].ToLowerInvariant();
@@ -307,12 +314,20 @@ namespace FlatFiles.IntegrationTest
             {
                 foreach (var scenario in Scenarios)
                 {
-                    // Each measurement gets a process of its own, because peak working set only counts up: read
-                    // two files in one process and the second inherits whatever the first reached.
-                    var measured = MeasureElsewhere( profile.Name, scenario );
-                    if (measured is not null)
+                    // Each run gets a process of its own: it keeps the read cold, which is the case worth
+                    // measuring, and it keeps peak working set meaningful, since that figure only counts up.
+                    List<RunResult> runs = [];
+                    for (var run = 0; run != Runs; ++run)
                     {
-                        results.Add( measured );
+                        var measured = MeasureElsewhere( profile.Name, scenario );
+                        if (measured is not null)
+                        {
+                            runs.Add( measured );
+                        }
+                    }
+                    if (runs.Count != 0)
+                    {
+                        results.Add( Average( runs ) );
                     }
                 }
             }
@@ -387,8 +402,10 @@ namespace FlatFiles.IntegrationTest
         private static void WriteMarkdownNotes( List<RunResult> results )
         {
             Console.WriteLine();
-            Console.WriteLine( "Each row is one sample read {0} times in a process of its own, and the figures are the mean of those", IntegrationRun.Reads );
-            Console.WriteLine( "reads. The scenarios are cumulative:" );
+            Console.WriteLine( "Each row is one sample loaded {0} times, each in a process of its own that starts, reads the file once and", Runs );
+            Console.WriteLine( "exits - which is how the library is mostly used - and the figures are the mean of those {0}. Everything a", Runs );
+            Console.WriteLine( "job pays for is inside them: the runtime compiling the parse path on first use, the schema being built," );
+            Console.WriteLine( "the file being opened. The scenarios are cumulative:" );
             Console.WriteLine( "`parse` reads every column as text and asks for no value, `typed` gives each single-typed column its" );
             Console.WriteLine( "own type, and `values` is `typed` with `GetValues` called on every record. The difference between two" );
             Console.WriteLine( "of them is the cost of the step between." );
@@ -397,16 +414,18 @@ namespace FlatFiles.IntegrationTest
             Console.WriteLine( "| --- | --- |" );
             Console.WriteLine( "| Columns | Columns in the schema; for a fixed-length sample, in its widest record layout. |" );
             Console.WriteLine( "| Records | Records the reader yielded. Gated exactly. No sample is built to have a record refused, so any refusal fails the check whatever else agrees. |" );
-            Console.WriteLine( "| Total Time | Mean wall clock of {0} complete reads: opening the file, building the schema, constructing the reader, reading every record, and disposing. The first read is cold, so one of the {0} carries whatever the runtime had left to compile. **Reported, never gated.** |", IntegrationRun.Reads );
-            Console.WriteLine( "| Range | The fastest and slowest of those {0} reads, so the spread behind the mean is visible rather than implied. |", IntegrationRun.Reads );
+            Console.WriteLine( "| Total Time | Mean wall clock of {0} cold loads: opening the file, building the schema, constructing the reader, reading every record, and disposing, in a process that has done nothing else. Nothing is amortised over reads a real caller never performs. **Reported, never gated.** |", Runs );
+            Console.WriteLine( "| Range | The quickest and slowest of those {0} loads, so the spread behind the mean is visible rather than implied. |", Runs );
             Console.WriteLine( "| MB/s | File size divided by Total Time, so it carries the same caveats. |" );
-            Console.WriteLine( "| Bytes/record | Mean bytes allocated across a read, divided by records read. Deterministic for given bytes on a given runtime, and repeats to within 0.1% here. **Gated at 2%.** |" );
-            Console.WriteLine( "| Peak heap | The largest the managed heap reached across all {0} reads, sampled every 5 ms. Reported. |", IntegrationRun.Reads );
-            Console.WriteLine( "| Peak working set | The process's peak working set, which is why each row gets its own process. Dominated by runtime start-up rather than by the read. Reported. |" );
+            Console.WriteLine( "| Bytes/record | Mean bytes allocated across a load, divided by records read. Deterministic for given bytes on a given runtime, and repeats to within 0.1% here. **Gated at 2%.** |" );
+            Console.WriteLine( "| Peak heap | The largest the managed heap reached in any of the {0} loads, sampled every 5 ms. Reported. |", Runs );
+            Console.WriteLine( "| Peak working set | The largest peak working set any of those processes reached. Each does one load and exits, so the figure is a whole job's footprint, most of it runtime start-up rather than the read. Reported. |" );
             Console.WriteLine();
-            Console.WriteLine( "Averaging {0} reads takes most of the machine noise out, but not all of it: `FlatFiles.Benchmark` is the", IntegrationRun.Reads );
-            Console.WriteLine( "project that measures time properly, with warm-up and statistics. Total Time and MB/s here show the shape" );
-            Console.WriteLine( "of the work rather than a figure to compare release to release, which is why neither is gated." );
+            Console.WriteLine( "Averaging {0} whole processes takes most of the machine noise out, but a cold start is noisy by nature and", Runs );
+            Console.WriteLine( "the range shows what is left. `FlatFiles.Benchmark` is the project that measures a warm steady state, with" );
+            Console.WriteLine( "statistics rather than a mean; these figures are the other question - what one job costs end to end - and" );
+            Console.WriteLine( "show the shape of the work rather than a number to compare release to release, which is why neither Total" );
+            Console.WriteLine( "Time nor MB/s is gated." );
 
             List<string> refused = [.. results.Where( x => x.SkippedRecords != 0 )
                 .Select( x => string.Format( CultureInfo.CurrentCulture, "{0} `{1}` refused {2:N0}", Shorthand( x.Profile ), x.Scenario, x.SkippedRecords ) )];
@@ -415,6 +434,45 @@ namespace FlatFiles.IntegrationTest
                 Console.WriteLine();
                 Console.WriteLine( "Records refused: " + string.Join( "; ", refused ) + "." );
             }
+        }
+
+        /// <summary>
+        ///     One result from several runs of the same measurement: the mean of what they took and allocated,
+        ///     the quickest and slowest of them, and the largest figure either memory reading reached.
+        /// </summary>
+        private static RunResult Average( List<RunResult> runs )
+        {
+            var first = runs[0];
+            var ticks = 0L;
+            var allocated = 0L;
+            var quickest = long.MaxValue;
+            var slowest = 0L;
+            var peakManaged = 0L;
+            var peakWorkingSet = 0L;
+            foreach (var run in runs)
+            {
+                ticks += run.Elapsed.Ticks;
+                allocated += run.AllocatedBytes;
+                quickest = Math.Min( quickest, run.Elapsed.Ticks );
+                slowest = Math.Max( slowest, run.Elapsed.Ticks );
+                peakManaged = Math.Max( peakManaged, run.PeakManagedBytes );
+                peakWorkingSet = Math.Max( peakWorkingSet, run.PeakWorkingSetBytes );
+            }
+            return new RunResult
+            {
+                Profile = first.Profile,
+                Scenario = first.Scenario,
+                Reads = runs.Count,
+                Records = first.Records,
+                SkippedRecords = first.SkippedRecords,
+                FileSize = first.FileSize,
+                Elapsed = TimeSpan.FromTicks( ticks / runs.Count ),
+                FastestRead = TimeSpan.FromTicks( quickest ),
+                SlowestRead = TimeSpan.FromTicks( slowest ),
+                AllocatedBytes = allocated / runs.Count,
+                PeakManagedBytes = peakManaged,
+                PeakWorkingSetBytes = peakWorkingSet
+            };
         }
 
         private static RunResult? MeasureElsewhere( string name, string scenario )
@@ -498,8 +556,9 @@ namespace FlatFiles.IntegrationTest
             Console.WriteLine( "typed  - each single-typed column given its own type, no value asked for" );
             Console.WriteLine( "values - typed, and GetValues called for every record" );
             Console.WriteLine();
-            Console.WriteLine( "Total time is the mean of {0} complete reads - opening the file, building the schema, reading every", IntegrationRun.Reads );
-            Console.WriteLine( "record - with the fastest and slowest beside it. The first of the {0} is cold and carries the JIT.", IntegrationRun.Reads );
+            Console.WriteLine( "Total time is the mean of {0} cold loads, each a process that starts, reads the file once and exits,", Runs );
+            Console.WriteLine( "with the quickest and slowest beside it. That is how the library is mostly used, so nothing here is" );
+            Console.WriteLine( "amortised over reads a real caller never performs." );
             Console.WriteLine( "Bytes/rec is what the read allocated, per record, and is the figure the release gate compares." );
             Console.WriteLine( "Peak heap is the largest the managed heap reached while reading; peak WS is the process working" );
             Console.WriteLine( "set, which is why each row gets its own process." );

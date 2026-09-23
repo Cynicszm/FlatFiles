@@ -47,8 +47,8 @@ jobs:
 
       - name: Integration check
         # Runs here and nowhere else. What it guards is a release going out with something moved, not
-        # a branch being wrong for an hour, and it costs about twenty seconds and 210 MB of disk on
-        # whatever runs it - not worth spending on every pull request.
+        # a branch being wrong for an hour, and it costs about a minute and a half and 210 MB of disk
+        # on whatever runs it - not worth spending on every pull request.
         #
         # Six committed samples - three delimited, three fixed-length - unpacked, read end to end and
         # compared against FlatFiles.IntegrationTest/Baseline.json. Nothing is generated here: the

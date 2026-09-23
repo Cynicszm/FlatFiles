@@ -211,15 +211,16 @@ Beyond the samples themselves, the record count is exact: a change there is a ch
 does with a real-shaped file, whether or not anybody meant it. No sample is built to have a record
 refused, so any refusal fails the check whatever else agrees. Bytes allocated per record is gated at 2%,
 which is deterministic to the byte and has repeated to within 0.1% here. How long a read takes and how
-much memory it peaks at are reported and never gated. Each sample is read five times and the mean
-reported with its range, which takes most of the machine noise out and still leaves more movement than
-a gate could live with - the first of the five is cold and is often twice the others. Peak memory is
-dominated by runtime start-up rather than by the read.
+much memory it peaks at are reported and never gated. Each sample is loaded five times, each in a
+process that starts, reads the file once and exits, because that is how the library is mostly used;
+the mean is reported with its range. That takes most of the machine noise out and still leaves more
+movement than a gate could live with. Peak memory is a whole job's footprint, most of it runtime
+start-up rather than the read.
 
 It runs in `publish.yml` only, before a release is packed, and a release fails if anything moved. It is
 deliberately not on the pull request build: what it guards is a release going out with something
-changed, and the run costs about twenty seconds and 210 MB of unpacked disk on whatever performs it -
-not worth spending on every push. When a change is intended, take
+changed, and the run costs about a minute and a half and 210 MB of unpacked disk on whatever performs
+it - not worth spending on every push. When a change is intended, take
 a new baseline with the `baseline` command and describe it in the changelog, in the same pull request
 as the changelog entry and before the tag is cut.
 
