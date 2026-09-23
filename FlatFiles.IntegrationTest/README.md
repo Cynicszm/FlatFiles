@@ -1,15 +1,15 @@
 # FlatFiles.IntegrationTest
 
-Reads six large files end to end and reports what each one costs: time, bytes allocated per record,
-and peak memory. The files are committed, compressed, and generated only when somebody asks, from a
+Reads the six integration test files end to end and reports what each one costs: time, bytes allocated
+per record, and peak memory. The files are committed, compressed, and generated only when somebody asks, from a
 profile that describes their shape - how many columns, how wide each runs, how often it is empty, and
 what its values parse as.
 
-The benchmark project measures small reads precisely. This one measures large reads realistically - the
-shapes that cause trouble in practice, which run to hundreds of columns and from hundreds of thousands
-to millions of records - at a scale where the numbers are dominated by the work rather than by the
-harness. It is also a release gate: `check` compares every figure against a committed baseline and
-fails when one moves.
+The benchmark project measures small reads precisely. This one reads whole files, shaped after the ones
+that cause trouble in practice - hundreds of columns, hundreds of thousands to millions of records,
+every field quoted, several record layouts in one file - where the numbers are dominated by the work
+rather than by the harness. It is also a release gate: `check` compares every figure against a
+committed baseline and fails when one moves.
 
 The largest sample here is 344,352 records. A profile is what a larger one would be built from, so
 adding one is a matter of writing the profile rather than of finding a file.
