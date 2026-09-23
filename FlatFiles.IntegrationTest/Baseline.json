@@ -1,13 +1,13 @@
 {
-  "Note": "Taken by the baseline command. Records and skipped records are exact; allocation is gated on the tolerance below. How long a read takes is not gated.",
+  "Note": "Taken by the baseline command. The record count is exact and allocation is gated on the tolerance below; how long a read takes is not gated. No sample is meant to have a record refused, so any refusal fails the check whatever these figures say.",
   "Tolerance": {
     "BytesPerRecord": 0.02
   },
   "Files": [
     {
       "Name": "Set1Sample1.csv",
-      "Bytes": 38540205,
-      "Sha256": "fcd7048e02cebded15dfe554e30ee364e4cbd75e4e007bd7899d95f8e640a89c"
+      "Bytes": 38540034,
+      "Sha256": "8a39cb1d9a0515727abddf3a84136cdadb0f7d1e8643e5d34e9a61b189334095"
     },
     {
       "Name": "Set1Sample2.csv",
@@ -40,127 +40,109 @@
       "Profile": "Set1Sample1",
       "Scenario": "parse",
       "Records": 37031,
-      "SkippedRecords": 0,
       "BytesPerRecord": 5684.9
     },
     {
       "Profile": "Set1Sample1",
       "Scenario": "typed",
-      "Records": 36883,
-      "SkippedRecords": 148,
-      "BytesPerRecord": 5651.4
+      "Records": 37031,
+      "BytesPerRecord": 5628.9
     },
     {
       "Profile": "Set1Sample1",
       "Scenario": "values",
-      "Records": 36883,
-      "SkippedRecords": 148,
-      "BytesPerRecord": 8707.5
+      "Records": 37031,
+      "BytesPerRecord": 8684.9
     },
     {
       "Profile": "Set1Sample2",
       "Scenario": "parse",
       "Records": 344352,
-      "SkippedRecords": 0,
       "BytesPerRecord": 1413.6
     },
     {
       "Profile": "Set1Sample2",
       "Scenario": "typed",
       "Records": 344352,
-      "SkippedRecords": 0,
       "BytesPerRecord": 1337.7
     },
     {
       "Profile": "Set1Sample2",
       "Scenario": "values",
       "Records": 344352,
-      "SkippedRecords": 0,
       "BytesPerRecord": 1825.7
     },
     {
       "Profile": "Set1Sample3",
       "Scenario": "parse",
       "Records": 39337,
-      "SkippedRecords": 0,
-      "BytesPerRecord": 3528.3
+      "BytesPerRecord": 3528
     },
     {
       "Profile": "Set1Sample3",
       "Scenario": "typed",
       "Records": 39337,
-      "SkippedRecords": 0,
-      "BytesPerRecord": 2988.1
+      "BytesPerRecord": 2987.8
     },
     {
       "Profile": "Set1Sample3",
       "Scenario": "values",
       "Records": 39337,
-      "SkippedRecords": 0,
-      "BytesPerRecord": 4580.1
+      "BytesPerRecord": 4579.8
     },
     {
       "Profile": "Set2Sample1",
       "Scenario": "parse",
       "Records": 22481,
-      "SkippedRecords": 0,
       "BytesPerRecord": 3759
     },
     {
       "Profile": "Set2Sample1",
       "Scenario": "typed",
       "Records": 22481,
-      "SkippedRecords": 0,
-      "BytesPerRecord": 3598.1
+      "BytesPerRecord": 3597.6
     },
     {
       "Profile": "Set2Sample1",
       "Scenario": "values",
       "Records": 22481,
-      "SkippedRecords": 0,
-      "BytesPerRecord": 4306.2
+      "BytesPerRecord": 4305.7
     },
     {
       "Profile": "Set2Sample2",
       "Scenario": "parse",
       "Records": 1790,
-      "SkippedRecords": 0,
-      "BytesPerRecord": 12093.2
+      "BytesPerRecord": 12092.3
     },
     {
       "Profile": "Set2Sample2",
       "Scenario": "typed",
       "Records": 1790,
-      "SkippedRecords": 0,
       "BytesPerRecord": 11276.3
     },
     {
       "Profile": "Set2Sample2",
       "Scenario": "values",
       "Records": 1790,
-      "SkippedRecords": 0,
-      "BytesPerRecord": 13178.3
+      "BytesPerRecord": 13171.4
     },
     {
       "Profile": "Set2Sample3",
       "Scenario": "parse",
       "Records": 18047,
-      "SkippedRecords": 0,
-      "BytesPerRecord": 1882.6
+      "BytesPerRecord": 1882.5
     },
     {
       "Profile": "Set2Sample3",
       "Scenario": "typed",
       "Records": 18047,
-      "SkippedRecords": 0,
-      "BytesPerRecord": 1648.6
+      "BytesPerRecord": 1647.9
     },
     {
       "Profile": "Set2Sample3",
       "Scenario": "values",
       "Records": 18047,
-      "SkippedRecords": 0,
-      "BytesPerRecord": 1916.2
+      "BytesPerRecord": 1915.5
     }
   ]
 }

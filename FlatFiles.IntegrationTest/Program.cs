@@ -47,7 +47,8 @@ namespace FlatFiles.IntegrationTest
             Console.WriteLine();
             Console.WriteLine( "  generate [profile...]   rebuild the samples from the profiles and pack them for committing." );
             Console.WriteLine( "                          The only thing that writes a sample; invalidates the baseline." );
-            Console.WriteLine( "  run      [profile...]   measure every scenario against the committed samples" );
+            Console.WriteLine( "  run      [profile...]   measure every scenario against the committed samples." );
+            Console.WriteLine( "                          Add --markdown for the table a release entry carries." );
             Console.WriteLine( "  check    [profile...]   measure, compare against the baseline, and fail if anything moved" );
             Console.WriteLine( "  profile  [profile...]   read the generated files back and write a workbook describing them" );
             Console.WriteLine( "  baseline [profile...]   measure and write the baseline, replacing what is there" );
@@ -256,14 +257,14 @@ namespace FlatFiles.IntegrationTest
                     Bytes = new FileInfo( PathFor( x ) ).Length,
                     Sha256 = FileStore.Hash( PathFor( x ) )
                 } )],
-                Note = "Taken by the baseline command. Records and skipped records are exact; allocation is gated "
-                     + "on the tolerance below. How long a read takes is not gated.",
+                Note = "Taken by the baseline command. The record count is exact and allocation is gated on the "
+                     + "tolerance below; how long a read takes is not gated. No sample is meant to have a record "
+                     + "refused, so any refusal fails the check whatever these figures say.",
                 Measurements = [.. results.Select( x => new Measurement
                 {
                     Profile = x.Profile,
                     Scenario = x.Scenario,
                     Records = x.Records,
-                    SkippedRecords = x.SkippedRecords,
                     BytesPerRecord = Math.Round( x.BytesPerRecord, 1 )
                 } )]
             };
@@ -316,10 +317,51 @@ namespace FlatFiles.IntegrationTest
 
         private static int Run( string[] names )
         {
-            var profiles = Load( names );
+            // A release entry carries these figures, so the run can hand them over ready to paste rather than
+            // leaving eighteen rows to be copied by eye.
+            var asMarkdown = names.Contains( "--markdown", StringComparer.OrdinalIgnoreCase );
+            var profiles = Load( [.. names.Where( x => !x.StartsWith( "--", StringComparison.Ordinal ) )] );
             var results = MeasureAll( profiles );
+            if (asMarkdown)
+            {
+                ReportAsMarkdown( profiles, results );
+                return 0;
+            }
             Report( profiles, results );
             return 0;
+        }
+
+        /// <summary>
+        ///     The same figures as a Markdown table, for the changelog entry a release carries.
+        /// </summary>
+        private static void ReportAsMarkdown( List<FileProfile> profiles, List<RunResult> results )
+        {
+            Console.WriteLine();
+            Console.WriteLine( "| Sample | Format | Columns | Records | Scenario | Time | MB/s | Bytes/record | Peak heap | Peak working set |" );
+            Console.WriteLine( "| --- | --- | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: |" );
+            var profileName = string.Empty;
+            foreach (var result in results)
+            {
+                var profile = profiles.Find( x => x.Name == result.Profile )!;
+                var first = result.Profile != profileName;
+                profileName = result.Profile;
+                Console.WriteLine( "| {0} | {1} | {2} | {3} | `{4}` | {5} | {6:N1} | {7:N0} | {8} | {9} |",
+                    first ? "**" + result.Profile + "**" : string.Empty,
+                    first ? ( profile.IsFixedLength ? "fixed-length" : "delimited" ) : string.Empty,
+                    first ? ColumnCount( profile ).ToString( "N0", CultureInfo.CurrentCulture ) : string.Empty,
+                    first ? result.Records.ToString( "N0", CultureInfo.CurrentCulture ) : string.Empty,
+                    result.Scenario,
+                    Duration( result.Elapsed ), result.MegabytesPerSecond, result.BytesPerRecord,
+                    Megabytes( result.PeakManagedBytes ), Megabytes( result.PeakWorkingSetBytes ) );
+            }
+            Console.WriteLine();
+            var skipped = results.Where( x => x.SkippedRecords != 0 )
+                .Select( x => string.Format( CultureInfo.CurrentCulture, "{0} `{1}` skipped {2:N0}", x.Profile, x.Scenario, x.SkippedRecords ) );
+            List<string> notes = [.. skipped];
+            if (notes.Count != 0)
+            {
+                Console.WriteLine( "Records skipped: " + string.Join( "; ", notes ) + "." );
+            }
         }
 
         private static RunResult? MeasureElsewhere( string name, string scenario )

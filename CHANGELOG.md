@@ -11,9 +11,32 @@ The mapper takes that path only where it can see that nothing needs a value as a
 
 Error handling is unchanged, including the one part of it that still boxes: a `ColumnError` handler's substitution arrives as an `object` and is set through the member, which is a box for each recovered value rather than for every value. Twenty-four tests cover the new path and each way out of it. Beside them, a check that is not part of the suite reads thirty-one scenarios - hooks, substitutions, default values, null formatters, ignored columns, metadata columns, every handler, selectors, nested types, headers, asynchronous reads, both readers - through this version and through 8.0.0, and compares the two character for character; they agree on all thirty-one, including which exception each failure raises.
 
-**A release is now checked against six large files before it goes out.** Nothing in the package changes for it. `FlatFiles.IntegrationTest` generates three delimited files and three fixed-length ones from committed profiles - 379 columns, 344,352 records, every field quoted, fourteen record layouts chosen by a single character, a 3,500-character record - reads each end to end, and compares records, records skipped and bytes allocated per record against a committed baseline. It runs in the publish workflow only, and a release fails if a figure moved without somebody meaning it to. The files are committed rather than built, compressed because one of them is 102 MB, and nothing regenerates them on its own - they are the input every figure is gated against, and an input that rebuilt itself would turn a change in the generator into what looks like a change in the library. The baseline pins a SHA-256 of each, so a run reading different bytes is refused rather than reported.
+**A release is now checked against six large files before it goes out.** Nothing in the package changes for it. `FlatFiles.IntegrationTest` reads six committed samples end to end - three delimited, three fixed-length, shaped after real files at 379 columns, 344,352 records, every field quoted, fourteen record layouts chosen by a single character and a 3,500-character record - and compares records, records skipped and bytes allocated per record against a committed baseline. It runs in the publish workflow only, and a release fails if a figure moved without somebody meaning it to. The files are committed rather than built, compressed because one of them is 102 MB, and nothing regenerates them on its own - they are the input every figure is gated against, and an input that rebuilt itself would turn a change in the generator into what looks like a change in the library. The baseline pins a SHA-256 of each, so a run reading different bytes is refused rather than reported.
 
-Reading those files turned up something about the reader worth writing down, which no unit test had reason to ask. A delimited record with **too few** fields is refused, and one with **too many** is accepted - the first however many the schema declares are kept and the rest discarded. So a record carrying a separator inside an unquoted field is read with every later value one position to the left, and nothing says so. Of 171 such records in the widest sample, a typed schema notices 148, because a shifted value has to reach a column that will not parse it before anything fails; where the separator falls among text columns, nothing does. This is behaviour as it stands, not a change made here.
+Where each of the six stands as this release goes out. Three scenarios apiece: `parse` reads every column as text and asks for no value, `typed` gives each single-typed column its own type, and `values` adds a `GetValues` call per record. Time is reported and never gated, because it is not stable enough to gate on; bytes per record is, at 2%.
+
+| Sample | Format | Columns | Records | Scenario | Time | MB/s | Bytes/record | Peak heap | Peak working set |
+| --- | --- | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: |
+| **Set1Sample1** | delimited | 379 | 37,031 | `parse` | 1.24 s | 29.6 | 5,685 | 13.5 MB | 51.1 MB |
+|  |  |  |  | `typed` | 1.45 s | 25.3 | 5,629 | 13.5 MB | 52.5 MB |
+|  |  |  |  | `values` | 1.47 s | 25.1 | 8,685 | 13.3 MB | 53.0 MB |
+| **Set1Sample2** | delimited | 58 | 344,352 | `parse` | 1.36 s | 74.5 | 1,414 | 13.4 MB | 50.9 MB |
+|  |  |  |  | `typed` | 1.67 s | 60.7 | 1,338 | 13.4 MB | 52.9 MB |
+|  |  |  |  | `values` | 1.74 s | 58.2 | 1,826 | 13.2 MB | 52.6 MB |
+| **Set1Sample3** | delimited | 196 | 39,337 | `parse` | 1.12 s | 40.0 | 3,528 | 13.4 MB | 50.4 MB |
+|  |  |  |  | `typed` | 1.38 s | 32.4 | 2,988 | 13.3 MB | 53.5 MB |
+|  |  |  |  | `values` | 1.44 s | 31.1 | 4,580 | 13.4 MB | 53.6 MB |
+| **Set2Sample1** | fixed-length | 172 | 22,481 | `parse` | 709 ms | 22.7 | 3,759 | 13.6 MB | 50.4 MB |
+|  |  |  |  | `typed` | 763 ms | 21.1 | 3,598 | 13.7 MB | 53.0 MB |
+|  |  |  |  | `values` | 772 ms | 20.9 | 4,306 | 13.7 MB | 53.0 MB |
+| **Set2Sample2** | fixed-length | 235 | 1,790 | `parse` | 119 ms | 50.1 | 12,092 | 12.6 MB | 47.7 MB |
+|  |  |  |  | `typed` | 141 ms | 42.4 | 11,269 | 13.3 MB | 49.8 MB |
+|  |  |  |  | `values` | 138 ms | 43.4 | 13,172 | 11.2 MB | 49.9 MB |
+| **Set2Sample3** | fixed-length | 34 | 18,047 | `parse` | 157 ms | 27.6 | 1,882 | 12.9 MB | 48.9 MB |
+|  |  |  |  | `typed` | 205 ms | 21.1 | 1,648 | 13.2 MB | 51.1 MB |
+|  |  |  |  | `values` | 206 ms | 21.0 | 1,916 | 13.1 MB | 51.1 MB |
+
+Building those samples turned up something about the reader worth writing down, which no unit test had reason to ask. A delimited record with **too few** fields is refused, and one with **too many** is accepted - the first however many the schema declares are kept and the rest discarded. So a record carrying a separator inside an unquoted field is read with every later value one position to the left, and nothing says so; whether anything notices depends on whether a shifted value reaches a column that will not parse it, which is a matter of where the separator fell rather than of the record being wrong. This is behaviour as it stands, not a change made here. No sample models it: every one of the six is read without a single record refused, so that a refusal in a later run means something has changed rather than something was always so.
 
 **This library puts performance first.** Where a performance change and a feature want the same release, the performance change goes in and the feature waits. That is the whole reason the last several releases read as they do - buffer writers, a span tokeniser, a column context built only when something can read it, span parsing on both readers - and it is why the three changes above went in ahead of every feature below. What is left on that list is feature work: the values array and the boxes were the two large allocations a typed read made, and both are now gone.
 

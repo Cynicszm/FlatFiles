@@ -55,8 +55,8 @@ namespace FlatFiles.IntegrationTest
             Console.WriteLine( new string( '=', 104 ) );
             Console.WriteLine( "AGAINST THE BASELINE" );
             Console.WriteLine( new string( '=', 104 ) );
-            Console.WriteLine( "{0,-14}{1,-8}{2,12}{3,12}{4,14}{5,14}{6,10}   {7}",
-                "Profile", "Scenario", "Records", "Skipped", "Bytes/rec", "Baseline", "Change", "" );
+            Console.WriteLine( "{0,-14}{1,-8}{2,12}{3,14}{4,14}{5,10}   {6}",
+                "Profile", "Scenario", "Records", "Bytes/rec", "Baseline", "Change", "" );
 
             var passed = true;
             var seen = new HashSet<string>();
@@ -67,8 +67,8 @@ namespace FlatFiles.IntegrationTest
                 if (expected is null)
                 {
                     passed = false;
-                    Console.WriteLine( "{0,-14}{1,-8}{2,12:N0}{3,12:N0}{4,14:N0}{5,14}{6,10}   {7}",
-                        result.Profile, result.Scenario, result.Records, result.SkippedRecords,
+                    Console.WriteLine( "{0,-14}{1,-8}{2,12:N0}{3,14:N0}{4,14}{5,10}   {6}",
+                        result.Profile, result.Scenario, result.Records,
                         result.BytesPerRecord, "-", "-", "FAILED: not in the baseline" );
                     continue;
                 }
@@ -77,9 +77,11 @@ namespace FlatFiles.IntegrationTest
                 {
                     reasons.Add( string.Format( CultureInfo.CurrentCulture, "records {0:N0} -> {1:N0}", expected.Records, result.Records ) );
                 }
-                if (result.SkippedRecords != expected.SkippedRecords)
+                // No sample is meant to have a record refused, so one that does is worth failing over whatever
+                // the other figures say. The record count would catch it too, but not say what happened.
+                if (result.SkippedRecords != 0)
                 {
-                    reasons.Add( string.Format( CultureInfo.CurrentCulture, "skipped {0:N0} -> {1:N0}", expected.SkippedRecords, result.SkippedRecords ) );
+                    reasons.Add( string.Format( CultureInfo.CurrentCulture, "{0:N0} records were refused", result.SkippedRecords ) );
                 }
                 var change = expected.BytesPerRecord == 0 ? 0 : result.BytesPerRecord / expected.BytesPerRecord - 1;
                 if (Math.Abs( change ) > baseline.Tolerance.BytesPerRecord)
@@ -87,8 +89,8 @@ namespace FlatFiles.IntegrationTest
                     reasons.Add( string.Format( CultureInfo.CurrentCulture, "allocation moved {0:+0.0%;-0.0%}", change ) );
                 }
                 passed &= reasons.Count == 0;
-                Console.WriteLine( "{0,-14}{1,-8}{2,12:N0}{3,12:N0}{4,14:N0}{5,14:N0}{6,10}   {7}",
-                    result.Profile, result.Scenario, result.Records, result.SkippedRecords,
+                Console.WriteLine( "{0,-14}{1,-8}{2,12:N0}{3,14:N0}{4,14:N0}{5,10}   {6}",
+                    result.Profile, result.Scenario, result.Records,
                     result.BytesPerRecord, expected.BytesPerRecord,
                     change.ToString( "+0.0%;-0.0%;0.0%", CultureInfo.CurrentCulture ),
                     reasons.Count == 0 ? string.Empty : "FAILED: " + string.Join( "; ", reasons ) );
@@ -101,8 +103,8 @@ namespace FlatFiles.IntegrationTest
                     continue;
                 }
                 passed = false;
-                Console.WriteLine( "{0,-14}{1,-8}{2,12}{3,12}{4,14}{5,14:N0}{6,10}   {7}",
-                    expected.Profile, expected.Scenario, "-", "-", "-", expected.BytesPerRecord, "-",
+                Console.WriteLine( "{0,-14}{1,-8}{2,12}{3,14}{4,14:N0}{5,10}   {6}",
+                    expected.Profile, expected.Scenario, "-", "-", expected.BytesPerRecord, "-",
                     "FAILED: the baseline has this and the run did not produce it" );
             }
 
