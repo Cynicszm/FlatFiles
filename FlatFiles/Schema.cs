@@ -1,4 +1,5 @@
 ﻿using System;
+using FlatFiles.TypeMapping;
 
 namespace FlatFiles
 {
@@ -115,6 +116,84 @@ namespace FlatFiles
                 }
             }
             return parsedValues;
+        }
+
+        /// <summary>
+        ///     Parses the record straight onto an entity, one column at a time, so that no value is ever an
+        ///     <see cref="object" />. A type mapper supplies one setter per column, in the order the columns are
+        ///     read, and takes this path only when every column and member it maps allows it.
+        /// </summary>
+        /// <typeparam name="TEntity">The type being read into.</typeparam>
+        /// <param name="context">The metadata for the current record being processed.</param>
+        /// <param name="values">The raw values of the record.</param>
+        /// <param name="entity">The entity to read into.</param>
+        /// <param name="setters">One setter per column that yields a value, in order.</param>
+        internal void ParseValues<TEntity>( IRecoverableRecordContext context, RawRecord values, TEntity entity, IColumnSetter<TEntity>[] setters )
+        {
+            for (int columnIndex = 0, sourceIndex = 0, destinationIndex = 0, columnCount = ColumnDefinitions.Count;
+                columnIndex != columnCount;
+                ++columnIndex)
+            {
+                var definition = ColumnDefinitions[columnIndex];
+                if (definition is IMetadataColumn)
+                {
+                    // Nothing in the record feeds this column, so it takes a destination but no source.
+                    var columnContext = NewColumnContext( context, columnIndex, destinationIndex );
+                    setters[destinationIndex].SetObject( entity, ParseWithContext( columnContext, string.Empty ) );
+                    ++destinationIndex;
+                    continue;
+                }
+                if (definition.IsIgnored)
+                {
+                    // An ignored column still runs whatever is attached to it, and still discards the result.
+                    ParseValue( context, columnIndex, -1, values[sourceIndex] );
+                    ++sourceIndex;
+                    continue;
+                }
+                ParseValueInto( context, columnIndex, destinationIndex, values[sourceIndex], entity, setters[destinationIndex] );
+                ++sourceIndex;
+                ++destinationIndex;
+            }
+        }
+
+        private void ParseValueInto<TEntity>( IRecoverableRecordContext context, int columnIndex, int destinationIndex, ReadOnlySpan<char> rawValue, TEntity entity, IColumnSetter<TEntity> setter )
+        {
+            var options = context.ExecutionContext.Options;
+            var definition = ColumnDefinitions[columnIndex];
+            if (options.IsColumnContextDisabled)
+            {
+                try
+                {
+                    setter.Set( null, entity, rawValue );
+                }
+                catch (Exception exception)
+                {
+                    throw new ColumnProcessingException( definition, destinationIndex, rawValue.ToString(), exception );
+                }
+                return;
+            }
+            if (definition.IsColumnContextRequired || options.FormatProvider is not null)
+            {
+                var columnContext = NewColumnContext( context, columnIndex, destinationIndex );
+                try
+                {
+                    setter.Set( columnContext, entity, rawValue );
+                }
+                catch (Exception exception)
+                {
+                    // A handler's substitution arrives as an object, which is the one value on this path that boxes.
+                    setter.SetObject( entity, RecoverParse( columnContext, rawValue.ToString(), exception ) );
+                }
+                return;
+            }
+            try
+            {
+                setter.Set( null, entity, rawValue );
+            }
+            catch (Exception exception)
+            {
+                setter.SetObject( entity, RecoverParse( NewColumnContext( context, columnIndex, destinationIndex ), rawValue.ToString(), exception ) );
+            }
         }
 
         private object? ParseValue( IRecoverableRecordContext context, int columnIndex, int destinationIndex, ReadOnlySpan<char> rawValue )

@@ -308,6 +308,53 @@ namespace FlatFiles
         }
 
         /// <summary>
+        ///     Whether this column can be parsed into <typeparamref name="T" /> without going through
+        ///     <see cref="object" />. It cannot when anything in the way expects a value of that shape: either of the
+        ///     parsing hooks, which are declared in terms of <see cref="object" /> and <see cref="string" />, or a
+        ///     derived column that replaced one of the <c>Parse</c> methods and so must see every value itself.
+        /// </summary>
+        internal bool SupportsTypedParse => OnParsing is null && OnParsed is null && !OverridesStringParse && !OverridesSpanParse;
+
+        /// <summary>
+        ///     Parses the value into the column's own type rather than into an object. Only valid where
+        ///     <see cref="SupportsTypedParse" /> says so; everything the ordinary parse does short of the hooks
+        ///     happens here too, so a null formatter, a default value and trimming all still apply.
+        /// </summary>
+        /// <param name="context">Holds information about the column current being processed.</param>
+        /// <param name="value">The value to parse.</param>
+        /// <param name="parsed">The parsed value, or the type's default when the value reads as null.</param>
+        /// <returns>False when the value reads as null, in which case the caller decides what null means.</returns>
+        internal bool ParseTyped( IColumnContext? context, ReadOnlySpan<char> value, out T parsed )
+        {
+            if (NullFormatter.IsNullValue( context, value ))
+            {
+                if (IsNullable)
+                {
+                    parsed = default!;
+                    return false;
+                }
+                var substitute = DefaultValue.GetDefaultValue( context );
+                if (substitute is null)
+                {
+                    parsed = default!;
+                    return false;
+                }
+                parsed = (T) substitute;
+                return true;
+            }
+            parsed = OnParse( context, IsTrimmed ? value.Trim() : value );
+            return true;
+        }
+
+        /// <summary>
+        ///     Whether the runtime type replaced <see cref="Parse(IColumnContext?, ReadOnlySpan{char})" />.
+        /// </summary>
+        private bool OverridesSpanParse => overridesSpanParse ??=
+            GetType().GetMethod( nameof( Parse ), [typeof( IColumnContext ), typeof( ReadOnlySpan<char> )] )?.DeclaringType != typeof( ColumnDefinition<T> );
+
+        private bool? overridesSpanParse;
+
+        /// <summary>
         ///     Whether the runtime type replaced <see cref="Parse(IColumnContext?, string)" />, in which case the
         ///     value has to reach it as a string. Asked once per column rather than once per value, because the
         ///     answer is a reflection lookup and never changes.

@@ -14,5 +14,11 @@
         /// </remarks>
         /// <returns>The reader's own values, valid until the next record is read.</returns>
         object?[] GetCurrentValues();
+
+        /// <summary>
+        ///     Set by a typed reader that will take each record onto an entity itself, so that the reader does not
+        ///     parse the values into objects first. Null where the reader parses them as usual.
+        /// </summary>
+        IEntityAssembler? Assembler { get; set; }
     }
 }

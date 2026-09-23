@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Reflection;
 
 namespace FlatFiles.TypeMapping
 {
@@ -54,6 +55,122 @@ namespace FlatFiles.TypeMapping
             }
             return cachedReader;
         }
+
+        public TEntity CreateEntity()
+        {
+            var factory = lookup.GetFactory<TEntity>() ?? codeGenerator.GetFactory<TEntity>();
+            return factory();
+        }
+
+        /// <summary>
+        ///     Builds one setter per column, or answers null where anything about the mapping means a value has to
+        ///     travel as an object: a custom reader, a nested entity, a field rather than a property, a property
+        ///     without a setter, a column whose type does not match the member's, or a column carrying a hook.
+        /// </summary>
+        public IColumnSetter<TEntity>[]? GetColumnSetters()
+        {
+            if (cachedSetters is not null)
+            {
+                return cachedSetters.Length == 0 ? null : cachedSetters;
+            }
+            cachedSetters = BuildColumnSetters() ?? [];
+            return cachedSetters.Length == 0 ? null : cachedSetters;
+        }
+
+        private IColumnSetter<TEntity>[]? BuildColumnSetters()
+        {
+            // Building one of these closes a generic type over the column's type, which a runtime without dynamic
+            // code cannot do for a value type it was not built with.
+            if (!DynamicCode.IsSupported || typeof( TEntity ).IsValueType || Member is not null)
+            {
+                return null;
+            }
+            var mappings = lookup.GetMappings();
+            if (mappings.Any( m => m.Member?.ParentAccessor is not null ))
+            {
+                return null;
+            }
+            var readerMappings = GetReaderMemberMappings( mappings );
+            if (readerMappings.Length == 0 || readerMappings.Length != lookup.LogicalCount)
+            {
+                return null;
+            }
+            var setters = new IColumnSetter<TEntity>[readerMappings.Length];
+            foreach (var mapping in readerMappings)
+            {
+                var setter = BuildColumnSetter( mapping );
+                if (setter is null || mapping.LogicalIndex < 0 || mapping.LogicalIndex >= setters.Length)
+                {
+                    return null;
+                }
+                setters[mapping.LogicalIndex] = setter;
+            }
+            return Array.Exists( setters, s => s is null ) ? null : setters;
+        }
+
+        private static IColumnSetter<TEntity>? BuildColumnSetter( IMemberMapping mapping )
+        {
+            if (mapping.Reader is not null || mapping.Member is null)
+            {
+                return null;
+            }
+            if (mapping.Member.MemberInfo is not PropertyInfo property)
+            {
+                return null;
+            }
+            if (mapping.ColumnDefinition is IMetadataColumn)
+            {
+                // Its value comes from the context rather than the record, and it is never a ColumnDefinition<T>.
+                return null;
+            }
+            // Public only: a non-public setter cannot be reached from generated code either, and a mapping that
+            // uses one should keep failing the way it does today rather than working only on this path.
+            var assign = property.GetSetMethod( false );
+            if (assign is null || mapping.ColumnDefinition is not ColumnDefinition definition)
+            {
+                return null;
+            }
+            var columnType = GetTypedColumnType( definition );
+            if (columnType is null || !SupportsTypedParse( definition ))
+            {
+                return null;
+            }
+            var valueType = columnType.GetGenericArguments()[0];
+            var memberType = property.PropertyType;
+            if (memberType == valueType)
+            {
+                var assigner = assign.CreateDelegate( typeof( Action<,> ).MakeGenericType( typeof( TEntity ), valueType ) );
+                var setterType = typeof( ColumnSetter<,> ).MakeGenericType( typeof( TEntity ), valueType );
+                return (IColumnSetter<TEntity>) Activator.CreateInstance( setterType, definition, assigner, mapping.Member )!;
+            }
+            if (valueType.IsValueType && memberType == typeof( Nullable<> ).MakeGenericType( valueType ))
+            {
+                var assigner = assign.CreateDelegate( typeof( Action<,> ).MakeGenericType( typeof( TEntity ), memberType ) );
+                var setterType = typeof( NullableColumnSetter<,> ).MakeGenericType( typeof( TEntity ), valueType );
+                return (IColumnSetter<TEntity>) Activator.CreateInstance( setterType, definition, assigner )!;
+            }
+            return null;
+        }
+
+        private static Type? GetTypedColumnType( ColumnDefinition definition )
+        {
+            for (var type = definition.GetType(); type is not null; type = type.BaseType)
+            {
+                if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof( ColumnDefinition<> ))
+                {
+                    return type;
+                }
+            }
+            return null;
+        }
+
+        private static bool SupportsTypedParse( ColumnDefinition definition )
+        {
+            var property = GetTypedColumnType( definition )!.GetProperty( "SupportsTypedParse", BindingFlags.Instance | BindingFlags.NonPublic );
+            return property?.GetValue( definition ) is true;
+        }
+
+        private IColumnSetter<TEntity>[]? cachedSetters;
 
         Func<IRecordContext, object?[], object?> IMapper.GetReader()
         {
