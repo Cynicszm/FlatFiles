@@ -107,9 +107,12 @@ like any other. A baseline that moves without an entry beside it is the thing th
 The samples themselves are gated the same way and for the same reason. Until a new baseline is taken,
 a regenerated sample fails the check rather than quietly shifting every figure under it.
 
-A release entry in the changelog carries the whole table - six samples, three scenarios apiece - so
-what a version cost is recorded where it shipped rather than only in a baseline the next release
-overwrites. `run --markdown` prints it ready to paste.
+A release that takes a new baseline carries the whole table in its changelog entry - six samples, three
+scenarios apiece - so what a version cost is recorded where it shipped rather than only in a baseline
+the next release overwrites. `run --markdown` prints it, both tables and the notes saying what each
+column measures, ready to paste. A release that leaves the baseline alone says the figures are
+unchanged and names the release that last recorded them, rather than reprinting a table whose
+ungated columns would differ anyway.
 
 ## What the profiles pin, and what they do not
 

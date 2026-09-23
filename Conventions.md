@@ -222,14 +222,21 @@ not worth spending on every push. When a change is intended, take
 a new baseline with the `baseline` command and describe it in the changelog, in the same pull request
 as the changelog entry and before the tag is cut.
 
-**A release entry carries the full table**, all six samples and all three scenarios apiece, so that what
-a version cost is recorded where it was released rather than only in a baseline file that the next
-release overwrites. `run --markdown` prints it ready to paste:
+**A release that takes a new baseline carries the full table**, all six samples and all three scenarios
+apiece, so that what a version cost is recorded where it was released rather than only in a baseline
+file the next release overwrites. `run --markdown` prints it, both tables and the notes saying what
+each column measures, ready to paste:
 
     dotnet run --project FlatFiles.IntegrationTest -c Release -- run --markdown
 
 Take it against the samples the release is cut from, in the pull request that finalises the changelog
 entry.
+
+**A release that does not change the baseline does not repeat the table.** It says the figures are
+unchanged and names the release that last recorded them. Reprinting an identical table invites the
+reader to hunt for a difference that is not there, and the numbers in it that are not gated - total
+time and MB/s - would differ anyway, from the machine rather than from the library, which is worse
+than saying nothing.
 
 ## Inspections
 
