@@ -242,6 +242,26 @@ reader to hunt for a difference that is not there, and the numbers in it that ar
 time and MB/s - would differ anyway, from the machine rather than from the library, which is worse
 than saying nothing.
 
+## Documentation
+
+`README.md` is the library's documentation, and its **Table of Contents is part of it**: every `##` and
+`###` heading has an entry, and the entries are in document order. The two are the same list or one of
+them is wrong. A section added without an entry is a section nobody finds.
+
+**Bring both up to date when a release is cut**, in the same pull request that dates the changelog
+entry and before the tag. The changelog says what changed and why; the README says how to use what is
+now there, and a release that added something a caller can reach - a way of mapping, an option, a
+column type - is not finished until the README has a section for it and the contents point at that
+section.
+
+The same applies to what the repository does to verify itself. `FlatFiles.IntegrationTest` has its own
+README carrying the tables, what each column measures and which figures are gated, and that is the
+right home for the detail; the root README should say the project exists, what it is for, and link to
+it, so that somebody reading about the library finds out how it is held to account.
+
+Checking this is mechanical, and worth doing rather than assuming: list the headings, list the
+contents entries, and compare them.
+
 ## Inspections
 
 The three projects are kept clean against ReSharper's default inspection set, with the exceptions below, and a
