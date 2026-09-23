@@ -59,7 +59,8 @@ namespace FlatFiles.IntegrationTest
             Console.WriteLine( "                          Add --markdown for the table a release entry carries." );
             Console.WriteLine( "  check    [profile...]   measure, compare against the baseline, and fail if anything moved" );
             Console.WriteLine( "  profile  [profile...]   read the generated files back and write a workbook describing them" );
-            Console.WriteLine( "  baseline [profile...]   measure and write the baseline, replacing what is there" );
+            Console.WriteLine( "  baseline [profile...]   measure, write the baseline, and print the table and notes" );
+            Console.WriteLine( "                          for the changelog entry, from the same runs." );
             Console.WriteLine( "  measure  <profile> <scenario>" );
             Console.WriteLine( "                          measure one scenario in this process and print one line" );
             Console.WriteLine();
@@ -288,6 +289,14 @@ namespace FlatFiles.IntegrationTest
             }
             Console.WriteLine( "Baseline written with {0} measurements:", baseline.Measurements.Count );
             Console.WriteLine( "  {0}", source );
+            Console.WriteLine();
+            Console.WriteLine( new string( '-', 110 ) );
+            Console.WriteLine( "For the changelog entry of the release this baseline is for. These are the runs the baseline" );
+            Console.WriteLine( "was taken from, so the table and the figures it gates on are the same measurements." );
+            Console.WriteLine( new string( '-', 110 ) );
+            // Printed rather than written to a file: the changelog is where these figures live, and a second
+            // copy beside the baseline would only go stale against it.
+            ReportAsMarkdown( profiles, results );
             return 0;
         }
 
@@ -367,7 +376,7 @@ namespace FlatFiles.IntegrationTest
             Console.WriteLine();
             Console.WriteLine( "**{0}**", heading );
             Console.WriteLine();
-            Console.WriteLine( "| Sample | Columns | Records | Scenario | Total Time | Range | MB/s | Bytes/record | Peak heap | Peak working set |" );
+            Console.WriteLine( "| Sample | Columns | Records | Scenario | Mean Total Time | Range | MB/s | Bytes/record | Peak heap | Peak working set |" );
             Console.WriteLine( "| --- | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |" );
 
             var previous = string.Empty;
@@ -414,9 +423,9 @@ namespace FlatFiles.IntegrationTest
             Console.WriteLine( "| --- | --- |" );
             Console.WriteLine( "| Columns | Columns in the schema; for a fixed-length sample, in its widest record layout. |" );
             Console.WriteLine( "| Records | Records the reader yielded. Gated exactly. No sample is built to have a record refused, so any refusal fails the check whatever else agrees. |" );
-            Console.WriteLine( "| Total Time | Mean wall clock of {0} cold loads: opening the file, building the schema, constructing the reader, reading every record, and disposing, in a process that has done nothing else. Nothing is amortised over reads a real caller never performs. **Reported, never gated.** |", Runs );
+            Console.WriteLine( "| Mean Total Time | Mean wall clock of {0} cold loads: opening the file, building the schema, constructing the reader, reading every record, and disposing, in a process that has done nothing else. Nothing is amortised over reads a real caller never performs. **Reported, never gated.** |", Runs );
             Console.WriteLine( "| Range | The quickest and slowest of those {0} loads, so the spread behind the mean is visible rather than implied. |", Runs );
-            Console.WriteLine( "| MB/s | File size divided by Total Time, so it carries the same caveats. |" );
+            Console.WriteLine( "| MB/s | File size divided by Mean Total Time, so it carries the same caveats. |" );
             Console.WriteLine( "| Bytes/record | Mean bytes allocated across a load, divided by records read. Deterministic for given bytes on a given runtime, and repeats to within 0.1% here. **Gated at 2%.** |" );
             Console.WriteLine( "| Peak heap | The largest the managed heap reached in any of the {0} loads, sampled every 5 ms. Reported. |", Runs );
             Console.WriteLine( "| Peak working set | The largest peak working set any of those processes reached. Each does one load and exits, so the figure is a whole job's footprint, most of it runtime start-up rather than the read. Reported. |" );
@@ -424,8 +433,8 @@ namespace FlatFiles.IntegrationTest
             Console.WriteLine( "Averaging {0} whole processes takes most of the machine noise out, but a cold start is noisy by nature and", Runs );
             Console.WriteLine( "the range shows what is left. `FlatFiles.Benchmark` is the project that measures a warm steady state, with" );
             Console.WriteLine( "statistics rather than a mean; these figures are the other question - what one job costs end to end - and" );
-            Console.WriteLine( "show the shape of the work rather than a number to compare release to release, which is why neither Total" );
-            Console.WriteLine( "Time nor MB/s is gated." );
+            Console.WriteLine( "show the shape of the work rather than a number to compare release to release, which is why neither Mean" );
+            Console.WriteLine( "Total Time nor MB/s is gated." );
 
             List<string> refused = [.. results.Where( x => x.SkippedRecords != 0 )
                 .Select( x => string.Format( CultureInfo.CurrentCulture, "{0} `{1}` refused {2:N0}", Shorthand( x.Profile ), x.Scenario, x.SkippedRecords ) )];
@@ -537,8 +546,8 @@ namespace FlatFiles.IntegrationTest
             Console.WriteLine( new string( '=', 118 ) );
             Console.WriteLine( "MEASUREMENTS" );
             Console.WriteLine( new string( '=', 118 ) );
-            Console.WriteLine( "{0,-14}{1,-8}{2,11}{3,9}{4,12}{5,20}{6,11}{7,12}{8,12}{9,12}",
-                "Profile", "Scenario", "Records", "Refused", "Total time", "Range", "MB/s", "Bytes/rec", "Peak heap", "Peak WS" );
+            Console.WriteLine( "{0,-14}{1,-8}{2,11}{3,9}{4,16}{5,20}{6,11}{7,12}{8,12}{9,12}",
+                "Profile", "Scenario", "Records", "Refused", "Mean total time", "Range", "MB/s", "Bytes/rec", "Peak heap", "Peak WS" );
             var profileName = string.Empty;
             foreach (var result in results)
             {
@@ -546,7 +555,7 @@ namespace FlatFiles.IntegrationTest
                 {
                     profileName = result.Profile;
                 }
-                Console.WriteLine( "{0,-14}{1,-8}{2,11:N0}{3,9:N0}{4,12}{5,20}{6,11:N1}{7,12:N0}{8,12}{9,12}",
+                Console.WriteLine( "{0,-14}{1,-8}{2,11:N0}{3,9:N0}{4,16}{5,20}{6,11:N1}{7,12:N0}{8,12}{9,12}",
                     result.Profile, result.Scenario, result.Records, result.SkippedRecords,
                     Duration( result.Elapsed ), Spread( result ), result.MegabytesPerSecond, result.BytesPerRecord,
                     Megabytes( result.PeakManagedBytes ), Megabytes( result.PeakWorkingSetBytes ) );
@@ -556,7 +565,7 @@ namespace FlatFiles.IntegrationTest
             Console.WriteLine( "typed  - each single-typed column given its own type, no value asked for" );
             Console.WriteLine( "values - typed, and GetValues called for every record" );
             Console.WriteLine();
-            Console.WriteLine( "Total time is the mean of {0} cold loads, each a process that starts, reads the file once and exits,", Runs );
+            Console.WriteLine( "Mean total time is over {0} cold loads, each a process that starts, reads the file once and exits,", Runs );
             Console.WriteLine( "with the quickest and slowest beside it. That is how the library is mostly used, so nothing here is" );
             Console.WriteLine( "amortised over reads a real caller never performs." );
             Console.WriteLine( "Bytes/rec is what the read allocated, per record, and is the figure the release gate compares." );

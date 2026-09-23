@@ -17,35 +17,35 @@ This release takes the first baseline, so it carries the figures. A release that
 
 **Delimited**
 
-| Sample | Columns | Records | Scenario | Total Time | Range | MB/s | Bytes/record | Peak heap | Peak working set |
+| Sample | Columns | Records | Scenario | Mean Total Time | Range | MB/s | Bytes/record | Peak heap | Peak working set |
 | --- | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| S1/S1 | 379 | 37,031 | `parse` | 1.38 s | 1.34 s - 1.40 s | 26.6 | 5,685 | 13.5 MB | 50.7 MB |
-| S1/S1 | 379 | 37,031 | `typed` | 1.58 s | 1.57 s - 1.61 s | 23.2 | 5,629 | 13.5 MB | 52.3 MB |
-| S1/S1 | 379 | 37,031 | `values` | 1.59 s | 1.56 s - 1.61 s | 23.1 | 8,685 | 13.6 MB | 52.5 MB |
+| S1/S1 | 379 | 37,031 | `parse` | 1.38 s | 1.35 s - 1.43 s | 26.7 | 5,685 | 13.5 MB | 50.6 MB |
+| S1/S1 | 379 | 37,031 | `typed` | 1.61 s | 1.60 s - 1.61 s | 22.9 | 5,629 | 13.6 MB | 52.5 MB |
+| S1/S1 | 379 | 37,031 | `values` | 1.60 s | 1.57 s - 1.62 s | 23.0 | 8,685 | 13.6 MB | 53.0 MB |
 | | | | | | | | | | |
-| S1/S2 | 58 | 344,352 | `parse` | 1.59 s | 1.51 s - 1.88 s | 64.0 | 1,414 | 13.5 MB | 50.4 MB |
-| S1/S2 | 58 | 344,352 | `typed` | 1.82 s | 1.77 s - 1.89 s | 55.9 | 1,338 | 13.4 MB | 52.2 MB |
-| S1/S2 | 58 | 344,352 | `values` | 1.79 s | 1.78 s - 1.80 s | 56.7 | 1,826 | 13.5 MB | 52.4 MB |
+| S1/S2 | 58 | 344,352 | `parse` | 1.50 s | 1.46 s - 1.53 s | 67.8 | 1,414 | 13.4 MB | 50.7 MB |
+| S1/S2 | 58 | 344,352 | `typed` | 1.80 s | 1.74 s - 1.85 s | 56.3 | 1,338 | 13.5 MB | 52.4 MB |
+| S1/S2 | 58 | 344,352 | `values` | 1.83 s | 1.77 s - 1.90 s | 55.4 | 1,826 | 13.4 MB | 52.2 MB |
 | | | | | | | | | | |
-| S1/S3 | 196 | 39,337 | `parse` | 1.24 s | 1.18 s - 1.26 s | 36.1 | 3,528 | 13.4 MB | 49.5 MB |
-| S1/S3 | 196 | 39,337 | `typed` | 1.59 s | 1.49 s - 1.71 s | 28.1 | 2,988 | 13.5 MB | 53.0 MB |
-| S1/S3 | 196 | 39,337 | `values` | 1.50 s | 1.45 s - 1.53 s | 29.8 | 4,580 | 13.4 MB | 53.0 MB |
+| S1/S3 | 196 | 39,337 | `parse` | 1.22 s | 1.14 s - 1.27 s | 36.5 | 3,528 | 13.5 MB | 49.7 MB |
+| S1/S3 | 196 | 39,337 | `typed` | 1.55 s | 1.46 s - 1.58 s | 28.9 | 2,988 | 13.5 MB | 53.1 MB |
+| S1/S3 | 196 | 39,337 | `values` | 1.51 s | 1.49 s - 1.53 s | 29.7 | 4,580 | 13.5 MB | 53.1 MB |
 
 **Fixed-length**
 
-| Sample | Columns | Records | Scenario | Total Time | Range | MB/s | Bytes/record | Peak heap | Peak working set |
+| Sample | Columns | Records | Scenario | Mean Total Time | Range | MB/s | Bytes/record | Peak heap | Peak working set |
 | --- | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| S2/S1 | 172 | 22,481 | `parse` | 494 ms | 460 ms - 582 ms | 32.6 | 3,759 | 13.4 MB | 49.1 MB |
-| S2/S1 | 172 | 22,481 | `typed` | 632 ms | 522 ms - 732 ms | 25.5 | 3,597 | 13.8 MB | 51.9 MB |
-| S2/S1 | 172 | 22,481 | `values` | 662 ms | 602 ms - 792 ms | 24.3 | 4,306 | 13.6 MB | 52.0 MB |
+| S2/S1 | 172 | 22,481 | `parse` | 540 ms | 443 ms - 613 ms | 29.8 | 3,759 | 13.8 MB | 49.0 MB |
+| S2/S1 | 172 | 22,481 | `typed` | 615 ms | 545 ms - 693 ms | 26.2 | 3,597 | 13.8 MB | 51.8 MB |
+| S2/S1 | 172 | 22,481 | `values` | 746 ms | 718 ms - 760 ms | 21.6 | 4,305 | 13.8 MB | 52.1 MB |
 | | | | | | | | | | |
-| S2/S2 | 235 | 1,790 | `parse` | 119 ms | 116 ms - 123 ms | 50.2 | 12,089 | 12.6 MB | 47.0 MB |
-| S2/S2 | 235 | 1,790 | `typed` | 147 ms | 137 ms - 151 ms | 40.8 | 11,266 | 12.9 MB | 49.1 MB |
-| S2/S2 | 235 | 1,790 | `values` | 144 ms | 140 ms - 150 ms | 41.5 | 13,171 | 12.5 MB | 49.0 MB |
+| S2/S2 | 235 | 1,790 | `parse` | 116 ms | 112 ms - 120 ms | 51.7 | 12,089 | 12.6 MB | 47.0 MB |
+| S2/S2 | 235 | 1,790 | `typed` | 148 ms | 141 ms - 160 ms | 40.4 | 11,266 | 12.8 MB | 49.0 MB |
+| S2/S2 | 235 | 1,790 | `values` | 159 ms | 143 ms - 181 ms | 37.6 | 13,168 | 12.3 MB | 48.9 MB |
 | | | | | | | | | | |
-| S2/S3 | 34 | 18,047 | `parse` | 160 ms | 154 ms - 165 ms | 27.2 | 1,882 | 12.9 MB | 47.6 MB |
-| S2/S3 | 34 | 18,047 | `typed` | 212 ms | 206 ms - 222 ms | 20.4 | 1,648 | 13.3 MB | 49.7 MB |
-| S2/S3 | 34 | 18,047 | `values` | 209 ms | 205 ms - 220 ms | 20.7 | 1,915 | 12.8 MB | 49.7 MB |
+| S2/S3 | 34 | 18,047 | `parse` | 155 ms | 152 ms - 158 ms | 28.0 | 1,882 | 13.2 MB | 47.6 MB |
+| S2/S3 | 34 | 18,047 | `typed` | 205 ms | 199 ms - 211 ms | 21.1 | 1,648 | 13.2 MB | 49.7 MB |
+| S2/S3 | 34 | 18,047 | `values` | 208 ms | 198 ms - 217 ms | 20.8 | 1,915 | 13.3 MB | 49.7 MB |
 
 Each row is one sample loaded 5 times, each in a process of its own that starts, reads the file once and
 exits - which is how the library is mostly used - and the figures are the mean of those 5. Everything a
@@ -59,9 +59,9 @@ of them is the cost of the step between.
 | --- | --- |
 | Columns | Columns in the schema; for a fixed-length sample, in its widest record layout. |
 | Records | Records the reader yielded. Gated exactly. No sample is built to have a record refused, so any refusal fails the check whatever else agrees. |
-| Total Time | Mean wall clock of 5 cold loads: opening the file, building the schema, constructing the reader, reading every record, and disposing, in a process that has done nothing else. Nothing is amortised over reads a real caller never performs. **Reported, never gated.** |
+| Mean Total Time | Mean wall clock of 5 cold loads: opening the file, building the schema, constructing the reader, reading every record, and disposing, in a process that has done nothing else. Nothing is amortised over reads a real caller never performs. **Reported, never gated.** |
 | Range | The quickest and slowest of those 5 loads, so the spread behind the mean is visible rather than implied. |
-| MB/s | File size divided by Total Time, so it carries the same caveats. |
+| MB/s | File size divided by Mean Total Time, so it carries the same caveats. |
 | Bytes/record | Mean bytes allocated across a load, divided by records read. Deterministic for given bytes on a given runtime, and repeats to within 0.1% here. **Gated at 2%.** |
 | Peak heap | The largest the managed heap reached in any of the 5 loads, sampled every 5 ms. Reported. |
 | Peak working set | The largest peak working set any of those processes reached. Each does one load and exits, so the figure is a whole job's footprint, most of it runtime start-up rather than the read. Reported. |
@@ -69,8 +69,8 @@ of them is the cost of the step between.
 Averaging 5 whole processes takes most of the machine noise out, but a cold start is noisy by nature and
 the range shows what is left. `FlatFiles.Benchmark` is the project that measures a warm steady state, with
 statistics rather than a mean; these figures are the other question - what one job costs end to end - and
-show the shape of the work rather than a number to compare release to release, which is why neither Total
-Time nor MB/s is gated.
+show the shape of the work rather than a number to compare release to release, which is why neither Mean
+Total Time nor MB/s is gated.
 
 **This library puts performance first.** Where a performance change and a feature want the same release, the performance change goes in and the feature waits. That is the whole reason the last several releases read as they do - buffer writers, a span tokeniser, a column context built only when something can read it, span parsing on both readers - and it is why the three changes above went in ahead of every feature below. What is left on that list is feature work: the values array and the boxes were the two large allocations a typed read made, and both are now gone.
 
