@@ -14,6 +14,21 @@ namespace FlatFiles.IntegrationTest
         private static int Main( string[] args )
         {
             var command = args.Length == 0 ? "run" : args[0].ToLowerInvariant();
+            try
+            {
+                return Dispatch( command, args );
+            }
+            catch (Exception exception) when (exception is IOException or ArgumentException)
+            {
+                // A missing sample or an unknown profile is something to say in a sentence, not to print a
+                // stack trace over: both mean somebody has to do something, and the message says what.
+                Console.Error.WriteLine( exception.Message );
+                return 1;
+            }
+        }
+
+        private static int Dispatch( string command, string[] args )
+        {
             return command switch
             {
                 "generate" => Generate( args.Skip( 1 ).ToArray() ),
@@ -30,8 +45,9 @@ namespace FlatFiles.IntegrationTest
         {
             Console.WriteLine( "FlatFiles stress test" );
             Console.WriteLine();
-            Console.WriteLine( "  generate [profile...]   write the simulated files, one per profile" );
-            Console.WriteLine( "  run      [profile...]   generate anything missing, then measure every scenario" );
+            Console.WriteLine( "  generate [profile...]   rebuild the samples from the profiles and pack them for committing." );
+            Console.WriteLine( "                          The only thing that writes a sample; invalidates the baseline." );
+            Console.WriteLine( "  run      [profile...]   measure every scenario against the committed samples" );
             Console.WriteLine( "  check    [profile...]   measure, compare against the baseline, and fail if anything moved" );
             Console.WriteLine( "  profile  [profile...]   read the generated files back and write a workbook describing them" );
             Console.WriteLine( "  baseline [profile...]   measure and write the baseline, replacing what is there" );
@@ -62,9 +78,31 @@ namespace FlatFiles.IntegrationTest
             return chosen;
         }
 
+        /// <summary>
+        ///     Where a sample is read from: unpacked into the build output from the committed copy. Nothing on
+        ///     this path generates a sample.
+        /// </summary>
         private static string PathFor( FileProfile profile )
         {
-            return Path.Combine( FileDirectory, profile.Name + ( profile.IsFixedLength ? ".txt" : ".csv" ) );
+            return FileStore.Restore( PackedPathFor( profile ), WorkingPathFor( profile ) );
+        }
+
+        private static string FileNameFor( FileProfile profile )
+        {
+            return profile.Name + ( profile.IsFixedLength ? ".txt" : ".csv" );
+        }
+
+        private static string WorkingPathFor( FileProfile profile )
+        {
+            return Path.Combine( FileDirectory, FileNameFor( profile ) );
+        }
+
+        /// <summary>
+        ///     The committed sample, beside the profiles rather than in the build output.
+        /// </summary>
+        private static string PackedPathFor( FileProfile profile )
+        {
+            return Path.Combine( SourceDirectory(), "Files", FileNameFor( profile ) + FileStore.Extension );
         }
 
         /// <summary>
@@ -87,18 +125,27 @@ namespace FlatFiles.IntegrationTest
 
         // ------------------------------------------------------------------ generate
 
+        /// <summary>
+        ///     Rebuilds the samples from the profiles and packs them for committing. This is the only thing that
+        ///     writes a sample, and it is never reached except by asking for it: the samples are the input every
+        ///     figure is gated against, so replacing them invalidates the baseline and has to be deliberate.
+        /// </summary>
         private static int Generate( string[] names )
         {
-            foreach (var profile in Load( names ))
+            var profiles = Load( names );
+            foreach (var profile in profiles)
             {
                 Write( profile );
             }
+            Console.WriteLine();
+            Console.WriteLine( "{0} sample{1} rebuilt and packed. The baseline no longer matches them:", profiles.Count, profiles.Count == 1 ? "" : "s" );
+            Console.WriteLine( "  take a new one with the baseline command, and say what moved in the changelog." );
             return 0;
         }
 
         private static void Write( FileProfile profile )
         {
-            var path = PathFor( profile );
+            var path = WorkingPathFor( profile );
             Console.WriteLine( "{0}: {1} columns, {2:N0} records", profile.Name, ColumnCount( profile ), profile.RecordCount );
             var result = FileGenerator.Generate( profile, path );
             var expected = profile.Expected;
@@ -114,16 +161,20 @@ namespace FlatFiles.IntegrationTest
                     result.FileSize == expected.FileSize
                         ? "the same to the byte"
                         : string.Format( CultureInfo.CurrentCulture, "{0:+#,##0;-#,##0} out", result.FileSize - expected.FileSize ) );
-                return;
             }
-            Console.WriteLine(
-                "  profile said       min {0:N0} / avg {1:N1} / max {2:N0}   average is {3:+0.00%;-0.00%;0.00%} out",
-                expected.RecordBytesMinimum, expected.RecordBytesAverage, expected.RecordBytesMaximum,
-                expected.RecordBytesAverage == 0 ? 0 : result.RecordBytesAverage / expected.RecordBytesAverage - 1 );
+            else
+            {
+                Console.WriteLine(
+                    "  profile said       min {0:N0} / avg {1:N1} / max {2:N0}   average is {3:+0.00%;-0.00%;0.00%} out",
+                    expected.RecordBytesMinimum, expected.RecordBytesAverage, expected.RecordBytesMaximum,
+                    expected.RecordBytesAverage == 0 ? 0 : result.RecordBytesAverage / expected.RecordBytesAverage - 1 );
+            }
             if (profile.MisalignedRecords != 0)
             {
                 Console.WriteLine( "  {0:N0} records carry a separator inside a field", result.MisalignedRecords );
             }
+            var packed = FileStore.Pack( path, PackedPathFor( profile ) );
+            Console.WriteLine( "  packed to {0:N0} bytes ({1:P0} of the file) for committing", packed, (double) packed / result.FileSize );
         }
 
         // ------------------------------------------------------------------ measure
@@ -160,13 +211,6 @@ namespace FlatFiles.IntegrationTest
         private static int WriteProfileReport( string[] names )
         {
             var profiles = Load( names );
-            foreach (var profile in profiles)
-            {
-                if (!File.Exists( PathFor( profile ) ))
-                {
-                    Write( profile );
-                }
-            }
             var directory = Path.Combine( SourceDirectory(), "Profiles", "Generated" );
             Console.WriteLine( "Reading {0} files back...", profiles.Count );
             var path = ProfileReport.Write( profiles, PathFor, directory );
@@ -185,8 +229,16 @@ namespace FlatFiles.IntegrationTest
                 Console.Error.WriteLine( "There is no baseline at {0}. Take one with the baseline command.", BaselinePath );
                 return 1;
             }
-            var results = MeasureAll( Load( names ) );
-            return BaselineCheck.Compare( Baseline.Load( BaselinePath ), results ) ? 0 : 1;
+            var profiles = Load( names );
+            var baseline = Baseline.Load( BaselinePath );
+            // What is about to be read has to be what the baseline was taken from, or the comparison is empty.
+            List<(string, string)> samples = [.. profiles.Select( x => ( FileNameFor( x ), PathFor( x ) ) )];
+            if (!BaselineCheck.VerifySamples( baseline, samples ))
+            {
+                return 1;
+            }
+            var results = MeasureAll( profiles );
+            return BaselineCheck.Compare( baseline, results ) ? 0 : 1;
         }
 
         /// <summary>
@@ -194,9 +246,16 @@ namespace FlatFiles.IntegrationTest
         /// </summary>
         private static int TakeBaseline( string[] names )
         {
-            var results = MeasureAll( Load( names ) );
+            var profiles = Load( names );
+            var results = MeasureAll( profiles );
             var baseline = new Baseline
             {
+                Files = [.. profiles.Select( x => new SampleFile
+                {
+                    Name = FileNameFor( x ),
+                    Bytes = new FileInfo( PathFor( x ) ).Length,
+                    Sha256 = FileStore.Hash( PathFor( x ) )
+                } )],
                 Note = "Taken by the baseline command. Records and skipped records are exact; allocation is gated "
                      + "on the tolerance below. How long a read takes is not gated.",
                 Measurements = [.. results.Select( x => new Measurement
@@ -238,13 +297,6 @@ namespace FlatFiles.IntegrationTest
 
         private static List<RunResult> MeasureAll( List<FileProfile> profiles )
         {
-            foreach (var profile in profiles)
-            {
-                if (!File.Exists( PathFor( profile ) ))
-                {
-                    Write( profile );
-                }
-            }
             List<RunResult> results = [];
             foreach (var profile in profiles)
             {

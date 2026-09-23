@@ -26,6 +26,13 @@ namespace FlatFiles.IntegrationTest
 
         public Tolerances Tolerance { get; set; } = new();
 
+        /// <summary>
+        ///     The samples these figures were measured from, by hash. A run that reads different bytes is not
+        ///     comparable with this baseline whatever the figures say, so the check refuses it rather than
+        ///     reporting a difference it cannot explain.
+        /// </summary>
+        public List<SampleFile> Files { get; set; } = [];
+
         public List<Measurement> Measurements { get; set; } = [];
 
         public static Baseline Load( string path )
@@ -44,6 +51,11 @@ namespace FlatFiles.IntegrationTest
         {
             return Measurements.Find( x => x.Profile == profile && x.Scenario == scenario );
         }
+
+        public SampleFile? FindFile( string name )
+        {
+            return Files.Find( x => x.Name == name );
+        }
     }
 
     internal sealed class Tolerances
@@ -54,6 +66,15 @@ namespace FlatFiles.IntegrationTest
         ///     in anger was eight times that.
         /// </summary>
         public double BytesPerRecord { get; set; } = 0.02;
+    }
+
+    internal sealed class SampleFile
+    {
+        public string Name { get; set; } = string.Empty;
+
+        public long Bytes { get; set; }
+
+        public string Sha256 { get; set; } = string.Empty;
     }
 
     internal sealed class Measurement
