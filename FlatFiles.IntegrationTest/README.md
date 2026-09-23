@@ -74,6 +74,11 @@ library from a single-schema read, and one the type mapper's newer shortcuts do 
 
 Each is a step further than the last, so the difference between two of them is the cost of the step.
 
+Every sample is read five times and the figures are the mean of those reads, with the fastest and
+slowest shown beside the mean so the spread is visible. The first of the five is cold, so it carries
+whatever the runtime had left to compile - on these files that read is often twice the others, which
+the range makes plain.
+
 - **`parse`** - every column read as `StringColumn`, no value asked for. The floor: find the records,
   find the fields, make a string of each.
 - **`typed`** - each single-typed column given its own type. The difference from `parse` is what

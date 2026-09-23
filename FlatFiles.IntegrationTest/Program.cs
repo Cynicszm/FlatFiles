@@ -198,7 +198,10 @@ namespace FlatFiles.IntegrationTest
                 result.Elapsed.TotalMilliseconds.ToString( "F1", CultureInfo.InvariantCulture ),
                 result.AllocatedBytes.ToString( CultureInfo.InvariantCulture ),
                 result.PeakManagedBytes.ToString( CultureInfo.InvariantCulture ),
-                result.PeakWorkingSetBytes.ToString( CultureInfo.InvariantCulture ) ) );
+                result.PeakWorkingSetBytes.ToString( CultureInfo.InvariantCulture ),
+                result.Reads.ToString( CultureInfo.InvariantCulture ),
+                result.FastestRead.TotalMilliseconds.ToString( "F1", CultureInfo.InvariantCulture ),
+                result.SlowestRead.TotalMilliseconds.ToString( "F1", CultureInfo.InvariantCulture ) ) );
             return 0;
         }
 
@@ -349,8 +352,8 @@ namespace FlatFiles.IntegrationTest
             Console.WriteLine();
             Console.WriteLine( "**{0}**", heading );
             Console.WriteLine();
-            Console.WriteLine( "| Sample | Format | Columns | Records | Scenario | Total Time | MB/s | Bytes/record | Peak heap | Peak working set |" );
-            Console.WriteLine( "| --- | --- | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: |" );
+            Console.WriteLine( "| Sample | Columns | Records | Scenario | Total Time | Range | MB/s | Bytes/record | Peak heap | Peak working set |" );
+            Console.WriteLine( "| --- | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |" );
 
             var previous = string.Empty;
             foreach (var result in results)
@@ -366,13 +369,13 @@ namespace FlatFiles.IntegrationTest
                     Console.WriteLine( "| | | | | | | | | | |" );
                 }
                 previous = result.Profile;
-                Console.WriteLine( "| {0} | {1} | {2:N0} | {3:N0} | `{4}` | {5} | {6:N1} | {7:N0} | {8} | {9} |",
+                // The heading says the format, so a column repeating it on every row says nothing.
+                Console.WriteLine( "| {0} | {1:N0} | {2:N0} | `{3}` | {4} | {5} | {6:N1} | {7:N0} | {8} | {9} |",
                     Shorthand( result.Profile ),
-                    profile.IsFixedLength ? "fixed-length" : "delimited",
                     ColumnCount( profile ),
                     result.Records,
                     result.Scenario,
-                    Duration( result.Elapsed ), result.MegabytesPerSecond, result.BytesPerRecord,
+                    Duration( result.Elapsed ), Spread( result ), result.MegabytesPerSecond, result.BytesPerRecord,
                     Megabytes( result.PeakManagedBytes ), Megabytes( result.PeakWorkingSetBytes ) );
             }
         }
@@ -384,7 +387,8 @@ namespace FlatFiles.IntegrationTest
         private static void WriteMarkdownNotes( List<RunResult> results )
         {
             Console.WriteLine();
-            Console.WriteLine( "Each row is one complete read of one sample in a process of its own. The scenarios are cumulative:" );
+            Console.WriteLine( "Each row is one sample read {0} times in a process of its own, and the figures are the mean of those", IntegrationRun.Reads );
+            Console.WriteLine( "reads. The scenarios are cumulative:" );
             Console.WriteLine( "`parse` reads every column as text and asks for no value, `typed` gives each single-typed column its" );
             Console.WriteLine( "own type, and `values` is `typed` with `GetValues` called on every record. The difference between two" );
             Console.WriteLine( "of them is the cost of the step between." );
@@ -393,15 +397,16 @@ namespace FlatFiles.IntegrationTest
             Console.WriteLine( "| --- | --- |" );
             Console.WriteLine( "| Columns | Columns in the schema; for a fixed-length sample, in its widest record layout. |" );
             Console.WriteLine( "| Records | Records the reader yielded. Gated exactly. No sample is built to have a record refused, so any refusal fails the check whatever else agrees. |" );
-            Console.WriteLine( "| Total Time | Wall clock for the whole read: opening the file, building the schema, constructing the reader, reading every record, and disposing. Measured once with no warm-up, so it includes first-call JIT. **Reported, never gated.** |" );
+            Console.WriteLine( "| Total Time | Mean wall clock of {0} complete reads: opening the file, building the schema, constructing the reader, reading every record, and disposing. The first read is cold, so one of the {0} carries whatever the runtime had left to compile. **Reported, never gated.** |", IntegrationRun.Reads );
+            Console.WriteLine( "| Range | The fastest and slowest of those {0} reads, so the spread behind the mean is visible rather than implied. |", IntegrationRun.Reads );
             Console.WriteLine( "| MB/s | File size divided by Total Time, so it carries the same caveats. |" );
-            Console.WriteLine( "| Bytes/record | Bytes allocated across that read, divided by records read. Deterministic for given bytes on a given runtime, and repeats to within 0.1% here. **Gated at 2%.** |" );
-            Console.WriteLine( "| Peak heap | The largest the managed heap reached during the read, sampled every 5 ms. Reported. |" );
+            Console.WriteLine( "| Bytes/record | Mean bytes allocated across a read, divided by records read. Deterministic for given bytes on a given runtime, and repeats to within 0.1% here. **Gated at 2%.** |" );
+            Console.WriteLine( "| Peak heap | The largest the managed heap reached across all {0} reads, sampled every 5 ms. Reported. |", IntegrationRun.Reads );
             Console.WriteLine( "| Peak working set | The process's peak working set, which is why each row gets its own process. Dominated by runtime start-up rather than by the read. Reported. |" );
             Console.WriteLine();
-            Console.WriteLine( "Total Time and MB/s are single un-warmed measurements and move 10-20% between runs; `FlatFiles.Benchmark`" );
-            Console.WriteLine( "is the project that measures time properly. They are here to show the shape of the work, not to be compared" );
-            Console.WriteLine( "release to release." );
+            Console.WriteLine( "Averaging {0} reads takes most of the machine noise out, but not all of it: `FlatFiles.Benchmark` is the", IntegrationRun.Reads );
+            Console.WriteLine( "project that measures time properly, with warm-up and statistics. Total Time and MB/s here show the shape" );
+            Console.WriteLine( "of the work rather than a figure to compare release to release, which is why neither is gated." );
 
             List<string> refused = [.. results.Where( x => x.SkippedRecords != 0 )
                 .Select( x => string.Format( CultureInfo.CurrentCulture, "{0} `{1}` refused {2:N0}", Shorthand( x.Profile ), x.Scenario, x.SkippedRecords ) )];
@@ -432,7 +437,7 @@ namespace FlatFiles.IntegrationTest
             var output = process.StandardOutput.ReadToEnd().Trim();
             process.WaitForExit();
             var parts = output.Split( '|' );
-            if (process.ExitCode != 0 || parts.Length != 9)
+            if (process.ExitCode != 0 || parts.Length != 12)
             {
                 Console.Error.WriteLine( "{0} {1} did not measure: {2}", name, scenario, output );
                 return null;
@@ -447,7 +452,10 @@ namespace FlatFiles.IntegrationTest
                 Elapsed = TimeSpan.FromMilliseconds( double.Parse( parts[5], CultureInfo.InvariantCulture ) ),
                 AllocatedBytes = long.Parse( parts[6], CultureInfo.InvariantCulture ),
                 PeakManagedBytes = long.Parse( parts[7], CultureInfo.InvariantCulture ),
-                PeakWorkingSetBytes = long.Parse( parts[8], CultureInfo.InvariantCulture )
+                PeakWorkingSetBytes = long.Parse( parts[8], CultureInfo.InvariantCulture ),
+                Reads = int.Parse( parts[9], CultureInfo.InvariantCulture ),
+                FastestRead = TimeSpan.FromMilliseconds( double.Parse( parts[10], CultureInfo.InvariantCulture ) ),
+                SlowestRead = TimeSpan.FromMilliseconds( double.Parse( parts[11], CultureInfo.InvariantCulture ) )
             };
         }
 
@@ -471,8 +479,8 @@ namespace FlatFiles.IntegrationTest
             Console.WriteLine( new string( '=', 118 ) );
             Console.WriteLine( "MEASUREMENTS" );
             Console.WriteLine( new string( '=', 118 ) );
-            Console.WriteLine( "{0,-14}{1,-8}{2,11}{3,9}{4,12}{5,11}{6,12}{7,12}{8,12}",
-                "Profile", "Scenario", "Records", "Refused", "Total time", "MB/s", "Bytes/rec", "Peak heap", "Peak WS" );
+            Console.WriteLine( "{0,-14}{1,-8}{2,11}{3,9}{4,12}{5,20}{6,11}{7,12}{8,12}{9,12}",
+                "Profile", "Scenario", "Records", "Refused", "Total time", "Range", "MB/s", "Bytes/rec", "Peak heap", "Peak WS" );
             var profileName = string.Empty;
             foreach (var result in results)
             {
@@ -480,9 +488,9 @@ namespace FlatFiles.IntegrationTest
                 {
                     profileName = result.Profile;
                 }
-                Console.WriteLine( "{0,-14}{1,-8}{2,11:N0}{3,9:N0}{4,12}{5,11:N1}{6,12:N0}{7,12}{8,12}",
+                Console.WriteLine( "{0,-14}{1,-8}{2,11:N0}{3,9:N0}{4,12}{5,20}{6,11:N1}{7,12:N0}{8,12}{9,12}",
                     result.Profile, result.Scenario, result.Records, result.SkippedRecords,
-                    Duration( result.Elapsed ), result.MegabytesPerSecond, result.BytesPerRecord,
+                    Duration( result.Elapsed ), Spread( result ), result.MegabytesPerSecond, result.BytesPerRecord,
                     Megabytes( result.PeakManagedBytes ), Megabytes( result.PeakWorkingSetBytes ) );
             }
             Console.WriteLine();
@@ -490,8 +498,8 @@ namespace FlatFiles.IntegrationTest
             Console.WriteLine( "typed  - each single-typed column given its own type, no value asked for" );
             Console.WriteLine( "values - typed, and GetValues called for every record" );
             Console.WriteLine();
-            Console.WriteLine( "Total time is the whole read - opening the file, building the schema, reading every record -" );
-            Console.WriteLine( "measured once with no warm-up, so it includes first-call JIT and is not comparable between runs." );
+            Console.WriteLine( "Total time is the mean of {0} complete reads - opening the file, building the schema, reading every", IntegrationRun.Reads );
+            Console.WriteLine( "record - with the fastest and slowest beside it. The first of the {0} is cold and carries the JIT.", IntegrationRun.Reads );
             Console.WriteLine( "Bytes/rec is what the read allocated, per record, and is the figure the release gate compares." );
             Console.WriteLine( "Peak heap is the largest the managed heap reached while reading; peak WS is the process working" );
             Console.WriteLine( "set, which is why each row gets its own process." );
@@ -521,6 +529,14 @@ namespace FlatFiles.IntegrationTest
             return profile.IsFixedLength
                 ? profile.RecordTypes.Count.ToString( CultureInfo.CurrentCulture )
                 : profile.QuoteEveryField ? "quoted" : "plain";
+        }
+
+        /// <summary>
+        ///     The fastest and slowest of the reads behind a mean.
+        /// </summary>
+        private static string Spread( RunResult result )
+        {
+            return Duration( result.FastestRead ) + " - " + Duration( result.SlowestRead );
         }
 
         private static string Duration( TimeSpan elapsed )
