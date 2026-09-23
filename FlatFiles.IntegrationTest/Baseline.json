@@ -1,0 +1,134 @@
+{
+  "Note": "Taken by the baseline command. Records and skipped records are exact; allocation is gated on the tolerance below. How long a read takes is not gated.",
+  "Tolerance": {
+    "BytesPerRecord": 0.02
+  },
+  "Measurements": [
+    {
+      "Profile": "Set1Sample1",
+      "Scenario": "parse",
+      "Records": 37031,
+      "SkippedRecords": 0,
+      "BytesPerRecord": 5684.6
+    },
+    {
+      "Profile": "Set1Sample1",
+      "Scenario": "typed",
+      "Records": 36883,
+      "SkippedRecords": 148,
+      "BytesPerRecord": 5651.5
+    },
+    {
+      "Profile": "Set1Sample1",
+      "Scenario": "values",
+      "Records": 36883,
+      "SkippedRecords": 148,
+      "BytesPerRecord": 8707.3
+    },
+    {
+      "Profile": "Set1Sample2",
+      "Scenario": "parse",
+      "Records": 344352,
+      "SkippedRecords": 0,
+      "BytesPerRecord": 1413.6
+    },
+    {
+      "Profile": "Set1Sample2",
+      "Scenario": "typed",
+      "Records": 344352,
+      "SkippedRecords": 0,
+      "BytesPerRecord": 1337.7
+    },
+    {
+      "Profile": "Set1Sample2",
+      "Scenario": "values",
+      "Records": 344352,
+      "SkippedRecords": 0,
+      "BytesPerRecord": 1825.7
+    },
+    {
+      "Profile": "Set1Sample3",
+      "Scenario": "parse",
+      "Records": 39337,
+      "SkippedRecords": 0,
+      "BytesPerRecord": 3528
+    },
+    {
+      "Profile": "Set1Sample3",
+      "Scenario": "typed",
+      "Records": 39337,
+      "SkippedRecords": 0,
+      "BytesPerRecord": 2988.2
+    },
+    {
+      "Profile": "Set1Sample3",
+      "Scenario": "values",
+      "Records": 39337,
+      "SkippedRecords": 0,
+      "BytesPerRecord": 4579.9
+    },
+    {
+      "Profile": "Set2Sample1",
+      "Scenario": "parse",
+      "Records": 22481,
+      "SkippedRecords": 0,
+      "BytesPerRecord": 3759.1
+    },
+    {
+      "Profile": "Set2Sample1",
+      "Scenario": "typed",
+      "Records": 22481,
+      "SkippedRecords": 0,
+      "BytesPerRecord": 3597.6
+    },
+    {
+      "Profile": "Set2Sample1",
+      "Scenario": "values",
+      "Records": 22481,
+      "SkippedRecords": 0,
+      "BytesPerRecord": 4306.3
+    },
+    {
+      "Profile": "Set2Sample2",
+      "Scenario": "parse",
+      "Records": 1790,
+      "SkippedRecords": 0,
+      "BytesPerRecord": 12093.3
+    },
+    {
+      "Profile": "Set2Sample2",
+      "Scenario": "typed",
+      "Records": 1790,
+      "SkippedRecords": 0,
+      "BytesPerRecord": 11270.4
+    },
+    {
+      "Profile": "Set2Sample2",
+      "Scenario": "values",
+      "Records": 1790,
+      "SkippedRecords": 0,
+      "BytesPerRecord": 13179.3
+    },
+    {
+      "Profile": "Set2Sample3",
+      "Scenario": "parse",
+      "Records": 18047,
+      "SkippedRecords": 0,
+      "BytesPerRecord": 1882.6
+    },
+    {
+      "Profile": "Set2Sample3",
+      "Scenario": "typed",
+      "Records": 18047,
+      "SkippedRecords": 0,
+      "BytesPerRecord": 1648
+    },
+    {
+      "Profile": "Set2Sample3",
+      "Scenario": "values",
+      "Records": 18047,
+      "SkippedRecords": 0,
+      "BytesPerRecord": 1916.3
+    }
+  ]
+}
