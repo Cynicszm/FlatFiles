@@ -58,7 +58,7 @@ jobs:
         # each sample yields and how many it refuses are exact; what a read allocates is gated at 2%.
         # How long a read takes is reported and not gated, because it is not stable enough to gate on.
         #
-        # A failure here is a change in what the library does with a large real-shaped file. If it
+        # A failure here is a change in what the library does with one of the integration test files. If it
         # was meant, take a new baseline and say so in the changelog.
         shell: pwsh
         run: |

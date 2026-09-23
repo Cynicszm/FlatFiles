@@ -233,14 +233,14 @@ namespace FlatFiles.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The type you are trying to map does not have a default constructor..
+        ///   Looks up a localized string similar to {0} cannot be built: it has no parameterless constructor, and {1}. A constructor is matched by giving every one of its parameters the name of a mapped member, ignoring case; {2}..
         /// </summary>
-        internal static string NoDefaultConstructor {
+        internal static string NoConstructorToMapOnto {
             get {
-                return ResourceManager.GetString("NoDefaultConstructor", resourceCulture);
+                return ResourceManager.GetString("NoConstructorToMapOnto", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to An attempt to view values was made after all of the records were read..
         /// </summary>

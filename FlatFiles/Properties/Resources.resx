@@ -189,8 +189,8 @@
   <data name="WrongPropertyType" xml:space="preserve">
     <value>The actual property type did not match the indicated type.</value>
   </data>
-  <data name="NoDefaultConstructor" xml:space="preserve">
-    <value>The type you are trying to map does not have a default constructor.</value>
+  <data name="NoConstructorToMapOnto" xml:space="preserve">
+    <value>{0} cannot be built: it has no parameterless constructor, and {1}. A constructor is matched by giving every one of its parameters the name of a mapped member, ignoring case; {2}.</value>
   </data>
   <data name="ReadOnlyProperty" xml:space="preserve">
     <value>Cannot read values into the {0} property because it is read-only.</value>

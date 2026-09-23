@@ -24,16 +24,22 @@ namespace FlatFiles.TypeMapping
             {
                 return cachedReader;
             }
-            var factory = lookup.GetFactory<TEntity>() ?? codeGenerator.GetFactory<TEntity>();
             var mappings = lookup.GetMappings();
-            var memberMappings = GetReaderMemberMappings( mappings );
+            var supplied = lookup.GetFactory<TEntity>();
+            // A caller who supplied a factory has said how the type is built, and a type with a parameterless
+            // constructor is built and then filled as it always was. Only where neither holds does the
+            // constructor take the values, which is where the alternative used to be an exception.
+            var constructorMapping = supplied is null ? ConstructorMapping.Find( typeof( TEntity ), mappings ) : null;
+            var build = Builder( supplied, constructorMapping );
+
+            var memberMappings = GetReaderMemberMappings( mappings, constructorMapping );
             var deserializer = codeGenerator.GetReader<TEntity>( memberMappings );
             var nestedMappers = GetNestedMappers( mappings );
             if (nestedMappers.Length != 0)
             {
                 cachedReader = ( recordContext, values ) =>
                 {
-                    var entity = factory();
+                    var entity = build( values );
                     deserializer( recordContext, entity, values );
                     foreach (var nestedMapper in nestedMappers)
                     {
@@ -48,12 +54,30 @@ namespace FlatFiles.TypeMapping
             {
                 cachedReader = ( recordContext, values ) =>
                 {
-                    var entity = factory();
+                    var entity = build( values );
                     deserializer( recordContext, entity, values );
                     return entity;
                 };
             }
             return cachedReader;
+        }
+
+        /// <summary>
+        ///     How an entity is built: from the caller's factory, from its constructor given the parsed values,
+        ///     or from a parameterless constructor.
+        /// </summary>
+        private Func<object?[], TEntity> Builder( Func<TEntity>? supplied, ConstructorMapping? constructorMapping )
+        {
+            if (supplied is not null)
+            {
+                return _ => supplied();
+            }
+            if (constructorMapping is not null)
+            {
+                return codeGenerator.GetConstructor<TEntity>( constructorMapping );
+            }
+            var factory = codeGenerator.GetFactory<TEntity>();
+            return _ => factory();
         }
 
         public TEntity CreateEntity()
@@ -87,6 +111,12 @@ namespace FlatFiles.TypeMapping
             }
             var mappings = lookup.GetMappings();
             if (mappings.Any( m => m.Member?.ParentAccessor is not null ))
+            {
+                return null;
+            }
+            // This path builds the entity empty and then sets each member on it, which is the one thing a type
+            // built through its constructor cannot have done to it.
+            if (lookup.GetFactory<TEntity>() is null && ConstructorMapping.Find( typeof( TEntity ), mappings ) is not null)
             {
                 return null;
             }
@@ -216,9 +246,20 @@ namespace FlatFiles.TypeMapping
 
         private IMemberMapping[] GetReaderMemberMappings( IMemberMapping[] mappings )
         {
+            return GetReaderMemberMappings( mappings, null );
+        }
+
+        /// <summary>
+        ///     The mappings the deserialiser assigns after the entity exists. Whatever a constructor was given is
+        ///     left out: assigning it again would either fail, the member having no setter, or overwrite a value
+        ///     the constructor may have checked or adjusted.
+        /// </summary>
+        private IMemberMapping[] GetReaderMemberMappings( IMemberMapping[] mappings, ConstructorMapping? constructorMapping )
+        {
             var memberMappings = mappings
                 .Where( m => m.Member is not null || m.Reader is not null )
                 .Where( m => Member?.Name == m.Member?.ParentAccessor?.Name )
+                .Where( m => constructorMapping is null || m.Member is null || !constructorMapping.FilledMembers.Contains( m.Member.Name ) )
                 .ToArray();
             return memberMappings;
         }
