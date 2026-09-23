@@ -191,6 +191,57 @@ follow. The exception that proves it: the twenty-one property mapping classes ar
 setters, and one reflective test drives every method on all of them precisely so that a new mapping or
 setter is covered without anyone remembering to extend a test.
 
+## Integration check
+
+`FlatFiles.IntegrationTest` reads six large files - three delimited, three fixed-length - end to end,
+and compares what it measured against `FlatFiles.IntegrationTest/Baseline.json`. They are shaped after
+real files: 379 columns, 344,352 records, every field quoted, fourteen record layouts chosen by one
+character, a 3,500-character record.
+
+The files are committed, compressed, in `FlatFiles.IntegrationTest/Files`, and unpacked into the build
+output to be read. **Nothing regenerates them automatically.** `generate` is the only command that
+writes one, and rebuilding is a deliberate act that invalidates the baseline, because the samples are
+the input every figure is gated against: an input that rebuilt itself would turn a change in the
+generator into what looks like a change in the library. The baseline pins a SHA-256 of each sample, and
+a run that reads different bytes is refused rather than reported.
+
+    dotnet run --project FlatFiles.IntegrationTest -c Release -- check
+
+Beyond the samples themselves, the record count is exact: a change there is a change in what the library
+does with a real-shaped file, whether or not anybody meant it. No sample is built to have a record
+refused, so any refusal fails the check whatever else agrees. Bytes allocated per record is gated at 2%,
+which is deterministic to the byte and has repeated to within 0.1% here. How long a read takes and how
+much memory it peaks at are reported and never gated. Each sample is loaded five times, each in a
+process that starts, reads the file once and exits, because that is how the library is mostly used;
+the mean is reported with its range. That takes most of the machine noise out and still leaves more
+movement than a gate could live with. Peak memory is a whole job's footprint, most of it runtime
+start-up rather than the read.
+
+It runs in `publish.yml` only, before a release is packed, and a release fails if anything moved. It is
+deliberately not on the pull request build: what it guards is a release going out with something
+changed, and the run costs about a minute and a half and 210 MB of unpacked disk on whatever performs
+it - not worth spending on every push. When a change is intended, take
+a new baseline with the `baseline` command and describe it in the changelog, in the same pull request
+as the changelog entry and before the tag is cut.
+
+**A release that takes a new baseline carries the full table**, all six samples and all three scenarios
+apiece, so that what a version cost is recorded where it was released rather than only in a baseline
+file the next release overwrites. The `baseline` command prints it - both tables and the notes saying
+what each column measures - from the runs it took the baseline from, so the figures in the changelog
+and the figures the gate compares are the same measurements:
+
+    dotnet run --project FlatFiles.IntegrationTest -c Release -- baseline
+
+Paste what it prints into the entry, in the pull request that finalises the changelog. `run --markdown`
+prints the same block from a fresh set of runs, which is useful for looking but is not what the
+baseline recorded.
+
+**A release that does not change the baseline does not repeat the table.** It says the figures are
+unchanged and names the release that last recorded them. Reprinting an identical table invites the
+reader to hunt for a difference that is not there, and the numbers in it that are not gated - total
+time and MB/s - would differ anyway, from the machine rather than from the library, which is worse
+than saying nothing.
+
 ## Inspections
 
 The three projects are kept clean against ReSharper's default inspection set, with the exceptions below, and a

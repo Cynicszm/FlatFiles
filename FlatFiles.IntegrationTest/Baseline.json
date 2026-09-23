@@ -1,0 +1,148 @@
+{
+  "Note": "Taken by the baseline command. The record count is exact and allocation is gated on the tolerance below; how long a read takes is not gated. No sample is meant to have a record refused, so any refusal fails the check whatever these figures say.",
+  "Tolerance": {
+    "BytesPerRecord": 0.02
+  },
+  "Files": [
+    {
+      "Name": "Set1Sample1.csv",
+      "Bytes": 38540034,
+      "Sha256": "8a39cb1d9a0515727abddf3a84136cdadb0f7d1e8643e5d34e9a61b189334095"
+    },
+    {
+      "Name": "Set1Sample2.csv",
+      "Bytes": 106501270,
+      "Sha256": "07756597602f45e76e95f63d80dcf7451966b70c6416c177676a4ed546dcf740"
+    },
+    {
+      "Name": "Set1Sample3.csv",
+      "Bytes": 46892080,
+      "Sha256": "c41760c24f8986dd43ee2879dc867b31f4dea2375092e17f2288cea614609825"
+    },
+    {
+      "Name": "Set2Sample1.txt",
+      "Bytes": 16905712,
+      "Sha256": "bce6a5a6b5f7fd8e950f12837608ca5bab142ba0911dcda1816cddbcba5b6e4e"
+    },
+    {
+      "Name": "Set2Sample2.txt",
+      "Bytes": 6268580,
+      "Sha256": "1967588b4d6f46fab40908c07680d8f7e4fa8eb46e3f9f8287306bfb94770810"
+    },
+    {
+      "Name": "Set2Sample3.txt",
+      "Bytes": 4547844,
+      "Sha256": "cc5d0fd5704899c59f7b520ed98f0f61b6620d627a89491f75922d4c209609ec"
+    }
+  ],
+  "Measurements": [
+    {
+      "Profile": "Set1Sample1",
+      "Scenario": "parse",
+      "Records": 37031,
+      "BytesPerRecord": 5684.8
+    },
+    {
+      "Profile": "Set1Sample1",
+      "Scenario": "typed",
+      "Records": 37031,
+      "BytesPerRecord": 5628.8
+    },
+    {
+      "Profile": "Set1Sample1",
+      "Scenario": "values",
+      "Records": 37031,
+      "BytesPerRecord": 8684.8
+    },
+    {
+      "Profile": "Set1Sample2",
+      "Scenario": "parse",
+      "Records": 344352,
+      "BytesPerRecord": 1413.6
+    },
+    {
+      "Profile": "Set1Sample2",
+      "Scenario": "typed",
+      "Records": 344352,
+      "BytesPerRecord": 1337.7
+    },
+    {
+      "Profile": "Set1Sample2",
+      "Scenario": "values",
+      "Records": 344352,
+      "BytesPerRecord": 1825.7
+    },
+    {
+      "Profile": "Set1Sample3",
+      "Scenario": "parse",
+      "Records": 39337,
+      "BytesPerRecord": 3527.9
+    },
+    {
+      "Profile": "Set1Sample3",
+      "Scenario": "typed",
+      "Records": 39337,
+      "BytesPerRecord": 2987.8
+    },
+    {
+      "Profile": "Set1Sample3",
+      "Scenario": "values",
+      "Records": 39337,
+      "BytesPerRecord": 4579.7
+    },
+    {
+      "Profile": "Set2Sample1",
+      "Scenario": "parse",
+      "Records": 22481,
+      "BytesPerRecord": 3758.9
+    },
+    {
+      "Profile": "Set2Sample1",
+      "Scenario": "typed",
+      "Records": 22481,
+      "BytesPerRecord": 3597.3
+    },
+    {
+      "Profile": "Set2Sample1",
+      "Scenario": "values",
+      "Records": 22481,
+      "BytesPerRecord": 4305.5
+    },
+    {
+      "Profile": "Set2Sample2",
+      "Scenario": "parse",
+      "Records": 1790,
+      "BytesPerRecord": 12088.9
+    },
+    {
+      "Profile": "Set2Sample2",
+      "Scenario": "typed",
+      "Records": 1790,
+      "BytesPerRecord": 11265.9
+    },
+    {
+      "Profile": "Set2Sample2",
+      "Scenario": "values",
+      "Records": 1790,
+      "BytesPerRecord": 13168
+    },
+    {
+      "Profile": "Set2Sample3",
+      "Scenario": "parse",
+      "Records": 18047,
+      "BytesPerRecord": 1882.2
+    },
+    {
+      "Profile": "Set2Sample3",
+      "Scenario": "typed",
+      "Records": 18047,
+      "BytesPerRecord": 1647.7
+    },
+    {
+      "Profile": "Set2Sample3",
+      "Scenario": "values",
+      "Records": 18047,
+      "BytesPerRecord": 1915.4
+    }
+  ]
+}

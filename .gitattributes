@@ -1,0 +1,3 @@
+# The integration test's sample files are committed compressed, and must never be touched by
+# line-ending conversion: the gate compares a hash of the bytes inside them.
+*.gz binary

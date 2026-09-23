@@ -45,6 +45,28 @@ jobs:
       - name: Test
         run: dotnet test FlatFiles.sln --configuration Release --no-build
 
+      - name: Integration check
+        # Runs here and nowhere else. What it guards is a release going out with something moved, not
+        # a branch being wrong for an hour, and it costs about a minute and a half and 210 MB of disk
+        # on whatever runs it - not worth spending on every pull request.
+        #
+        # Six committed samples - three delimited, three fixed-length - unpacked, read end to end and
+        # compared against FlatFiles.IntegrationTest/Baseline.json. Nothing is generated here: the
+        # samples are committed compressed beside the profiles and only rebuilt when somebody asks,
+        # because they are the input every figure is gated against. The baseline pins a SHA-256 of
+        # each, and a run reading different bytes is refused rather than reported. How many records
+        # each sample yields and how many it refuses are exact; what a read allocates is gated at 2%.
+        # How long a read takes is reported and not gated, because it is not stable enough to gate on.
+        #
+        # A failure here is a change in what the library does with a large real-shaped file. If it
+        # was meant, take a new baseline and say so in the changelog.
+        shell: pwsh
+        run: |
+          $exe = 'FlatFiles.IntegrationTest\bin\Release\net10.0\FlatFiles.IntegrationTest.exe'
+          if (-not (Test-Path $exe)) { throw "The integration test did not build: $exe is missing." }
+          & $exe check
+          if ($LASTEXITCODE -ne 0) { throw "The integration check failed with exit code $LASTEXITCODE." }
+
       - name: Pack
         run: dotnet pack FlatFiles/FlatFiles.csproj --configuration Release --output artifacts -p:ContinuousIntegrationBuild=true
 

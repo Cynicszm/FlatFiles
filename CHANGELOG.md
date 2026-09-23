@@ -11,6 +11,67 @@ The mapper takes that path only where it can see that nothing needs a value as a
 
 Error handling is unchanged, including the one part of it that still boxes: a `ColumnError` handler's substitution arrives as an `object` and is set through the member, which is a box for each recovered value rather than for every value. Twenty-four tests cover the new path and each way out of it. Beside them, a check that is not part of the suite reads thirty-one scenarios - hooks, substitutions, default values, null formatters, ignored columns, metadata columns, every handler, selectors, nested types, headers, asynchronous reads, both readers - through this version and through 8.0.0, and compares the two character for character; they agree on all thirty-one, including which exception each failure raises.
 
+**A release is now checked against six large files before it goes out.** Nothing in the package changes for it. `FlatFiles.IntegrationTest` reads six committed samples end to end - three delimited, three fixed-length, shaped after real files at 379 columns, 344,352 records, every field quoted, fourteen record layouts chosen by a single character and a 3,500-character record - and compares records, records skipped and bytes allocated per record against a committed baseline. It runs in the publish workflow only, and a release fails if a figure moved without somebody meaning it to. The files are committed rather than built, compressed because one of them is 102 MB, and nothing regenerates them on its own - they are the input every figure is gated against, and an input that rebuilt itself would turn a change in the generator into what looks like a change in the library. The baseline pins a SHA-256 of each, so a run reading different bytes is refused rather than reported.
+
+This release takes the first baseline, so it carries the figures. A release that changes the baseline records what the samples cost under it; one that does not says so and leaves them where they were last written, because repeating an unchanged table only invites the reader to look for a difference that is not there.
+
+**Delimited**
+
+| Sample | Columns | Records | Scenario | Mean Total Time | Range | MB/s | Bytes/record | Peak heap | Peak working set |
+| --- | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| S1/S1 | 379 | 37,031 | `parse` | 1.38 s | 1.35 s - 1.43 s | 26.7 | 5,685 | 13.5 MB | 50.6 MB |
+| S1/S1 | 379 | 37,031 | `typed` | 1.61 s | 1.60 s - 1.61 s | 22.9 | 5,629 | 13.6 MB | 52.5 MB |
+| S1/S1 | 379 | 37,031 | `values` | 1.60 s | 1.57 s - 1.62 s | 23.0 | 8,685 | 13.6 MB | 53.0 MB |
+| | | | | | | | | | |
+| S1/S2 | 58 | 344,352 | `parse` | 1.50 s | 1.46 s - 1.53 s | 67.8 | 1,414 | 13.4 MB | 50.7 MB |
+| S1/S2 | 58 | 344,352 | `typed` | 1.80 s | 1.74 s - 1.85 s | 56.3 | 1,338 | 13.5 MB | 52.4 MB |
+| S1/S2 | 58 | 344,352 | `values` | 1.83 s | 1.77 s - 1.90 s | 55.4 | 1,826 | 13.4 MB | 52.2 MB |
+| | | | | | | | | | |
+| S1/S3 | 196 | 39,337 | `parse` | 1.22 s | 1.14 s - 1.27 s | 36.5 | 3,528 | 13.5 MB | 49.7 MB |
+| S1/S3 | 196 | 39,337 | `typed` | 1.55 s | 1.46 s - 1.58 s | 28.9 | 2,988 | 13.5 MB | 53.1 MB |
+| S1/S3 | 196 | 39,337 | `values` | 1.51 s | 1.49 s - 1.53 s | 29.7 | 4,580 | 13.5 MB | 53.1 MB |
+
+**Fixed-length**
+
+| Sample | Columns | Records | Scenario | Mean Total Time | Range | MB/s | Bytes/record | Peak heap | Peak working set |
+| --- | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| S2/S1 | 172 | 22,481 | `parse` | 540 ms | 443 ms - 613 ms | 29.8 | 3,759 | 13.8 MB | 49.0 MB |
+| S2/S1 | 172 | 22,481 | `typed` | 615 ms | 545 ms - 693 ms | 26.2 | 3,597 | 13.8 MB | 51.8 MB |
+| S2/S1 | 172 | 22,481 | `values` | 746 ms | 718 ms - 760 ms | 21.6 | 4,305 | 13.8 MB | 52.1 MB |
+| | | | | | | | | | |
+| S2/S2 | 235 | 1,790 | `parse` | 116 ms | 112 ms - 120 ms | 51.7 | 12,089 | 12.6 MB | 47.0 MB |
+| S2/S2 | 235 | 1,790 | `typed` | 148 ms | 141 ms - 160 ms | 40.4 | 11,266 | 12.8 MB | 49.0 MB |
+| S2/S2 | 235 | 1,790 | `values` | 159 ms | 143 ms - 181 ms | 37.6 | 13,168 | 12.3 MB | 48.9 MB |
+| | | | | | | | | | |
+| S2/S3 | 34 | 18,047 | `parse` | 155 ms | 152 ms - 158 ms | 28.0 | 1,882 | 13.2 MB | 47.6 MB |
+| S2/S3 | 34 | 18,047 | `typed` | 205 ms | 199 ms - 211 ms | 21.1 | 1,648 | 13.2 MB | 49.7 MB |
+| S2/S3 | 34 | 18,047 | `values` | 208 ms | 198 ms - 217 ms | 20.8 | 1,915 | 13.3 MB | 49.7 MB |
+
+Each row is one sample loaded 5 times, each in a process of its own that starts, reads the file once and
+exits - which is how the library is mostly used - and the figures are the mean of those 5. Everything a
+job pays for is inside them: the runtime compiling the parse path on first use, the schema being built,
+the file being opened. The scenarios are cumulative:
+`parse` reads every column as text and asks for no value, `typed` gives each single-typed column its
+own type, and `values` is `typed` with `GetValues` called on every record. The difference between two
+of them is the cost of the step between.
+
+| Column | What it measures |
+| --- | --- |
+| Columns | Columns in the schema; for a fixed-length sample, in its widest record layout. |
+| Records | Records the reader yielded. Gated exactly. No sample is built to have a record refused, so any refusal fails the check whatever else agrees. |
+| Mean Total Time | Mean wall clock of 5 cold loads: opening the file, building the schema, constructing the reader, reading every record, and disposing, in a process that has done nothing else. Nothing is amortised over reads a real caller never performs. **Reported, never gated.** |
+| Range | The quickest and slowest of those 5 loads, so the spread behind the mean is visible rather than implied. |
+| MB/s | File size divided by Mean Total Time, so it carries the same caveats. |
+| Bytes/record | Mean bytes allocated across a load, divided by records read. Deterministic for given bytes on a given runtime, and repeats to within 0.1% here. **Gated at 2%.** |
+| Peak heap | The largest the managed heap reached in any of the 5 loads, sampled every 5 ms. Reported. |
+| Peak working set | The largest peak working set any of those processes reached. Each does one load and exits, so the figure is a whole job's footprint, most of it runtime start-up rather than the read. Reported. |
+
+Averaging 5 whole processes takes most of the machine noise out, but a cold start is noisy by nature and
+the range shows what is left. `FlatFiles.Benchmark` is the project that measures a warm steady state, with
+statistics rather than a mean; these figures are the other question - what one job costs end to end - and
+show the shape of the work rather than a number to compare release to release, which is why neither Mean
+Total Time nor MB/s is gated.
+
 **This library puts performance first.** Where a performance change and a feature want the same release, the performance change goes in and the feature waits. That is the whole reason the last several releases read as they do - buffer writers, a span tokeniser, a column context built only when something can read it, span parsing on both readers - and it is why the three changes above went in ahead of every feature below. What is left on that list is feature work: the values array and the boxes were the two large allocations a typed read made, and both are now gone.
 
 ### Planned
@@ -22,7 +83,11 @@ In the order they will be built. None of these breaks anything, so none of them 
 - **Attribute-based mapping.** The library has no attribute types at all. Every mapping is written out in fluent calls, which is the right default for a file whose shape is not the class's business, and the wrong one for the common case where a class exists to mirror a file.
 - **Comment and blank-line skipping.** Both option classes can express it today only through a `RecordRead` handler on every reader. A comment prefix and a skip-blank-lines flag on the options would cover most of what those handlers are written for. Small, and the least glamorous thing on this list.
 - **UTF-8 `Stream` input.** Reading from a `Stream` without wrapping it in a `StreamReader`, with the encoding and any byte order mark handled by the reader. This was ranked first, and first for the wrong reason: the entry claimed it was the one change that would take allocation below CsvHelper. Measured, decoding 1.36 MB of UTF-8 costs 0.2 ms and about one byte a record, because `StreamReader` reuses its buffers, and reading the same file through a `StreamReader` rather than a `StringReader` allocates exactly the same 741 bytes a record. It is worth having as a convenience, and for files whose encoding has to be sniffed rather than assumed, but not as a performance change.
-- **Header-driven column matching against a supplied schema.** The header row is read and thrown away: never checked against the schema, never used to order it. A file whose columns have been reordered since the schema was written is read straight into the wrong properties, silently, because position is all the reader has. Matching the header by name, and saying what happens when it disagrees - reorder, refuse, or ignore - is the largest gap left against CsvHelper, which maps by name and is the one competitor this repository benchmarks against. Reading by position stays the default, since a file with no header has nothing else to go on.
+- **Header-driven column matching against a supplied schema, and what to do with a record that does not fit it.** The header row is read and thrown away: never checked against the schema, never used to order it. A file whose columns have been reordered since the schema was written is read straight into the wrong properties, silently, because position is all the reader has. Matching the header by name, and saying what happens when it disagrees - reorder, refuse, or ignore - is the largest gap left against CsvHelper, which maps by name and is the one competitor this repository benchmarks against. Reading by position stays the default, since a file with no header has nothing else to go on.
+
+  The same feature settles what a record of the wrong length means, because today the two ends disagree and neither is configurable. A delimited record with **too few** fields is refused; one with **too many** is accepted, the first however many the schema declares kept and the rest discarded. So a record carrying a separator inside an unquoted field is read with every later value one position to the left, and nothing says so - whether anything notices depends on whether a shifted value reaches a column that will not parse it, which is a matter of where the separator fell rather than of the record being wrong. The fixed-length reader already has `IsRaggedRight` and `IsLongRecordRejected` for the same question and answers it differently again.
+
+  What is wanted is one way of saying it on both readers: refuse a short record or pad it, refuse a long one or discard the surplus, with the current behaviour as the default so nothing changes for anyone who does not ask. Whatever is chosen has to be visible - a record silently read one column out of step is the worst of the available outcomes, and is what happens now.
 
 **Considered and already covered.** Seven more ideas came out of the same review and turned out to need no work. They are recorded so that nobody spends an afternoon rediscovering it.
 
