@@ -17,24 +17,24 @@ Where each of the six stands as this release goes out. Three scenarios apiece: `
 
 | Sample | Format | Columns | Records | Scenario | Time | MB/s | Bytes/record | Peak heap | Peak working set |
 | --- | --- | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: |
-| **Set1Sample1** | delimited | 379 | 37,031 | `parse` | 1.24 s | 29.6 | 5,685 | 13.5 MB | 51.1 MB |
-|  |  |  |  | `typed` | 1.45 s | 25.3 | 5,629 | 13.5 MB | 52.5 MB |
-|  |  |  |  | `values` | 1.47 s | 25.1 | 8,685 | 13.3 MB | 53.0 MB |
-| **Set1Sample2** | delimited | 58 | 344,352 | `parse` | 1.36 s | 74.5 | 1,414 | 13.4 MB | 50.9 MB |
-|  |  |  |  | `typed` | 1.67 s | 60.7 | 1,338 | 13.4 MB | 52.9 MB |
-|  |  |  |  | `values` | 1.74 s | 58.2 | 1,826 | 13.2 MB | 52.6 MB |
-| **Set1Sample3** | delimited | 196 | 39,337 | `parse` | 1.12 s | 40.0 | 3,528 | 13.4 MB | 50.4 MB |
-|  |  |  |  | `typed` | 1.38 s | 32.4 | 2,988 | 13.3 MB | 53.5 MB |
-|  |  |  |  | `values` | 1.44 s | 31.1 | 4,580 | 13.4 MB | 53.6 MB |
-| **Set2Sample1** | fixed-length | 172 | 22,481 | `parse` | 709 ms | 22.7 | 3,759 | 13.6 MB | 50.4 MB |
-|  |  |  |  | `typed` | 763 ms | 21.1 | 3,598 | 13.7 MB | 53.0 MB |
-|  |  |  |  | `values` | 772 ms | 20.9 | 4,306 | 13.7 MB | 53.0 MB |
-| **Set2Sample2** | fixed-length | 235 | 1,790 | `parse` | 119 ms | 50.1 | 12,092 | 12.6 MB | 47.7 MB |
-|  |  |  |  | `typed` | 141 ms | 42.4 | 11,269 | 13.3 MB | 49.8 MB |
-|  |  |  |  | `values` | 138 ms | 43.4 | 13,172 | 11.2 MB | 49.9 MB |
-| **Set2Sample3** | fixed-length | 34 | 18,047 | `parse` | 157 ms | 27.6 | 1,882 | 12.9 MB | 48.9 MB |
-|  |  |  |  | `typed` | 205 ms | 21.1 | 1,648 | 13.2 MB | 51.1 MB |
-|  |  |  |  | `values` | 206 ms | 21.0 | 1,916 | 13.1 MB | 51.1 MB |
+| S1 Sample 1 | delimited | 379 | 37,031 | `parse` | 1.25 s | 29.4 | 5,685 | 13.4 MB | 50.8 MB |
+|  |  |  |  | `typed` | 1.46 s | 25.2 | 5,629 | 13.3 MB | 52.8 MB |
+|  |  |  |  | `values` | 1.47 s | 25.0 | 8,685 | 13.6 MB | 52.7 MB |
+| S1 Sample 2 | delimited | 58 | 344,352 | `parse` | 1.41 s | 72.2 | 1,414 | 13.3 MB | 50.9 MB |
+|  |  |  |  | `typed` | 1.67 s | 60.7 | 1,338 | 13.4 MB | 52.6 MB |
+|  |  |  |  | `values` | 1.69 s | 60.0 | 1,826 | 13.4 MB | 52.7 MB |
+| S1 Sample 3 | delimited | 196 | 39,337 | `parse` | 1.05 s | 42.4 | 3,528 | 13.4 MB | 51.2 MB |
+|  |  |  |  | `typed` | 1.37 s | 32.7 | 2,988 | 13.3 MB | 53.5 MB |
+|  |  |  |  | `values` | 1.38 s | 32.3 | 4,580 | 13.4 MB | 53.6 MB |
+| S2 Sample 1 | fixed-length | 172 | 22,481 | `parse` | 642 ms | 25.1 | 3,759 | 13.6 MB | 50.1 MB |
+|  |  |  |  | `typed` | 747 ms | 21.6 | 3,598 | 13.8 MB | 52.7 MB |
+|  |  |  |  | `values` | 727 ms | 22.2 | 4,306 | 13.7 MB | 52.8 MB |
+| S2 Sample 2 | fixed-length | 235 | 1,790 | `parse` | 107 ms | 55.8 | 12,092 | 10.6 MB | 47.8 MB |
+|  |  |  |  | `typed` | 135 ms | 44.4 | 11,269 | 12.2 MB | 49.9 MB |
+|  |  |  |  | `values` | 129 ms | 46.4 | 13,171 | 11.7 MB | 49.8 MB |
+| S2 Sample 3 | fixed-length | 34 | 18,047 | `parse` | 154 ms | 28.2 | 1,882 | 13.0 MB | 49.4 MB |
+|  |  |  |  | `typed` | 197 ms | 22.1 | 1,648 | 12.5 MB | 51.1 MB |
+|  |  |  |  | `values` | 201 ms | 21.6 | 1,916 | 12.2 MB | 51.0 MB |
 
 **This library puts performance first.** Where a performance change and a feature want the same release, the performance change goes in and the feature waits. That is the whole reason the last several releases read as they do - buffer writers, a span tokeniser, a column context built only when something can read it, span parsing on both readers - and it is why the three changes above went in ahead of every feature below. What is left on that list is feature work: the values array and the boxes were the two large allocations a typed read made, and both are now gone.
 
