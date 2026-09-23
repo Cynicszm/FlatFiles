@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace FlatFiles.IntegrationTest
 {
@@ -346,7 +347,7 @@ namespace FlatFiles.IntegrationTest
                 var first = result.Profile != profileName;
                 profileName = result.Profile;
                 Console.WriteLine( "| {0} | {1} | {2} | {3} | `{4}` | {5} | {6:N1} | {7:N0} | {8} | {9} |",
-                    first ? "**" + result.Profile + "**" : string.Empty,
+                    first ? Shorthand( result.Profile ) : string.Empty,
                     first ? ( profile.IsFixedLength ? "fixed-length" : "delimited" ) : string.Empty,
                     first ? ColumnCount( profile ).ToString( "N0", CultureInfo.CurrentCulture ) : string.Empty,
                     first ? result.Records.ToString( "N0", CultureInfo.CurrentCulture ) : string.Empty,
@@ -444,6 +445,17 @@ namespace FlatFiles.IntegrationTest
             Console.WriteLine();
             Console.WriteLine( "Bytes/rec is what the read allocated, per record. Peak heap is the largest the managed" );
             Console.WriteLine( "heap reached while reading; peak WS is the process working set. Each row is its own process." );
+        }
+
+        /// <summary>
+        ///     A sample's name in a narrower form for a table: Set1Sample1 reads as S1 Sample 1.
+        /// </summary>
+        private static string Shorthand( string profile )
+        {
+            var match = Regex.Match( profile, @"^Set(\d+)Sample(\d+)$" );
+            return match.Success
+                ? string.Format( CultureInfo.CurrentCulture, "S{0} Sample {1}", match.Groups[1].Value, match.Groups[2].Value )
+                : profile;
         }
 
         /// <summary>
