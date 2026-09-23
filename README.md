@@ -21,6 +21,7 @@ If you are working with data classes, defining schemas is even easier. You can u
 * [Overview](#overview)
 * [Type Mappers](#type-mappers)
     * [Auto-mapping](#auto-mapping)
+    * [Constructor mapping](#constructor-mapping)
 * [Schemas](#schemas)
     * [Column types](#column-types)
     * [Creating your own columns](#creating-your-own-columns)
@@ -43,6 +44,7 @@ If you are working with data classes, defining schemas is even easier. You can u
 * [Non-Public Classes and Members](#non-public-classes-and-members)
 * [ADO.NET DataTables](#adonet-datatables)
 * [FlatFileDataReader](#flatfiledatareader)
+* [How This Library Is Verified](#how-this-library-is-verified)
 * [License](#license)
 
 ## Type Mappers
@@ -92,6 +94,48 @@ If your delimited file (CSV, TSV, etc.) has a schema with column names that matc
 By default, columns and properties are matched by name (case-insensitive). If you need more control over how columns and properties are matched, you can pass in your own `IAutoMapMatcher`. Given an `IColumnDefinition` and a `MemberInfo`, a matcher must determine whether the two map to one another. For convenience, you can also use the `AutoMapMatcher.For` method to pass a `Func<IColumnDefinition, MemberInfo, bool>` delegate rather than implement the interface.
 
 Similarly, use the `GetAutoMappedWriter` method to automatically write out a delimited file. Note that there's no way to control the column formatting. However, you can control the name and position of the columns by passing an `IAutoMapResolver`. The `IAutoMapResolver` interface provides the `GetPosition` and a `GetColumnName` methods, both accepting a `MemberInfo`. For convenience, you can also use the `AutoMapResolver.For` method to pass delegates for determining the names/positions, rather than implement the interface. 
+
+### Constructor mapping
+`Define<T>()` does not need your class to have a parameterless constructor. If it hasn't got one, FlatFiles builds it by handing its constructor the values it parsed, matching each parameter to a mapped member by name, ignoring case.
+
+That means a positional record maps with nothing extra:
+
+```csharp
+public record Customer(int CustomerId, string Name, DateTime Created, decimal AverageSales);
+
+var mapper = DelimitedTypeMapper.Define<Customer>();
+mapper.Property(c => c.CustomerId).ColumnName("customer_id");
+mapper.Property(c => c.Name).ColumnName("name");
+mapper.Property(c => c.Created).ColumnName("created").InputFormat("yyyyMMdd");
+mapper.Property(c => c.AverageSales).ColumnName("avg_sales");
+```
+
+The same applies to a class whose properties are get-only, which nothing could fill before, and to one that checks what it is given rather than being built empty and assigned afterwards:
+
+```csharp
+public class Customer
+{
+    public Customer(int customerId, string name)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(customerId);
+        CustomerId = customerId;
+        Name = name;
+    }
+
+    public int CustomerId { get; }
+    public string Name { get; }
+}
+```
+
+The rules are worth knowing before you rely on them:
+
+* If your class has a parameterless constructor, FlatFiles uses it and assigns the properties afterwards, exactly as it always has. Nothing about an existing mapping changes.
+* If you passed a factory to `Define` or `UseFactory`, you have said how the class is built and FlatFiles does not look for a constructor.
+* Otherwise the greediest constructor whose parameters all match mapped members wins, so a class offering both a full constructor and a partial one is built as completely as the record allows.
+* A member the constructor takes is not assigned again afterwards. One it does not take is assigned as usual, so you can mix a constructor with settable properties.
+* If nothing matches — a parameter named something no mapped member is called, or one whose type will not take what the member parses to — you get a `FlatFileException` naming the class, the constructors it tried and the members that were mapped.
+
+One thing to be aware of if you validate in a constructor: when it rejects a record, its own exception reaches you. It is not wrapped in a `RecordProcessingException`, so a [`RecordError`](#error-handling) handler will not skip the record for you. That matches how FlatFiles treats any failure while building an entity, including a `CustomMapping` reader that throws.
 
 ## Schemas
 Under the hood, type mapping internally defines a schema, giving each column a name, order and type in the flat file. You can get access to the schema by calling `GetSchema` on the mapper.
@@ -637,6 +681,13 @@ Usually in cases like this, it is just easier to use the type mappers. However, 
 FlatFiles also provides helpful extension methods on the `IDataReader` interface to make it easier to extract data. It provides `GetNullable*` variants of the `IDataReader` methods, so you don't need to constantly call `IsDBNull`. There are also variants of each method accepting the column name rather than the ordinal position.
 
 There are also generic `GetValue<T>` methods that can deal with type conversions automatically for you. For example, anytime you read in a CSV file without providing the schema, FlatFiles assumes each column is a `string`. When calling `GetValue<int>("Id")` or `GetValue<DateTime?>("CreatedOn")`, FlatFiles will try to convert the values for you. This is extremely helpful when you don't want to provide (*or can't provide*) a schema but can still determine the column types. For example, when you know the column names and their types but their order could be different between runs.
+
+## How This Library Is Verified
+Besides the unit tests, this repository reads six files end to end before every release and compares what that cost against figures committed alongside them. The files are generated from profiles describing the shape of real ones — 379 columns; 344,352 records; every field quoted; fourteen record layouts chosen by a single character; a 3,500-character record — and they are committed rather than built, so the bytes being read are fixed and a change in the numbers means a change in the library.
+
+Three figures are compared. How many records each file yields is exact, and so is the requirement that none be refused. What a read allocates per record is compared to within 2%, being deterministic for given bytes on a given runtime. How long a read takes is reported and never compared, because it is not stable enough to decide anything.
+
+The check runs in the publish workflow only, so a release fails if a figure moved without somebody meaning it to. [`FlatFiles.IntegrationTest/README.md`](FlatFiles.IntegrationTest/README.md) has the detail: the six files and what each stresses, the tables of measurements, what every column means, and how to take a new baseline when a change moves one on purpose.
 
 ## License
 This is free and unencumbered software released into the public domain.
