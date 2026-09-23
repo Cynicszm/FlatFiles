@@ -11,9 +11,10 @@ namespace FlatFiles.IntegrationTest
     ///     calls it a change rather than noise.
     /// </summary>
     /// <remarks>
-    ///     Two of the three figures are gated and one is not. How many records a file yields, and how many it
-    ///     refuses, are exact: a change there is a change in what the library does with a real file, whether or
-    ///     not anybody meant it. What a read allocates is deterministic to the byte for a given file and runtime,
+    ///     Two figures are gated and one is not. How many records a sample yields is exact: a change there is a
+    ///     change in what the library does with a real-shaped file, whether or not anybody meant it, and it
+    ///     catches a record being refused as surely as a count of refusals would, because a refused record is one
+    ///     the run did not yield. What a read allocates is deterministic to the byte for a given file and runtime,
     ///     so it is gated on a tolerance that exists only to absorb a runtime's own housekeeping. How long a read
     ///     takes is not gated at all - the same unchanged code has measured 11 ms and 22 ms on the same machine
     ///     within a minute - so it is reported and left to a human.
@@ -84,8 +85,6 @@ namespace FlatFiles.IntegrationTest
         public string Scenario { get; set; } = string.Empty;
 
         public long Records { get; set; }
-
-        public long SkippedRecords { get; set; }
 
         public double BytesPerRecord { get; set; }
     }

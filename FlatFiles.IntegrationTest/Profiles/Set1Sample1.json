@@ -1,11 +1,11 @@
 {
   "name": "Set1Sample1",
-  "description": "The widest of the three: 379 columns of mixed dates, decimals and codes, unquoted, with a wide right-anchored final column and a handful of records carrying a separator inside a field.",
+  "description": "The widest of the three: 379 columns of mixed dates, decimals and codes, unquoted, with a wide right-anchored final column.",
   "separator": ",",
   "recordSeparator": "\r\n",
   "quoteEveryField": false,
   "recordCount": 37031,
-  "misalignedRecords": 171,
+  "misalignedRecords": 0,
   "expected": {
     "fileSize": 38609929,
     "recordBytesMinimum": 770,

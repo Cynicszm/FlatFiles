@@ -207,18 +207,29 @@ a run that reads different bytes is refused rather than reported.
 
     dotnet run --project FlatFiles.IntegrationTest -c Release -- check
 
-Three figures beyond the samples, gated differently on purpose. Records read and records skipped are exact: a change there
-is a change in what the library does with a real-shaped file, whether or not anybody meant it. Bytes
-allocated per record is gated at 2%, which is deterministic to the byte and has repeated to within 0.1%
-here. How long a read takes and how much memory it peaks at are reported and never gated - the same
-unchanged code has measured 11 ms and 22 ms on the same machine within a minute, and peak memory is
-dominated by runtime start-up rather than by the read.
+Beyond the samples themselves, the record count is exact: a change there is a change in what the library
+does with a real-shaped file, whether or not anybody meant it. No sample is built to have a record
+refused, so any refusal fails the check whatever else agrees. Bytes allocated per record is gated at 2%,
+which is deterministic to the byte and has repeated to within 0.1% here. How long a read takes and how
+much memory it peaks at are reported and never gated - the same unchanged code has measured 11 ms and
+22 ms on the same machine within a minute, and peak memory is dominated by runtime start-up rather than
+by the read.
 
 It runs in `publish.yml` only, before a release is packed, and a release fails if anything moved. It is
-deliberately not on the pull request build: generating and reading 220 MB is too slow to put on every
-push, and what it guards is a release going out with something changed. When a change is intended, take
+deliberately not on the pull request build: what it guards is a release going out with something
+changed, and the run costs about twenty seconds and 210 MB of unpacked disk on whatever performs it -
+not worth spending on every push. When a change is intended, take
 a new baseline with the `baseline` command and describe it in the changelog, in the same pull request
 as the changelog entry and before the tag is cut.
+
+**A release entry carries the full table**, all six samples and all three scenarios apiece, so that what
+a version cost is recorded where it was released rather than only in a baseline file that the next
+release overwrites. `run --markdown` prints it ready to paste:
+
+    dotnet run --project FlatFiles.IntegrationTest -c Release -- run --markdown
+
+Take it against the samples the release is cut from, in the pull request that finalises the changelog
+entry.
 
 ## Inspections
 

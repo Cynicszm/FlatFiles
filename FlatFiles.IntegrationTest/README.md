@@ -54,7 +54,7 @@ once.
 
 | Profile | Format | Columns | Records | Size | What it stresses |
 | --- | --- | --- | --- | --- | --- |
-| `Set1Sample1` | delimited | 379 | 37,031 | 37 MB | The widest delimited record. A right-anchored final column of four distinct widths, and 171 records carrying a separator inside an unquoted field. |
+| `Set1Sample1` | delimited | 379 | 37,031 | 37 MB | The widest delimited record, with a right-anchored final column of four distinct widths. |
 | `Set1Sample2` | delimited | 58 | 344,352 | 102 MB | The most records. Few columns, a final column empty on every record, so per-record overhead shows up where per-field work does not. |
 | `Set1Sample3` | delimited | 196 | 39,337 | 45 MB | Every field quoted, so a third of the file is punctuation and every value goes through the quoted path. |
 | `Set2Sample1` | fixed-length | up to 172 | 22,481 | 16 MB | Fourteen record layouts in one file, chosen by a single character, from 21 windows wide to 172. Several layouts stop short of the 750-character record, leaving the tail unread. |
@@ -84,14 +84,15 @@ recovery rather than parsing.
 
 `check` measures everything and compares it against `Baseline.json`, which is committed beside this
 file. It runs in one place: the publish workflow, before a release is packed, and a release fails if
-anything moved. It is deliberately not on the pull request build - generating and reading 220 MB is
-too slow to put on every push, and what it guards is a release going out with something changed.
-Three figures, gated differently on purpose:
+anything moved. It is deliberately not on the pull request build - what it guards is a release going
+out with something changed, and the run costs about twenty seconds and 210 MB of unpacked disk on
+whatever performs it. Three figures, gated differently on purpose:
 
 | Figure | Gate | Why |
 | --- | --- | --- |
 | The samples themselves | exact, by SHA-256 | A figure measured against different bytes says nothing, so the check verifies its input before measuring anything. |
-| Records read, records skipped | exact | A change here is a change in what the library does with a real-shaped file, whether or not anybody meant it. |
+| Records read | exact | A change here is a change in what the library does with a real-shaped file, whether or not anybody meant it. A record refused is a record not yielded, so this catches one without needing a count of its own. |
+| Records refused | must be none | No sample is built to have a record refused. One that does means something changed, so it fails whatever the other figures say. |
 | Bytes allocated per record | 2% | Deterministic to the byte for a given file and runtime. Repeated runs here agree to within 0.1%, so 2% absorbs a runtime's housekeeping and nothing else. |
 | Time, peak memory | not gated | Reported only. The same unchanged code has measured 11 ms and 22 ms on the same machine within a minute, and peak memory is dominated by runtime start-up rather than by the read. Gating either would fail releases at random. |
 
@@ -100,6 +101,10 @@ like any other. A baseline that moves without an entry beside it is the thing th
 
 The samples themselves are gated the same way and for the same reason. Until a new baseline is taken,
 a regenerated sample fails the check rather than quietly shifting every figure under it.
+
+A release entry in the changelog carries the whole table - six samples, three scenarios apiece - so
+what a version cost is recorded where it shipped rather than only in a baseline the next release
+overwrites. `run --markdown` prints it ready to paste.
 
 ## What the profiles pin, and what they do not
 
@@ -136,13 +141,22 @@ the project needs no spreadsheet library for the one thing it produces.
 
 ## A note on records with too many fields
 
-`Set1Sample1` models 171 records that carry a separator inside an unquoted field, so those records
-present 380 fields against a 379-column schema. The reader rejects a record with too few fields and
-accepts one with too many, keeping the first 379 and discarding the rest - so every field after the
-stray separator is read one position to the left, silently.
+None of the six samples has a record the reader refuses. That is deliberate: a refusal in a later run
+should mean something changed, not that something was always so, which is why the check fails on any
+refusal at all rather than comparing a count of them.
 
-In the `parse` scenario all 37,031 records are therefore read without complaint, 171 of them holding
-shifted values. In `typed` only 148 fail, because a shifted value has to reach a column that will not
-parse it before anything notices, and where the separator lands among text columns nothing does.
-Whether a misaligned record is noticed depends on how the schema is typed and on where the stray
-separator fell, not on the record being wrong.
+An earlier draft of `Set1Sample1` did model 171 records carrying a separator inside an unquoted field,
+and building it turned up something worth writing down. The reader refuses a record with too few
+fields and accepts one with too many, keeping the first however many the schema declares and
+discarding the rest:
+
+    exact     -> read [1][2][3]
+    too few   -> RecordProcessingException
+    too many  -> read [1][2][3]      (the fourth field discarded, no error)
+
+So a record with a stray separator is read with every later value one position to the left, and
+nothing says so. Whether anything notices depends on whether a shifted value reaches a column that
+will not parse it - a matter of where the separator fell, not of the record being wrong. Of those 171
+records, a typed schema noticed 148 and read 23 of them silently wrong.
+
+This is behaviour as it stands, recorded here rather than modelled in a sample.
