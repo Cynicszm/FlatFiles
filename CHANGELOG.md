@@ -1,5 +1,42 @@
-## 8.1.0 (unreleased)
-**Not released.** Being built. What is written up here has landed on master; what is under **Planned** has not. Nothing in this release breaks anything.
+## 8.2.0 (planned)
+**Not released, and not started.** What is written here is the order the remaining work will be done in, kept with the releases so that the reasoning sits beside what it produced. Nothing below breaks anything, so none of it is waiting for a major version.
+
+### Next
+
+In the order they will be built. None of these breaks anything, so none of them is waiting for a major version.
+
+- **A source generator for mappings.** Would remove the start-up cost of emitting a deserialiser, and the reflection fallback's per-value penalty on runtimes without dynamic code, neither of which a trimmer can follow. 7.4.0's `RuntimeFeature.IsDynamicCodeSupported` fallback made the library work under Native AOT; this would make it fast there.
+
+  **8.1.0 was cut before this one starts**, and for a reason worth keeping written down: it was the first release the integration check ever gated, and it was one where nothing moved. A failure there would have meant the machinery was wrong, which is a plain thing to diagnose. Had the check first run on a release that moved every figure, a failure would have said nothing - the baseline, the change or the gate itself, and no way to tell which. The same holds whenever a release would change what every read costs.
+
+  The generator work takes the new baseline, against a release known to have produced a clean one, and its changelog entry carries the table showing what moved.
+- **Attribute-based mapping.** The library has no attribute types at all. Every mapping is written out in fluent calls, which is the right default for a file whose shape is not the class's business, and the wrong one for the common case where a class exists to mirror a file.
+- **Comment and blank-line skipping.** Both option classes can express it today only through a `RecordRead` handler on every reader. A comment prefix and a skip-blank-lines flag on the options would cover most of what those handlers are written for. Small, and the least glamorous thing on this list.
+- **UTF-8 `Stream` input.** Reading from a `Stream` without wrapping it in a `StreamReader`, with the encoding and any byte order mark handled by the reader. This was ranked first, and first for the wrong reason: the entry claimed it was the one change that would take allocation below CsvHelper. Measured, decoding 1.36 MB of UTF-8 costs 0.2 ms and about one byte a record, because `StreamReader` reuses its buffers, and reading the same file through a `StreamReader` rather than a `StringReader` allocates exactly the same 741 bytes a record. It is worth having as a convenience, and for files whose encoding has to be sniffed rather than assumed, but not as a performance change.
+- **Header-driven column matching against a supplied schema, and what to do with a record that does not fit it.** The header row is read and thrown away: never checked against the schema, never used to order it. A file whose columns have been reordered since the schema was written is read straight into the wrong properties, silently, because position is all the reader has. Matching the header by name, and saying what happens when it disagrees - reorder, refuse, or ignore - is the largest gap left against CsvHelper, which maps by name and is the one competitor this repository benchmarks against. Reading by position stays the default, since a file with no header has nothing else to go on.
+
+  The same feature settles what a record of the wrong length means, because today the two ends disagree and neither is configurable. A delimited record with **too few** fields is refused; one with **too many** is accepted, the first however many the schema declares kept and the rest discarded. So a record carrying a separator inside an unquoted field is read with every later value one position to the left, and nothing says so - whether anything notices depends on whether a shifted value reaches a column that will not parse it, which is a matter of where the separator fell rather than of the record being wrong. The fixed-length reader already has `IsRaggedRight` and `IsLongRecordRejected` for the same question and answers it differently again.
+
+  What is wanted is one way of saying it on both readers: refuse a short record or pad it, refuse a long one or discard the surplus, with the current behaviour as the default so nothing changes for anyone who does not ask. Whatever is chosen has to be visible - a record silently read one column out of step is the worst of the available outcomes, and is what happens now.
+
+**Considered and already covered.** Seven more ideas came out of the same review and turned out to need no work. They are recorded so that nobody spends an afternoon rediscovering it.
+
+Already supported when the review looked:
+
+- multi-character separators - `DelimitedOptions.Separator` is a string, not a character;
+- quoting behaviour - `QuoteBehaviour` quotes only what needs it, or everything, or nothing;
+- whitespace preservation - `DelimitedOptions.PreserveWhiteSpace`, alongside `Trim` on the string and character array columns;
+- files holding more than one schema - the schema selectors and injectors, on both readers and writers;
+- `IDataReader` - `FlatFileDataReader`, with `DataTable` support beside it.
+
+Shipped since the review, by the releases named:
+
+- cancellation tokens on every asynchronous read and write - 7.2.0;
+- ragged-right fixed-length files - 7.3.0.
+
+Nothing that review raised was declined outright.
+## 8.1.0 (2026-09-23)
+**Summary** - Three changes to what a read costs and one to what it can map. A delimited read through a type mapper allocated 879 bytes a record at 8.0.0 and now allocates 388; fixed-length, 1,295 and now 732. `Define<T>()` has lost its `new()` constraint, so a positional record, a type whose properties are get-only and a type that validates in its constructor all map without being given a second, looser shape to be deserialised into. A release is now checked against the six integration test files before it goes out. Nothing here breaks anything.
 
 **A typed read no longer copies the values out of the reader.** `IReader.GetValues` hands a caller its own array, because a caller may keep it or write to it. A type mapper does neither: it reads each value once, builds an entity, and lets the array go. Copying it for that meant every record through a mapper allocated the values array twice - once where the record was parsed, once for a copy nothing ever looked at. The mapper now takes the reader's own array through an internal member that says as much. Measured on 10,000 records of 13 columns, a delimited read through a type mapper allocated 879 bytes a record and now allocates 751; fixed-length, 1,295 and now 1,167. Reads that do not go through a mapper are untouched, and `GetValues` still copies, because its callers are the ones the copy is for.
 
@@ -81,42 +118,6 @@ Two smaller things came with it. A non-public parameterless constructor now work
 One behaviour is worth knowing before relying on it. When a constructor refuses a record - the whole point of letting it validate - its exception reaches the caller as it was thrown, not wrapped in a `RecordProcessingException` that a `RecordError` handler could skip. That is how the library already treats a failure while an entity is being assembled, a custom reader that throws included, so this follows it rather than inventing a second convention; whether that is the right convention is a question for the error handling rather than for this change.
 
 **This library puts performance first.** Where a performance change and a feature want the same release, the performance change goes in and the feature waits. That is the whole reason the last several releases read as they do - buffer writers, a span tokeniser, a column context built only when something can read it, span parsing on both readers - and it is why the three changes above went in ahead of every feature below. What is left on that list is feature work: the values array and the boxes were the two large allocations a typed read made, and both are now gone.
-
-### Planned
-
-In the order they will be built. None of these breaks anything, so none of them is waiting for a major version.
-
-- **A source generator for mappings.** Would remove the start-up cost of emitting a deserialiser, and the reflection fallback's per-value penalty on runtimes without dynamic code, neither of which a trimmer can follow. 7.4.0's `RuntimeFeature.IsDynamicCodeSupported` fallback made the library work under Native AOT; this would make it fast there.
-
-  **Cut a release before this one starts.** The constructor mapping is done and sitting in this release unreleased. Two reasons, and the second is the better one. A release then carries a finished feature rather than holding it behind an unstarted one. More to the point, it is the first release the integration check will ever have gated, and it should be a release where nothing moved: if the check fails on one where every figure was expected to stay put, the machinery is wrong, and that is a plain thing to diagnose. Cut it for the first time alongside a change that moves every figure and a failure says nothing - the baseline, the generator or the gate itself, and no way to tell which.
-
-  The generator work then takes the new baseline, against a release known to have produced a clean one, and its changelog entry carries the table showing what moved.
-- **Attribute-based mapping.** The library has no attribute types at all. Every mapping is written out in fluent calls, which is the right default for a file whose shape is not the class's business, and the wrong one for the common case where a class exists to mirror a file.
-- **Comment and blank-line skipping.** Both option classes can express it today only through a `RecordRead` handler on every reader. A comment prefix and a skip-blank-lines flag on the options would cover most of what those handlers are written for. Small, and the least glamorous thing on this list.
-- **UTF-8 `Stream` input.** Reading from a `Stream` without wrapping it in a `StreamReader`, with the encoding and any byte order mark handled by the reader. This was ranked first, and first for the wrong reason: the entry claimed it was the one change that would take allocation below CsvHelper. Measured, decoding 1.36 MB of UTF-8 costs 0.2 ms and about one byte a record, because `StreamReader` reuses its buffers, and reading the same file through a `StreamReader` rather than a `StringReader` allocates exactly the same 741 bytes a record. It is worth having as a convenience, and for files whose encoding has to be sniffed rather than assumed, but not as a performance change.
-- **Header-driven column matching against a supplied schema, and what to do with a record that does not fit it.** The header row is read and thrown away: never checked against the schema, never used to order it. A file whose columns have been reordered since the schema was written is read straight into the wrong properties, silently, because position is all the reader has. Matching the header by name, and saying what happens when it disagrees - reorder, refuse, or ignore - is the largest gap left against CsvHelper, which maps by name and is the one competitor this repository benchmarks against. Reading by position stays the default, since a file with no header has nothing else to go on.
-
-  The same feature settles what a record of the wrong length means, because today the two ends disagree and neither is configurable. A delimited record with **too few** fields is refused; one with **too many** is accepted, the first however many the schema declares kept and the rest discarded. So a record carrying a separator inside an unquoted field is read with every later value one position to the left, and nothing says so - whether anything notices depends on whether a shifted value reaches a column that will not parse it, which is a matter of where the separator fell rather than of the record being wrong. The fixed-length reader already has `IsRaggedRight` and `IsLongRecordRejected` for the same question and answers it differently again.
-
-  What is wanted is one way of saying it on both readers: refuse a short record or pad it, refuse a long one or discard the surplus, with the current behaviour as the default so nothing changes for anyone who does not ask. Whatever is chosen has to be visible - a record silently read one column out of step is the worst of the available outcomes, and is what happens now.
-
-**Considered and already covered.** Seven more ideas came out of the same review and turned out to need no work. They are recorded so that nobody spends an afternoon rediscovering it.
-
-Already supported when the review looked:
-
-- multi-character separators - `DelimitedOptions.Separator` is a string, not a character;
-- quoting behaviour - `QuoteBehaviour` quotes only what needs it, or everything, or nothing;
-- whitespace preservation - `DelimitedOptions.PreserveWhiteSpace`, alongside `Trim` on the string and character array columns;
-- files holding more than one schema - the schema selectors and injectors, on both readers and writers;
-- `IDataReader` - `FlatFileDataReader`, with `DataTable` support beside it.
-
-Shipped since the review, by the releases named:
-
-- cancellation tokens on every asynchronous read and write - 7.2.0;
-- ragged-right fixed-length files - 7.3.0.
-
-Nothing that review raised was declined outright.
-
 ## 8.0.0 (2026-09-22)
 **Summary** - The first major version of this fork. Three breaking changes, each recorded here before it was made: the public API is spelled the way the rest of the library is, the obsolete `Preprocessor` members are gone, and a delimited record is parsed straight from the parser's buffer, which makes `IRecordContext.Values` good only while its record is. A delimited read allocates 741 bytes a record where 7.6.0 allocated 1,171.
 
