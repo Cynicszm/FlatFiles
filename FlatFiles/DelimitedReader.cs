@@ -375,6 +375,18 @@ namespace FlatFiles
                 ProcessError( new RecordProcessingException( currentContext, Resources.DelimitedRecordWrongNumberOfColumns ) );
                 return null;
             }
+            recordSchema = currentSchema;
+            valuesAreParsed = true;
+            if (Assembler is not null && rawValues is null && RecordParsed is null && recordParsedUntyped is null)
+            {
+                // Nothing here needs the values as objects, so they go straight onto the entity instead.
+                if (!Assemble( currentContext, currentSchema, rawRecord ))
+                {
+                    return null;
+                }
+                valuesAreParsed = false;
+                return parsedValues;
+            }
             var currentValues = ParseValues( currentContext, rawRecord, rawValues );
             if (currentValues is null)
             {
@@ -436,6 +448,31 @@ namespace FlatFiles
             return parsedValues;
         }
 
+        // A typed reader installs this to take the record onto an entity itself, which is the only way a value
+        // reaches a property without being boxed on the way. It is used only where nothing else needs the parsed
+        // values: no handler for the parsed record, and no values already made strings of for a selector or a
+        // handler for the record read.
+        internal IEntityAssembler? Assembler { get; set; }
+
+        private bool valuesAreParsed;
+
+        private DelimitedSchema? recordSchema;
+
+        /// <summary>
+        ///     Parses the values the assembler took instead, for a caller that asks the reader for them anyway.
+        ///     Only a caller holding this reader can get here, because a type mapper makes its own; a column on that
+        ///     path carries no parsing hooks, so reading its value a second time changes nothing.
+        /// </summary>
+        private void EnsureValuesParsed()
+        {
+            if (valuesAreParsed || recordSchema is null || recordContext is not DelimitedRecordContext context)
+            {
+                return;
+            }
+            values = recordSchema.ParseValues( context, parser.Values, GetParsedValues( recordSchema ) );
+            valuesAreParsed = true;
+        }
+
         private ExecutionContextCache<DelimitedSchema, DelimitedExecutionContext>? executionContexts;
 
         private DelimitedRecordContext NewRecordContext( DelimitedSchema currentSchema, string record, string[]? currentValues )
@@ -461,6 +498,21 @@ namespace FlatFiles
         {
             var columnDefinitions = currentSchema.ColumnDefinitions;
             return valueCount + columnDefinitions.MetadataCount < columnDefinitions.PhysicalCount;
+        }
+
+        private bool Assemble( DelimitedRecordContext currentContext, DelimitedSchema schema, RawRecord rawRecord )
+        {
+            try
+            {
+                currentContext.ColumnError += ColumnError;
+                Assembler!.Assemble( currentContext, schema, rawRecord );
+                return true;
+            }
+            catch (FlatFileException exception)
+            {
+                ProcessError( new RecordProcessingException( currentContext, Resources.InvalidRecordConversion, exception ) );
+                return false;
+            }
         }
 
         private object?[]? ParseValues( DelimitedRecordContext currentContext, RawRecord rawRecord, string[]? rawValues )
@@ -619,11 +671,18 @@ namespace FlatFiles
             {
                 throw new InvalidOperationException( Resources.NoMoreRecords );
             }
+            EnsureValuesParsed();
             var copy = new object[values.Length];
             Array.Copy( values, copy, values.Length );
             return copy;
         }
 
+
+        IEntityAssembler? IReaderWithMetadata.Assembler
+        {
+            get => Assembler;
+            set => Assembler = value;
+        }
 
         object?[] IReaderWithMetadata.GetCurrentValues()
         {
@@ -639,6 +698,7 @@ namespace FlatFiles
             {
                 throw new InvalidOperationException( Resources.NoMoreRecords );
             }
+            EnsureValuesParsed();
             return values;
         }
 
