@@ -34,10 +34,15 @@ namespace FlatFiles.TypeMapping
         public Func<TEntity> GetFactory<TEntity>()
         {
             var entityType = typeof( TEntity );
-            var constructorInfo = MemberAccessorBuilder.GetConstructor<TEntity>( Type.EmptyTypes );
-            if (constructorInfo is null)
+            // The caller has already established there is one: a type without a parameterless constructor is
+            // built through the constructor it does have, and never arrives here.
+            var constructorInfo = MemberAccessorBuilder.GetConstructor<TEntity>( Type.EmptyTypes )!;
+            if (!constructorInfo.IsPublic)
             {
-                throw new FlatFileException( Resources.NoDefaultConstructor );
+                // Emitted code is not the type's friend, so a constructor it keeps to itself has to be reached
+                // reflectively. Slower per entity, and only for a type that asked for it by hiding its
+                // constructor.
+                return () => (TEntity) constructorInfo.Invoke( null );
             }
             var typeName = GetUniqueTypeName( $"{entityType.Name}Factory" );
             var typeBuilder = moduleBuilder.DefineType( typeName, TypeAttributes.Class | TypeAttributes.Public | TypeAttributes.Sealed );
@@ -48,6 +53,38 @@ namespace FlatFiles.TypeMapping
             var typeInfo = typeBuilder.CreateTypeInfo();
             var createInfo = typeInfo.GetMethod( methodBuilder.Name )!;
             return createInfo.CreateDelegate<Func<TEntity>>();
+        }
+
+        /// <summary>
+        ///     Emits a method that reads the parameters out of the parsed values and calls the constructor with
+        ///     them, so a type that must be built complete costs one call rather than a reflective invoke and an
+        ///     array of arguments for every record.
+        /// </summary>
+        public Func<object?[], TEntity> GetConstructor<TEntity>( ConstructorMapping mapping )
+        {
+            var entityType = typeof( TEntity );
+            var typeName = GetUniqueTypeName( $"{entityType.Name}Constructor" );
+            var typeBuilder = moduleBuilder.DefineType( typeName, TypeAttributes.Class | TypeAttributes.Public | TypeAttributes.Sealed );
+            var methodBuilder = typeBuilder.DefineMethod( "Create", MethodAttributes.Public | MethodAttributes.Static, entityType, [typeof( object?[] )] );
+            var generator = methodBuilder.GetILGenerator();
+
+            var parameters = mapping.Constructor.GetParameters();
+            for (var index = 0; index != parameters.Length; ++index)
+            {
+                generator.Emit( OpCodes.Ldarg_0 );
+                generator.Emit( OpCodes.Ldc_I4, mapping.LogicalIndexes[index] );
+                generator.Emit( OpCodes.Ldelem_Ref );
+                var parameterType = parameters[index].ParameterType;
+                // A value type arrives boxed and has to be taken out of its box; a reference type only has to be
+                // proved to be what the constructor was promised.
+                generator.Emit( parameterType.IsValueType ? OpCodes.Unbox_Any : OpCodes.Castclass, parameterType );
+            }
+            generator.Emit( OpCodes.Newobj, mapping.Constructor );
+            generator.Emit( OpCodes.Ret );
+
+            var typeInfo = typeBuilder.CreateTypeInfo();
+            var createInfo = typeInfo.GetMethod( methodBuilder.Name )!;
+            return createInfo.CreateDelegate<Func<object?[], TEntity>>();
         }
 
         public Action<IRecordContext, TEntity, object?[]> GetReader<TEntity>( IMemberMapping[] mappings )
