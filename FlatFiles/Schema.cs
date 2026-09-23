@@ -44,10 +44,10 @@ namespace FlatFiles
         /// </summary>
         /// <param name="context">The metadata for the current record being processed.</param>
         /// <param name="values">The values to parse.</param>
+        /// <param name="parsedValues">The array to put the parsed objects in, one slot per physical column.</param>
         /// <returns>The parsed objects.</returns>
-        internal object?[] ParseValues( IRecoverableRecordContext context, string[] values )
+        internal object?[] ParseValues( IRecoverableRecordContext context, string[] values, object?[] parsedValues )
         {
-            var parsedValues = new object?[ColumnDefinitions.PhysicalCount];
             for (int columnIndex = 0, sourceIndex = 0, destinationIndex = 0, columnCount = ColumnDefinitions.Count;
                 columnIndex != columnCount;
                 ++columnIndex)
@@ -85,10 +85,10 @@ namespace FlatFiles
         /// </summary>
         /// <param name="context">The metadata for the current record being processed.</param>
         /// <param name="values">The raw values of the record, as ranges within the text they were read from.</param>
+        /// <param name="parsedValues">The array to put the parsed objects in, one slot per physical column.</param>
         /// <returns>The parsed objects.</returns>
-        internal object?[] ParseValues( IRecoverableRecordContext context, RawRecord values )
+        internal object?[] ParseValues( IRecoverableRecordContext context, RawRecord values, object?[] parsedValues )
         {
-            var parsedValues = new object?[ColumnDefinitions.PhysicalCount];
             for (int columnIndex = 0, sourceIndex = 0, destinationIndex = 0, columnCount = ColumnDefinitions.Count;
                 columnIndex != columnCount;
                 ++columnIndex)

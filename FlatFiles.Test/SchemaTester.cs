@@ -45,7 +45,7 @@ namespace FlatFiles.Test
             string[] values = [ "bob", "smith", "20120123", "185" ];
             var executionContext = new DelimitedExecutionContext( schema, new DelimitedOptions() );
             var recordContext = new DelimitedRecordContext( executionContext );
-            var parsed = schema.ParseValues( recordContext, values );
+            var parsed = schema.ParseValues( recordContext, values, new object[schema.ColumnDefinitions.PhysicalCount] );
             object[] expected = [ "bob", "smith", new DateTime( 2012, 1, 23 ), 185 ];
             CollectionAssert.AreEqual( expected, parsed );
         }
