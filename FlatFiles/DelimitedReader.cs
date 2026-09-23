@@ -417,6 +417,25 @@ namespace FlatFiles
             return e.IsSkipped;
         }
 
+
+        // One array of parsed values for the whole read. Every slot is written for every record, and the only
+        // caller that may keep it is a parsed record handler, which is given one of its own instead.
+        private object?[] parsedValues = [];
+
+        private object?[] GetParsedValues( ISchema currentSchema )
+        {
+            var count = currentSchema.ColumnDefinitions.PhysicalCount;
+            if (RecordParsed is not null || recordParsedUntyped is not null)
+            {
+                return new object?[count];
+            }
+            if (parsedValues.Length != count)
+            {
+                parsedValues = new object?[count];
+            }
+            return parsedValues;
+        }
+
         private ExecutionContextCache<DelimitedSchema, DelimitedExecutionContext>? executionContexts;
 
         private DelimitedRecordContext NewRecordContext( DelimitedSchema currentSchema, string record, string[]? currentValues )
@@ -450,9 +469,10 @@ namespace FlatFiles
             {
                 currentContext.ColumnError += ColumnError;
                 var currentSchema = currentContext.ExecutionContext.Schema;
+                var destination = GetParsedValues( currentSchema );
                 return rawValues is null
-                    ? currentSchema.ParseValues( currentContext, rawRecord )
-                    : currentSchema.ParseValues( currentContext, rawValues );
+                    ? currentSchema.ParseValues( currentContext, rawRecord, destination )
+                    : currentSchema.ParseValues( currentContext, rawValues, destination );
             }
             catch (FlatFileException exception)
             {
