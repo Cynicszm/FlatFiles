@@ -211,9 +211,10 @@ Beyond the samples themselves, the record count is exact: a change there is a ch
 does with a real-shaped file, whether or not anybody meant it. No sample is built to have a record
 refused, so any refusal fails the check whatever else agrees. Bytes allocated per record is gated at 2%,
 which is deterministic to the byte and has repeated to within 0.1% here. How long a read takes and how
-much memory it peaks at are reported and never gated - the same unchanged code has measured 11 ms and
-22 ms on the same machine within a minute, and peak memory is dominated by runtime start-up rather than
-by the read.
+much memory it peaks at are reported and never gated. Each sample is read five times and the mean
+reported with its range, which takes most of the machine noise out and still leaves more movement than
+a gate could live with - the first of the five is cold and is often twice the others. Peak memory is
+dominated by runtime start-up rather than by the read.
 
 It runs in `publish.yml` only, before a release is packed, and a release fails if anything moved. It is
 deliberately not on the pull request build: what it guards is a release going out with something
