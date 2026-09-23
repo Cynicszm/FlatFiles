@@ -10,7 +10,7 @@
     <RepositoryUrl>https://github.com/Cynicszm/FlatFiles.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>csv;comma;tab;separated;value;delimited;flat;file;fixed;width;fixed-width;length;fixed-length;parser;parsing;parse</PackageTags>
-    <PackageReleaseNotes>A record read through a type mapper no longer copies the parsed values out of the reader, and the reader now fills one array of parsed values for the whole read rather than a new one for every record. A RecordParsed handler is still given an array of its own, because it may keep it. Measured on 10,000 records of 13 columns, a delimited read allocated 741 bytes a record and now allocates 613, a fixed-length read 1,157 and now 1,029, and the same reads through a type mapper 879 and 623, 1,295 and 1,039. No API changes.</PackageReleaseNotes>
+    <PackageReleaseNotes>A record read through a type mapper no longer copies the parsed values out of the reader, the reader fills one array of parsed values for the whole read rather than a new one for every record, and a type mapper now parses each value into the member that holds it rather than boxing it on the way. A RecordParsed handler is still given an array of its own, because it may keep it, and a mapping the typed parse cannot cover - a parsing hook, a custom reader, a field, a nested entity - reads as it did. Measured on 10,000 records of 13 columns, a delimited read allocated 741 bytes a record and now allocates 613, a fixed-length read 1,157 and now 1,029, and the same reads through a type mapper 879 and 388, 1,295 and 732. No API changes.</PackageReleaseNotes>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>FlatFiles.snk</AssemblyOriginatorKeyFile>
     <Version>8.1.0</Version>
