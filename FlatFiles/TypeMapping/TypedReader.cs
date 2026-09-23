@@ -62,8 +62,9 @@ namespace FlatFiles.TypeMapping
 
         private void SetCurrent()
         {
-            var values = Reader.GetValues();
+            // The reader's own array, not a copy: the deserialiser reads each value once and never keeps it.
             var metadataReader = (IReaderWithMetadata) Reader;
+            var values = metadataReader.GetCurrentValues();
             var recordContext = metadataReader.GetMetadata();
             current = deserializer( recordContext, values ); // Won't be null is Read returns true
         }
