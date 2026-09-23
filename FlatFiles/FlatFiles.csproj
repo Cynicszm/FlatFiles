@@ -10,10 +10,10 @@
     <RepositoryUrl>https://github.com/Cynicszm/FlatFiles.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>csv;comma;tab;separated;value;delimited;flat;file;fixed;width;fixed-width;length;fixed-length;parser;parsing;parse</PackageTags>
-    <PackageReleaseNotes>Breaking. TimeSpanColumn.FromMillseconds is renamed FromMilliseconds. QuoteBehavior becomes QuoteBehaviour, OptimizeMapping becomes OptimiseMapping and its isOptimized parameter becomes isOptimised. The obsolete Preprocessor members are removed from IColumnDefinition, ColumnDefinition and all twenty-six property mapping interfaces; OnParsing replaces them. A delimited record is now parsed straight from the parser's buffer, which makes IRecordContext.Values report the record being processed and null once the reader has moved on; the fixed-length reader narrows to match. That last one changes no signature, so nothing will warn you about it. A delimited read allocates 741 bytes a record where 7.6.0 allocated 1,171.</PackageReleaseNotes>
+    <PackageReleaseNotes>A record read through a type mapper no longer copies the parsed values out of the reader. The mapper reads each value once and discards the array, so the copy was a second array per record that nothing looked at. Measured on 10,000 records of 13 columns, a delimited read through a type mapper allocated 879 bytes a record and now allocates 751; fixed-length, 1,295 and now 1,167. No API changes, and reads that do not go through a mapper are untouched.</PackageReleaseNotes>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>FlatFiles.snk</AssemblyOriginatorKeyFile>
-    <Version>8.0.0</Version>
+    <Version>8.1.0</Version>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -30,8 +30,8 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <AssemblyVersion>8.0.0.0</AssemblyVersion>
-    <FileVersion>8.0.0.0</FileVersion>
+    <AssemblyVersion>8.1.0.0</AssemblyVersion>
+    <FileVersion>8.1.0.0</FileVersion>
     <PackageLicenseFile>UNLICENSE.txt</PackageLicenseFile>
     <PackageIcon>icon.png</PackageIcon>
     <Nullable>enable</Nullable>
