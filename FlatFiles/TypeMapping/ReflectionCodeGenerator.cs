@@ -9,6 +9,21 @@ namespace FlatFiles.TypeMapping
             return () => (TEntity) Activator.CreateInstance( typeof( TEntity ), true )!;
         }
 
+        public Func<object?[], TEntity> GetConstructor<TEntity>( ConstructorMapping mapping )
+        {
+            var constructor = mapping.Constructor;
+            var indexes = mapping.LogicalIndexes;
+            return values =>
+            {
+                var arguments = new object?[indexes.Length];
+                for (var index = 0; index != indexes.Length; ++index)
+                {
+                    arguments[index] = values[indexes[index]];
+                }
+                return (TEntity) constructor.Invoke( arguments );
+            };
+        }
+
         public Action<IRecordContext, TEntity, object?[]> GetReader<TEntity>( IMemberMapping[] mappings )
         {
             void Reader( IRecordContext recordContext, TEntity entity, object?[] values )

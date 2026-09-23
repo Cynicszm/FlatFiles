@@ -493,12 +493,24 @@ namespace FlatFiles.Test
         [TestMethod]
         public void TestEmitGenerator_RefusesWhatItCannotMap()
         {
+            // A type with no parameterless constructor is built through the constructor it does have, whose
+            // parameter names say where its values come from.
             var noConstructor = DelimitedTypeMapper.DefineDynamic( typeof( NoDefaultConstructor ) );
             noConstructor.Int32Property( "Id" );
-            Assert.ThrowsExactly<FlatFileException>( () => noConstructor.Read( new StringReader( "1\n" ) ).ToList(), "Without a factory the emitted deserializer needs a parameterless constructor." );
+            var constructed = (NoDefaultConstructor) noConstructor.Read( new StringReader( "1\n" ) ).Single();
+            Assert.AreEqual( 1, constructed.Id, "The constructor takes the parsed value." );
+
             var withFactory = DelimitedTypeMapper.Define( () => new NoDefaultConstructor( 5 ) );
             withFactory.Property( x => x.Id );
-            Assert.AreEqual( 1, withFactory.Read( new StringReader( "1\n" ) ).Single().Id, "A factory removes the need." );
+            Assert.AreEqual( 1, withFactory.Read( new StringReader( "1\n" ) ).Single().Id, "A factory still says how to build it." );
+
+            // Nothing matches a parameter called something no mapped member is called, and the reader says what
+            // it tried rather than reporting a missing default constructor.
+            var unmatched = DelimitedTypeMapper.Define<UnmatchedConstructor>();
+            unmatched.Property( x => x.Id );
+            var failure = Assert.ThrowsExactly<FlatFileException>( () => unmatched.Read( new StringReader( "1\n" ) ).ToList(), "No constructor can be satisfied." );
+            StringAssert.Contains( failure.Message, "UnmatchedConstructor", "The message names the type." );
+            StringAssert.Contains( failure.Message, "Id", "The message names what was mapped." );
 
             var readOnly = DelimitedTypeMapper.Define<ReadOnlyEntity>();
             readOnly.Property( x => x.Computed );
@@ -512,6 +524,11 @@ namespace FlatFiles.Test
         public sealed class NoDefaultConstructor( int id )
         {
             public int Id { get; set; } = id;
+        }
+
+        public sealed class UnmatchedConstructor( int somethingElse )
+        {
+            public int Id { get; set; } = somethingElse;
         }
 
         public sealed class ReadOnlyEntity

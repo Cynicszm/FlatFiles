@@ -68,9 +68,11 @@ namespace FlatFiles.TypeMapping
         /// <typeparam name="TEntity">The type of the entity whose properties will be mapped.</typeparam>
         /// <returns>The configuration object.</returns>
         public static IDelimitedTypeMapper<TEntity> Define<TEntity>()
-            where TEntity : new()
         {
-            return new DelimitedTypeMapper<TEntity>( () => new TEntity() );
+            // No factory, and no new() constraint. A type with a parameterless constructor is built with it as
+            // before; one without is built by handing its constructor the values the record parsed to, which is
+            // the only way into a type whose properties have no setters.
+            return new DelimitedTypeMapper<TEntity>( (Func<TEntity>?) null );
         }
 
         /// <summary>

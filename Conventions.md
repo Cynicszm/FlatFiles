@@ -193,8 +193,8 @@ setter is covered without anyone remembering to extend a test.
 
 ## Integration check
 
-`FlatFiles.IntegrationTest` reads six large files - three delimited, three fixed-length - end to end,
-and compares what it measured against `FlatFiles.IntegrationTest/Baseline.json`. They are shaped after
+`FlatFiles.IntegrationTest` reads the six integration test files - three delimited, three fixed-length -
+end to end, and compares what it measured against `FlatFiles.IntegrationTest/Baseline.json`. They are shaped after
 real files: 379 columns, 344,352 records, every field quoted, fourteen record layouts chosen by one
 character, a 3,500-character record.
 
