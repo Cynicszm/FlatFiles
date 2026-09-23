@@ -13,28 +13,58 @@ Error handling is unchanged, including the one part of it that still boxes: a `C
 
 **A release is now checked against six large files before it goes out.** Nothing in the package changes for it. `FlatFiles.IntegrationTest` reads six committed samples end to end - three delimited, three fixed-length, shaped after real files at 379 columns, 344,352 records, every field quoted, fourteen record layouts chosen by a single character and a 3,500-character record - and compares records, records skipped and bytes allocated per record against a committed baseline. It runs in the publish workflow only, and a release fails if a figure moved without somebody meaning it to. The files are committed rather than built, compressed because one of them is 102 MB, and nothing regenerates them on its own - they are the input every figure is gated against, and an input that rebuilt itself would turn a change in the generator into what looks like a change in the library. The baseline pins a SHA-256 of each, so a run reading different bytes is refused rather than reported.
 
-Where each of the six stands as this release goes out. Three scenarios apiece: `parse` reads every column as text and asks for no value, `typed` gives each single-typed column its own type, and `values` adds a `GetValues` call per record. Time is reported and never gated, because it is not stable enough to gate on; bytes per record is, at 2%.
+This release takes the first baseline, so it carries the figures. A release that changes the baseline records what the samples cost under it; one that does not says so and leaves them where they were last written, because repeating an unchanged table only invites the reader to look for a difference that is not there.
 
-| Sample | Format | Columns | Records | Scenario | Time | MB/s | Bytes/record | Peak heap | Peak working set |
+**Delimited**
+
+| Sample | Format | Columns | Records | Scenario | Total Time | MB/s | Bytes/record | Peak heap | Peak working set |
 | --- | --- | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: |
-| S1 Sample 1 | delimited | 379 | 37,031 | `parse` | 1.25 s | 29.4 | 5,685 | 13.4 MB | 50.8 MB |
-|  |  |  |  | `typed` | 1.46 s | 25.2 | 5,629 | 13.3 MB | 52.8 MB |
-|  |  |  |  | `values` | 1.47 s | 25.0 | 8,685 | 13.6 MB | 52.7 MB |
-| S1 Sample 2 | delimited | 58 | 344,352 | `parse` | 1.41 s | 72.2 | 1,414 | 13.3 MB | 50.9 MB |
-|  |  |  |  | `typed` | 1.67 s | 60.7 | 1,338 | 13.4 MB | 52.6 MB |
-|  |  |  |  | `values` | 1.69 s | 60.0 | 1,826 | 13.4 MB | 52.7 MB |
-| S1 Sample 3 | delimited | 196 | 39,337 | `parse` | 1.05 s | 42.4 | 3,528 | 13.4 MB | 51.2 MB |
-|  |  |  |  | `typed` | 1.37 s | 32.7 | 2,988 | 13.3 MB | 53.5 MB |
-|  |  |  |  | `values` | 1.38 s | 32.3 | 4,580 | 13.4 MB | 53.6 MB |
-| S2 Sample 1 | fixed-length | 172 | 22,481 | `parse` | 642 ms | 25.1 | 3,759 | 13.6 MB | 50.1 MB |
-|  |  |  |  | `typed` | 747 ms | 21.6 | 3,598 | 13.8 MB | 52.7 MB |
-|  |  |  |  | `values` | 727 ms | 22.2 | 4,306 | 13.7 MB | 52.8 MB |
-| S2 Sample 2 | fixed-length | 235 | 1,790 | `parse` | 107 ms | 55.8 | 12,092 | 10.6 MB | 47.8 MB |
-|  |  |  |  | `typed` | 135 ms | 44.4 | 11,269 | 12.2 MB | 49.9 MB |
-|  |  |  |  | `values` | 129 ms | 46.4 | 13,171 | 11.7 MB | 49.8 MB |
-| S2 Sample 3 | fixed-length | 34 | 18,047 | `parse` | 154 ms | 28.2 | 1,882 | 13.0 MB | 49.4 MB |
-|  |  |  |  | `typed` | 197 ms | 22.1 | 1,648 | 12.5 MB | 51.1 MB |
-|  |  |  |  | `values` | 201 ms | 21.6 | 1,916 | 12.2 MB | 51.0 MB |
+| S1/S1 | delimited | 379 | 37,031 | `parse` | 1.22 s | 30.0 | 5,685 | 13.3 MB | 51.0 MB |
+| S1/S1 | delimited | 379 | 37,031 | `typed` | 1.43 s | 25.6 | 5,629 | 13.6 MB | 52.4 MB |
+| S1/S1 | delimited | 379 | 37,031 | `values` | 1.46 s | 25.2 | 8,685 | 13.5 MB | 52.6 MB |
+| | | | | | | | | | |
+| S1/S2 | delimited | 58 | 344,352 | `parse` | 1.20 s | 84.8 | 1,414 | 13.2 MB | 51.4 MB |
+| S1/S2 | delimited | 58 | 344,352 | `typed` | 1.65 s | 61.6 | 1,338 | 13.4 MB | 52.5 MB |
+| S1/S2 | delimited | 58 | 344,352 | `values` | 1.70 s | 59.8 | 1,826 | 13.4 MB | 52.8 MB |
+| | | | | | | | | | |
+| S1/S3 | delimited | 196 | 39,337 | `parse` | 1.04 s | 43.0 | 3,528 | 13.4 MB | 51.0 MB |
+| S1/S3 | delimited | 196 | 39,337 | `typed` | 1.37 s | 32.7 | 2,988 | 13.4 MB | 53.5 MB |
+| S1/S3 | delimited | 196 | 39,337 | `values` | 1.36 s | 33.0 | 4,580 | 13.4 MB | 53.6 MB |
+
+**Fixed-length**
+
+| Sample | Format | Columns | Records | Scenario | Total Time | MB/s | Bytes/record | Peak heap | Peak working set |
+| --- | --- | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: |
+| S2/S1 | fixed-length | 172 | 22,481 | `parse` | 647 ms | 24.9 | 3,759 | 13.6 MB | 50.4 MB |
+| S2/S1 | fixed-length | 172 | 22,481 | `typed` | 761 ms | 21.2 | 3,598 | 13.6 MB | 53.2 MB |
+| S2/S1 | fixed-length | 172 | 22,481 | `values` | 765 ms | 21.1 | 4,306 | 13.5 MB | 52.5 MB |
+| | | | | | | | | | |
+| S2/S2 | fixed-length | 235 | 1,790 | `parse` | 111 ms | 53.7 | 12,093 | 11.6 MB | 48.1 MB |
+| S2/S2 | fixed-length | 235 | 1,790 | `typed` | 135 ms | 44.3 | 11,269 | 13.1 MB | 49.8 MB |
+| S2/S2 | fixed-length | 235 | 1,790 | `values` | 141 ms | 42.3 | 13,171 | 11.3 MB | 49.6 MB |
+| | | | | | | | | | |
+| S2/S3 | fixed-length | 34 | 18,047 | `parse` | 158 ms | 27.5 | 1,882 | 12.7 MB | 49.0 MB |
+| S2/S3 | fixed-length | 34 | 18,047 | `typed` | 193 ms | 22.5 | 1,648 | 13.0 MB | 51.0 MB |
+| S2/S3 | fixed-length | 34 | 18,047 | `values` | 196 ms | 22.1 | 1,916 | 11.1 MB | 51.0 MB |
+
+Each row is one complete read of one sample in a process of its own. The scenarios are cumulative:
+`parse` reads every column as text and asks for no value, `typed` gives each single-typed column its
+own type, and `values` is `typed` with `GetValues` called on every record. The difference between two
+of them is the cost of the step between.
+
+| Column | What it measures |
+| --- | --- |
+| Columns | Columns in the schema; for a fixed-length sample, in its widest record layout. |
+| Records | Records the reader yielded. Gated exactly. No sample is built to have a record refused, so any refusal fails the check whatever else agrees. |
+| Total Time | Wall clock for the whole read: opening the file, building the schema, constructing the reader, reading every record, and disposing. Measured once with no warm-up, so it includes first-call JIT. **Reported, never gated.** |
+| MB/s | File size divided by Total Time, so it carries the same caveats. |
+| Bytes/record | Bytes allocated across that read, divided by records read. Deterministic for given bytes on a given runtime, and repeats to within 0.1% here. **Gated at 2%.** |
+| Peak heap | The largest the managed heap reached during the read, sampled every 5 ms. Reported. |
+| Peak working set | The process's peak working set, which is why each row gets its own process. Dominated by runtime start-up rather than by the read. Reported. |
+
+Total Time and MB/s are single un-warmed measurements and move 10-20% between runs; `FlatFiles.Benchmark`
+is the project that measures time properly. They are here to show the shape of the work, not to be compared
+release to release.
 
 **This library puts performance first.** Where a performance change and a feature want the same release, the performance change goes in and the feature waits. That is the whole reason the last several releases read as they do - buffer writers, a span tokeniser, a column context built only when something can read it, span parsing on both readers - and it is why the three changes above went in ahead of every feature below. What is left on that list is feature work: the values array and the boxes were the two large allocations a typed read made, and both are now gone.
 

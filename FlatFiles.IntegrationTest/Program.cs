@@ -333,35 +333,82 @@ namespace FlatFiles.IntegrationTest
         }
 
         /// <summary>
-        ///     The same figures as a Markdown table, for the changelog entry a release carries.
+        ///     The same figures as Markdown, for the changelog entry a release carries: one table per format,
+        ///     every row carrying its sample so no row has to be read against one above it, and the text saying
+        ///     what each column is a measurement of.
         /// </summary>
         private static void ReportAsMarkdown( List<FileProfile> profiles, List<RunResult> results )
         {
+            WriteMarkdownTable( "Delimited", profiles, results, fixedLength: false );
+            WriteMarkdownTable( "Fixed-length", profiles, results, fixedLength: true );
+            WriteMarkdownNotes( results );
+        }
+
+        private static void WriteMarkdownTable( string heading, List<FileProfile> profiles, List<RunResult> results, bool fixedLength )
+        {
             Console.WriteLine();
-            Console.WriteLine( "| Sample | Format | Columns | Records | Scenario | Time | MB/s | Bytes/record | Peak heap | Peak working set |" );
+            Console.WriteLine( "**{0}**", heading );
+            Console.WriteLine();
+            Console.WriteLine( "| Sample | Format | Columns | Records | Scenario | Total Time | MB/s | Bytes/record | Peak heap | Peak working set |" );
             Console.WriteLine( "| --- | --- | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: |" );
-            var profileName = string.Empty;
+
+            var previous = string.Empty;
             foreach (var result in results)
             {
                 var profile = profiles.Find( x => x.Name == result.Profile )!;
-                var first = result.Profile != profileName;
-                profileName = result.Profile;
-                Console.WriteLine( "| {0} | {1} | {2} | {3} | `{4}` | {5} | {6:N1} | {7:N0} | {8} | {9} |",
-                    first ? Shorthand( result.Profile ) : string.Empty,
-                    first ? ( profile.IsFixedLength ? "fixed-length" : "delimited" ) : string.Empty,
-                    first ? ColumnCount( profile ).ToString( "N0", CultureInfo.CurrentCulture ) : string.Empty,
-                    first ? result.Records.ToString( "N0", CultureInfo.CurrentCulture ) : string.Empty,
+                if (profile.IsFixedLength != fixedLength)
+                {
+                    continue;
+                }
+                // A rule between one sample and the next, so three scenarios read as a group.
+                if (previous.Length != 0 && result.Profile != previous)
+                {
+                    Console.WriteLine( "| | | | | | | | | | |" );
+                }
+                previous = result.Profile;
+                Console.WriteLine( "| {0} | {1} | {2:N0} | {3:N0} | `{4}` | {5} | {6:N1} | {7:N0} | {8} | {9} |",
+                    Shorthand( result.Profile ),
+                    profile.IsFixedLength ? "fixed-length" : "delimited",
+                    ColumnCount( profile ),
+                    result.Records,
                     result.Scenario,
                     Duration( result.Elapsed ), result.MegabytesPerSecond, result.BytesPerRecord,
                     Megabytes( result.PeakManagedBytes ), Megabytes( result.PeakWorkingSetBytes ) );
             }
+        }
+
+        /// <summary>
+        ///     What the columns are measurements of. Worth writing out beside the figures rather than leaving to
+        ///     a reader to assume, because two of them mean less than they look like they do.
+        /// </summary>
+        private static void WriteMarkdownNotes( List<RunResult> results )
+        {
             Console.WriteLine();
-            var skipped = results.Where( x => x.SkippedRecords != 0 )
-                .Select( x => string.Format( CultureInfo.CurrentCulture, "{0} `{1}` skipped {2:N0}", x.Profile, x.Scenario, x.SkippedRecords ) );
-            List<string> notes = [.. skipped];
-            if (notes.Count != 0)
+            Console.WriteLine( "Each row is one complete read of one sample in a process of its own. The scenarios are cumulative:" );
+            Console.WriteLine( "`parse` reads every column as text and asks for no value, `typed` gives each single-typed column its" );
+            Console.WriteLine( "own type, and `values` is `typed` with `GetValues` called on every record. The difference between two" );
+            Console.WriteLine( "of them is the cost of the step between." );
+            Console.WriteLine();
+            Console.WriteLine( "| Column | What it measures |" );
+            Console.WriteLine( "| --- | --- |" );
+            Console.WriteLine( "| Columns | Columns in the schema; for a fixed-length sample, in its widest record layout. |" );
+            Console.WriteLine( "| Records | Records the reader yielded. Gated exactly. No sample is built to have a record refused, so any refusal fails the check whatever else agrees. |" );
+            Console.WriteLine( "| Total Time | Wall clock for the whole read: opening the file, building the schema, constructing the reader, reading every record, and disposing. Measured once with no warm-up, so it includes first-call JIT. **Reported, never gated.** |" );
+            Console.WriteLine( "| MB/s | File size divided by Total Time, so it carries the same caveats. |" );
+            Console.WriteLine( "| Bytes/record | Bytes allocated across that read, divided by records read. Deterministic for given bytes on a given runtime, and repeats to within 0.1% here. **Gated at 2%.** |" );
+            Console.WriteLine( "| Peak heap | The largest the managed heap reached during the read, sampled every 5 ms. Reported. |" );
+            Console.WriteLine( "| Peak working set | The process's peak working set, which is why each row gets its own process. Dominated by runtime start-up rather than by the read. Reported. |" );
+            Console.WriteLine();
+            Console.WriteLine( "Total Time and MB/s are single un-warmed measurements and move 10-20% between runs; `FlatFiles.Benchmark`" );
+            Console.WriteLine( "is the project that measures time properly. They are here to show the shape of the work, not to be compared" );
+            Console.WriteLine( "release to release." );
+
+            List<string> refused = [.. results.Where( x => x.SkippedRecords != 0 )
+                .Select( x => string.Format( CultureInfo.CurrentCulture, "{0} `{1}` refused {2:N0}", Shorthand( x.Profile ), x.Scenario, x.SkippedRecords ) )];
+            if (refused.Count != 0)
             {
-                Console.WriteLine( "Records skipped: " + string.Join( "; ", notes ) + "." );
+                Console.WriteLine();
+                Console.WriteLine( "Records refused: " + string.Join( "; ", refused ) + "." );
             }
         }
 
@@ -425,7 +472,7 @@ namespace FlatFiles.IntegrationTest
             Console.WriteLine( "MEASUREMENTS" );
             Console.WriteLine( new string( '=', 118 ) );
             Console.WriteLine( "{0,-14}{1,-8}{2,11}{3,9}{4,12}{5,11}{6,12}{7,12}{8,12}",
-                "Profile", "Scenario", "Records", "Skipped", "Time", "MB/s", "Bytes/rec", "Peak heap", "Peak WS" );
+                "Profile", "Scenario", "Records", "Refused", "Total time", "MB/s", "Bytes/rec", "Peak heap", "Peak WS" );
             var profileName = string.Empty;
             foreach (var result in results)
             {
@@ -443,18 +490,21 @@ namespace FlatFiles.IntegrationTest
             Console.WriteLine( "typed  - each single-typed column given its own type, no value asked for" );
             Console.WriteLine( "values - typed, and GetValues called for every record" );
             Console.WriteLine();
-            Console.WriteLine( "Bytes/rec is what the read allocated, per record. Peak heap is the largest the managed" );
-            Console.WriteLine( "heap reached while reading; peak WS is the process working set. Each row is its own process." );
+            Console.WriteLine( "Total time is the whole read - opening the file, building the schema, reading every record -" );
+            Console.WriteLine( "measured once with no warm-up, so it includes first-call JIT and is not comparable between runs." );
+            Console.WriteLine( "Bytes/rec is what the read allocated, per record, and is the figure the release gate compares." );
+            Console.WriteLine( "Peak heap is the largest the managed heap reached while reading; peak WS is the process working" );
+            Console.WriteLine( "set, which is why each row gets its own process." );
         }
 
         /// <summary>
-        ///     A sample's name in a narrower form for a table: Set1Sample1 reads as S1 Sample 1.
+        ///     A sample's name in a narrower form for a table: Set1Sample1 reads as S1/S1.
         /// </summary>
         private static string Shorthand( string profile )
         {
             var match = Regex.Match( profile, @"^Set(\d+)Sample(\d+)$" );
             return match.Success
-                ? string.Format( CultureInfo.CurrentCulture, "S{0} Sample {1}", match.Groups[1].Value, match.Groups[2].Value )
+                ? string.Format( CultureInfo.CurrentCulture, "S{0}/S{1}", match.Groups[1].Value, match.Groups[2].Value )
                 : profile;
         }
 
