@@ -5,9 +5,14 @@ and peak memory. The files are committed, compressed, and generated only when so
 profile that describes their shape - how many columns, how wide each runs, how often it is empty, and
 what its values parse as.
 
-The benchmark project measures small reads precisely. This one measures large reads realistically, at
-a scale where the numbers are dominated by the work rather than by the harness, and it is also a
-release gate: `check` compares every figure against a committed baseline and fails when one moves.
+The benchmark project measures small reads precisely. This one measures large reads realistically - the
+shapes that cause trouble in practice, which run to hundreds of columns and from hundreds of thousands
+to millions of records - at a scale where the numbers are dominated by the work rather than by the
+harness. It is also a release gate: `check` compares every figure against a committed baseline and
+fails when one moves.
+
+The largest sample here is 344,352 records. A profile is what a larger one would be built from, so
+adding one is a matter of writing the profile rather than of finding a file.
 
 ## Running it
 
@@ -138,25 +143,3 @@ they were meant to have, and it is committed so the check can be read without ru
 
 It takes a few seconds over all six files. The workbook is written by hand as a zip of XML parts, so
 the project needs no spreadsheet library for the one thing it produces.
-
-## A note on records with too many fields
-
-None of the six samples has a record the reader refuses. That is deliberate: a refusal in a later run
-should mean something changed, not that something was always so, which is why the check fails on any
-refusal at all rather than comparing a count of them.
-
-An earlier draft of `Set1Sample1` did model 171 records carrying a separator inside an unquoted field,
-and building it turned up something worth writing down. The reader refuses a record with too few
-fields and accepts one with too many, keeping the first however many the schema declares and
-discarding the rest:
-
-    exact     -> read [1][2][3]
-    too few   -> RecordProcessingException
-    too many  -> read [1][2][3]      (the fourth field discarded, no error)
-
-So a record with a stray separator is read with every later value one position to the left, and
-nothing says so. Whether anything notices depends on whether a shifted value reaches a column that
-will not parse it - a matter of where the separator fell, not of the record being wrong. Of those 171
-records, a typed schema noticed 148 and read 23 of them silently wrong.
-
-This is behaviour as it stands, recorded here rather than modelled in a sample.
