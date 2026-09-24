@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace FlatFiles.TypeMapping
 {
@@ -63,18 +64,60 @@ namespace FlatFiles.TypeMapping
             var selector = new FixedLengthSchemaSelector();
             var valueReader = new FixedLengthReader( reader, selector, options );
             var multiReader = new MultiplexingFixedLengthTypedReader( valueReader );
+            // Every mapping or none: the reader takes the assembled path for every record once it is given an
+            // assembler, so one mapping that cannot be read that way puts them all back on the values path.
+            var assemblers = Assemblers( [.. matchers.Select( x => x.TypeMapper ), .. defaultMapper is null ? Array.Empty<IDynamicFixedLengthTypeMapper>() : [defaultMapper]] );
             foreach (var matcher in matchers)
             {
-                var typedReader = new Lazy<Func<IRecordContext, object?[], object?>>( GetReader( matcher.TypeMapper ) );
-                selector.When( matcher.Predicate ).Use( matcher.TypeMapper.GetSchema() ).OnMatch( () => multiReader.Deserializer = typedReader.Value );
+                var mapper = matcher.TypeMapper;
+                var typedReader = new Lazy<Func<IRecordContext, object?[], object?>>( GetReader( mapper ) );
+                selector.When( matcher.Predicate ).Use( mapper.GetSchema() ).OnMatch( () =>
+                {
+                    multiReader.Deserializer = typedReader.Value;
+                    multiReader.Assembler = assemblers?[mapper];
+                } );
             }
             if (defaultMapper is null)
             {
+                Install( multiReader, assemblers );
                 return multiReader;
             }
-            var typeReader = new Lazy<Func<IRecordContext, object?[], object?>>( GetReader( defaultMapper ) );
-            selector.WithDefault( defaultMapper.GetSchema() ).OnMatch( () => multiReader.Deserializer = typeReader.Value );
+            var fallback = defaultMapper;
+            var typeReader = new Lazy<Func<IRecordContext, object?[], object?>>( GetReader( fallback ) );
+            selector.WithDefault( fallback.GetSchema() ).OnMatch( () =>
+            {
+                multiReader.Deserializer = typeReader.Value;
+                multiReader.Assembler = assemblers?[fallback];
+            } );
+            Install( multiReader, assemblers );
             return multiReader;
+        }
+
+        private static void Install( MultiplexingFixedLengthTypedReader multiReader, Dictionary<IDynamicFixedLengthTypeMapper, IObjectAssembler>? assemblers )
+        {
+            if (assemblers is not null)
+            {
+                multiReader.Install();
+            }
+        }
+
+        /// <summary>
+        ///     An assembler per mapper, or null where any one of them cannot be read onto an entity without its
+        ///     values being boxed on the way.
+        /// </summary>
+        private static Dictionary<IDynamicFixedLengthTypeMapper, IObjectAssembler>? Assemblers( IDynamicFixedLengthTypeMapper[] mappers )
+        {
+            var assemblers = new Dictionary<IDynamicFixedLengthTypeMapper, IObjectAssembler>( mappers.Length );
+            foreach (var mapper in mappers)
+            {
+                var assembler = ( (IMapperSource) mapper ).GetMapper().GetAssembler();
+                if (assembler is null)
+                {
+                    return null;
+                }
+                assemblers[mapper] = assembler;
+            }
+            return assemblers;
         }
 
         private static Func<Func<IRecordContext, object?[], object?>> GetReader( IDynamicFixedLengthTypeMapper typeMapper )

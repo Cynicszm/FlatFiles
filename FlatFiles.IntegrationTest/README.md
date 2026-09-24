@@ -117,12 +117,16 @@ path, which is what they are here for. The members are nullable because a typed 
 field to null and a member that cannot hold one refuses the record; the samples have plenty of both,
 and a scenario that refused records would be measuring error recovery.
 
-The two formats do not cover the same ground. A delimited mapper reads through the path that sets each
-member without boxing the value. A fixed-length file of several record layouts has to be read through
-`FixedLengthTypeMapperSelector`, which multiplexes deserialisers over a shared values array and never
-takes that path, so the fixed-length figures cover a mapped read but not an unboxed one - which is why
-the factory built per record moved the delimited figures twenty-four fold and the fixed-length ones not
-at all.
+Both formats read through the path that sets each member without boxing the value, though they did not
+when this scenario was written. A fixed-length file of several record layouts is read through
+`FixedLengthTypeMapperSelector`, which multiplexed deserialisers over a shared values array and took no
+part in that path - which is why the factory built per record moved the delimited figures twenty-four
+fold and the fixed-length ones not at all, and how the gap was found. The selector now holds a setter
+list per mapper, so both halves of the table measure the same thing.
+
+A delimited selector still reads the older way, for a reason worth knowing: its predicates are given the
+record's values, so the reader has to build them before it can choose a schema at all. None of the
+samples here uses one.
 
 ## The release gate
 
