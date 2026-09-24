@@ -28,7 +28,7 @@ namespace FlatFiles.Test
         {
             public int Id { get; set; }
 
-            public string Name { get; set; }
+            public string Name { get; set; } = string.Empty;
         }
 
         /// <summary>
@@ -39,13 +39,13 @@ namespace FlatFiles.Test
         {
             public bool Bool { get; set; }
 
-            public byte[] Bytes { get; set; }
+            public byte[] Bytes { get; set; } = [];
 
             public byte Byte { get; set; }
 
             public sbyte SByte { get; set; }
 
-            public char[] Chars { get; set; }
+            public char[] Chars { get; set; } = [];
 
             public char Char { get; set; }
 
@@ -77,17 +77,17 @@ namespace FlatFiles.Test
 
             public float Single { get; set; }
 
-            public string Text { get; set; }
+            public string Text { get; set; } = string.Empty;
 
             public TimeSpan TimeSpan { get; set; }
 
             public Colour Colour { get; set; }
 
-            public string Custom { get; set; }
+            public string Custom { get; set; } = string.Empty;
 
-            public Nested Nested { get; set; }
+            public Nested Nested { get; set; } = null!;
 
-            public Nested Other { get; set; }
+            public Nested Other { get; set; } = null!;
         }
 
         private static readonly Guid SampleGuid = new( "12345678-1234-1234-1234-123456789012" );
@@ -188,8 +188,8 @@ namespace FlatFiles.Test
             mapper.EnumProperty<Colour>( "Colour" );
             mapper.Ignored();
             mapper.CustomMapping( new StringColumn( "Custom" ) )
-                .WithReader( ( e, v ) => ((Everything) e).Custom = ((string) v).ToUpperInvariant() )
-                .WithWriter( e => ((Everything) e).Custom );
+                .WithReader( ( e, v ) => ((Everything) e!).Custom = ((string) v!).ToUpperInvariant() )
+                .WithWriter( e => ((Everything) e!).Custom );
             var nested = DelimitedTypeMapper.Define<Nested>();
             nested.Property( n => n.Id );
             nested.Property( n => n.Name );
@@ -231,8 +231,8 @@ namespace FlatFiles.Test
             mapper.EnumProperty<Colour>( "Colour", 6 );
             mapper.Ignored( 2 );
             mapper.CustomMapping( new StringColumn( "Custom" ), 8 )
-                .WithReader( ( _, e, v ) => ((Everything) e).Custom = ((string) v).ToUpperInvariant() )
-                .WithWriter( ( _, e ) => ((Everything) e).Custom );
+                .WithReader( ( _, e, v ) => ((Everything) e!).Custom = ((string) v!).ToUpperInvariant() )
+                .WithWriter( ( _, e ) => ((Everything) e!).Custom );
             var nested = DelimitedTypeMapper.Define<Nested>();
             nested.Property( n => n.Id );
             nested.Property( n => n.Name );
@@ -355,7 +355,7 @@ namespace FlatFiles.Test
             writer.RecordError += onRecord;
 
             Assert.IsNotNull( writer.Writer );
-            Assert.AreEqual( 27, writer.GetSchema().ColumnDefinitions.Count );
+            Assert.AreEqual( 27, writer.GetSchema()!.ColumnDefinitions.Count );
             writer.WriteSchema();
             await writer.WriteSchemaAsync();
             writer.Write( Sample() );

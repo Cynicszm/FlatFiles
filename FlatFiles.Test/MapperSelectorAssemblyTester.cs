@@ -103,12 +103,12 @@ namespace FlatFiles.Test
             Assert.AreEqual( 7, ( (Detail) read[1] ).Quantity );
         }
 
-        private static void AssertFixedLength( List<object> read )
+        private static void AssertFixedLength( List<object?> read )
         {
             Assert.HasCount( 3, read );
-            Assert.AreEqual( "Jan", ( (Header) read[0] ).Name );
-            Assert.AreEqual( 12345, ( (Detail) read[1] ).Amount );
-            Assert.AreEqual( 67890, ( (Detail) read[2] ).Amount );
+            Assert.AreEqual( "Jan", ( (Header) read[0]! ).Name );
+            Assert.AreEqual( 12345, ( (Detail) read[1]! ).Amount );
+            Assert.AreEqual( 67890, ( (Detail) read[2]! ).Amount );
         }
 
         private static IFixedLengthTypeMapper<Header> HeaderMapper()
@@ -135,7 +135,7 @@ namespace FlatFiles.Test
 
         public sealed class Header
         {
-            public string Name { get; set; }
+            public string Name { get; set; } = string.Empty;
         }
 
         public sealed class Detail

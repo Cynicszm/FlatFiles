@@ -145,7 +145,7 @@ namespace FlatFiles.Test
 
         public sealed class Appointment
         {
-            public string Who { get; set; }
+            public string Who { get; set; } = string.Empty;
 
             public DateOnly Day { get; set; }
 
@@ -174,11 +174,11 @@ namespace FlatFiles.Test
 
             public byte GetByte( int i ) => (byte) values[i];
 
-            public long GetBytes( int i, long fieldOffset, byte[] buffer, int bufferoffset, int length ) => throw new NotSupportedException();
+            public long GetBytes( int i, long fieldOffset, byte[]? buffer, int bufferoffset, int length ) => throw new NotSupportedException();
 
             public char GetChar( int i ) => (char) values[i];
 
-            public long GetChars( int i, long fieldoffset, char[] buffer, int bufferoffset, int length ) => throw new NotSupportedException();
+            public long GetChars( int i, long fieldoffset, char[]? buffer, int bufferoffset, int length ) => throw new NotSupportedException();
 
             public System.Data.IDataReader GetData( int i ) => throw new NotSupportedException();
 

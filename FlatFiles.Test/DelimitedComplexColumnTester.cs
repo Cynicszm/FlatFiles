@@ -29,7 +29,7 @@ namespace FlatFiles.Test
             Assert.IsTrue( reader.Read(), "The record should have been read." );
             var values = reader.GetValues();
             Assert.AreEqual( 1, values[0] );
-            var nested = (object[]) values[1];
+            var nested = (object[]) values[1]!;
             Assert.AreEqual( 2, nested[0] );
             Assert.AreEqual( "x", nested[1] );
             Assert.IsFalse( reader.Read(), "Only one record was written." );

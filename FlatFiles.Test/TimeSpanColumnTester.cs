@@ -36,7 +36,7 @@ namespace FlatFiles.Test
         public void TestParse_NoFormatString_ParsesGenerically()
         {
             var column = new TimeSpanColumn( "created" );
-            var actual = (TimeSpan) column.Parse( null, "12.13:23:33" );
+            var actual = (TimeSpan) column.Parse( null, "12.13:23:33" )!;
             var expected = new TimeSpan( 12, 13, 23, 33 );
             Assert.AreEqual( expected, actual );
         }
@@ -48,7 +48,7 @@ namespace FlatFiles.Test
             {
                 InputFormat = @"d\.hh\:mm\:ss\.FFF"
             };
-            var actual = (TimeSpan) column.Parse( null, "12.13:23:33.123" );
+            var actual = (TimeSpan) column.Parse( null, "12.13:23:33.123" )!;
             var expected = new TimeSpan( 12, 13, 23, 33, 123 );
             Assert.AreEqual( expected, actual );
         }
@@ -70,7 +70,7 @@ namespace FlatFiles.Test
             var daysColumn = new DoubleColumn( "Duration" );
             var durationColumn = TimeSpanColumn.FromDays( daysColumn );
             
-            var actual = (TimeSpan) durationColumn.Parse( null, "1" );
+            var actual = (TimeSpan) durationColumn.Parse( null, "1" )!;
             Assert.AreEqual( TimeSpan.FromDays( 1 ), actual );
         }
 
@@ -110,7 +110,7 @@ namespace FlatFiles.Test
             var hoursColumn = new DoubleColumn( "Duration" );
             var durationColumn = TimeSpanColumn.FromHours( hoursColumn );
             
-            var actual = (TimeSpan) durationColumn.Parse( null, "24" );
+            var actual = (TimeSpan) durationColumn.Parse( null, "24" )!;
             Assert.AreEqual( TimeSpan.FromDays( 1 ), actual );
         }
 
@@ -130,7 +130,7 @@ namespace FlatFiles.Test
             var msColumn = new DoubleColumn( "Duration" );
             var durationColumn = TimeSpanColumn.FromMilliseconds( msColumn );
 
-            var actual = (TimeSpan) durationColumn.Parse( null, "86400000" );
+            var actual = (TimeSpan) durationColumn.Parse( null, "86400000" )!;
             Assert.AreEqual( TimeSpan.FromDays( 1 ), actual );
         }
 
@@ -150,7 +150,7 @@ namespace FlatFiles.Test
             var minutesColumn = new DoubleColumn( "Duration" );
             var durationColumn = TimeSpanColumn.FromMinutes( minutesColumn );
 
-            var actual = (TimeSpan) durationColumn.Parse( null, "1440" );
+            var actual = (TimeSpan) durationColumn.Parse( null, "1440" )!;
             Assert.AreEqual( TimeSpan.FromDays( 1 ), actual );
         }
 
@@ -170,7 +170,7 @@ namespace FlatFiles.Test
             var secondsColumn = new DoubleColumn( "Duration" );
             var durationColumn = TimeSpanColumn.FromSeconds( secondsColumn );
 
-            var actual = (TimeSpan) durationColumn.Parse( null, "86400" );
+            var actual = (TimeSpan) durationColumn.Parse( null, "86400" )!;
             Assert.AreEqual( TimeSpan.FromDays( 1 ), actual );
         }
 
@@ -190,7 +190,7 @@ namespace FlatFiles.Test
             var ticksColumn = new Int64Column( "Duration" );
             var durationColumn = TimeSpanColumn.FromTicks( ticksColumn );
 
-            var actual = (TimeSpan) durationColumn.Parse( null, "864000000000" );
+            var actual = (TimeSpan) durationColumn.Parse( null, "864000000000" )!;
             Assert.AreEqual( TimeSpan.FromDays( 1 ), actual );
         }
 

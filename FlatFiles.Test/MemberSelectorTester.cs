@@ -13,7 +13,7 @@ namespace FlatFiles.Test
     {
         private sealed class Inner
         {
-            public string Value { get; set; }
+            public string Value { get; set; } = string.Empty;
         }
 
         private sealed class Holder
@@ -23,9 +23,9 @@ namespace FlatFiles.Test
 
         private sealed class Entity
         {
-            public string Name { get; set; }
+            public string Name { get; set; } = string.Empty;
 
-            public Inner Child { get; set; }
+            public Inner Child { get; set; } = null!;
 
             public static string Tag { get; } = "tag";
         }

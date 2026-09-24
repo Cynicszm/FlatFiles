@@ -42,7 +42,7 @@ namespace FlatFiles.Benchmark
             mapper.Property( x => x.StratificationCategory3 ).ColumnName( "StratificationCategory3" );
             mapper.Property( x => x.Stratification3 ).ColumnName( "Stratification3" );
             mapper.CustomMapping( new GeoLocationColumn( "GeoLocation" ) )
-                .WithReader( ( d, v ) => d.GeoLocation = (GeoLocation) v )
+                .WithReader( ( d, v ) => d.GeoLocation = (GeoLocation) v! )
                 .WithWriter( d => d.GeoLocation );
             mapper.Property( x => x.ResponseId ).ColumnName( "ResponseID" );
             mapper.Property( x => x.LocationId ).ColumnName( "LocationID" );
@@ -93,7 +93,7 @@ namespace FlatFiles.Benchmark
             mapper.Property( x => x.StratificationCategory3 ).ColumnName( "StratificationCategory3" );
             mapper.Property( x => x.Stratification3 ).ColumnName( "Stratification3" );
             mapper.CustomMapping( new GeoLocationColumn( "GeoLocation" ) )
-                .WithReader( ( d, v ) => d.GeoLocation = (GeoLocation) v )
+                .WithReader( ( d, v ) => d.GeoLocation = (GeoLocation) v! )
                 .WithWriter( d => d.GeoLocation );
             mapper.Property( x => x.ResponseId ).ColumnName( "ResponseID" );
             mapper.Property( x => x.LocationId ).ColumnName( "LocationID" );
@@ -139,69 +139,69 @@ namespace FlatFiles.Benchmark
 
             public int YearEnd { get; set; }
 
-            public string LocationAbbreviation { get; set; }
+            public string LocationAbbreviation { get; set; } = string.Empty;
 
-            public string LocationDescription { get; set; }
+            public string LocationDescription { get; set; } = string.Empty;
 
-            public string DataSource { get; set; }
+            public string DataSource { get; set; } = string.Empty;
 
-            public string Topic { get; set; }
+            public string Topic { get; set; } = string.Empty;
 
-            public string Question { get; set; }
+            public string Question { get; set; } = string.Empty;
 
-            public string Response { get; set; }
+            public string Response { get; set; } = string.Empty;
 
-            public string DataValueUnit { get; set; }
+            public string DataValueUnit { get; set; } = string.Empty;
 
-            public string DataValueType { get; set; }
+            public string DataValueType { get; set; } = string.Empty;
 
-            public string DataValue { get; set; }
+            public string DataValue { get; set; } = string.Empty;
 
             public decimal? AlternativeDataValue { get; set; }
 
-            public string DataValueFootnoteSymbol { get; set; }
+            public string DataValueFootnoteSymbol { get; set; } = string.Empty;
 
-            public string DataValueFootnote { get; set; }
+            public string DataValueFootnote { get; set; } = string.Empty;
 
             public decimal? LowConfidenceLimit { get; set; }
 
             public decimal? HighConfidenceLimit { get; set; }
 
-            public string StratificationCategory1 { get; set; }
+            public string StratificationCategory1 { get; set; } = string.Empty;
 
-            public string Stratification1 { get; set; }
+            public string Stratification1 { get; set; } = string.Empty;
 
-            public string StratificationCategory2 { get; set; }
+            public string StratificationCategory2 { get; set; } = string.Empty;
 
-            public string Stratification2 { get; set; }
+            public string Stratification2 { get; set; } = string.Empty;
 
-            public string StratificationCategory3 { get; set; }
+            public string StratificationCategory3 { get; set; } = string.Empty;
 
-            public string Stratification3 { get; set; }
+            public string Stratification3 { get; set; } = string.Empty;
 
-            public GeoLocation GeoLocation { get; set; }
+            public GeoLocation GeoLocation { get; set; } = null!;
 
-            public string ResponseId { get; set; }
+            public string ResponseId { get; set; } = string.Empty;
 
-            public string LocationId { get; set; }
+            public string LocationId { get; set; } = string.Empty;
 
-            public string TopicId { get; set; }
+            public string TopicId { get; set; } = string.Empty;
 
-            public string QuestionId { get; set; }
+            public string QuestionId { get; set; } = string.Empty;
 
-            public string DataValueTypeId { get; set; }
+            public string DataValueTypeId { get; set; } = string.Empty;
 
-            public string StratificationCategoryId1 { get; set; }
+            public string StratificationCategoryId1 { get; set; } = string.Empty;
 
-            public string StratificationId1 { get; set; }
+            public string StratificationId1 { get; set; } = string.Empty;
 
-            public string StratificationCategoryId2 { get; set; }
+            public string StratificationCategoryId2 { get; set; } = string.Empty;
 
-            public string StratificationId2 { get; set; }
+            public string StratificationId2 { get; set; } = string.Empty;
 
-            public string StratificationCategoryId3 { get; set; }
+            public string StratificationCategoryId3 { get; set; } = string.Empty;
 
-            public string StratificationId3 { get; set; }
+            public string StratificationId3 { get; set; } = string.Empty;
         }
 
         public class GeoLocation
@@ -218,12 +218,12 @@ namespace FlatFiles.Benchmark
 
         public class GeoLocationColumn( string columnName ) : ColumnDefinition<GeoLocation>( columnName )
         {
-            protected override string OnFormat( IColumnContext context, GeoLocation value )
+            protected override string OnFormat( IColumnContext? context, GeoLocation value )
             {
                 return value.ToString();
             }
 
-            protected override GeoLocation OnParse( IColumnContext context, string value )
+            protected override GeoLocation OnParse( IColumnContext? context, string value )
             {
                 var parts = value.Substring( 1, value.Length - 2 ).Split( ',', 2 );
                 var result = new GeoLocation

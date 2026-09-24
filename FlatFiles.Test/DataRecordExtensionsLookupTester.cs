@@ -55,11 +55,11 @@ namespace FlatFiles.Test
             var record = OpenRecord();
 
             Assert.AreEqual( Colour.Green, record.GetEnum<Colour>( "colour" ) );
-            Assert.AreEqual( Colour.Green, record.GetEnum<string, Colour>( "colour", Enum.Parse<Colour> ) );
-            Assert.AreEqual( Colour.Green, record.GetEnum<string, Colour>( 8, Enum.Parse<Colour> ) );
+            Assert.AreEqual( Colour.Green, record.GetEnum<string, Colour>( "colour", ( value => Enum.Parse<Colour>( value! ) ) ) );
+            Assert.AreEqual( Colour.Green, record.GetEnum<string, Colour>( 8, ( value => Enum.Parse<Colour>( value! ) ) ) );
             Assert.AreEqual( Colour.Green, record.GetNullableEnum<Colour>( "colour" ) );
-            Assert.AreEqual( Colour.Green, record.GetNullableEnum<string, Colour>( "colour", value => Enum.Parse<Colour>( value ) ) );
-            Assert.AreEqual( Colour.Green, record.GetNullableEnum<string, Colour>( 8, value => Enum.Parse<Colour>( value ) ) );
+            Assert.AreEqual( Colour.Green, record.GetNullableEnum<string, Colour>( "colour", value => Enum.Parse<Colour>( value! ) ) );
+            Assert.AreEqual( Colour.Green, record.GetNullableEnum<string, Colour>( 8, value => Enum.Parse<Colour>( value! ) ) );
         }
 
         [TestMethod]

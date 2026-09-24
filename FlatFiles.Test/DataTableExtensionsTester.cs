@@ -19,10 +19,10 @@ namespace FlatFiles.Test
         [TestMethod]
         public void TestReadFlatFile_DataTableNull_Throws()
         {
-            DataTable table = null;
+            DataTable table = null!;
             var stringReader = new StringReader( string.Empty );
             IReader parser = new DelimitedReader( stringReader );
-            Assert.ThrowsExactly<ArgumentNullException>( () => table.ReadFlatFile( parser ) );
+            Assert.ThrowsExactly<ArgumentNullException>( () => table!.ReadFlatFile( parser ) );
         }
 
         /// <summary>
@@ -32,8 +32,8 @@ namespace FlatFiles.Test
         public void TestReadFlatFile_ParserNull_Throws()
         {
             var table = new DataTable();
-            IReader parser = null;
-            Assert.ThrowsExactly<ArgumentNullException>( () => table.ReadFlatFile( parser ) );
+            IReader parser = null!;
+            Assert.ThrowsExactly<ArgumentNullException>( () => table.ReadFlatFile( parser! ) );
         }
 
         /// <summary>

@@ -31,7 +31,7 @@ namespace FlatFiles.Test
         {
             public int Id { get; set; }
 
-            public string Name { get; set; }
+            public string Name { get; set; } = string.Empty;
         }
 
         /// <summary>
@@ -43,7 +43,7 @@ namespace FlatFiles.Test
 
             public bool? NullableBool { get; set; }
 
-            public byte[] Bytes { get; set; }
+            public byte[] Bytes { get; set; } = [];
 
             public byte Byte { get; set; }
 
@@ -53,7 +53,7 @@ namespace FlatFiles.Test
 
             public sbyte? NullableSByte { get; set; }
 
-            public char[] Chars { get; set; }
+            public char[] Chars { get; set; } = [];
 
             public char Char { get; set; }
 
@@ -119,15 +119,15 @@ namespace FlatFiles.Test
 
             public float? NullableSingle { get; set; }
 
-            public string Text { get; set; }
+            public string Text { get; set; } = string.Empty;
 
             public Colour Colour { get; set; }
 
             public Colour? NullableColour { get; set; }
 
-            public Nested Nested { get; set; }
+            public Nested Nested { get; set; } = null!;
 
-            public Nested Other { get; set; }
+            public Nested Other { get; set; } = null!;
         }
 
         private static List<object> DelimitedMappings()
@@ -241,7 +241,7 @@ namespace FlatFiles.Test
         ///     Synthesises a valid argument for a fluent setter's parameter. Delegates are cleared rather than
         ///     supplied, which is itself a legitimate call, and enums take their first member.
         /// </summary>
-        private static object Argument( ParameterInfo parameter )
+        private static object? Argument( ParameterInfo parameter )
         {
             var type = parameter.ParameterType;
             if (type == typeof( string ))
@@ -274,7 +274,7 @@ namespace FlatFiles.Test
             }
             if (type.IsEnum)
             {
-                return Enum.GetValues( type ).GetValue( 0 );
+                return Enum.GetValues( type ).GetValue( 0 )!;
             }
             return type.IsValueType ? Activator.CreateInstance( type ) : null;
         }
@@ -293,7 +293,7 @@ namespace FlatFiles.Test
                 {
                     continue;
                 }
-                object[] arguments = [.. method.GetParameters().Select( Argument )];
+                object?[] arguments = [.. method.GetParameters().Select( Argument )];
                 var result = method.Invoke( mapping, arguments );
                 Assert.IsTrue( ReferenceEquals( mapping, result ), $"{type.Name}.{method.Name} should return the mapping for chaining." );
                 ++invoked;

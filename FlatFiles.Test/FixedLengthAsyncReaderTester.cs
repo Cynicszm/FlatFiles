@@ -40,7 +40,7 @@ namespace FlatFiles.Test
             }
             Assert.AreEqual( 1, people.Count );
             var person = people.SingleOrDefault();
-            Assert.AreEqual( bob.Id, person.Id );
+            Assert.AreEqual( bob.Id, person!.Id );
             Assert.AreEqual( bob.Name, person.Name );
             Assert.AreEqual( bob.Created, person.Created );
             Assert.IsTrue( person.IsActive );
@@ -80,7 +80,7 @@ namespace FlatFiles.Test
         {
             public int Id { get; set; }
 
-            public string Name { get; set; }
+            public string Name { get; set; } = string.Empty;
 
             public DateTime Created { get; set; }
 

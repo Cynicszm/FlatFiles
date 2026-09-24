@@ -103,9 +103,9 @@ namespace FlatFiles.Test
         [TestMethod]
         public void TestRecordParsed_HandlerKeepsTheValues_TheyDoNotChangeUnderIt()
         {
-            List<object[]> kept = [];
+            List<object?[]> kept = [];
             var reader = new DelimitedReader( new StringReader( Data ), Schema() );
-            reader.RecordParsed += ( _, e ) => kept.Add( e.Values );
+            reader.RecordParsed += ( _, e ) => kept.Add( e.Values! );
 
             while (reader.Read())
             {
@@ -123,7 +123,7 @@ namespace FlatFiles.Test
         [TestMethod]
         public void TestRecordParsed_FixedLengthHandlerKeepsTheValues_TheyDoNotChangeUnderIt()
         {
-            List<object[]> kept = [];
+            List<object?[]> kept = [];
             var schema = new FixedLengthSchema();
             schema.AddColumn( new Int32Column( "id" ), new Window( 2 ) );
             schema.AddColumn( new StringColumn( "name" ), new Window( 6 ) );
@@ -168,7 +168,7 @@ namespace FlatFiles.Test
         {
             public int Id { get; set; }
 
-            public string Name { get; set; }
+            public string Name { get; set; } = string.Empty;
         }
     }
 }

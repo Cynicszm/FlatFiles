@@ -37,9 +37,9 @@ namespace FlatFiles.Test
 
         public sealed class Outer
         {
-            public string Name { get; set; }
+            public string Name { get; set; } = string.Empty;
 
-            public string Nickname { get; set; }
+            public string Nickname { get; set; } = string.Empty;
 
             public int Field;
 
@@ -193,12 +193,12 @@ namespace FlatFiles.Test
             var schema = new DelimitedSchema();
             schema.AddColumn( column );
             schema.AddColumn( new StringColumn( "a" ) );
-            IRecordContext captured = null;
+            IRecordContext captured = null!;
             var reader = new DelimitedReader( new StringReader( "1,x\n" ), schema );
             reader.RecordParsed += ( _, e ) => captured = e.RecordContext;
 
             Assert.IsTrue( reader.Read() );
-            var context = new ColumnContext( captured, 0, 0 );
+            var context = new ColumnContext( captured!, 0, 0 );
 
             Assert.AreEqual( "01", column.Format( context, null ), "The string form formats the record number from the context." );
             Assert.AreEqual( 1, column.Parse( context, string.Empty ) );
@@ -209,10 +209,10 @@ namespace FlatFiles.Test
         {
             var mapper = DelimitedTypeMapper.DefineDynamic( typeof( Outer ) );
             var custom = mapper.CustomMapping( new StringColumn( "Name" ) );
-            custom.WithReader( ( Action<object, object> ) null );
-            custom.WithWriter( ( Action<object, object[]> ) null );
-            custom.WithWriter( ( Func<object, object> ) null );
-            custom.WithWriter( ( e, values ) => values[0] = ((Outer) e).Name );
+            custom.WithReader( ( Action<object?, object?> ) null! );
+            custom.WithWriter( ( Action<object?, object?[]> ) null! );
+            custom.WithWriter( ( Func<object?, object?> ) null! );
+            custom.WithWriter( ( e, values ) => values[0] = ((Outer) e!).Name );
             var text = new StringWriter();
 
             mapper.Write( text, [ new Outer { Name = "Ann" } ], new DelimitedOptions { RecordSeparator = "\n" } );

@@ -30,7 +30,7 @@ namespace FlatFiles.Test
             Person[] people = [.. mapper.Read( stringReader )];
             Assert.AreEqual( 1, people.Length );
             var person = people.SingleOrDefault();
-            Assert.AreEqual( bob.Id, person.Id );
+            Assert.AreEqual( bob.Id, person!.Id );
             Assert.AreEqual( bob.Name, person.Name );
             Assert.AreEqual( bob.Created, person.Created );
         }
@@ -39,7 +39,7 @@ namespace FlatFiles.Test
         {
             public int Id;
 
-            public string Name { get; set; }
+            public string Name { get; set; } = string.Empty;
 
             public DateTime Created;
 

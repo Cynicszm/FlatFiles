@@ -22,13 +22,13 @@ namespace FlatFiles.Test
 
             public bool? NullableBool { get; set; }
 
-            public byte[] Bytes { get; set; }
+            public byte[] Bytes { get; set; } = [];
 
             public byte Byte { get; set; }
 
             public byte? NullableByte { get; set; }
 
-            public char[] Chars { get; set; }
+            public char[] Chars { get; set; } = [];
 
             public char Char { get; set; }
 
@@ -82,7 +82,7 @@ namespace FlatFiles.Test
 
             public float? NullableSingle { get; set; }
 
-            public string Text { get; set; }
+            public string Text { get; set; } = string.Empty;
 
             public TimeSpan TimeSpan { get; set; }
 
@@ -233,7 +233,7 @@ namespace FlatFiles.Test
         public void TestAutoMappedWriter_WithAResolver_RenamesAndSkipsColumns()
         {
             var output = new StringWriter();
-            var resolver = AutoMapResolver.For( member => member.Name == "Field" ? null : member.Name.ToUpperInvariant(), member => member.Name == "Text" ? 0 : 1 );
+            var resolver = AutoMapResolver.For( member => member.Name == "Field" ? null! : member.Name.ToUpperInvariant(), member => member.Name == "Text" ? 0 : 1 );
 
             var writer = DelimitedTypeMapper.GetAutoMappedWriter<Plain>( output, Options, resolver );
             writer.WriteSchema();

@@ -22,33 +22,33 @@ namespace FlatFiles.Test
             mapper.CustomMapping( new IndexTrackingColumn( new Int32Column( "Id" ), colPhysicalIndexes, colLogicalIndexes ) )
                 .WithReader( ( ctx, x, v ) =>
                 {
-                    propPhysicalIndexes.Add( ctx.PhysicalIndex );
+                    propPhysicalIndexes.Add( ctx!.PhysicalIndex );
                     propLogicalIndexes.Add( ctx.LogicalIndex );
-                    x.Id = (int) v;
+                    x.Id = (int) v!;
                 } );
             mapper.Ignored();
             mapper.CustomMapping( new IndexTrackingColumn( new StringColumn( "Name" ), colPhysicalIndexes, colLogicalIndexes ) )
                 .WithReader( ( ctx, x, v ) =>
                 {
-                    propPhysicalIndexes.Add( ctx.PhysicalIndex );
+                    propPhysicalIndexes.Add( ctx!.PhysicalIndex );
                     propLogicalIndexes.Add( ctx.LogicalIndex );
-                    x.Name = (string) v;
+                    x.Name = (string) v!;
                 } );
             mapper.Ignored();
             mapper.CustomMapping( new IndexTrackingColumn( new DateTimeColumn( "CreatedOn" ) { InputFormat = "yyyy-MM-dd" }, colPhysicalIndexes, colLogicalIndexes ) )
                 .WithReader( ( ctx, x, v ) =>
                 {
-                    propPhysicalIndexes.Add( ctx.PhysicalIndex );
+                    propPhysicalIndexes.Add( ctx!.PhysicalIndex );
                     propLogicalIndexes.Add( ctx.LogicalIndex );
-                    x.CreatedOn = (DateTime) v;
+                    x.CreatedOn = (DateTime) v!;
                 } );
             mapper.Ignored();
             mapper.CustomMapping( new IndexTrackingColumn( new BooleanColumn( "IsActive" ), colPhysicalIndexes, colLogicalIndexes ) )
                 .WithReader( ( ctx, x, v ) =>
                 {
-                    propPhysicalIndexes.Add( ctx.PhysicalIndex );
+                    propPhysicalIndexes.Add( ctx!.PhysicalIndex );
                     propLogicalIndexes.Add( ctx.LogicalIndex );
-                    x.IsActive = (bool) v;
+                    x.IsActive = (bool) v!;
                 } );
             var reader = new StringReader( data );
             var typedReader = mapper.GetReader( reader );
@@ -75,7 +75,7 @@ namespace FlatFiles.Test
             mapper.CustomMapping( new IndexTrackingColumn( new Int32Column( "Id" ), colPhysicalIndexes, colLogicalIndexes ) )
                 .WithWriter( ( ctx, x ) =>
                 {
-                    propPhysicalIndexes.Add( ctx.PhysicalIndex );
+                    propPhysicalIndexes.Add( ctx!.PhysicalIndex );
                     propLogicalIndexes.Add( ctx.LogicalIndex );
                     return x.Id;
                 } );
@@ -83,7 +83,7 @@ namespace FlatFiles.Test
             mapper.CustomMapping( new IndexTrackingColumn( new StringColumn( "Name" ), colPhysicalIndexes, colLogicalIndexes ) )
                 .WithWriter( ( ctx, x ) =>
                 {
-                    propPhysicalIndexes.Add( ctx.PhysicalIndex );
+                    propPhysicalIndexes.Add( ctx!.PhysicalIndex );
                     propLogicalIndexes.Add( ctx.LogicalIndex );
                     return x.Name;
                 } );
@@ -91,7 +91,7 @@ namespace FlatFiles.Test
             mapper.CustomMapping( new IndexTrackingColumn( new DateTimeColumn( "CreatedOn" ) { InputFormat = "yyyy-MM-dd" }, colPhysicalIndexes, colLogicalIndexes ) )
                 .WithWriter( ( ctx, x ) =>
                 {
-                    propPhysicalIndexes.Add( ctx.PhysicalIndex );
+                    propPhysicalIndexes.Add( ctx!.PhysicalIndex );
                     propLogicalIndexes.Add( ctx.LogicalIndex );
                     return x.CreatedOn;
                 } );
@@ -99,7 +99,7 @@ namespace FlatFiles.Test
             mapper.CustomMapping( new IndexTrackingColumn( new BooleanColumn( "IsActive" ), colPhysicalIndexes, colLogicalIndexes ) )
                 .WithWriter( ( ctx, x ) =>
                 {
-                    propPhysicalIndexes.Add( ctx.PhysicalIndex );
+                    propPhysicalIndexes.Add( ctx!.PhysicalIndex );
                     propLogicalIndexes.Add( ctx.LogicalIndex );
                     return x.IsActive;
                 } );
@@ -120,7 +120,7 @@ namespace FlatFiles.Test
         {
             public int Id { get; set; }
 
-            public string Name { get; set; }
+            public string Name { get; set; } = string.Empty;
 
             public DateTime CreatedOn { get; set; }
 
@@ -132,7 +132,7 @@ namespace FlatFiles.Test
             List<int> physicalIndexes,
             List<int> logicalIndexes ) : IColumnDefinition
         {
-            public string ColumnName => column.ColumnName;
+            public string ColumnName => column.ColumnName!;
 
             public bool IsIgnored => column.IsIgnored;
 
@@ -153,44 +153,44 @@ namespace FlatFiles.Test
             }
 
             [Obsolete]
-            public Func<IColumnContext, string, string> OnParsing
+            public Func<IColumnContext?, string, string?>? OnParsing
             {
-                get => column.OnParsing;
+                get => column.OnParsing!;
                 set => column.OnParsing = value;
             }
 
-            public Func<IColumnContext, object, object> OnParsed
+            public Func<IColumnContext?, object?, object?>? OnParsed
             {
-                get => column.OnParsed;
+                get => column.OnParsed!;
                 set => column.OnParsed = value;
             }
 
-            public Func<IColumnContext, object, object> OnFormatting
+            public Func<IColumnContext?, object?, object?>? OnFormatting
             {
-                get => column.OnFormatting;
+                get => column.OnFormatting!;
                 set => column.OnFormatting = value;
             }
 
-            public Func<IColumnContext, string, string> OnFormatted
+            public Func<IColumnContext?, string, string?>? OnFormatted
             {
-                get => column.OnFormatted;
+                get => column.OnFormatted!;
                 set => column.OnFormatted = value;
             }
 
             public Type ColumnType => column.ColumnType;
 
-            public string Format( IColumnContext context, object value )
+            public string Format( IColumnContext? context, object? value )
             {
-                physicalIndexes.Add( context.PhysicalIndex );
+                physicalIndexes.Add( context!.PhysicalIndex );
                 logicalIndexes.Add( context.LogicalIndex );
                 return column.Format( context, value );
             }
 
-            public object Parse( IColumnContext context, string value )
+            public object Parse( IColumnContext? context, string value )
             {
-                physicalIndexes.Add( context.PhysicalIndex );
+                physicalIndexes.Add( context!.PhysicalIndex );
                 logicalIndexes.Add( context.LogicalIndex );
-                return column.Parse( context, value );
+                return column.Parse( context, value )!;
             }
         }
     }

@@ -42,7 +42,7 @@ namespace FlatFiles.Test
         public void TestParse_NoFormatString_ParsesGenerically()
         {
             var column = new DateTimeOffsetColumn( "created" );
-            var actual = (DateTimeOffset) column.Parse( null, "1/19/2013" );
+            var actual = (DateTimeOffset) column.Parse( null, "1/19/2013" )!;
             var expected = new DateTime( 2013, 1, 19 );
             Assert.AreEqual( expected, actual );
         }
@@ -57,7 +57,7 @@ namespace FlatFiles.Test
             {
                 FormatProvider = CultureInfo.CurrentCulture
             };
-            var actual = (DateTimeOffset) column.Parse( null, "1/19/2013" );
+            var actual = (DateTimeOffset) column.Parse( null, "1/19/2013" )!;
             var expected = new DateTimeOffset( 2013, 1, 19, 0, 0, 0, BaseUtcOffset );
             Assert.AreEqual( expected, actual );
         }
@@ -73,7 +73,7 @@ namespace FlatFiles.Test
                 InputFormat = "f",
                 FormatProvider = CultureInfo.InvariantCulture
             };
-            var actual = (DateTimeOffset) column.Parse( null, "Saturday, 19 January 2013 01:02" );
+            var actual = (DateTimeOffset) column.Parse( null, "Saturday, 19 January 2013 01:02" )!;
             var expected = new DateTimeOffset( 2013, 1, 19, 1, 2, 0, BaseUtcOffset );
             Assert.AreEqual( expected, actual );
         }
@@ -86,7 +86,7 @@ namespace FlatFiles.Test
             {
                 InputFormat = "o"
             };
-            var actual = (DateTimeOffset) column.Parse( null, "2013-01-19T01:02:03.0000000-04:00" );
+            var actual = (DateTimeOffset) column.Parse( null, "2013-01-19T01:02:03.0000000-04:00" )!;
             var expected = new DateTimeOffset( 2013, 1, 19, 1, 2, 3, TimeSpan.FromHours( -4 ) );
             Assert.AreEqual( expected, actual );
         }
@@ -103,7 +103,7 @@ namespace FlatFiles.Test
                 FormatProvider = CultureInfo.CurrentCulture
             };
             
-            var actual = (DateTimeOffset) column.Parse( null, "1/19/2013" );
+            var actual = (DateTimeOffset) column.Parse( null, "1/19/2013" )!;
             var expected = new DateTimeOffset( 2013, 1, 19, 0, 0, 0, BaseUtcOffset );
             Assert.AreEqual( expected, actual );
         }

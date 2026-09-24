@@ -54,46 +54,46 @@ namespace FlatFiles.Test
         [TestMethod]
         public void TestReadRecord_AnyLineBreak_EndsTheRecord()
         {
-            AssertValues( "a,b\r\nc,d\nef,g\rh,i", null, [ "a", "b" ], [ "c", "d" ], [ "ef", "g" ], [ "h", "i" ] );
+            AssertValues( "a,b\r\nc,d\nef,g\rh,i", null!, [ "a", "b" ], [ "c", "d" ], [ "ef", "g" ], [ "h", "i" ] );
         }
 
         [TestMethod]
         public void TestReadRecord_NoTrailingLineBreak_ReadsTheLastRecord()
         {
-            AssertValues( "a,b", null, [ "a", "b" ] );
-            AssertValues( "a,b\r\n", null, [ "a", "b" ] );
+            AssertValues( "a,b", null!, [ "a", "b" ] );
+            AssertValues( "a,b\r\n", null!, [ "a", "b" ] );
         }
 
         [TestMethod]
         public void TestReadRecord_QuotedValue_KeepsSeparatorsAndLineBreaksAndUndoublesQuotes()
         {
-            AssertValues( "\"x,\"\"y\"\"\r\nz\",1\r\n", null, [ "x,\"y\"\r\nz", "1" ] );
+            AssertValues( "\"x,\"\"y\"\"\r\nz\",1\r\n", null!, [ "x,\"y\"\r\nz", "1" ] );
         }
 
         [TestMethod]
         public void TestReadRecord_SeveralRebuiltValuesInOneRecord_StayApart()
         {
-            AssertValues( "\"a\"\"b\",\"c\"\"d\"\r\n", null, [ "a\"b", "c\"d" ] );
-            AssertValues( "\"a\"\"b\",plain,\"c\"\"d\"\"e\"\r\n", null, [ "a\"b", "plain", "c\"d\"e" ] );
+            AssertValues( "\"a\"\"b\",\"c\"\"d\"\r\n", null!, [ "a\"b", "c\"d" ] );
+            AssertValues( "\"a\"\"b\",plain,\"c\"\"d\"\"e\"\r\n", null!, [ "a\"b", "plain", "c\"d\"e" ] );
         }
 
         [TestMethod]
         public void TestReadRecord_RebuiltValueFollowedByAPlainRecord_DoesNotLeakIntoIt()
         {
-            AssertValues( "\"a\"\"b\",c\r\nd,e", null, [ "a\"b", "c" ], [ "d", "e" ] );
+            AssertValues( "\"a\"\"b\",c\r\nd,e", null!, [ "a\"b", "c" ], [ "d", "e" ] );
         }
 
         [TestMethod]
         public void TestReadRecord_RebuiltValueAtTheEndOfTheStream_IsStillRead()
         {
-            AssertValues( "a,\"b\"\"c\"", null, [ "a", "b\"c" ] );
+            AssertValues( "a,\"b\"\"c\"", null!, [ "a", "b\"c" ] );
         }
 
         [TestMethod]
         public void TestReadRecord_QuotedValueOfNothingOrOnlyQuotes_IsRead()
         {
-            AssertValues( "\"\",a", null, [ "", "a" ] );
-            AssertValues( "\"\"\"\"\"\",a", null, [ "\"\"", "a" ] );
+            AssertValues( "\"\",a", null!, [ "", "a" ] );
+            AssertValues( "\"\"\"\"\"\",a", null!, [ "\"\"", "a" ] );
         }
 
         [TestMethod]
@@ -105,27 +105,27 @@ namespace FlatFiles.Test
         [TestMethod]
         public void TestReadRecord_QuoteInsideUnquotedValue_IsLiteral()
         {
-            AssertValues( "a\"b,c", null, [ "a\"b", "c" ] );
+            AssertValues( "a\"b,c", null!, [ "a\"b", "c" ] );
         }
 
         [TestMethod]
         public void TestReadRecord_LeadingWhiteSpace_IsDroppedAndTrailingKept()
         {
-            AssertValues( " a , b \r\n", null, [ "a ", "b " ] );
+            AssertValues( " a , b \r\n", null!, [ "a ", "b " ] );
             AssertValues( " a , b \r\n", new DelimitedOptions { PreserveWhiteSpace = true }, [ " a ", " b " ] );
         }
 
         [TestMethod]
         public void TestReadRecord_WhiteSpaceOnlyValue_IsEmptyUnlessPreserved()
         {
-            AssertValues( "a,  \r\n", null, [ "a", "" ] );
+            AssertValues( "a,  \r\n", null!, [ "a", "" ] );
             AssertValues( "a,  \r\n", new DelimitedOptions { PreserveWhiteSpace = true }, [ "a", "  " ] );
         }
 
         [TestMethod]
         public void TestReadRecord_WhiteSpaceAroundQuotedValue_IsDroppedUnlessPreserved()
         {
-            AssertValues( "  \"a\"  ,b", null, [ "a", "b" ] );
+            AssertValues( "  \"a\"  ,b", null!, [ "a", "b" ] );
             AssertValues( "\"a\"  ,b", new DelimitedOptions { PreserveWhiteSpace = true }, [ "a  ", "b" ] );
             // With whitespace preserved the quote is no longer the first character, so the value is not quoted at all.
             AssertValues( "  \"a\",b", new DelimitedOptions { PreserveWhiteSpace = true }, [ "  \"a\"", "b" ] );
@@ -144,7 +144,7 @@ namespace FlatFiles.Test
         [TestMethod]
         public void TestReadRecord_EmptyValuesAndBlankLines_AreReported()
         {
-            AssertValues( "a,,\r\n\r\nb", null, [ "a", "", "" ], [ "" ], [ "b" ] );
+            AssertValues( "a,,\r\n\r\nb", null!, [ "a", "", "" ], [ "" ], [ "b" ] );
         }
 
         [TestMethod]
@@ -169,7 +169,7 @@ namespace FlatFiles.Test
             var plain = new string( 'p', 5000 );
             var quoted = new string( 'q', 2500 ) + "\"" + new string( 'r', 2500 );
 
-            AssertValues( plain + ",\"" + quoted.Replace( "\"", "\"\"" ) + "\"\r\n", null, [ plain, quoted ] );
+            AssertValues( plain + ",\"" + quoted.Replace( "\"", "\"\"" ) + "\"\r\n", null!, [ plain, quoted ] );
         }
 
         [TestMethod]

@@ -38,7 +38,7 @@ namespace FlatFiles.Test
         public void TestParse_NoFormatString_ParsesGenerically()
         {
             var column = new DateTimeColumn( "created" );
-            var actual = (DateTime) column.Parse( null, "1/19/2013" );
+            var actual = (DateTime) column.Parse( null, "1/19/2013" )!;
             var expected = new DateTime( 2013, 1, 19 );
             Assert.AreEqual( expected, actual );
         }
@@ -53,7 +53,7 @@ namespace FlatFiles.Test
             {
                 FormatProvider = CultureInfo.CurrentCulture
             };
-            var actual = (DateTime) column.Parse( null, "1/19/2013" );
+            var actual = (DateTime) column.Parse( null, "1/19/2013" )!;
             var expected = new DateTime( 2013, 1, 19 );
             Assert.AreEqual( expected, actual );
         }
@@ -68,7 +68,7 @@ namespace FlatFiles.Test
             {
                 InputFormat = "d"
             };
-            var actual = (DateTime) column.Parse( null, "1/19/2013" );
+            var actual = (DateTime) column.Parse( null, "1/19/2013" )!;
             var expected = new DateTime( 2013, 1, 19 );
             Assert.AreEqual( expected, actual );
         }
@@ -84,7 +84,7 @@ namespace FlatFiles.Test
                 InputFormat = "d",
                 FormatProvider = CultureInfo.InvariantCulture
             };
-            var actual = (DateTime) column.Parse( null, "01/19/2013" );
+            var actual = (DateTime) column.Parse( null, "01/19/2013" )!;
             var expected = new DateTime( 2013, 1, 19 );
             Assert.AreEqual( expected, actual );
         }

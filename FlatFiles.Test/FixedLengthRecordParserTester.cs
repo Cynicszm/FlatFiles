@@ -46,19 +46,19 @@ namespace FlatFiles.Test
         [TestMethod]
         public void TestReadRecord_AnyLineBreak_EndsTheRecord()
         {
-            AssertRecords( "abc\r\ndef\nghi\rjkl", null, "abc", "def", "ghi", "jkl" );
+            AssertRecords( "abc\r\ndef\nghi\rjkl", null!, "abc", "def", "ghi", "jkl" );
         }
 
         [TestMethod]
         public void TestReadRecord_TrailingLineBreak_DoesNotProduceAnEmptyRecord()
         {
-            AssertRecords( "abc\r\n", null, "abc" );
+            AssertRecords( "abc\r\n", null!, "abc" );
         }
 
         [TestMethod]
         public void TestReadRecord_BlankLine_IsAnEmptyRecord()
         {
-            AssertRecords( "abc\r\n\r\ndef", null, "abc", "", "def" );
+            AssertRecords( "abc\r\n\r\ndef", null!, "abc", "", "def" );
         }
 
         [TestMethod]
@@ -72,7 +72,7 @@ namespace FlatFiles.Test
         {
             var record = new string( 'x', 5000 );
 
-            AssertRecords( record + "\r\n" + record, null, record, record );
+            AssertRecords( record + "\r\n" + record, null!, record, record );
         }
 
         [TestMethod]
@@ -92,7 +92,7 @@ namespace FlatFiles.Test
         [TestMethod]
         public void TestIsEndOfStream_EmptyInput_IsTrueImmediately()
         {
-            AssertRecords( "", null );
+            AssertRecords( "", null! );
         }
 
         [TestMethod]

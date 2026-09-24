@@ -17,7 +17,7 @@ namespace FlatFiles.Test
         {
             public int Id;
 
-            public string Name;
+            public string Name = string.Empty;
         }
 
         [TestMethod]

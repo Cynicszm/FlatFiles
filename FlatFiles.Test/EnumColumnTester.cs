@@ -53,7 +53,7 @@ namespace FlatFiles.Test
         public void TestParse_Int32Value_EnumReturned()
         {
             var column = new EnumColumn<MyEnum>( "count" );
-            var actual = (MyEnum) column.Parse( null, "1" );
+            var actual = (MyEnum) column.Parse( null, "1" )!;
             const MyEnum expected = MyEnum.First;
             Assert.AreEqual( expected, actual );
         }
@@ -65,7 +65,7 @@ namespace FlatFiles.Test
         public void TestParse_StringValue_EnumReturned()
         {
             var column = new EnumColumn<MyEnum>( "count" );
-            var actual = (MyEnum) column.Parse( null, "First" );
+            var actual = (MyEnum) column.Parse( null, "First" )!;
             const MyEnum expected = MyEnum.First;
             Assert.AreEqual( expected, actual );
         }

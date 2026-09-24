@@ -76,7 +76,7 @@ namespace FlatFiles.Test
 
         private class IgnoredOnly
         {
-            public string Ignored { get; set; }
+            public string Ignored { get; set; } = string.Empty;
         }
     }
 }

@@ -49,7 +49,7 @@ namespace FlatFiles.Benchmark
 
         public class Person
         {
-            public string Name { get; set; }
+            public string Name { get; set; } = string.Empty;
 
             public int? IQ { get; set; }
 

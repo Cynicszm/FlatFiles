@@ -270,7 +270,7 @@ namespace FlatFiles.Test
 
         public class HeaderRecord
         {
-            public string BatchName { get; set; }
+            public string BatchName { get; set; } = string.Empty;
 
             public int RecordCount { get; set; }
         }
@@ -288,7 +288,7 @@ namespace FlatFiles.Test
         {
             public int Id { get; set; }
 
-            public string Name { get; set; }
+            public string Name { get; set; } = string.Empty;
 
             public DateTime? CreatedOn { get; set; }
 

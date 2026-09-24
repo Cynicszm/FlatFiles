@@ -104,27 +104,27 @@ namespace FlatFiles.Benchmark
         
         public class PropertyPerson
         {
-            public string FirstName { get; set; }
+            public string FirstName { get; set; } = string.Empty;
 
-            public string LastName { get; set; }
+            public string LastName { get; set; } = string.Empty;
 
             public int Age { get; set; }
 
-            public string Street1 { get; set; }
+            public string Street1 { get; set; } = string.Empty;
 
-            public string Street2 { get; set; }
+            public string Street2 { get; set; } = string.Empty;
 
-            public string City { get; set; }
+            public string City { get; set; } = string.Empty;
 
-            public string State { get; set; }
+            public string State { get; set; } = string.Empty;
 
-            public string Zip { get; set; }
+            public string Zip { get; set; } = string.Empty;
 
-            public string FavouriteColour { get; set; }
+            public string FavouriteColour { get; set; } = string.Empty;
 
-            public string FavouriteFood { get; set; }
+            public string FavouriteFood { get; set; } = string.Empty;
 
-            public string FavouriteSport { get; set; }
+            public string FavouriteSport { get; set; } = string.Empty;
             
             public DateTime? CreatedOn { get; set; }
 
@@ -133,17 +133,17 @@ namespace FlatFiles.Benchmark
 
         public class FieldPerson
         {
-            public string FirstName;
-            public string LastName;
+            public string FirstName = string.Empty;
+            public string LastName = string.Empty;
             public int Age;
-            public string Street1;
-            public string Street2;
-            public string City;
-            public string State;
-            public string Zip;
-            public string FavouriteColour;
-            public string FavouriteFood;
-            public string FavouriteSport;
+            public string Street1 = string.Empty;
+            public string Street2 = string.Empty;
+            public string City = string.Empty;
+            public string State = string.Empty;
+            public string Zip = string.Empty;
+            public string FavouriteColour = string.Empty;
+            public string FavouriteFood = string.Empty;
+            public string FavouriteSport = string.Empty;
             public DateTime? CreatedOn;
             public bool IsActive;
         }

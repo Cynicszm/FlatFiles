@@ -14,7 +14,7 @@ namespace FlatFiles.Benchmark
         public void RunCsvHelper()
         {
             var directory = Path.GetDirectoryName( Assembly.GetExecutingAssembly().Location );
-            var path = Path.Combine( directory, "TestFiles", "SampleData.csv" );
+            var path = Path.Combine( directory!, "TestFiles", "SampleData.csv" );
             using var stream = File.OpenRead( path );
             using var textReader = new StreamReader( stream );
             var configuration = new CsvConfiguration( CultureInfo.InvariantCulture )
@@ -103,7 +103,7 @@ namespace FlatFiles.Benchmark
             mapper.Property( x => x.StratificationId3 ).ColumnName( "StratificationID3" );
 
             var directory = Path.GetDirectoryName( Assembly.GetExecutingAssembly().Location );
-            var path = Path.Combine( directory, "TestFiles", "SampleData.csv" );
+            var path = Path.Combine( directory!, "TestFiles", "SampleData.csv" );
             using var stream = File.OpenRead( path );
             using var textReader = new StreamReader( stream );
             _ = mapper.Read( textReader, new DelimitedOptions { IsFirstRecordSchema = true } ).ToArray();
@@ -115,69 +115,69 @@ namespace FlatFiles.Benchmark
 
             public int YearEnd { get; set; }
 
-            public string LocationAbbreviation { get; set; }
+            public string LocationAbbreviation { get; set; } = string.Empty;
 
-            public string LocationDescription { get; set; }
+            public string LocationDescription { get; set; } = string.Empty;
 
-            public string DataSource { get; set; }
+            public string DataSource { get; set; } = string.Empty;
 
-            public string Topic { get; set; }
+            public string Topic { get; set; } = string.Empty;
 
-            public string Question { get; set; }
+            public string Question { get; set; } = string.Empty;
 
-            public string Response { get; set; }
+            public string Response { get; set; } = string.Empty;
 
-            public string DataValueUnit { get; set; }
+            public string DataValueUnit { get; set; } = string.Empty;
 
-            public string DataValueType { get; set; }
+            public string DataValueType { get; set; } = string.Empty;
 
-            public string DataValue { get; set; }
+            public string DataValue { get; set; } = string.Empty;
 
             public decimal? AlternativeDataValue { get; set; }
 
-            public string DataValueFootnoteSymbol { get; set; }
+            public string DataValueFootnoteSymbol { get; set; } = string.Empty;
 
-            public string DataValueFootnote { get; set; }
+            public string DataValueFootnote { get; set; } = string.Empty;
 
             public decimal? LowConfidenceLimit { get; set; }
 
             public decimal? HighConfidenceLimit { get; set; }
 
-            public string StratificationCategory1 { get; set; }
+            public string StratificationCategory1 { get; set; } = string.Empty;
 
-            public string Stratification1 { get; set; }
+            public string Stratification1 { get; set; } = string.Empty;
 
-            public string StratificationCategory2 { get; set; }
+            public string StratificationCategory2 { get; set; } = string.Empty;
 
-            public string Stratification2 { get; set; }
+            public string Stratification2 { get; set; } = string.Empty;
 
-            public string StratificationCategory3 { get; set; }
+            public string StratificationCategory3 { get; set; } = string.Empty;
 
-            public string Stratification3 { get; set; }
+            public string Stratification3 { get; set; } = string.Empty;
 
-            public string GeoLocation { get; set; }
+            public string GeoLocation { get; set; } = string.Empty;
 
-            public string ResponseId { get; set; }
+            public string ResponseId { get; set; } = string.Empty;
 
-            public string LocationId { get; set; }
+            public string LocationId { get; set; } = string.Empty;
 
-            public string TopicId { get; set; }
+            public string TopicId { get; set; } = string.Empty;
 
-            public string QuestionId { get; set; }
+            public string QuestionId { get; set; } = string.Empty;
 
-            public string DataValueTypeId { get; set; }
+            public string DataValueTypeId { get; set; } = string.Empty;
 
-            public string StratificationCategoryId1 { get; set; }
+            public string StratificationCategoryId1 { get; set; } = string.Empty;
 
-            public string StratificationId1 { get; set; }
+            public string StratificationId1 { get; set; } = string.Empty;
 
-            public string StratificationCategoryId2 { get; set; }
+            public string StratificationCategoryId2 { get; set; } = string.Empty;
 
-            public string StratificationId2 { get; set; }
+            public string StratificationId2 { get; set; } = string.Empty;
 
-            public string StratificationCategoryId3 { get; set; }
+            public string StratificationCategoryId3 { get; set; } = string.Empty;
 
-            public string StratificationId3 { get; set; }
+            public string StratificationId3 { get; set; } = string.Empty;
         }
     }
 }

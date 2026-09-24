@@ -31,7 +31,7 @@ namespace FlatFiles.Test
             };
             var reader = new DelimitedReader( new StringReader( Data ), GetSchema(), options );
             List<string> captured = [];
-            reader.RecordRead += ( _, e ) => captured.Add( e.RecordContext.Record );
+            reader.RecordRead += ( _, e ) => captured.Add( e.RecordContext.Record! );
             while (reader.Read())
             {
             }
@@ -71,7 +71,7 @@ namespace FlatFiles.Test
         [TestMethod]
         public void TestRecordText_NotPreserved_ParsesIdenticalValues()
         {
-            static object[][] Read( bool preserve )
+            static object?[][] Read( bool preserve )
             {
                 var options = new DelimitedOptions
                 {
@@ -79,7 +79,7 @@ namespace FlatFiles.Test
                     PreserveRecordText = preserve
                 };
                 var reader = new DelimitedReader( new StringReader( Data ), GetSchema(), options );
-                List<object[]> rows = [];
+                List<object?[]> rows = [];
                 while (reader.Read())
                 {
                     rows.Add( reader.GetValues() );
@@ -132,7 +132,7 @@ namespace FlatFiles.Test
             var options = new DelimitedOptions { PreserveRecordText = true };
             var reader = new DelimitedReader( new StringReader( "a\r\n\r\nb\r\n" ), schema, options );
             List<string> captured = [];
-            reader.RecordRead += ( _, e ) => captured.Add( e.RecordContext.Record );
+            reader.RecordRead += ( _, e ) => captured.Add( e.RecordContext.Record! );
             while (reader.Read())
             {
             }

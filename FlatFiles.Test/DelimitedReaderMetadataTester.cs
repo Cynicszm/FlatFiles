@@ -24,7 +24,7 @@ namespace FlatFiles.Test
             var output = writer.ToString();
 
             mapper.CustomMapping( new RecordNumberColumn( "RecordNumber" ) )
-                .WithReader( ( p, v ) => p.RecordNumber = (int) v )
+                .WithReader( ( p, v ) => p.RecordNumber = (int) v! )
                 .WithWriter( p => p.RecordNumber );
             var reader = new StringReader( output );
             Person[] results = [.. mapper.Read( reader, new DelimitedOptions { IsFirstRecordSchema = true } )];
@@ -54,7 +54,7 @@ namespace FlatFiles.Test
             var output = writer.ToString();
 
             mapper.CustomMapping( new RecordNumberColumn( "RecordNumber" ) )
-                .WithReader( ( p, v ) => p.RecordNumber = (int) v )
+                .WithReader( ( p, v ) => p.RecordNumber = (int) v! )
                 .WithWriter( p => p.RecordNumber );
             var stringReader = new StringReader( output );
             var options = new DelimitedOptions { IsFirstRecordSchema = true };
@@ -88,7 +88,7 @@ namespace FlatFiles.Test
             var output = writer.ToString();
 
             mapper.CustomMapping( new RecordNumberColumn( "RecordNumber" ) { IncludeSchema = true, IncludeSkippedRecords = true } )
-                .WithReader( ( p, v ) => p.RecordNumber = (int) v )
+                .WithReader( ( p, v ) => p.RecordNumber = (int) v! )
                 .WithWriter( p => p.RecordNumber );
             var stringReader = new StringReader( output );
             var options = new DelimitedOptions { IsFirstRecordSchema = true };
@@ -122,7 +122,7 @@ namespace FlatFiles.Test
             var output = writer.ToString();
 
             mapper.CustomMapping( new RecordNumberColumn( "RecordNumber" ) { IncludeSchema = true, IncludeSkippedRecords = true } )
-                .WithReader( ( p, v ) => p.RecordNumber = (int) v )
+                .WithReader( ( p, v ) => p.RecordNumber = (int) v! )
                 .WithWriter( p => p.RecordNumber );
             var reader = new StringReader( output );
             Person[] results = [.. mapper.Read( reader, new DelimitedOptions { IsFirstRecordSchema = true } )];
@@ -152,7 +152,7 @@ namespace FlatFiles.Test
             var output = writer.ToString();
 
             mapper.CustomMapping( new RecordNumberColumn( "RecordNumber" ) { IncludeSchema = false, IncludeSkippedRecords = true } )
-                .WithReader( ( p, v ) => p.RecordNumber = (int) v )
+                .WithReader( ( p, v ) => p.RecordNumber = (int) v! )
                 .WithWriter( p => p.RecordNumber );
             var stringReader = new StringReader( output );
             var options = new DelimitedOptions { IsFirstRecordSchema = true };
@@ -186,7 +186,7 @@ namespace FlatFiles.Test
             var output = writer.ToString();
 
             mapper.CustomMapping( new RecordNumberColumn( "RecordNumber" ) { IncludeSchema = false, IncludeSkippedRecords = true } )
-                .WithReader( ( p, v ) => p.RecordNumber = (int) v )
+                .WithReader( ( p, v ) => p.RecordNumber = (int) v! )
                 .WithWriter( p => p.RecordNumber );
             var reader = new StringReader( output );
             Person[] results = [.. mapper.Read( reader, new DelimitedOptions { IsFirstRecordSchema = true } )];
@@ -217,7 +217,7 @@ namespace FlatFiles.Test
             var output = writer.ToString();
 
             mapper.CustomMapping( new RecordNumberColumn( "RecordNumber" ) )
-                .WithReader( ( p, v ) => p.RecordNumber = (int) v )
+                .WithReader( ( p, v ) => p.RecordNumber = (int) v! )
                 .WithWriter( p => p.RecordNumber );
             var reader = new StringReader( output );
             Person[] results = [.. mapper.Read( reader, new DelimitedOptions { IsFirstRecordSchema = true } )];
@@ -248,7 +248,7 @@ namespace FlatFiles.Test
             var output = writer.ToString();
 
             mapper.CustomMapping( new RecordNumberColumn( "RecordNumber" ) )
-                .WithReader( ( p, v ) => p.RecordNumber = (int) v )
+                .WithReader( ( p, v ) => p.RecordNumber = (int) v! )
                 .WithWriter( p => p.RecordNumber );
             var stringReader = new StringReader( output );
             var options = new DelimitedOptions { IsFirstRecordSchema = true };
@@ -267,7 +267,7 @@ namespace FlatFiles.Test
 
         public class Person
         {
-            public string Name { get; set; }
+            public string Name { get; set; } = string.Empty;
 
             public int RecordNumber { get; set; }
         }

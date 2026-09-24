@@ -14,7 +14,7 @@ namespace FlatFiles.Test
         {
             var mapper = DelimitedTypeMapper.Define( () => new
             {
-                Name = (string) null
+                Name = (string) null!
             } );
             mapper.Property( x => x.Name ).ColumnName( "Name" );
             var writer = new StringWriter();
@@ -143,7 +143,7 @@ namespace FlatFiles.Test
 
         public class Person
         {
-            public string Name { get; set; }
+            public string Name { get; set; } = string.Empty;
 
             public int? IQ { get; set; }
 
@@ -154,7 +154,7 @@ namespace FlatFiles.Test
 
         internal class InternalPerson
         {
-            internal string Name { get; set; }
+            internal string Name { get; set; } = string.Empty;
         }
     }
 }

@@ -40,9 +40,9 @@ namespace FlatFiles.Test
             return schema;
         }
 
-        private static List<object[]> ReadAll( FixedLengthReader reader )
+        private static List<object?[]> ReadAll( FixedLengthReader reader )
         {
-            List<object[]> records = [];
+            List<object?[]> records = [];
             while (reader.Read())
             {
                 records.Add( reader.GetValues() );
@@ -59,9 +59,9 @@ namespace FlatFiles.Test
 
             Assert.HasCount( 4, records );
             CollectionAssert.AreEqual( new object[] { "A001", "Widget", 42, "Note A" }, records[0] );
-            CollectionAssert.AreEqual( new object[] { "B002", "Gadget", 7, null }, records[1], "A window the record never reaches is null." );
-            CollectionAssert.AreEqual( new object[] { "C003", "Gizmo", 1, null }, records[2], "A window the record ends inside takes the characters that are there." );
-            CollectionAssert.AreEqual( new object[] { "D004", null, null, null }, records[3] );
+            CollectionAssert.AreEqual( new object[] { "B002", "Gadget", 7, null! }, records[1], "A window the record never reaches is null." );
+            CollectionAssert.AreEqual( new object[] { "C003", "Gizmo", 1, null! }, records[2], "A window the record ends inside takes the characters that are there." );
+            CollectionAssert.AreEqual( new object[] { "D004", null!, null!, null! }, records[3] );
         }
 
         [TestMethod]
@@ -136,8 +136,8 @@ namespace FlatFiles.Test
             var records = ReadAll( reader );
 
             CollectionAssert.AreEqual( new object[] { "A001", "everything else" }, records[0] );
-            CollectionAssert.AreEqual( new object[] { "B0", null }, records[1] );
-            CollectionAssert.AreEqual( new object[] { "C003", null }, records[2] );
+            CollectionAssert.AreEqual( new object[] { "B0", null! }, records[1] );
+            CollectionAssert.AreEqual( new object[] { "C003", null! }, records[2] );
         }
 
         [TestMethod]
@@ -164,10 +164,10 @@ namespace FlatFiles.Test
             var records = ReadAll( reader );
 
             Assert.HasCount( 4, records );
-            CollectionAssert.AreEqual( new object[] { "H", "September", null }, records[0] );
+            CollectionAssert.AreEqual( new object[] { "H", "September", null! }, records[0] );
             CollectionAssert.AreEqual( new object[] { "D", "ACC00001", 100.50m, "REF-1" }, records[1] );
-            CollectionAssert.AreEqual( new object[] { "D", "ACC00002", 75m, null }, records[2] );
-            CollectionAssert.AreEqual( new object[] { "D", "ACC00003", null, null }, records[3] );
+            CollectionAssert.AreEqual( new object[] { "D", "ACC00002", 75m, null! }, records[2] );
+            CollectionAssert.AreEqual( new object[] { "D", "ACC00003", null!, null! }, records[3] );
         }
 
         [TestMethod]
@@ -180,21 +180,21 @@ namespace FlatFiles.Test
             var records = ReadAll( reader );
 
             Assert.HasCount( 2, records );
-            CollectionAssert.AreEqual( new object[] { "B002", "Gadget", null, null }, records[1] );
+            CollectionAssert.AreEqual( new object[] { "B002", "Gadget", null!, null! }, records[1] );
         }
 
         [TestMethod]
         public async Task TestReadAsync_ShortRecords_ReadWhatIsThere()
         {
             var reader = new FixedLengthReader( new StringReader( Records ), Schema(), Ragged() );
-            List<object[]> records = [];
+            List<object?[]> records = [];
             while (await reader.ReadAsync())
             {
                 records.Add( reader.GetValues() );
             }
 
             Assert.HasCount( 4, records );
-            CollectionAssert.AreEqual( new object[] { "D004", null, null, null }, records[3] );
+            CollectionAssert.AreEqual( new object[] { "D004", null!, null!, null! }, records[3] );
         }
 
         [TestMethod]
@@ -320,13 +320,13 @@ namespace FlatFiles.Test
 
         public sealed class Item
         {
-            public string Id { get; set; }
+            public string Id { get; set; } = string.Empty;
 
-            public string Name { get; set; }
+            public string Name { get; set; } = string.Empty;
 
             public int? Quantity { get; set; }
 
-            public string Note { get; set; }
+            public string Note { get; set; } = string.Empty;
         }
     }
 }

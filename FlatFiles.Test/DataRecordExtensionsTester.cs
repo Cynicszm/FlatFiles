@@ -13,7 +13,7 @@ namespace FlatFiles.Test
         [TestMethod]
         public void TestNullableExtensions_AllNull()
         {
-            var data = string.Join( ",", typeof( NullableValues ).GetProperties().Select( _ => (string) null ) );
+            var data = string.Join( ",", typeof( NullableValues ).GetProperties().Select( _ => (string) null! ) );
             var schema = GetSchema();
             var stringReader = new StringReader( data );
             var csvReader = new DelimitedReader( stringReader, schema );
@@ -104,7 +104,7 @@ namespace FlatFiles.Test
 
             public decimal? DecimalValue { get; set; }
 
-            public string StringValue { get; set; }
+            public string StringValue { get; set; } = string.Empty;
 
             public DateTime? DateTimeValue { get; set; }
 
@@ -137,7 +137,7 @@ namespace FlatFiles.Test
             Assert.AreEqual( 6, length );
             var expected = new object[]
             {
-                0, DateTime.UnixEpoch, DBNull.Value, 3.14159, 3.14159m, "A String", null, null, null, null
+                0, DateTime.UnixEpoch, DBNull.Value, 3.14159, 3.14159m, "A String", null!, null!, null!, null!
             };
             CollectionAssert.AreEqual( expected, values );
         }
@@ -154,7 +154,7 @@ namespace FlatFiles.Test
             Assert.AreEqual( 6, length );
             var expected = new object[]
             {
-                0, DateTime.UnixEpoch, null, 3.14159, 3.14159m, "A String", null, null, null, null
+                0, DateTime.UnixEpoch, null!, 3.14159, 3.14159m, "A String", null!, null!, null!, null!
             };
             CollectionAssert.AreEqual( expected, values );
         }
@@ -173,7 +173,7 @@ namespace FlatFiles.Test
                 throw new NotImplementedException();
             }
 
-            public long GetBytes( int i, long fieldOffset, byte[] buffer, int bufferoffset, int length )
+            public long GetBytes( int i, long fieldOffset, byte[]? buffer, int bufferoffset, int length )
             {
                 throw new NotImplementedException();
             }
@@ -183,7 +183,7 @@ namespace FlatFiles.Test
                 throw new NotImplementedException();
             }
 
-            public long GetChars( int i, long fieldoffset, char[] buffer, int bufferoffset, int length )
+            public long GetChars( int i, long fieldoffset, char[]? buffer, int bufferoffset, int length )
             {
                 throw new NotImplementedException();
             }

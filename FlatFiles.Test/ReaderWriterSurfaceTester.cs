@@ -18,14 +18,14 @@ namespace FlatFiles.Test
     {
         public sealed class Header
         {
-            public string Batch { get; set; }
+            public string Batch { get; set; } = string.Empty;
         }
 
         public sealed class Detail
         {
             public int Id { get; set; }
 
-            public string Name { get; set; }
+            public string Name { get; set; } = string.Empty;
         }
 
         private static readonly CancellationToken Cancelled = new( true );
@@ -130,7 +130,7 @@ namespace FlatFiles.Test
             Assert.IsNotNull( reader.Reader );
             Assert.IsNotNull( ((ITypedReader<object>) reader).Reader );
             Assert.IsTrue( reader.Read() );
-            Assert.AreEqual( "B1", ((Header) reader.Current).Batch );
+            Assert.AreEqual( "B1", ((Header) reader.Current!).Batch );
             Assert.IsTrue( reader.Skip() );
             Assert.IsTrue( await reader.ReadAsync() );
             Assert.AreEqual( 2, ((Detail) reader.Current).Id );
@@ -468,8 +468,8 @@ namespace FlatFiles.Test
         public void TestCustomMapping_EveryReaderAndWriterShape()
         {
             var mapper = DelimitedTypeMapper.Define<Detail>();
-            mapper.CustomMapping( new Int32Column( "Id" ) ).WithReader( ( d, v ) => d.Id = (int) v ).WithWriter( d => d.Id );
-            mapper.CustomMapping( new StringColumn( "Name" ) ).WithReader( ( _, d, v ) => d.Name = (string) v ).WithWriter( ( d, values ) => values[1] = d.Name );
+            mapper.CustomMapping( new Int32Column( "Id" ) ).WithReader( ( d, v ) => d.Id = (int) v! ).WithWriter( d => d.Id );
+            mapper.CustomMapping( new StringColumn( "Name" ) ).WithReader( ( _, d, v ) => d.Name = (string) v! ).WithWriter( ( d, values ) => values[1] = d.Name );
             var options = new DelimitedOptions { RecordSeparator = "\n" };
             var text = new StringWriter();
 
