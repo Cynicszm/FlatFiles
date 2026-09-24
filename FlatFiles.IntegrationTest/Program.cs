@@ -370,16 +370,17 @@ namespace FlatFiles.IntegrationTest
             var throughSchema = results.FindAll( x => x.Scenario != MappedScenario );
             var ontoEntities = results.FindAll( x => x.Scenario == MappedScenario );
 
-            WriteMarkdownTable( "Delimited", profiles, throughSchema, fixedLength: false );
-            WriteMarkdownTable( "Fixed-length", profiles, throughSchema, fixedLength: true );
-            WriteMarkdownTable( "Delimited, through a type mapper", profiles, ontoEntities, fixedLength: false );
-            WriteMarkdownTable( "Fixed-length, through a type mapper", profiles, ontoEntities, fixedLength: true );
+            WriteMarkdownTable( "Delimited", profiles, throughSchema, fixedLength: false, withScenario: true );
+            WriteMarkdownTable( "Fixed-length", profiles, throughSchema, fixedLength: true, withScenario: true );
+            // One scenario, so a column repeating its name on every row says nothing the heading has not.
+            WriteMarkdownTable( "Delimited, through a type mapper", profiles, ontoEntities, fixedLength: false, withScenario: false );
+            WriteMarkdownTable( "Fixed-length, through a type mapper", profiles, ontoEntities, fixedLength: true, withScenario: false );
             WriteMarkdownNotes( results );
         }
 
         private const string MappedScenario = "mapper";
 
-        private static void WriteMarkdownTable( string heading, List<FileProfile> profiles, List<RunResult> results, bool fixedLength )
+        private static void WriteMarkdownTable( string heading, List<FileProfile> profiles, List<RunResult> results, bool fixedLength, bool withScenario )
         {
             // A run of one profile has nothing for three of the four tables, and an empty table with a heading
             // over it says less than no table at all.
@@ -390,8 +391,12 @@ namespace FlatFiles.IntegrationTest
             Console.WriteLine();
             Console.WriteLine( "**{0}**", heading );
             Console.WriteLine();
-            Console.WriteLine( "| Sample | Columns | Records | Scenario | Mean Total Time | Range | MB/s | Bytes/record | Peak heap | Peak working set |" );
-            Console.WriteLine( "| --- | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |" );
+            Console.WriteLine( withScenario
+                ? "| Sample | Columns | Records | Scenario | Mean Total Time | Range | MB/s | Bytes/record | Peak heap | Peak working set |"
+                : "| Sample | Columns | Records | Mean Total Time | Range | MB/s | Bytes/record | Peak heap | Peak working set |" );
+            Console.WriteLine( withScenario
+                ? "| --- | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |"
+                : "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |" );
 
             var previous = string.Empty;
             foreach (var result in results)
@@ -409,7 +414,8 @@ namespace FlatFiles.IntegrationTest
                 }
                 previous = result.Profile;
                 // The heading says the format, so a column repeating it on every row says nothing.
-                Console.WriteLine( "| {0} | {1:N0} | {2:N0} | `{3}` | {4} | {5} | {6:N1} | {7:N0} | {8} | {9} |",
+                Console.WriteLine( withScenario ? "| {0} | {1:N0} | {2:N0} | `{3}` | {4} | {5} | {6:N1} | {7:N0} | {8} | {9} |"
+                                                : "| {0} | {1:N0} | {2:N0} | {4} | {5} | {6:N1} | {7:N0} | {8} | {9} |",
                     Shorthand( result.Profile ),
                     ColumnCount( profile ),
                     result.Records,

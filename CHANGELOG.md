@@ -106,19 +106,19 @@ The baseline moves with this release. The `parse`, `typed` and `values` figures 
 
 **Delimited, through a type mapper**
 
-| Sample | Columns | Records | Scenario | Mean Total Time | Range | MB/s | Bytes/record | Peak heap | Peak working set |
-| --- | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| S1/S1 | 379 | 37,031 | `mapper` | 1.17 s | 1.12 s - 1.20 s | 31.4 | 221 | 9.0 MB | 47.6 MB |
-| S1/S2 | 58 | 344,352 | `mapper` | 1.33 s | 1.29 s - 1.37 s | 76.1 | 196 | 13.5 MB | 52.7 MB |
-| S1/S3 | 196 | 39,337 | `mapper` | 1.09 s | 1.08 s - 1.10 s | 41.1 | 200 | 8.7 MB | 47.4 MB |
+| Sample | Columns | Records | Mean Total Time | Range | MB/s | Bytes/record | Peak heap | Peak working set |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| S1/S1 | 379 | 37,031 | 1.17 s | 1.12 s - 1.20 s | 31.4 | 221 | 9.0 MB | 47.6 MB |
+| S1/S2 | 58 | 344,352 | 1.33 s | 1.29 s - 1.37 s | 76.1 | 196 | 13.5 MB | 52.7 MB |
+| S1/S3 | 196 | 39,337 | 1.09 s | 1.08 s - 1.10 s | 41.1 | 200 | 8.7 MB | 47.4 MB |
 
 **Fixed-length, through a type mapper**
 
-| Sample | Columns | Records | Scenario | Mean Total Time | Range | MB/s | Bytes/record | Peak heap | Peak working set |
-| --- | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| S2/S1 | 172 | 22,481 | `mapper` | 468 ms | 455 ms - 494 ms | 34.4 | 1,908 | 14.0 MB | 54.3 MB |
-| S2/S2 | 235 | 1,790 | `mapper` | 150 ms | 144 ms - 152 ms | 39.9 | 8,172 | 12.5 MB | 50.1 MB |
-| S2/S3 | 34 | 18,047 | `mapper` | 199 ms | 193 ms - 210 ms | 21.7 | 829 | 13.0 MB | 50.2 MB |
+| Sample | Columns | Records | Mean Total Time | Range | MB/s | Bytes/record | Peak heap | Peak working set |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| S2/S1 | 172 | 22,481 | 468 ms | 455 ms - 494 ms | 34.4 | 1,908 | 14.0 MB | 54.3 MB |
+| S2/S2 | 235 | 1,790 | 150 ms | 144 ms - 152 ms | 39.9 | 8,172 | 12.5 MB | 50.1 MB |
+| S2/S3 | 34 | 18,047 | 199 ms | 193 ms - 210 ms | 21.7 | 829 | 13.0 MB | 50.2 MB |
 
 Each row is one sample loaded 5 times, each in a process of its own that starts, reads the file once and
 exits - which is how the library is mostly used - and the figures are the mean of those 5. Everything a
