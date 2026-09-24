@@ -1,4 +1,4 @@
-# FlatFiles
+﻿# FlatFiles
 
 [![Build and test](https://github.com/Cynicszm/FlatFiles/actions/workflows/build.yml/badge.svg?branch=master)](https://github.com/Cynicszm/FlatFiles/actions/workflows/build.yml) [![NuGet](https://img.shields.io/nuget/v/Cynicszm.FlatFiles.svg)](https://www.nuget.org/packages/Cynicszm.FlatFiles)
 
@@ -684,6 +684,8 @@ There are also generic `GetValue<T>` methods that can deal with type conversions
 
 ## How This Library Is Verified
 Besides the unit tests, this repository reads six files end to end before every release and compares what that cost against figures committed alongside them. The files are generated from profiles describing the shape of real ones — 379 columns; 344,352 records; every field quoted; fourteen record layouts chosen by a single character; a 3,500-character record — and they are committed rather than built, so the bytes being read are fixed and a change in the numbers means a change in the library.
+
+Each file is read four ways: every column as text, every single-typed column given its type, that again with the values asked for, and the file read onto entities through a type mapper. The last is there because the first three never build an entity, so nothing taken from them can move when the mapping path does.
 
 Three figures are compared. How many records each file yields is exact, and so is the requirement that none be refused. What a read allocates per record is compared to within 2%, being deterministic for given bytes on a given runtime. How long a read takes is reported and never compared, because it is not stable enough to decide anything.
 

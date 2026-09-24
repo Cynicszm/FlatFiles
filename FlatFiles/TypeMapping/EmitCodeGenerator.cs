@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Globalization;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Threading;
 using FlatFiles.Properties;
 
 namespace FlatFiles.TypeMapping
@@ -25,6 +26,17 @@ namespace FlatFiles.TypeMapping
             moduleBuilder = assemblyBuilder.DefineDynamicModule( "FlatFiles_DynamicModule" );
         }
 
+        /// <summary>
+        ///     How many times a generator has been asked to prepare something: a factory, a constructor, a
+        ///     deserialiser or a serialiser. Each one defines a type in the dynamic module, so what a read asks
+        ///     for once is cheap and what it asks for per record is not - 8.1.0 shipped a factory built per
+        ///     record, which every behavioural test passed. The tests read this either side of a read and hold
+        ///     the count to what a read prepares rather than to what it reads.
+        /// </summary>
+        internal static int Preparations => preparations;
+
+        private static int preparations;
+
         private string GetUniqueTypeName( string name )
         {
             var id = nameLookup.AddOrUpdate( name, 0, ( _, old ) => old + 1 );
@@ -33,6 +45,7 @@ namespace FlatFiles.TypeMapping
 
         public Func<TEntity> GetFactory<TEntity>()
         {
+            Interlocked.Increment( ref preparations );
             var entityType = typeof( TEntity );
             // The caller has already established there is one: a type without a parameterless constructor is
             // built through the constructor it does have, and never arrives here.
@@ -62,6 +75,7 @@ namespace FlatFiles.TypeMapping
         /// </summary>
         public Func<object?[], TEntity> GetConstructor<TEntity>( ConstructorMapping mapping )
         {
+            Interlocked.Increment( ref preparations );
             var entityType = typeof( TEntity );
             var typeName = GetUniqueTypeName( $"{entityType.Name}Constructor" );
             var typeBuilder = moduleBuilder.DefineType( typeName, TypeAttributes.Class | TypeAttributes.Public | TypeAttributes.Sealed );
@@ -89,6 +103,7 @@ namespace FlatFiles.TypeMapping
 
         public Action<IRecordContext, TEntity, object?[]> GetReader<TEntity>( IMemberMapping[] mappings )
         {
+            Interlocked.Increment( ref preparations );
             var entityType = typeof( TEntity );
             var typeName = GetUniqueTypeName( $"{entityType.Name}Reader" );
             var typeBuilder = moduleBuilder.DefineType( typeName, TypeAttributes.Public | TypeAttributes.Sealed );
@@ -201,6 +216,7 @@ namespace FlatFiles.TypeMapping
 
         public Action<IRecordContext, TEntity, object?[]> GetWriter<TEntity>( IMemberMapping[] mappings )
         {
+            Interlocked.Increment( ref preparations );
             var entityType = typeof( TEntity );
             var typeName = GetUniqueTypeName( $"{entityType.Name}Writer" );
             var typeBuilder = moduleBuilder.DefineType( typeName, TypeAttributes.Public | TypeAttributes.Sealed );

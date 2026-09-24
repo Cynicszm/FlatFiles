@@ -1,6 +1,99 @@
-## 8.2.0 (planned)
-**Not released, and not started.** What is written here is the order the remaining work will be done in, kept with the releases so that the reasoning sits beside what it produced. Nothing below breaks anything, so none of it is waiting for a major version.
+﻿## 8.2.0 (unreleased)
+**Not released.** Being built. What is written up here has landed on master; what is under **Next** has not. Nothing in this release breaks anything.
 
+**A typed read built a new entity factory for every record.** 8.1.0 gave the reader a path that takes a record straight onto an entity without boxing its values, and that path asks the mapper for a fresh entity per record. The mapper answered by asking the code generator for a factory each time, and the emit code generator answers a request for a factory by defining a type in its dynamic module. So an optimised typed read - the default - emitted one type per record, and the release that was meant to allocate less allocated five times more than the release before it. The factory is now built once per mapper, as the deserialiser and the column setters already were.
+
+Measured on 10,000 records of 13 columns, a delimited read through an optimised type mapper allocated 4,457 bytes a record and took 7.6 seconds; it now allocates 362 bytes a record and takes 44 ms. Fixed-length, 4,824 bytes and 7.3 seconds, now 730 bytes and 37 ms. For comparison the same reads at 8.0.0 allocated 877 and 1,317 bytes a record, at 62 and 56 ms.
+
+Those corrected figures are the ones 8.1.0's entry claims - 388 bytes a record delimited and 732 fixed-length. What that entry describes is what the change does once the factory is built once, which is what a mapping with `OptimiseMapping( false )` did all along, and what the default does again now. A reader comparing the 8.1.0 entry against 8.1.0 itself would not have found those figures.
+
+Two things had to miss it for it to ship, and both are now closed.
+
+The unit tests check what a read produces rather than what it costs, so a read that produced the right entities an expensive way passed every one of them. They now also check what a read prepares. The emit code generator counts what it is asked for - a factory, a constructor, a deserialiser, a serialiser - and a test runs the same read over one record and over a thousand and fails if the count follows the records. That is exact and says where the cost went, rather than being a threshold: preparing once a read is right and preparing once a record is wrong, whatever either costs. Beside it, a bound on what a read allocates per record, which holds for the reflection code generator too, where preparing is cheap enough not to show in a count but doing it per record is still wrong. Three of the six fail on the code as released.
+
+The integration check reads its six files through schemas rather than type mappers, so nothing it gates touches the mapped path; it reported six files whose cost had not moved, correctly, about reads that were never affected. It now reads each file a fourth way, `mapper`, onto entities through a type mapper, and the tables carry it. Against `Set1Sample3` that scenario reports 184 bytes a record and about a second; with the factory built per record it reports 4,442 bytes a record and takes 150 seconds.
+
+Adding that scenario showed up two more things, both fixed below: a fixed-length file of several layouts was read onto entities through a path that boxed every value, and a type the generated code cannot see was not read onto at all.
+
+**A fixed-length file of several record layouts is read onto entities without boxing its values.** A file whose records follow more than one layout is read through `FixedLengthTypeMapperSelector`, which picks a mapper per record by looking at the record and hands the work to a deserialiser reading an array of parsed values. That array is what 8.1.0 stopped a plain mapper needing, and a selector kept needing it: every value boxed on its way to a property, and the array copied once more for the selector to read. Since the reader now says which schema matched when it hands a record over, a selector can hold one setter list per mapper and use the one the matched schema belongs to. Measured against the integration samples, `Set2Sample1` went from 2,086 bytes a record to 1,908 and from 709 ms to 448, `Set2Sample3` from 1,045 to 829, and `Set2Sample2` from 8,339 to 8,172.
+
+It is all of them or none. The reader takes that path for every record once it has been given an assembler, so a selector holding one mapping that cannot be read that way - a custom reader, a nested entity, anything the mapper already refuses - puts every mapping behind it back on the values path. Five tests read the same records both ways and check the entities match.
+
+A delimited selector cannot do the same, and the reason is in its shape rather than in the work: its predicates are handed the record's values, so the reader has to parse them into an array before it can choose a schema at all, and once that array exists there is nothing to save. A predicate given the record's text instead would settle it, which is a change to the selector's surface rather than to a reader, and is on the list below.
+
+**A type the generated code cannot see is mapped rather than refused.** The emit code generator checks whether a constructor is public before emitting a call to it, and did not ask the same of the type. Mapping onto an internal class with an ordinary public constructor therefore emitted a factory that could not reach it, and the first record threw `MethodAccessException` from generated code - nothing a caller could act on, and nothing that said what to do about it. A mapping onto a type out of the generated code's reach now uses the reflection code generator, which is slower per value and works, exactly as a private constructor already did.
+
+An assembly can let the generated code in by naming `FlatFiles.DynamicAssembly` in an `InternalsVisibleTo`, and one that has is taken at its word: its internal types keep the faster path. That is not a footnote - this repository's own test assembly does it, which is why an internal entity worked in every test ever written here and failed the moment it was tried anywhere else. Five tests now map onto a private nested type, which no `InternalsVisibleTo` can open up.
+
+The baseline moves with this release. The `parse`, `typed` and `values` figures are where 8.1.0 left them, as they read through a schema and nothing here touches that. `mapper` is new, and its fixed-length rows already carry a change: they are what a selector costs now that it reads onto entities directly.
+
+**Delimited**
+
+| Sample | Columns | Records | Scenario | Mean Total Time | Range | MB/s | Bytes/record | Peak heap | Peak working set |
+| --- | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| S1/S1 | 379 | 37,031 | `parse` | 1.37 s | 1.32 s - 1.39 s | 26.8 | 5,685 | 13.5 MB | 49.5 MB |
+| S1/S1 | 379 | 37,031 | `typed` | 1.61 s | 1.58 s - 1.67 s | 22.8 | 5,629 | 13.6 MB | 51.1 MB |
+| S1/S1 | 379 | 37,031 | `values` | 1.59 s | 1.55 s - 1.63 s | 23.1 | 8,685 | 13.5 MB | 51.1 MB |
+| S1/S1 | 379 | 37,031 | `mapper` | 1.17 s | 1.12 s - 1.20 s | 31.4 | 221 | 9.0 MB | 47.6 MB |
+| | | | | | | | | | |
+| S1/S2 | 58 | 344,352 | `parse` | 1.53 s | 1.45 s - 1.57 s | 66.5 | 1,414 | 13.4 MB | 49.2 MB |
+| S1/S2 | 58 | 344,352 | `typed` | 1.79 s | 1.74 s - 1.84 s | 56.8 | 1,338 | 13.4 MB | 50.9 MB |
+| S1/S2 | 58 | 344,352 | `values` | 1.79 s | 1.76 s - 1.82 s | 56.7 | 1,826 | 13.4 MB | 51.1 MB |
+| S1/S2 | 58 | 344,352 | `mapper` | 1.33 s | 1.29 s - 1.37 s | 76.1 | 196 | 13.5 MB | 52.7 MB |
+| | | | | | | | | | |
+| S1/S3 | 196 | 39,337 | `parse` | 1.24 s | 1.16 s - 1.27 s | 36.1 | 3,528 | 13.5 MB | 48.3 MB |
+| S1/S3 | 196 | 39,337 | `typed` | 1.56 s | 1.50 s - 1.68 s | 28.6 | 2,988 | 13.5 MB | 51.7 MB |
+| S1/S3 | 196 | 39,337 | `values` | 1.49 s | 1.44 s - 1.55 s | 30.0 | 4,580 | 13.5 MB | 51.9 MB |
+| S1/S3 | 196 | 39,337 | `mapper` | 1.09 s | 1.08 s - 1.10 s | 41.1 | 200 | 8.7 MB | 47.4 MB |
+
+**Fixed-length**
+
+| Sample | Columns | Records | Scenario | Mean Total Time | Range | MB/s | Bytes/record | Peak heap | Peak working set |
+| --- | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| S2/S1 | 172 | 22,481 | `parse` | 494 ms | 453 ms - 598 ms | 32.6 | 3,759 | 13.8 MB | 48.0 MB |
+| S2/S1 | 172 | 22,481 | `typed` | 601 ms | 552 ms - 697 ms | 26.8 | 3,598 | 13.7 MB | 50.8 MB |
+| S2/S1 | 172 | 22,481 | `values` | 582 ms | 567 ms - 597 ms | 27.7 | 4,305 | 13.7 MB | 50.9 MB |
+| S2/S1 | 172 | 22,481 | `mapper` | 468 ms | 455 ms - 494 ms | 34.4 | 1,908 | 14.0 MB | 54.3 MB |
+| | | | | | | | | | |
+| S2/S2 | 235 | 1,790 | `parse` | 127 ms | 113 ms - 170 ms | 47.0 | 12,090 | 13.0 MB | 45.5 MB |
+| S2/S2 | 235 | 1,790 | `typed` | 145 ms | 136 ms - 162 ms | 41.2 | 11,269 | 12.8 MB | 47.6 MB |
+| S2/S2 | 235 | 1,790 | `values` | 150 ms | 136 ms - 175 ms | 39.9 | 13,169 | 13.0 MB | 47.6 MB |
+| S2/S2 | 235 | 1,790 | `mapper` | 150 ms | 144 ms - 152 ms | 39.9 | 8,172 | 12.5 MB | 50.1 MB |
+| | | | | | | | | | |
+| S2/S3 | 34 | 18,047 | `parse` | 173 ms | 157 ms - 184 ms | 25.1 | 1,882 | 13.0 MB | 46.4 MB |
+| S2/S3 | 34 | 18,047 | `typed` | 303 ms | 260 ms - 356 ms | 14.3 | 1,648 | 13.2 MB | 48.4 MB |
+| S2/S3 | 34 | 18,047 | `values` | 249 ms | 230 ms - 264 ms | 17.4 | 1,916 | 12.9 MB | 48.5 MB |
+| S2/S3 | 34 | 18,047 | `mapper` | 199 ms | 193 ms - 210 ms | 21.7 | 829 | 13.0 MB | 50.2 MB |
+
+Each row is one sample loaded 5 times, each in a process of its own that starts, reads the file once and
+exits - which is how the library is mostly used - and the figures are the mean of those 5. Everything a
+job pays for is inside them: the runtime compiling the parse path on first use, the schema being built,
+the file being opened. The first three scenarios are cumulative:
+`parse` reads every column as text and asks for no value, `typed` gives each single-typed column its
+own type, and `values` is `typed` with `GetValues` called on every record. The difference between two
+of them is the cost of the step between.
+
+`mapper` is not a fourth step but a different path: the file read onto entities through a type mapper,
+which is the only scenario that builds an entity or uses the setters a mapper makes per column. It maps
+the first column of each kind the profile knows about and ignores the rest, which costs the reader the
+column but not the parse, so its figures sit beside the others rather than being compared with them.
+
+| Column | What it measures |
+| --- | --- |
+| Columns | Columns in the schema; for a fixed-length sample, in its widest record layout. |
+| Records | Records the reader yielded. Gated exactly. No sample is built to have a record refused, so any refusal fails the check whatever else agrees. |
+| Mean Total Time | Mean wall clock of 5 cold loads: opening the file, building the schema, constructing the reader, reading every record, and disposing, in a process that has done nothing else. Nothing is amortised over reads a real caller never performs. **Reported, never gated.** |
+| Range | The quickest and slowest of those 5 loads, so the spread behind the mean is visible rather than implied. |
+| MB/s | File size divided by Mean Total Time, so it carries the same caveats. |
+| Bytes/record | Mean bytes allocated across a load, divided by records read. Deterministic for given bytes on a given runtime, and repeats to within 0.1% here. **Gated at 2%.** |
+| Peak heap | The largest the managed heap reached in any of the 5 loads, sampled every 5 ms. Reported. |
+| Peak working set | The largest peak working set any of those processes reached. Each does one load and exits, so the figure is a whole job's footprint, most of it runtime start-up rather than the read. Reported. |
+
+Averaging 5 whole processes takes most of the machine noise out, but a cold start is noisy by nature and
+the range shows what is left. `FlatFiles.Benchmark` is the project that measures a warm steady state, with
+statistics rather than a mean; these figures are the other question - what one job costs end to end - and
+show the shape of the work rather than a number to compare release to release, which is why neither Mean
+Total Time nor MB/s is gated.
 ### Next
 
 In the order they will be built. None of these breaks anything, so none of them is waiting for a major version.
@@ -18,6 +111,8 @@ In the order they will be built. None of these breaks anything, so none of them 
   The same feature settles what a record of the wrong length means, because today the two ends disagree and neither is configurable. A delimited record with **too few** fields is refused; one with **too many** is accepted, the first however many the schema declares kept and the rest discarded. So a record carrying a separator inside an unquoted field is read with every later value one position to the left, and nothing says so - whether anything notices depends on whether a shifted value reaches a column that will not parse it, which is a matter of where the separator fell rather than of the record being wrong. The fixed-length reader already has `IsRaggedRight` and `IsLongRecordRejected` for the same question and answers it differently again.
 
   What is wanted is one way of saying it on both readers: refuse a short record or pad it, refuse a long one or discard the surplus, with the current behaviour as the default so nothing changes for anyone who does not ask. Whatever is chosen has to be visible - a record silently read one column out of step is the worst of the available outcomes, and is what happens now.
+
+- **A delimited selector should be able to match on the record's text.** `DelimitedTypeMapperSelector` and `DelimitedSchemaSelector` are given each record's values to choose a schema by, so the reader has to parse a record into an array of values before it can decide what the record is - which is the one thing that stops a selected delimited mapping being read straight onto an entity, as a fixed-length one now is. A predicate over the record's text, beside the one over its values, would leave the choice to the caller: match on text and keep the faster path, or match on values and pay for them.
 
 **Considered and already covered.** Seven more ideas came out of the same review and turned out to need no work. They are recorded so that nobody spends an afternoon rediscovering it.
 
