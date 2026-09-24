@@ -24,7 +24,7 @@ namespace FlatFiles.IntegrationTest
         ///     column that is mixed stays text deliberately: typing it would mean a record failing for a value the
         ///     original file was perfectly happy with, and the run would be measuring error recovery instead.
         /// </summary>
-        private static ColumnDefinition ColumnFor( ColumnProfile column )
+        public static ColumnDefinition ColumnFor( ColumnProfile column )
         {
             var kinds = ( column.Date > 0 ? 1 : 0 ) + ( column.Numeric > 0 ? 1 : 0 ) + ( column.String > 0 ? 1 : 0 );
             if (kinds != 1)
@@ -78,7 +78,7 @@ namespace FlatFiles.IntegrationTest
             return selector;
         }
 
-        private static Func<string, bool> Predicate( RecordTypeProfile type )
+        public static Func<string, bool> Predicate( RecordTypeProfile type )
         {
             if (type.IsPrefixed)
             {

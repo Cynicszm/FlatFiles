@@ -1,4 +1,4 @@
-# FlatFiles.IntegrationTest
+﻿# FlatFiles.IntegrationTest
 
 Reads the six integration test files end to end and reports what each one costs: time, bytes allocated
 per record, and peak memory. The files are committed, compressed, and generated only when somebody asks, from a
@@ -18,8 +18,8 @@ adding one is a matter of writing the profile rather than of finding a file.
 
     dotnet run --project FlatFiles.IntegrationTest -c Release
 
-That measures every scenario: six samples, three scenarios each, five processes apiece, so ninety
-cold loads and about a minute and a half.
+That measures every scenario: six samples, four scenarios each, five processes apiece, so a hundred
+and twenty cold loads and a couple of minutes.
 
     dotnet run --project FlatFiles.IntegrationTest -c Release -- run Set1Sample2
     dotnet run --project FlatFiles.IntegrationTest -c Release -- check
@@ -73,7 +73,8 @@ library from a single-schema read, and one the type mapper's newer shortcuts do 
 
 ## The scenarios
 
-Each is a step further than the last, so the difference between two of them is the cost of the step.
+The first three are each a step further than the last, so the difference between two of them is the
+cost of the step. The fourth is a different path through the library rather than a further step.
 
 Every sample is loaded five times, each in a process that starts, reads the file once and exits, and
 the figures are the mean of those five with the quickest and slowest beside them. That is how the
@@ -90,10 +91,38 @@ Measuring a warm steady state instead would flatter the library and answer a que
   parsing a value into a `DateTime`, `decimal` or `int` costs over copying it out as text.
 - **`values`** - `typed`, with `GetValues` called on every record. The difference is what a caller
   that keeps the values pays, which is an array per record and a copy into it.
+- **`mapper`** - the same file read onto entities through a type mapper. Not a step further than
+  `values` and not comparable with it: a different path, measured because nothing else here goes
+  anywhere near it.
 
 A column the profile shows as mixed stays text in every scenario. Typing it would mean records failing
 on values the file it was modelled on was perfectly happy with, and the run would be measuring error
 recovery rather than parsing.
+
+### Why `mapper` is here
+
+The first three scenarios read through a schema. That path never builds an entity, never asks the code
+generator for anything and never uses the setters a mapper makes per column, so no figure taken from it
+can move when any of that changes. 8.1.0 shipped a type mapper that built its entity factory once per
+record - emitting a type per record - through a run of this check in which nothing moved, because
+nothing here read through a mapper. This scenario is that hole closed: with the factory built per
+record it reports 4,442 bytes a record against Set1Sample3 and takes 150 seconds, against 184 bytes and
+a second with it built once.
+
+A sample has up to 379 columns and no class to match, so the mapper takes the first column of each kind
+the profile knows about - text, whole number, decimal and date - onto a property of that type, and
+ignores the rest. Ignoring costs the reader the column but not the parse, so the figures are lower than
+`typed` and are not a measure of what mapping 379 columns would cost. They are a measure of the mapped
+path, which is what they are here for. The members are nullable because a typed column parses an empty
+field to null and a member that cannot hold one refuses the record; the samples have plenty of both,
+and a scenario that refused records would be measuring error recovery.
+
+The two formats do not cover the same ground. A delimited mapper reads through the path that sets each
+member without boxing the value. A fixed-length file of several record layouts has to be read through
+`FixedLengthTypeMapperSelector`, which multiplexes deserialisers over a shared values array and never
+takes that path, so the fixed-length figures cover a mapped read but not an unboxed one - which is why
+the factory built per record moved the delimited figures twenty-four fold and the fixed-length ones not
+at all.
 
 ## The release gate
 

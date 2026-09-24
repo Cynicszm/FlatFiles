@@ -7,7 +7,83 @@ Measured on 10,000 records of 13 columns, a delimited read through an optimised 
 
 Those corrected figures are the ones 8.1.0's entry claims - 388 bytes a record delimited and 732 fixed-length. What that entry describes is what the change does once the factory is built once, which is what a mapping with `OptimiseMapping( false )` did all along, and what the default does again now. A reader comparing the 8.1.0 entry against 8.1.0 itself would not have found those figures.
 
-Two things had to miss it for it to ship. The integration files are read through schemas rather than type mappers, so nothing in the gated figures touches this path; the gate reported six files whose cost had not moved, correctly, about reads that were never affected. And the unit tests check what a read produces rather than what it costs, so a read that produced the right entities an expensive way passed every one of them. A test now reads 2,000 records through an optimised mapper and an unoptimised one and fails either if it allocates more than 1,500 bytes a record - a bound rather than a measurement, set well above what a read costs and well below what rebuilding the factory costs.
+Two things had to miss it for it to ship, and both are now closed.
+
+The unit tests check what a read produces rather than what it costs, so a read that produced the right entities an expensive way passed every one of them. They now also check what a read prepares. The emit code generator counts what it is asked for - a factory, a constructor, a deserialiser, a serialiser - and a test runs the same read over one record and over a thousand and fails if the count follows the records. That is exact and says where the cost went, rather than being a threshold: preparing once a read is right and preparing once a record is wrong, whatever either costs. Beside it, a bound on what a read allocates per record, which holds for the reflection code generator too, where preparing is cheap enough not to show in a count but doing it per record is still wrong. Three of the six fail on the code as released.
+
+The integration check reads its six files through schemas rather than type mappers, so nothing it gates touches the mapped path; it reported six files whose cost had not moved, correctly, about reads that were never affected. It now reads each file a fourth way, `mapper`, onto entities through a type mapper, and the tables carry it. Against `Set1Sample3` that scenario reports 184 bytes a record and about a second; with the factory built per record it reports 4,442 bytes a record and takes 150 seconds.
+
+The two formats do not cover the same ground there, which is worth knowing before trusting the figures. A delimited mapper reads through the path that sets each member without boxing the value. A fixed-length file of several record layouts has to be read through `FixedLengthTypeMapperSelector`, which multiplexes deserialisers over a shared values array and never takes that path - so the factory built per record moved the delimited figures twenty-four fold and the fixed-length ones not at all. Making a mapper selector take the same path as a mapper is worth doing and is not done here.
+
+The baseline moves with this release, the samples having gained a scenario rather than changed. The `parse`, `typed` and `values` figures are where 8.1.0 left them, as they read through a schema and nothing here touches that; `mapper` is new, and is the row a change to the mapping path now has to move past.
+
+**Delimited**
+
+| Sample | Columns | Records | Scenario | Mean Total Time | Range | MB/s | Bytes/record | Peak heap | Peak working set |
+| --- | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| S1/S1 | 379 | 37,031 | `parse` | 1.40 s | 1.36 s - 1.45 s | 26.3 | 5,685 | 13.5 MB | 49.5 MB |
+| S1/S1 | 379 | 37,031 | `typed` | 1.71 s | 1.64 s - 1.80 s | 21.5 | 5,629 | 13.6 MB | 50.7 MB |
+| S1/S1 | 379 | 37,031 | `values` | 1.67 s | 1.60 s - 1.71 s | 22.1 | 8,685 | 13.5 MB | 51.2 MB |
+| S1/S1 | 379 | 37,031 | `mapper` | 1.21 s | 1.17 s - 1.23 s | 30.3 | 221 | 9.0 MB | 47.5 MB |
+| | | | | | | | | | |
+| S1/S2 | 58 | 344,352 | `parse` | 1.57 s | 1.54 s - 1.60 s | 64.7 | 1,414 | 13.4 MB | 49.4 MB |
+| S1/S2 | 58 | 344,352 | `typed` | 2.03 s | 1.92 s - 2.19 s | 50.1 | 1,338 | 13.5 MB | 51.0 MB |
+| S1/S2 | 58 | 344,352 | `values` | 2.02 s | 1.93 s - 2.05 s | 50.3 | 1,826 | 13.4 MB | 51.1 MB |
+| S1/S2 | 58 | 344,352 | `mapper` | 1.38 s | 1.34 s - 1.42 s | 73.7 | 196 | 13.5 MB | 52.9 MB |
+| | | | | | | | | | |
+| S1/S3 | 196 | 39,337 | `parse` | 1.27 s | 1.20 s - 1.34 s | 35.1 | 3,528 | 13.4 MB | 48.1 MB |
+| S1/S3 | 196 | 39,337 | `typed` | 1.54 s | 1.48 s - 1.71 s | 29.0 | 2,988 | 13.5 MB | 51.9 MB |
+| S1/S3 | 196 | 39,337 | `values` | 1.65 s | 1.60 s - 1.70 s | 27.0 | 4,580 | 13.5 MB | 51.9 MB |
+| S1/S3 | 196 | 39,337 | `mapper` | 1.12 s | 1.10 s - 1.14 s | 40.0 | 200 | 8.7 MB | 47.4 MB |
+
+**Fixed-length**
+
+| Sample | Columns | Records | Scenario | Mean Total Time | Range | MB/s | Bytes/record | Peak heap | Peak working set |
+| --- | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| S2/S1 | 172 | 22,481 | `parse` | 685 ms | 512 ms - 748 ms | 23.5 | 3,759 | 13.8 MB | 48.1 MB |
+| S2/S1 | 172 | 22,481 | `typed` | 734 ms | 681 ms - 795 ms | 22.0 | 3,598 | 13.8 MB | 50.8 MB |
+| S2/S1 | 172 | 22,481 | `values` | 831 ms | 824 ms - 848 ms | 19.4 | 4,306 | 13.8 MB | 51.1 MB |
+| S2/S1 | 172 | 22,481 | `mapper` | 603 ms | 506 ms - 752 ms | 26.7 | 2,086 | 14.0 MB | 52.7 MB |
+| | | | | | | | | | |
+| S2/S2 | 235 | 1,790 | `parse` | 137 ms | 127 ms - 148 ms | 43.6 | 12,089 | 12.5 MB | 45.6 MB |
+| S2/S2 | 235 | 1,790 | `typed` | 164 ms | 159 ms - 166 ms | 36.5 | 11,266 | 12.7 MB | 47.5 MB |
+| S2/S2 | 235 | 1,790 | `values` | 161 ms | 157 ms - 166 ms | 37.2 | 13,171 | 12.9 MB | 47.7 MB |
+| S2/S2 | 235 | 1,790 | `mapper` | 157 ms | 152 ms - 163 ms | 38.0 | 8,339 | 12.3 MB | 49.7 MB |
+| | | | | | | | | | |
+| S2/S3 | 34 | 18,047 | `parse` | 168 ms | 163 ms - 173 ms | 25.9 | 1,882 | 13.4 MB | 46.2 MB |
+| S2/S3 | 34 | 18,047 | `typed` | 220 ms | 213 ms - 231 ms | 19.7 | 1,648 | 13.3 MB | 48.4 MB |
+| S2/S3 | 34 | 18,047 | `values` | 223 ms | 215 ms - 227 ms | 19.4 | 1,916 | 13.4 MB | 48.4 MB |
+| S2/S3 | 34 | 18,047 | `mapper` | 206 ms | 197 ms - 217 ms | 21.1 | 1,045 | 12.8 MB | 49.8 MB |
+
+Each row is one sample loaded 5 times, each in a process of its own that starts, reads the file once and
+exits - which is how the library is mostly used - and the figures are the mean of those 5. Everything a
+job pays for is inside them: the runtime compiling the parse path on first use, the schema being built,
+the file being opened. The first three scenarios are cumulative:
+`parse` reads every column as text and asks for no value, `typed` gives each single-typed column its
+own type, and `values` is `typed` with `GetValues` called on every record. The difference between two
+of them is the cost of the step between.
+
+`mapper` is not a fourth step but a different path: the file read onto entities through a type mapper,
+which is the only scenario that builds an entity or uses the setters a mapper makes per column. It maps
+the first column of each kind the profile knows about and ignores the rest, which costs the reader the
+column but not the parse, so its figures sit beside the others rather than being compared with them.
+
+| Column | What it measures |
+| --- | --- |
+| Columns | Columns in the schema; for a fixed-length sample, in its widest record layout. |
+| Records | Records the reader yielded. Gated exactly. No sample is built to have a record refused, so any refusal fails the check whatever else agrees. |
+| Mean Total Time | Mean wall clock of 5 cold loads: opening the file, building the schema, constructing the reader, reading every record, and disposing, in a process that has done nothing else. Nothing is amortised over reads a real caller never performs. **Reported, never gated.** |
+| Range | The quickest and slowest of those 5 loads, so the spread behind the mean is visible rather than implied. |
+| MB/s | File size divided by Mean Total Time, so it carries the same caveats. |
+| Bytes/record | Mean bytes allocated across a load, divided by records read. Deterministic for given bytes on a given runtime, and repeats to within 0.1% here. **Gated at 2%.** |
+| Peak heap | The largest the managed heap reached in any of the 5 loads, sampled every 5 ms. Reported. |
+| Peak working set | The largest peak working set any of those processes reached. Each does one load and exits, so the figure is a whole job's footprint, most of it runtime start-up rather than the read. Reported. |
+
+Averaging 5 whole processes takes most of the machine noise out, but a cold start is noisy by nature and
+the range shows what is left. `FlatFiles.Benchmark` is the project that measures a warm steady state, with
+statistics rather than a mean; these figures are the other question - what one job costs end to end - and
+show the shape of the work rather than a number to compare release to release, which is why neither Mean
+Total Time nor MB/s is gated.
 
 ### Next
 
@@ -26,6 +102,9 @@ In the order they will be built. None of these breaks anything, so none of them 
   The same feature settles what a record of the wrong length means, because today the two ends disagree and neither is configurable. A delimited record with **too few** fields is refused; one with **too many** is accepted, the first however many the schema declares kept and the rest discarded. So a record carrying a separator inside an unquoted field is read with every later value one position to the left, and nothing says so - whether anything notices depends on whether a shifted value reaches a column that will not parse it, which is a matter of where the separator fell rather than of the record being wrong. The fixed-length reader already has `IsRaggedRight` and `IsLongRecordRejected` for the same question and answers it differently again.
 
   What is wanted is one way of saying it on both readers: refuse a short record or pad it, refuse a long one or discard the surplus, with the current behaviour as the default so nothing changes for anyone who does not ask. Whatever is chosen has to be visible - a record silently read one column out of step is the worst of the available outcomes, and is what happens now.
+
+- **A mapper selector should read the way a mapper does.** `FixedLengthTypeMapperSelector` multiplexes a deserialiser per matched layout over a shared values array, so a file of several record layouts read onto entities never takes the path that sets each member without boxing the value - the path 8.1.0 added and the one a delimited mapper takes. A caller whose fixed-length file has more than one layout, which is most of the reason to have a selector, gets none of it. Found by putting a mapped read into the integration check: the factory built per record moved the delimited figures twenty-four fold and the fixed-length ones not at all, because the fixed-length ones were never on that path.
+- **An internal entity type cannot be mapped when mapping is optimised.** The emit code generator checks whether a constructor is public before emitting a call to it, but not whether the type is, so a mapping onto an internal class with an ordinary public constructor emits a factory that cannot reach it and throws `MethodAccessException` on the first record. The reflective fallback next to it is the answer; it is the visibility of the type that has to be asked about as well. Nothing in the suite maps onto an internal type, which is why this has been true for as long as the check has been there.
 
 **Considered and already covered.** Seven more ideas came out of the same review and turned out to need no work. They are recorded so that nobody spends an afternoon rediscovering it.
 
