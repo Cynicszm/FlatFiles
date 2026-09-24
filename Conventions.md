@@ -1,4 +1,4 @@
-# Conventions
+﻿# Conventions
 
 How code in this repository is written. Anything not covered here follows the surrounding file.
 
@@ -241,6 +241,19 @@ unchanged and names the release that last recorded them. Reprinting an identical
 reader to hunt for a difference that is not there, and the numbers in it that are not gated - total
 time and MB/s - would differ anyway, from the machine rather than from the library, which is worse
 than saying nothing.
+
+## Versions
+
+Three properties in `FlatFiles.csproj` carry the version and they do not move together on their own.
+`Version` is the package's, and is set in the pull request that dates the changelog entry.
+`AssemblyVersion` and `FileVersion` are the assembly's, and have been bumped historically in the
+**first commit of the cycle** - the first change made after a release goes out, not the release itself.
+
+Whichever moment is chosen, the two have to end up in step before the tag. 8.2.0 shipped with an
+assembly reporting 8.1.0.0, because the work commits did not touch it and the release pull request set
+only `Version`. Nothing broke - the strong-name identity simply stayed where 8.1.0 left it, and the
+package version and Source Link were right - but the assembly misreports itself, and that is permanent
+for a release once it is published. Check all three before tagging.
 
 ## Documentation
 
