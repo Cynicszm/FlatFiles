@@ -53,11 +53,17 @@ namespace FlatFiles.IntegrationTest
     ///     Reads one generated file from end to end and reports what it cost.
     /// </summary>
     /// <remarks>
-    ///     Three scenarios, each a step further than the last. <c>parse</c> reads every record and parses every
-    ///     value as text without asking for any of it, which is the floor. <c>typed</c> does the same with each
-    ///     column given its own type, so the difference is what parsing a value into something costs.
-    ///     <c>values</c> adds a call to <see cref="IReader.GetValues" /> per record, which is what a caller that
-    ///     keeps the values pays on top.
+    ///     Four scenarios. The first three are each a step further than the last: <c>parse</c> reads every record
+    ///     and parses every value as text without asking for any of it, which is the floor; <c>typed</c> does the
+    ///     same with each column given its own type, so the difference is what parsing a value into something
+    ///     costs; and <c>values</c> adds a call to <see cref="IReader.GetValues" /> per record, which is what a
+    ///     caller that keeps the values pays on top.
+    ///     <para>
+    ///         <c>mapper</c> is not a step further but a different path: the same file read onto entities through
+    ///         a type mapper. Nothing in the other three builds an entity, asks the code generator for anything,
+    ///         or uses the setters a mapper makes per column, so nothing in them can see a change there. A
+    ///         release shipped with a factory built per record because this scenario did not exist.
+    ///     </para>
     /// </remarks>
     internal static class IntegrationRun
     {
@@ -138,6 +144,11 @@ namespace FlatFiles.IntegrationTest
             using (var stream = new FileStream( path, FileMode.Open, FileAccess.Read, FileShare.Read, 1 << 20 ))
             using (var text = new StreamReader( stream ))
             {
+                if (scenario == "mapper")
+                {
+                    (records, skipped) = ReadMapped( profile, text );
+                    return;
+                }
                 IReader reader = profile.IsFixedLength ? FixedLength( profile, text, typed ) : Delimited( profile, text, typed );
                 // A record the schema cannot take - one carrying a separator inside a field, or one no layout
                 // recognises - is counted and skipped, which is what a caller does with a file this size.
@@ -157,6 +168,51 @@ namespace FlatFiles.IntegrationTest
             }
             records = taken;
             skipped = refused;
+        }
+
+        /// <summary>
+        ///     One complete read onto entities. A fixed-length file of several layouts takes a mapper per layout
+        ///     behind the same rules the schema selector uses, which is what a caller with such a file writes.
+        /// </summary>
+        private static (long Taken, long Refused) ReadMapped( FileProfile profile, TextReader text )
+        {
+            var taken = 0L;
+            var refused = 0L;
+            if (profile.IsFixedLength)
+            {
+                var options = new FixedLengthOptions
+                {
+                    RecordSeparator = profile.RecordSeparator
+                };
+                var reader = MapperFactory.CreateSelector( profile ).GetReader( text, options );
+                reader.RecordError += ( _, e ) =>
+                {
+                    ++refused;
+                    e.IsHandled = true;
+                };
+                while (reader.Read())
+                {
+                    ++taken;
+                }
+                return (taken, refused);
+            }
+            var delimitedOptions = new DelimitedOptions
+            {
+                Separator = profile.Separator,
+                RecordSeparator = profile.RecordSeparator,
+                IsFirstRecordSchema = true
+            };
+            var delimitedReader = MapperFactory.Create( profile ).GetReader( text, delimitedOptions );
+            delimitedReader.RecordError += ( _, e ) =>
+            {
+                ++refused;
+                e.IsHandled = true;
+            };
+            while (delimitedReader.Read())
+            {
+                ++taken;
+            }
+            return (taken, refused);
         }
     }
 }
