@@ -10,7 +10,7 @@ namespace FlatFiles.IntegrationTest
 {
     internal static class Program
     {
-        private static readonly string[] Scenarios = ["parse", "typed", "values"];
+        private static readonly string[] Scenarios = ["parse", "typed", "values", "mapper"];
 
         /// <summary>
         ///     How many times each measurement is taken. Each one is a process of its own doing a single cold
@@ -414,10 +414,15 @@ namespace FlatFiles.IntegrationTest
             Console.WriteLine( "Each row is one sample loaded {0} times, each in a process of its own that starts, reads the file once and", Runs );
             Console.WriteLine( "exits - which is how the library is mostly used - and the figures are the mean of those {0}. Everything a", Runs );
             Console.WriteLine( "job pays for is inside them: the runtime compiling the parse path on first use, the schema being built," );
-            Console.WriteLine( "the file being opened. The scenarios are cumulative:" );
+            Console.WriteLine( "the file being opened. The first three scenarios are cumulative:" );
             Console.WriteLine( "`parse` reads every column as text and asks for no value, `typed` gives each single-typed column its" );
             Console.WriteLine( "own type, and `values` is `typed` with `GetValues` called on every record. The difference between two" );
             Console.WriteLine( "of them is the cost of the step between." );
+            Console.WriteLine();
+            Console.WriteLine( "`mapper` is not a fourth step but a different path: the file read onto entities through a type mapper," );
+            Console.WriteLine( "which is the only scenario that builds an entity or uses the setters a mapper makes per column. It maps" );
+            Console.WriteLine( "the first column of each kind the profile knows about and ignores the rest, which costs the reader the" );
+            Console.WriteLine( "column but not the parse, so its figures sit beside the others rather than being compared with them." );
             Console.WriteLine();
             Console.WriteLine( "| Column | What it measures |" );
             Console.WriteLine( "| --- | --- |" );
@@ -564,6 +569,7 @@ namespace FlatFiles.IntegrationTest
             Console.WriteLine( "parse  - every column read as text, no value asked for" );
             Console.WriteLine( "typed  - each single-typed column given its own type, no value asked for" );
             Console.WriteLine( "values - typed, and GetValues called for every record" );
+            Console.WriteLine( "mapper - read onto entities through a type mapper, which is a different path entirely" );
             Console.WriteLine();
             Console.WriteLine( "Mean total time is over {0} cold loads, each a process that starts, reads the file once and exits,", Runs );
             Console.WriteLine( "with the quickest and slowest beside it. That is how the library is mostly used, so nothing here is" );
