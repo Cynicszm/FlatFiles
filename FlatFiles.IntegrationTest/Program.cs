@@ -360,24 +360,43 @@ namespace FlatFiles.IntegrationTest
         }
 
         /// <summary>
-        ///     The same figures as Markdown, for the changelog entry a release carries: one table per format,
-        ///     every row carrying its sample so no row has to be read against one above it, and the text saying
-        ///     what each column is a measurement of.
+        ///     The same figures as Markdown, for the changelog entry a release carries: a table per format for the
+        ///     scenarios that read through a schema, and a second pair for the one that reads onto entities.
+        ///     Separate tables because `mapper` is not a further step than `values` and its figures are not
+        ///     comparable with theirs - a row of it among them invites a comparison that means nothing.
         /// </summary>
         private static void ReportAsMarkdown( List<FileProfile> profiles, List<RunResult> results )
         {
-            WriteMarkdownTable( "Delimited", profiles, results, fixedLength: false );
-            WriteMarkdownTable( "Fixed-length", profiles, results, fixedLength: true );
+            var throughSchema = results.FindAll( x => x.Scenario != MappedScenario );
+            var ontoEntities = results.FindAll( x => x.Scenario == MappedScenario );
+
+            WriteMarkdownTable( "Delimited", profiles, throughSchema, fixedLength: false, withScenario: true );
+            WriteMarkdownTable( "Fixed-length", profiles, throughSchema, fixedLength: true, withScenario: true );
+            // One scenario, so a column repeating its name on every row says nothing the heading has not.
+            WriteMarkdownTable( "Delimited, through a type mapper", profiles, ontoEntities, fixedLength: false, withScenario: false );
+            WriteMarkdownTable( "Fixed-length, through a type mapper", profiles, ontoEntities, fixedLength: true, withScenario: false );
             WriteMarkdownNotes( results );
         }
 
-        private static void WriteMarkdownTable( string heading, List<FileProfile> profiles, List<RunResult> results, bool fixedLength )
+        private const string MappedScenario = "mapper";
+
+        private static void WriteMarkdownTable( string heading, List<FileProfile> profiles, List<RunResult> results, bool fixedLength, bool withScenario )
         {
+            // A run of one profile has nothing for three of the four tables, and an empty table with a heading
+            // over it says less than no table at all.
+            if (!results.Exists( x => profiles.Find( p => p.Name == x.Profile )!.IsFixedLength == fixedLength ))
+            {
+                return;
+            }
             Console.WriteLine();
             Console.WriteLine( "**{0}**", heading );
             Console.WriteLine();
-            Console.WriteLine( "| Sample | Columns | Records | Scenario | Mean Total Time | Range | MB/s | Bytes/record | Peak heap | Peak working set |" );
-            Console.WriteLine( "| --- | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |" );
+            Console.WriteLine( withScenario
+                ? "| Sample | Columns | Records | Scenario | Mean Total Time | Range | MB/s | Bytes/record | Peak heap | Peak working set |"
+                : "| Sample | Columns | Records | Mean Total Time | Range | MB/s | Bytes/record | Peak heap | Peak working set |" );
+            Console.WriteLine( withScenario
+                ? "| --- | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |"
+                : "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |" );
 
             var previous = string.Empty;
             foreach (var result in results)
@@ -387,14 +406,16 @@ namespace FlatFiles.IntegrationTest
                 {
                     continue;
                 }
-                // A rule between one sample and the next, so three scenarios read as a group.
-                if (previous.Length != 0 && result.Profile != previous)
+                // A rule between one sample and the next, so a sample's scenarios read as a group. A table of one
+                // row per sample has nothing to group, so it gets none.
+                if (previous.Length != 0 && result.Profile != previous && results.Exists( x => x.Scenario != results[0].Scenario ))
                 {
                     Console.WriteLine( "| | | | | | | | | | |" );
                 }
                 previous = result.Profile;
                 // The heading says the format, so a column repeating it on every row says nothing.
-                Console.WriteLine( "| {0} | {1:N0} | {2:N0} | `{3}` | {4} | {5} | {6:N1} | {7:N0} | {8} | {9} |",
+                Console.WriteLine( withScenario ? "| {0} | {1:N0} | {2:N0} | `{3}` | {4} | {5} | {6:N1} | {7:N0} | {8} | {9} |"
+                                                : "| {0} | {1:N0} | {2:N0} | {4} | {5} | {6:N1} | {7:N0} | {8} | {9} |",
                     Shorthand( result.Profile ),
                     ColumnCount( profile ),
                     result.Records,
@@ -419,10 +440,11 @@ namespace FlatFiles.IntegrationTest
             Console.WriteLine( "own type, and `values` is `typed` with `GetValues` called on every record. The difference between two" );
             Console.WriteLine( "of them is the cost of the step between." );
             Console.WriteLine();
-            Console.WriteLine( "`mapper` is not a fourth step but a different path: the file read onto entities through a type mapper," );
-            Console.WriteLine( "which is the only scenario that builds an entity or uses the setters a mapper makes per column. It maps" );
-            Console.WriteLine( "the first column of each kind the profile knows about and ignores the rest, which costs the reader the" );
-            Console.WriteLine( "column but not the parse, so its figures sit beside the others rather than being compared with them." );
+            Console.WriteLine( "`mapper` has tables of its own because it is not a fourth step but a different path: the file read onto" );
+            Console.WriteLine( "entities through a type mapper, which is the only scenario that builds an entity or uses the setters a" );
+            Console.WriteLine( "mapper makes per column. It maps the first column of each kind the profile knows about and ignores the" );
+            Console.WriteLine( "rest, which costs the reader the column but not the parse, so its figures are far below the others and" );
+            Console.WriteLine( "mean something different. Read each set against itself and against the same set in an earlier release." );
             Console.WriteLine();
             Console.WriteLine( "| Column | What it measures |" );
             Console.WriteLine( "| --- | --- |" );
