@@ -13,7 +13,7 @@
     <PackageReleaseNotes>A record read through a type mapper no longer copies the parsed values out of the reader, the reader fills one array of parsed values for the whole read rather than a new one for every record, and a type mapper now parses each value into the member that holds it rather than boxing it on the way. Define&lt;T&gt; has also lost its new() constraint: a type with no parameterless constructor is built by handing its constructor the parsed values, matched to its parameters by name, which maps a positional record, a type whose properties are get-only, and a type that validates what it is given. Measured on 10,000 records of 13 columns, a delimited read allocated 741 bytes a record and now allocates 613, a fixed-length read 1,157 and now 1,029, and the same reads through a type mapper 879 and 388, 1,295 and 732. No breaking changes.</PackageReleaseNotes>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>FlatFiles.snk</AssemblyOriginatorKeyFile>
-    <Version>8.2.0</Version>
+    <Version>8.3.0</Version>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -30,8 +30,8 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <AssemblyVersion>8.1.0.0</AssemblyVersion>
-    <FileVersion>8.1.0.0</FileVersion>
+    <AssemblyVersion>8.3.0.0</AssemblyVersion>
+    <FileVersion>8.3.0.0</FileVersion>
     <PackageLicenseFile>UNLICENSE.txt</PackageLicenseFile>
     <PackageIcon>icon.png</PackageIcon>
     <Nullable>enable</Nullable>
