@@ -1,5 +1,13 @@
-## 8.2.0 (planned)
-**Not released, and not started.** What is written here is the order the remaining work will be done in, kept with the releases so that the reasoning sits beside what it produced. Nothing below breaks anything, so none of it is waiting for a major version.
+﻿## 8.2.0 (unreleased)
+**Not released.** Being built. What is written up here has landed on master; what is under **Next** has not. Nothing in this release breaks anything.
+
+**A typed read built a new entity factory for every record.** 8.1.0 gave the reader a path that takes a record straight onto an entity without boxing its values, and that path asks the mapper for a fresh entity per record. The mapper answered by asking the code generator for a factory each time, and the emit code generator answers a request for a factory by defining a type in its dynamic module. So an optimised typed read - the default - emitted one type per record, and the release that was meant to allocate less allocated five times more than the release before it. The factory is now built once per mapper, as the deserialiser and the column setters already were.
+
+Measured on 10,000 records of 13 columns, a delimited read through an optimised type mapper allocated 4,457 bytes a record and took 7.6 seconds; it now allocates 362 bytes a record and takes 44 ms. Fixed-length, 4,824 bytes and 7.3 seconds, now 730 bytes and 37 ms. For comparison the same reads at 8.0.0 allocated 877 and 1,317 bytes a record, at 62 and 56 ms.
+
+Those corrected figures are the ones 8.1.0's entry claims - 388 bytes a record delimited and 732 fixed-length. What that entry describes is what the change does once the factory is built once, which is what a mapping with `OptimiseMapping( false )` did all along, and what the default does again now. A reader comparing the 8.1.0 entry against 8.1.0 itself would not have found those figures.
+
+Two things had to miss it for it to ship. The integration files are read through schemas rather than type mappers, so nothing in the gated figures touches this path; the gate reported six files whose cost had not moved, correctly, about reads that were never affected. And the unit tests check what a read produces rather than what it costs, so a read that produced the right entities an expensive way passed every one of them. A test now reads 2,000 records through an optimised mapper and an unoptimised one and fails either if it allocates more than 1,500 bytes a record - a bound rather than a measurement, set well above what a read costs and well below what rebuilding the factory costs.
 
 ### Next
 
