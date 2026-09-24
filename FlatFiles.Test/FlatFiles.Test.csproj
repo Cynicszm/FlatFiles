@@ -27,10 +27,15 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.10.1" />
     <PackageReference Include="MSTest.TestAdapter" Version="3.11.1" />
     <PackageReference Include="MSTest.TestFramework" Version="3.11.1" />
+    <!-- To run the generator against source text and read back what it wrote, which is the only way to
+         test a generator from outside the compiler. -->
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.8.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\FlatFiles\FlatFiles.csproj" />
+    <!-- As an ordinary reference, not an analyser: these tests drive it themselves. -->
+    <ProjectReference Include="..\FlatFiles.Generator\FlatFiles.Generator.csproj" />
   </ItemGroup>
 
 </Project>
