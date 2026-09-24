@@ -10,11 +10,22 @@ is the exception: it is never renamed for style, because that breaks callers.
 
 ## Target and language
 
-- `net10.0`, single target. The library, the tests and the benchmarks all build against it.
+- `net10.0`, single target. The library, the tests, the benchmarks and the integration test all build
+  against it.
+- **A Roslyn analyser or source generator is the one exception**, and has to be. Such a project is
+  loaded into the compiler's own process, which is why the tooling requires `netstandard2.0` — the
+  target is decided by where the code runs rather than by what the repository would prefer. It also
+  means an analyser project is written against an older language and framework than everything else
+  here, so what it may use is whatever `netstandard2.0` offers, not what `net10.0` does. Nothing it
+  generates is bound by that: generated code is compiled into the caller's project and targets
+  whatever the caller targets.
 - C# 14, which is the language default for `net10.0`. There is no `LangVersion` pin, so the language
   moves with the SDK.
-- Nullable reference types are enabled in the library. Do not silence a warning with `!` unless you
-  have actually established the value is non-null — narrow it or add a guard clause instead.
+- Nullable reference types are enabled in every project. In the library, do not silence a warning
+  with `!` unless you have actually established the value is non-null — narrow it or add a guard
+  clause instead. In the tests and benchmarks the operator is the right answer more often, because a
+  test that has just read a record knows what is in it and the compiler does not; `null!` for an
+  argument a test deliberately passes says the same thing about intent.
 - Prefer collection expressions to the older initialiser forms: `[]`, `[x, y]`, `[.. items]` rather
   than `new[] { … }`, `new List<T> { … }` or `Array.Empty<T>()`. This includes materialising a LINQ
   chain — `List<T> found = [.. items.Where( … )];` rather than a trailing `.ToList()` — which is the
@@ -293,6 +304,9 @@ Left as they are, deliberately:
 - The static per-`TEntity` type check in the two type mapper injectors, which is meant to be one per type.
 
 ## Analysers
+
+About analysers this repository's build *runs*. Writing one that ships to callers is a different
+matter, and the target it has to be built against is under **Target and language**.
 
 Not yet enforced in this repository — there is no `.editorconfig` or `Directory.Build.props`, so no
 `CA` rule can fire in a local build. If that changes, make it opt-in rather than opt-out:
