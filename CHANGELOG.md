@@ -11,6 +11,12 @@ Registering nothing changes nothing, which is what makes this safe to adopt a ty
 
 This is the half of the source generator that has to exist before the generator can emit anything, and it is useful without it: a caller under AOT can write the registrations by hand today. The generator will write the same calls from a module initialiser, and these registrations are what its output is checked against.
 
+**Those registrations are written for you.** The package now carries a source generator. It looks for the calls that name an entity - `Define<T>()` and `DefineDynamic( typeof( T ) )` on either mapper - and writes a registration for each type it finds, from a module initialiser, so a caller does nothing and gets the faster path. Measured from a consuming project with the dynamic-code switch off, a delimited read through a type mapper allocates 359 bytes a record, which is what the hand-written registrations cost and what the same read costs with the switch on.
+
+It writes for a public property with a public setter whose type a column parses to, and for the nullable form of one. It says so, at information level, about every member it cannot write for and why - no setter, a setter that is not public, an init-only setter, or a type no column reads. Information rather than a warning, because a member that falls back is slower rather than wrong; said at all, because a member quietly reverting to the slower path is how an expensive mistake hides, which is exactly what happened between 8.1.0 and 8.2.0.
+
+A mapping the generator does not find is unaffected, and so is one it finds nothing to write for. `MappingAccessors` remains open for anything the search cannot see - a type mapped reflectively, or one from an assembly that does not reference the generator.
+
 **A column is no longer asked by reflection whether it can be parsed into its own type.** `Mapper` held columns as the non-generic `ColumnDefinition` and read `SupportsTypedParse` off the generic subclass through `GetProperty( ..., NonPublic )`. A trimmer is free to remove that property, and a lookup that comes back empty reads as "no" - so the faster path would have switched itself off silently under trimming, which is the same configuration this release is trying to reach. It is declared on the base class now and answered by the column that knows its type.
 
 ### Next

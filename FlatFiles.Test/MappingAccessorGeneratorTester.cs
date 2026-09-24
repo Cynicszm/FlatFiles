@@ -31,6 +31,7 @@ namespace FlatFiles.Test
 
             Assert.ContainsSingle( written );
             StringAssert.Contains( written.Single(), "new global::Customer()" );
+            StringAssert.Contains( written.Single(), "AddSetter<global::Customer, int>( \"Id\"" );
         }
 
         [TestMethod]
@@ -98,7 +99,28 @@ namespace FlatFiles.Test
         }
 
         [TestMethod]
-        public void TestTypeWithoutAParameterlessConstructor_IsNotWrittenFor()
+        public void TestTypeWithoutAParameterlessConstructor_HasNoFactory()
+        {
+            var written = Run( """
+                using FlatFiles.TypeMapping;
+                public class Customer
+                {
+                    public Customer( int id ) => Id = id;
+                    public int Id { get; }
+                    public string Name { get; set; } = string.Empty;
+                }
+                public static class Program
+                {
+                    public static void Main() => DelimitedTypeMapper.Define<Customer>();
+                }
+                """ );
+
+            Assert.DoesNotContain( "AddFactory", written.Single(), "There is nothing to register for a type that cannot be built empty." );
+            StringAssert.Contains( written.Single(), "AddSetter<global::Customer, string>( \"Name\"" );
+        }
+
+        [TestMethod]
+        public void TestTypeThatCanNeitherBeBuiltNorSet_IsWrittenForAtAll()
         {
             var written = Run( """
                 using FlatFiles.TypeMapping;
@@ -113,7 +135,93 @@ namespace FlatFiles.Test
                 }
                 """ );
 
-            Assert.IsEmpty( written, "There is no factory to register for a type that cannot be built empty." );
+            Assert.IsEmpty( written, "An empty registration is worse than none." );
+        }
+
+        [TestMethod]
+        public void TestEveryKindOfMember_IsWrittenForOrExplained()
+        {
+            var written = Run( """
+                using System;
+                using FlatFiles.TypeMapping;
+                public enum Rank { First }
+                public class Customer
+                {
+                    public int Whole { get; set; }
+                    public decimal? Amount { get; set; }
+                    public DateTime When { get; set; }
+                    public Guid Key { get; set; }
+                    public Rank Standing { get; set; }
+                    public byte[] Raw { get; set; } = [];
+                    public string Text { get; set; } = string.Empty;
+                    public int ReadOnly { get; }
+                    public int Hidden { get; private set; }
+                    public int Once { get; init; }
+                    public Customer? Nested { get; set; }
+                }
+                public static class Program
+                {
+                    public static void Main() => DelimitedTypeMapper.Define<Customer>();
+                }
+                """ );
+
+            var source = written.Single();
+            StringAssert.Contains( source, "AddSetter<global::Customer, int>( \"Whole\"" );
+            StringAssert.Contains( source, "AddNullableSetter<global::Customer, decimal>( \"Amount\"" );
+            StringAssert.Contains( source, "AddSetter<global::Customer, global::System.DateTime>( \"When\"" );
+            StringAssert.Contains( source, "AddSetter<global::Customer, global::System.Guid>( \"Key\"" );
+            StringAssert.Contains( source, "AddSetter<global::Customer, global::Rank>( \"Standing\"" );
+            StringAssert.Contains( source, "AddSetter<global::Customer, byte[]>( \"Raw\"" );
+            StringAssert.Contains( source, "AddSetter<global::Customer, string>( \"Text\"" );
+
+            foreach (var refused in new[] { "ReadOnly", "Hidden", "Once", "Nested" })
+            {
+                Assert.DoesNotContain( $"\"{refused}\"", source, $"{refused} cannot be set this way." );
+            }
+        }
+
+        [TestMethod]
+        public void TestAMemberItCannotWriteFor_IsSaidAloudButNotShoutedAbout()
+        {
+            Run( """
+                using FlatFiles.TypeMapping;
+                public class Customer
+                {
+                    public int Id { get; set; }
+                    public int Counted { get; private set; }
+                }
+                public static class Program
+                {
+                    public static void Main() => DelimitedTypeMapper.Define<Customer>();
+                }
+                """ );
+
+            var said = Reported.Single();
+            Assert.AreEqual( "FF1001", said.Id );
+            Assert.AreEqual( DiagnosticSeverity.Info, said.Severity, "A mapping that falls back is slower, not wrong." );
+            StringAssert.Contains( said.GetMessage(), "Counted" );
+            StringAssert.Contains( said.GetMessage(), "its setter is not public" );
+            Assert.AreNotEqual( Location.None, said.Location, "It should point at the member it is about." );
+        }
+
+        [TestMethod]
+        public void TestAMemberOfATypeNoColumnReads_SaysSo()
+        {
+            Run( """
+                using System;
+                using FlatFiles.TypeMapping;
+                public class Customer
+                {
+                    public int Id { get; set; }
+                    public Uri? Where { get; set; }
+                }
+                public static class Program
+                {
+                    public static void Main() => DelimitedTypeMapper.Define<Customer>();
+                }
+                """ );
+
+            StringAssert.Contains( Reported.Single().GetMessage(), "no column parses to System.Uri" );
         }
 
         [TestMethod]
@@ -171,7 +279,7 @@ namespace FlatFiles.Test
         private static List<string> Run( string source )
         {
             var compilation = CSharpCompilation.Create( "Consumer",
-                [CSharpSyntaxTree.ParseText( source )],
+                [CSharpSyntaxTree.ParseText( source, path: "Consumer.cs" )],
                 References(),
                 new CSharpCompilationOptions( OutputKind.DynamicallyLinkedLibrary ) );
 
@@ -181,9 +289,15 @@ namespace FlatFiles.Test
             var driver = CSharpGeneratorDriver.Create( new MappingAccessorGenerator() );
             var result = driver.RunGenerators( compilation ).GetRunResult();
 
-            Assert.IsEmpty( result.Diagnostics, "The generator reported something it should not have." );
+            Reported = [.. result.Diagnostics];
+            Assert.IsEmpty( Reported.Where( x => x.Severity >= DiagnosticSeverity.Warning ), "The generator warned about something it should not have." );
             return [.. result.GeneratedTrees.Select( x => x.GetText().ToString() )];
         }
+
+        /// <summary>
+        ///     What the last run said, for the tests that are about what it says rather than what it writes.
+        /// </summary>
+        private static List<Diagnostic> Reported { get; set; } = [];
 
         private static List<MetadataReference> References()
         {

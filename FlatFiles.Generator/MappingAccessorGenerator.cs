@@ -25,6 +25,20 @@ namespace FlatFiles.Generator
 
         private static readonly string[] MapperTypes = ["DelimitedTypeMapper", "FixedLengthTypeMapper"];
 
+        /// <summary>
+        ///     Said about a member nothing can be written for. Information rather than a warning: a mapping that
+        ///     falls back is not wrong, only slower, and a build that shouted about every one would be a build
+        ///     nobody reads. It is said at all because a member quietly reverting to the slower path is how an
+        ///     expensive mistake hides, which has happened in this library before.
+        /// </summary>
+        private static readonly DiagnosticDescriptor MemberNotWritten = new(
+            "FF1001",
+            "A member has no generated accessor",
+            "'{0}.{1}' has no generated setter, because {2}; a mapping that uses it builds one at run time instead",
+            "FlatFiles.Mapping",
+            DiagnosticSeverity.Info,
+            true );
+
         /// <inheritdoc />
         public void Initialize( IncrementalGeneratorInitializationContext context )
         {
@@ -102,8 +116,8 @@ namespace FlatFiles.Generator
 
         private static MappedEntity? Describe( INamedTypeSymbol entity )
         {
-            // A type parameter, an array, an anonymous type or one the generated code could not name is not
-            // something to write registrations for.
+            // A type parameter, an anonymous type or one the generated code could not name is not something to
+            // write registrations for.
             if (entity.TypeKind != TypeKind.Class && entity.TypeKind != TypeKind.Struct)
             {
                 return null;
@@ -126,7 +140,7 @@ namespace FlatFiles.Generator
             {
                 hint.Append( char.IsLetterOrDigit( character ) ? character : '_' );
             }
-            return new MappedEntity( qualified, hint.ToString(), HasParameterlessConstructor( entity ) );
+            return new MappedEntity( qualified, hint.ToString(), HasParameterlessConstructor( entity ), Members( entity ) );
         }
 
         private static bool HasParameterlessConstructor( INamedTypeSymbol entity )
@@ -141,20 +155,164 @@ namespace FlatFiles.Generator
             return false;
         }
 
+        /// <summary>
+        ///     Every property of the entity, and for each either what to write or why nothing can be.
+        /// </summary>
+        private static ImmutableArray<MappedMember> Members( INamedTypeSymbol entity )
+        {
+            var members = ImmutableArray.CreateBuilder<MappedMember>();
+            var seen = new HashSet<string>();
+            for (var type = entity; type is not null; type = type.BaseType)
+            {
+                foreach (var symbol in type.GetMembers())
+                {
+                    if (symbol is not IPropertySymbol property || property.IsStatic || property.IsIndexer)
+                    {
+                        continue;
+                    }
+                    if (property.DeclaredAccessibility != Accessibility.Public)
+                    {
+                        continue;
+                    }
+                    // A property hiding one of the same name further up wins, a mapping having named the one the
+                    // entity itself declares.
+                    if (!seen.Add( property.Name ))
+                    {
+                        continue;
+                    }
+                    members.Add( Member( property ) );
+                }
+            }
+            return members.ToImmutable();
+        }
+
+        private static MappedMember Member( IPropertySymbol property )
+        {
+            var where = Position( property );
+            if (property.SetMethod is not { } setter)
+            {
+                return MappedMember.Refused( property.Name, "it has no setter", where );
+            }
+            if (setter.DeclaredAccessibility != Accessibility.Public)
+            {
+                return MappedMember.Refused( property.Name, "its setter is not public", where );
+            }
+            if (setter.IsInitOnly)
+            {
+                return MappedMember.Refused( property.Name, "its setter is init-only, and can only be used while the entity is being built", where );
+            }
+
+            var underlying = Underlying( property.Type );
+            var parsed = underlying ?? property.Type;
+            if (!CanBeParsedTo( parsed ))
+            {
+                return MappedMember.Refused( property.Name, $"no column parses to {parsed.ToDisplayString()}", where );
+            }
+            return MappedMember.Writable( property.Name, parsed.ToDisplayString( SymbolDisplayFormat.FullyQualifiedFormat ), underlying is not null );
+        }
+
+        /// <summary>
+        ///     The type inside a <c>Nullable&lt;T&gt;</c>, or null where the type is not one.
+        /// </summary>
+        private static ITypeSymbol? Underlying( ITypeSymbol type )
+        {
+            if (type is INamedTypeSymbol named && named.IsGenericType && named.ConstructedFrom?.SpecialType == SpecialType.System_Nullable_T)
+            {
+                return named.TypeArguments[0];
+            }
+            return null;
+        }
+
+        /// <summary>
+        ///     Whether the library has a column that reads a value of this type. A member of any other type is
+        ///     left alone, since a registration nothing matches would be written and never used.
+        /// </summary>
+        private static bool CanBeParsedTo( ITypeSymbol type )
+        {
+            if (type.TypeKind == TypeKind.Enum)
+            {
+                return true;
+            }
+            switch (type.SpecialType)
+            {
+                case SpecialType.System_Boolean:
+                case SpecialType.System_Byte:
+                case SpecialType.System_SByte:
+                case SpecialType.System_Char:
+                case SpecialType.System_Int16:
+                case SpecialType.System_UInt16:
+                case SpecialType.System_Int32:
+                case SpecialType.System_UInt32:
+                case SpecialType.System_Int64:
+                case SpecialType.System_UInt64:
+                case SpecialType.System_Single:
+                case SpecialType.System_Double:
+                case SpecialType.System_Decimal:
+                case SpecialType.System_String:
+                case SpecialType.System_DateTime:
+                    return true;
+            }
+            if (type is IArrayTypeSymbol array)
+            {
+                return array.Rank == 1
+                    && ( array.ElementType.SpecialType == SpecialType.System_Byte || array.ElementType.SpecialType == SpecialType.System_Char );
+            }
+            return type.ToDisplayString() is "System.Guid" or "System.TimeSpan" or "System.DateTimeOffset" or "System.DateOnly" or "System.TimeOnly";
+        }
+
+        private static SourcePosition Position( ISymbol symbol )
+        {
+            var location = symbol.Locations.FirstOrDefault( static x => x.IsInSource );
+            if (location is null)
+            {
+                return default;
+            }
+            var span = location.GetLineSpan();
+            return new SourcePosition( location.SourceTree?.FilePath ?? string.Empty,
+                location.SourceSpan.Start, location.SourceSpan.Length,
+                span.StartLinePosition.Line, span.StartLinePosition.Character,
+                span.EndLinePosition.Line, span.EndLinePosition.Character );
+        }
+
         private static void Emit( SourceProductionContext output, ImmutableArray<MappedEntity> found )
         {
             var written = new HashSet<string>();
             foreach (var entity in found)
             {
-                if (!entity.CanBeConstructed || !written.Add( entity.QualifiedName ))
+                if (!written.Add( entity.QualifiedName ))
                 {
                     continue;
                 }
-                output.AddSource( $"{entity.HintName}.Accessors.g.cs", SourceText.From( Registration( entity ), Encoding.UTF8 ) );
+                foreach (var member in entity.Members)
+                {
+                    if (member.Refusal is not null)
+                    {
+                        output.ReportDiagnostic( Diagnostic.Create( MemberNotWritten, Where( member.Position ), entity.QualifiedName, member.Name, member.Refusal ) );
+                    }
+                }
+                var writable = entity.Members.Where( static x => x.Refusal is null ).ToImmutableArray();
+                if (!entity.CanBeConstructed && writable.Length == 0)
+                {
+                    continue;
+                }
+                output.AddSource( $"{entity.HintName}.Accessors.g.cs", SourceText.From( Registrations( entity, writable ), Encoding.UTF8 ) );
             }
         }
 
-        private static string Registration( MappedEntity entity )
+        private static Location? Where( SourcePosition position )
+        {
+            if (string.IsNullOrEmpty( position.FilePath ))
+            {
+                return null;
+            }
+            return Location.Create( position.FilePath!,
+                new TextSpan( position.Start, position.Length ),
+                new LinePositionSpan(
+                    new LinePosition( position.StartLine, position.StartCharacter ),
+                    new LinePosition( position.EndLine, position.EndCharacter ) ) );
+        }
+
+        private static string Registrations( MappedEntity entity, ImmutableArray<MappedMember> writable )
         {
             var builder = new StringBuilder();
             builder.AppendLine( "// <auto-generated/>" );
@@ -168,7 +326,15 @@ namespace FlatFiles.Generator
             builder.AppendLine( "        [global::System.Runtime.CompilerServices.ModuleInitializer]" );
             builder.AppendLine( "        internal static void Register()" );
             builder.AppendLine( "        {" );
-            builder.AppendLine( $"            global::FlatFiles.CodeGeneration.MappingAccessors.AddFactory( static () => new {entity.QualifiedName}() );" );
+            if (entity.CanBeConstructed)
+            {
+                builder.AppendLine( $"            global::FlatFiles.CodeGeneration.MappingAccessors.AddFactory( static () => new {entity.QualifiedName}() );" );
+            }
+            foreach (var member in writable)
+            {
+                var method = member.IsNullable ? "AddNullableSetter" : "AddSetter";
+                builder.AppendLine( $"            global::FlatFiles.CodeGeneration.MappingAccessors.{method}<{entity.QualifiedName}, {member.ValueType}>( \"{member.Name}\", static ( entity, value ) => entity.{member.Name} = value );" );
+            }
             builder.AppendLine( "        }" );
             builder.AppendLine( "    }" );
             builder.AppendLine( "}" );
