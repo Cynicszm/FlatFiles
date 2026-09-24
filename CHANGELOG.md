@@ -79,17 +79,14 @@ The baseline moves with this release. The `parse`, `typed` and `values` figures 
 | S1/S1 | 379 | 37,031 | `parse` | 1.37 s | 1.32 s - 1.39 s | 26.8 | 5,685 | 13.5 MB | 49.5 MB |
 | S1/S1 | 379 | 37,031 | `typed` | 1.61 s | 1.58 s - 1.67 s | 22.8 | 5,629 | 13.6 MB | 51.1 MB |
 | S1/S1 | 379 | 37,031 | `values` | 1.59 s | 1.55 s - 1.63 s | 23.1 | 8,685 | 13.5 MB | 51.1 MB |
-| S1/S1 | 379 | 37,031 | `mapper` | 1.17 s | 1.12 s - 1.20 s | 31.4 | 221 | 9.0 MB | 47.6 MB |
 | | | | | | | | | | |
 | S1/S2 | 58 | 344,352 | `parse` | 1.53 s | 1.45 s - 1.57 s | 66.5 | 1,414 | 13.4 MB | 49.2 MB |
 | S1/S2 | 58 | 344,352 | `typed` | 1.79 s | 1.74 s - 1.84 s | 56.8 | 1,338 | 13.4 MB | 50.9 MB |
 | S1/S2 | 58 | 344,352 | `values` | 1.79 s | 1.76 s - 1.82 s | 56.7 | 1,826 | 13.4 MB | 51.1 MB |
-| S1/S2 | 58 | 344,352 | `mapper` | 1.33 s | 1.29 s - 1.37 s | 76.1 | 196 | 13.5 MB | 52.7 MB |
 | | | | | | | | | | |
 | S1/S3 | 196 | 39,337 | `parse` | 1.24 s | 1.16 s - 1.27 s | 36.1 | 3,528 | 13.5 MB | 48.3 MB |
 | S1/S3 | 196 | 39,337 | `typed` | 1.56 s | 1.50 s - 1.68 s | 28.6 | 2,988 | 13.5 MB | 51.7 MB |
 | S1/S3 | 196 | 39,337 | `values` | 1.49 s | 1.44 s - 1.55 s | 30.0 | 4,580 | 13.5 MB | 51.9 MB |
-| S1/S3 | 196 | 39,337 | `mapper` | 1.09 s | 1.08 s - 1.10 s | 41.1 | 200 | 8.7 MB | 47.4 MB |
 
 **Fixed-length**
 
@@ -98,16 +95,29 @@ The baseline moves with this release. The `parse`, `typed` and `values` figures 
 | S2/S1 | 172 | 22,481 | `parse` | 494 ms | 453 ms - 598 ms | 32.6 | 3,759 | 13.8 MB | 48.0 MB |
 | S2/S1 | 172 | 22,481 | `typed` | 601 ms | 552 ms - 697 ms | 26.8 | 3,598 | 13.7 MB | 50.8 MB |
 | S2/S1 | 172 | 22,481 | `values` | 582 ms | 567 ms - 597 ms | 27.7 | 4,305 | 13.7 MB | 50.9 MB |
-| S2/S1 | 172 | 22,481 | `mapper` | 468 ms | 455 ms - 494 ms | 34.4 | 1,908 | 14.0 MB | 54.3 MB |
 | | | | | | | | | | |
 | S2/S2 | 235 | 1,790 | `parse` | 127 ms | 113 ms - 170 ms | 47.0 | 12,090 | 13.0 MB | 45.5 MB |
 | S2/S2 | 235 | 1,790 | `typed` | 145 ms | 136 ms - 162 ms | 41.2 | 11,269 | 12.8 MB | 47.6 MB |
 | S2/S2 | 235 | 1,790 | `values` | 150 ms | 136 ms - 175 ms | 39.9 | 13,169 | 13.0 MB | 47.6 MB |
-| S2/S2 | 235 | 1,790 | `mapper` | 150 ms | 144 ms - 152 ms | 39.9 | 8,172 | 12.5 MB | 50.1 MB |
 | | | | | | | | | | |
 | S2/S3 | 34 | 18,047 | `parse` | 173 ms | 157 ms - 184 ms | 25.1 | 1,882 | 13.0 MB | 46.4 MB |
 | S2/S3 | 34 | 18,047 | `typed` | 303 ms | 260 ms - 356 ms | 14.3 | 1,648 | 13.2 MB | 48.4 MB |
 | S2/S3 | 34 | 18,047 | `values` | 249 ms | 230 ms - 264 ms | 17.4 | 1,916 | 12.9 MB | 48.5 MB |
+
+**Delimited, through a type mapper**
+
+| Sample | Columns | Records | Scenario | Mean Total Time | Range | MB/s | Bytes/record | Peak heap | Peak working set |
+| --- | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| S1/S1 | 379 | 37,031 | `mapper` | 1.17 s | 1.12 s - 1.20 s | 31.4 | 221 | 9.0 MB | 47.6 MB |
+| S1/S2 | 58 | 344,352 | `mapper` | 1.33 s | 1.29 s - 1.37 s | 76.1 | 196 | 13.5 MB | 52.7 MB |
+| S1/S3 | 196 | 39,337 | `mapper` | 1.09 s | 1.08 s - 1.10 s | 41.1 | 200 | 8.7 MB | 47.4 MB |
+
+**Fixed-length, through a type mapper**
+
+| Sample | Columns | Records | Scenario | Mean Total Time | Range | MB/s | Bytes/record | Peak heap | Peak working set |
+| --- | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| S2/S1 | 172 | 22,481 | `mapper` | 468 ms | 455 ms - 494 ms | 34.4 | 1,908 | 14.0 MB | 54.3 MB |
+| S2/S2 | 235 | 1,790 | `mapper` | 150 ms | 144 ms - 152 ms | 39.9 | 8,172 | 12.5 MB | 50.1 MB |
 | S2/S3 | 34 | 18,047 | `mapper` | 199 ms | 193 ms - 210 ms | 21.7 | 829 | 13.0 MB | 50.2 MB |
 
 Each row is one sample loaded 5 times, each in a process of its own that starts, reads the file once and
@@ -118,10 +128,11 @@ the file being opened. The first three scenarios are cumulative:
 own type, and `values` is `typed` with `GetValues` called on every record. The difference between two
 of them is the cost of the step between.
 
-`mapper` is not a fourth step but a different path: the file read onto entities through a type mapper,
-which is the only scenario that builds an entity or uses the setters a mapper makes per column. It maps
-the first column of each kind the profile knows about and ignores the rest, which costs the reader the
-column but not the parse, so its figures sit beside the others rather than being compared with them.
+`mapper` has tables of its own because it is not a fourth step but a different path: the file read onto
+entities through a type mapper, which is the only scenario that builds an entity or uses the setters a
+mapper makes per column. It maps the first column of each kind the profile knows about and ignores the
+rest, which costs the reader the column but not the parse, so its figures are far below the others and
+mean something different. Read each set against itself and against the same set in an earlier release.
 
 | Column | What it measures |
 | --- | --- |

@@ -150,11 +150,13 @@ like any other. A baseline that moves without an entry beside it is the thing th
 The samples themselves are gated the same way and for the same reason. Until a new baseline is taken,
 a regenerated sample fails the check rather than quietly shifting every figure under it.
 
-A release that takes a new baseline carries the whole table in its changelog entry - six samples, three
+A release that takes a new baseline carries the whole table in its changelog entry - six samples, four
 scenarios apiece - so what a version cost is recorded where it shipped rather than only in a baseline
-the next release overwrites. `baseline` prints it: both tables and the notes saying what each column
+the next release overwrites. `baseline` prints it: four tables and the notes saying what each column
 measures, from the very runs it took the baseline from, so the entry and the gate hold the same
-figures. `run --markdown` prints the same block from fresh runs, which is useful for looking but is
+figures. Two tables cover the scenarios that read through a schema, one per format, and two more cover
+`mapper`, because it is a different path and a row of it among the others invites a comparison that
+means nothing. `run --markdown` prints the same block from fresh runs, which is useful for looking but is
 not what the baseline recorded.
 
 A release that leaves the baseline alone says the figures are unchanged and names the release that
