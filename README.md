@@ -34,7 +34,7 @@ If you are working with data classes, defining schemas is even easier. You can u
 * [Ignored Fields](#ignored-fields)
 * [Metadata](#metadata)
     * [Writing metadata](#writing-metadata)
-    * [Create your own metadata](#creating-your-own-metadata-columns)
+    * [Creating your own metadata columns](#creating-your-own-metadata-columns)
 * [Skipping Records](#skipping-records)
 * [Error Handling](#error-handling)
 * [Files Containing Multiple Schemas](#files-containing-multiple-schemas)
@@ -628,7 +628,11 @@ mapper.OptimiseMapping(false);  // Use normal reflection to get and set properti
 ```
 
 ## Non-Public Classes and Members
-As of FlatFiles 3.0, you can no longer map to non-public classes and members (aka., `internal`, `protected` or `private`) without taking additional steps. The simplest solution is to make your classes and members `public`. Alternatively, you can [disable optimisations](#disabling-optimisation) which will cause FlatFiles to use normal reflection, which should be able to access anything, at the cost of some runtime overhead.
+Generated code lives in an assembly of its own, so it cannot see a class the rest of the world cannot see. As of FlatFiles 8.2.0 that is handled for you: mapping onto a type out of its reach uses reflection instead, which is slower per value and works, so nothing is needed to map onto an `internal` class. Before 8.2.0 it emitted a factory that could not reach the type, and the first record threw `MethodAccessException`.
+
+Non-public **members** are a separate matter and still need one of the steps below, as does an `internal` type you would rather keep on the faster path.
+
+The simplest solution is to make your classes and members `public`. Alternatively, you can [disable optimisations](#disabling-optimisation) which will cause FlatFiles to use normal reflection, which should be able to access anything, at the cost of some runtime overhead.
 
 Another option is to grant FlatFiles access to your `internal` classes and members by adding the following line to you `Assembly.cs` file:
 
@@ -636,7 +640,7 @@ Another option is to grant FlatFiles access to your `internal` classes and membe
 [assembly: InternalsVisibleTo("FlatFiles.DynamicAssembly,PublicKey=00240000048000009400000006020000002400005253413100040000010001009b9e44f637b293021ec4d8625071e5fe1682eeb167c233b46314cca79bf2769606285d5d1225cba8ce1e75be9e8ab7251d17eaf2c3b00fde5eac50a0f7dc7fec2f70279ff71c72341ad2738661babfdc6792479f14fd64d841285644d5c09c2902e9467f574e0d369161caee632087c5d819c3c36f76622306b09a4f868230c1")]
 ```
 
-Notice that this only grants access to `internal` types/members. You will still not be able to access `private` members.
+Notice that this only grants access to `internal` types/members. You will still not be able to access `private` members. An assembly that grants it keeps `internal` types on the generated path rather than the reflection fallback.
 
 As a final option, you can use the `CustomMapping` method, passing delegates to read/write your members. Since the delegates are part of your project, they can access non-public members without trouble. There is almost no runtime overhead using `CustomMapping` instead of `Property`.
 

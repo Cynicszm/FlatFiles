@@ -1,5 +1,50 @@
-﻿## 8.2.0 (unreleased)
-**Not released.** Being built. What is written up here has landed on master; what is under **Next** has not. Nothing in this release breaks anything.
+﻿## 8.3.0 (planned)
+**Not released, and not started.** What is written here is the order the remaining work will be done in, kept with the releases so that the reasoning sits beside what it produced. Nothing below breaks anything, so none of it is waiting for a major version.
+
+### Next
+
+In the order they will be built. None of these breaks anything, so none of them is waiting for a major version.
+
+- **A source generator for mappings.** Would produce at compile time what the emit code generator makes at run time - the entity factory, the deserialiser, the serialiser and the per-column setters - so that a mapping costs nothing to prepare, needs no dynamic code, and is something a trimmer can follow.
+
+  The first version of this entry justified it by the start-up cost of emitting a deserialiser and by the reflection fallback's per-value penalty. Since 8.1.0 there is a sharper reason, and it is the one to build against. The path that takes a record onto an entity without boxing its values is itself gated on dynamic code: building a setter closes `ColumnSetter<TEntity, T>` over the column's type, and a runtime without dynamic code cannot close a generic over a value type it was not built with. So where there is no dynamic code the library falls back to the reflection code generator and boxes every value, and what 8.1.0 bought does not reach Native AOT at all.
+
+  Measured on 10,000 records of 13 columns, with the dynamic-code switch off and then on: a delimited read through a type mapper allocates 619 bytes a record without dynamic code and 362 with it, and a fixed-length read 1,059 and 730. A generator closes those generics where the compiler can see them, which is what would make the left-hand figures into the right-hand ones on a runtime that has no JIT at all. That is the change to measure the work by.
+
+  **8.1.0 was cut before this one starts**, and for a reason worth keeping written down: it was the first release the integration check ever gated, and it was one where nothing moved. A failure there would have meant the machinery was wrong, which is a plain thing to diagnose. Had the check first run on a release that moved every figure, a failure would have said nothing - the baseline, the change or the gate itself, and no way to tell which. The same holds whenever a release would change what every read costs.
+
+  What that check will not do is see this work land, and adding the mapped scenario to it has not changed that. It reads onto entities now, which is what caught the factory built per record, but it reads on this runtime - where dynamic code is available and the emitted path is the one taken. What a generator changes is what happens where that path is not available, which is a runtime the check does not run on. The generator still takes the new baseline, since it is a release that changes what a read costs and the baseline has to move with it, but the figures that show whether it worked are the ones above, taken with the dynamic-code switch off, and its entry has to carry them beside the table.
+
+  **What has to be decided first is where the generator gets its input.** Every mapping today is written in fluent calls made at run time, so nothing at compile time says which types to generate for. Something has to: an attribute on the entity, a partial mapper class the generator fills in, or a registry it emits that a mapper looks itself up in. That is the same question as the next item on this list, which is the natural thing for a generator to read, so the two want deciding together, with what the attribute work settles becoming what the generator reads.
+- **Attribute-based mapping.** The library has no attribute types at all. Every mapping is written out in fluent calls, which is the right default for a file whose shape is not the class's business, and the wrong one for the common case where a class exists to mirror a file.
+- **Comment and blank-line skipping.** Both option classes can express it today only through a `RecordRead` handler on every reader. A comment prefix and a skip-blank-lines flag on the options would cover most of what those handlers are written for. Small, and the least glamorous thing on this list.
+- **UTF-8 `Stream` input.** Reading from a `Stream` without wrapping it in a `StreamReader`, with the encoding and any byte order mark handled by the reader. This was ranked first, and first for the wrong reason: the entry claimed it was the one change that would take allocation below CsvHelper. Measured, decoding 1.36 MB of UTF-8 costs 0.2 ms and about one byte a record, because `StreamReader` reuses its buffers, and reading the same file through a `StreamReader` rather than a `StringReader` allocates exactly the same 741 bytes a record. It is worth having as a convenience, and for files whose encoding has to be sniffed rather than assumed, but not as a performance change.
+- **Header-driven column matching against a supplied schema, and what to do with a record that does not fit it.** The header row is read and thrown away: never checked against the schema, never used to order it. A file whose columns have been reordered since the schema was written is read straight into the wrong properties, silently, because position is all the reader has. Matching the header by name, and saying what happens when it disagrees - reorder, refuse, or ignore - is the largest gap left against CsvHelper, which maps by name and is the one competitor this repository benchmarks against. Reading by position stays the default, since a file with no header has nothing else to go on.
+
+  The same feature settles what a record of the wrong length means, because today the two ends disagree and neither is configurable. A delimited record with **too few** fields is refused; one with **too many** is accepted, the first however many the schema declares kept and the rest discarded. So a record carrying a separator inside an unquoted field is read with every later value one position to the left, and nothing says so - whether anything notices depends on whether a shifted value reaches a column that will not parse it, which is a matter of where the separator fell rather than of the record being wrong. The fixed-length reader already has `IsRaggedRight` and `IsLongRecordRejected` for the same question and answers it differently again.
+
+  What is wanted is one way of saying it on both readers: refuse a short record or pad it, refuse a long one or discard the surplus, with the current behaviour as the default so nothing changes for anyone who does not ask. Whatever is chosen has to be visible - a record silently read one column out of step is the worst of the available outcomes, and is what happens now.
+
+- **A delimited selector should be able to match on the record's text.** `DelimitedTypeMapperSelector` and `DelimitedSchemaSelector` are given each record's values to choose a schema by, so the reader has to parse a record into an array of values before it can decide what the record is - which is the one thing that stops a selected delimited mapping being read straight onto an entity, as a fixed-length one now is. A predicate over the record's text, beside the one over its values, would leave the choice to the caller: match on text and keep the faster path, or match on values and pay for them.
+
+**Considered and already covered.** Seven more ideas came out of the same review and turned out to need no work. They are recorded so that nobody spends an afternoon rediscovering it.
+
+Already supported when the review looked:
+
+- multi-character separators - `DelimitedOptions.Separator` is a string, not a character;
+- quoting behaviour - `QuoteBehaviour` quotes only what needs it, or everything, or nothing;
+- whitespace preservation - `DelimitedOptions.PreserveWhiteSpace`, alongside `Trim` on the string and character array columns;
+- files holding more than one schema - the schema selectors and injectors, on both readers and writers;
+- `IDataReader` - `FlatFileDataReader`, with `DataTable` support beside it.
+
+Shipped since the review, by the releases named:
+
+- cancellation tokens on every asynchronous read and write - 7.2.0;
+- ragged-right fixed-length files - 7.3.0.
+
+Nothing that review raised was declined outright.
+## 8.2.0 (2026-09-24)
+**Summary** - A fix for what 8.1.0 got wrong, and the two things looking for it turned up. An optimised typed read - the default - built a new entity factory for every record, which meant emitting a type per record: a delimited read through a type mapper took 7.6 seconds and allocated 4,457 bytes a record, against 62 ms and 877 at 8.0.0, and now takes 44 ms and allocates 362. Beside it, a fixed-length file of several record layouts is read onto entities without boxing its values, and a type the generated code cannot see is mapped rather than refused. The checks that let the first one through are closed: the tests now count what a read prepares, and the integration files are read onto entities as well as into values. Nothing here breaks anything.
 
 **A typed read built a new entity factory for every record.** 8.1.0 gave the reader a path that takes a record straight onto an entity without boxing its values, and that path asks the mapper for a fresh entity per record. The mapper answered by asking the code generator for a factory each time, and the emit code generator answers a request for a factory by defining a type in its dynamic module. So an optimised typed read - the default - emitted one type per record, and the release that was meant to allocate less allocated five times more than the release before it. The factory is now built once per mapper, as the deserialiser and the column setters already were.
 
@@ -94,48 +139,6 @@ the range shows what is left. `FlatFiles.Benchmark` is the project that measures
 statistics rather than a mean; these figures are the other question - what one job costs end to end - and
 show the shape of the work rather than a number to compare release to release, which is why neither Mean
 Total Time nor MB/s is gated.
-### Next
-
-In the order they will be built. None of these breaks anything, so none of them is waiting for a major version.
-
-- **A source generator for mappings.** Would produce at compile time what the emit code generator makes at run time - the entity factory, the deserialiser, the serialiser and the per-column setters - so that a mapping costs nothing to prepare, needs no dynamic code, and is something a trimmer can follow.
-
-  The first version of this entry justified it by the start-up cost of emitting a deserialiser and by the reflection fallback's per-value penalty. Since 8.1.0 there is a sharper reason, and it is the one to build against. The path that takes a record onto an entity without boxing its values is itself gated on dynamic code: building a setter closes `ColumnSetter<TEntity, T>` over the column's type, and a runtime without dynamic code cannot close a generic over a value type it was not built with. So where there is no dynamic code the library falls back to the reflection code generator and boxes every value, and what 8.1.0 bought does not reach Native AOT at all.
-
-  Measured on 10,000 records of 13 columns, with the dynamic-code switch off and then on: a delimited read through a type mapper allocates 619 bytes a record without dynamic code and 362 with it, and a fixed-length read 1,059 and 730. A generator closes those generics where the compiler can see them, which is what would make the left-hand figures into the right-hand ones on a runtime that has no JIT at all. That is the change to measure the work by.
-
-  **8.1.0 was cut before this one starts**, and for a reason worth keeping written down: it was the first release the integration check ever gated, and it was one where nothing moved. A failure there would have meant the machinery was wrong, which is a plain thing to diagnose. Had the check first run on a release that moved every figure, a failure would have said nothing - the baseline, the change or the gate itself, and no way to tell which. The same holds whenever a release would change what every read costs.
-
-  What that check will not do is see this work land, and adding the mapped scenario to it has not changed that. It reads onto entities now, which is what caught the factory built per record, but it reads on this runtime - where dynamic code is available and the emitted path is the one taken. What a generator changes is what happens where that path is not available, which is a runtime the check does not run on. The generator still takes the new baseline, since it is a release that changes what a read costs and the baseline has to move with it, but the figures that show whether it worked are the ones above, taken with the dynamic-code switch off, and its entry has to carry them beside the table.
-
-  **What has to be decided first is where the generator gets its input.** Every mapping today is written in fluent calls made at run time, so nothing at compile time says which types to generate for. Something has to: an attribute on the entity, a partial mapper class the generator fills in, or a registry it emits that a mapper looks itself up in. That is the same question as the next item on this list, which is the natural thing for a generator to read, so the two want deciding together, with what the attribute work settles becoming what the generator reads.
-- **Attribute-based mapping.** The library has no attribute types at all. Every mapping is written out in fluent calls, which is the right default for a file whose shape is not the class's business, and the wrong one for the common case where a class exists to mirror a file.
-- **Comment and blank-line skipping.** Both option classes can express it today only through a `RecordRead` handler on every reader. A comment prefix and a skip-blank-lines flag on the options would cover most of what those handlers are written for. Small, and the least glamorous thing on this list.
-- **UTF-8 `Stream` input.** Reading from a `Stream` without wrapping it in a `StreamReader`, with the encoding and any byte order mark handled by the reader. This was ranked first, and first for the wrong reason: the entry claimed it was the one change that would take allocation below CsvHelper. Measured, decoding 1.36 MB of UTF-8 costs 0.2 ms and about one byte a record, because `StreamReader` reuses its buffers, and reading the same file through a `StreamReader` rather than a `StringReader` allocates exactly the same 741 bytes a record. It is worth having as a convenience, and for files whose encoding has to be sniffed rather than assumed, but not as a performance change.
-- **Header-driven column matching against a supplied schema, and what to do with a record that does not fit it.** The header row is read and thrown away: never checked against the schema, never used to order it. A file whose columns have been reordered since the schema was written is read straight into the wrong properties, silently, because position is all the reader has. Matching the header by name, and saying what happens when it disagrees - reorder, refuse, or ignore - is the largest gap left against CsvHelper, which maps by name and is the one competitor this repository benchmarks against. Reading by position stays the default, since a file with no header has nothing else to go on.
-
-  The same feature settles what a record of the wrong length means, because today the two ends disagree and neither is configurable. A delimited record with **too few** fields is refused; one with **too many** is accepted, the first however many the schema declares kept and the rest discarded. So a record carrying a separator inside an unquoted field is read with every later value one position to the left, and nothing says so - whether anything notices depends on whether a shifted value reaches a column that will not parse it, which is a matter of where the separator fell rather than of the record being wrong. The fixed-length reader already has `IsRaggedRight` and `IsLongRecordRejected` for the same question and answers it differently again.
-
-  What is wanted is one way of saying it on both readers: refuse a short record or pad it, refuse a long one or discard the surplus, with the current behaviour as the default so nothing changes for anyone who does not ask. Whatever is chosen has to be visible - a record silently read one column out of step is the worst of the available outcomes, and is what happens now.
-
-- **A delimited selector should be able to match on the record's text.** `DelimitedTypeMapperSelector` and `DelimitedSchemaSelector` are given each record's values to choose a schema by, so the reader has to parse a record into an array of values before it can decide what the record is - which is the one thing that stops a selected delimited mapping being read straight onto an entity, as a fixed-length one now is. A predicate over the record's text, beside the one over its values, would leave the choice to the caller: match on text and keep the faster path, or match on values and pay for them.
-
-**Considered and already covered.** Seven more ideas came out of the same review and turned out to need no work. They are recorded so that nobody spends an afternoon rediscovering it.
-
-Already supported when the review looked:
-
-- multi-character separators - `DelimitedOptions.Separator` is a string, not a character;
-- quoting behaviour - `QuoteBehaviour` quotes only what needs it, or everything, or nothing;
-- whitespace preservation - `DelimitedOptions.PreserveWhiteSpace`, alongside `Trim` on the string and character array columns;
-- files holding more than one schema - the schema selectors and injectors, on both readers and writers;
-- `IDataReader` - `FlatFileDataReader`, with `DataTable` support beside it.
-
-Shipped since the review, by the releases named:
-
-- cancellation tokens on every asynchronous read and write - 7.2.0;
-- ragged-right fixed-length files - 7.3.0.
-
-Nothing that review raised was declined outright.
 ## 8.1.0 (2026-09-23)
 **Summary** - Three changes to what a read costs and one to what it can map. A delimited read through a type mapper allocated 879 bytes a record at 8.0.0 and now allocates 388; fixed-length, 1,295 and now 732. `Define<T>()` has lost its `new()` constraint, so a positional record, a type whose properties are get-only and a type that validates in its constructor all map without being given a second, looser shape to be deserialised into. A release is now checked against the six integration test files before it goes out. Nothing here breaks anything.
 
