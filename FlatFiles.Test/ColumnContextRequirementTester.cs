@@ -39,10 +39,10 @@ namespace FlatFiles.Test
         [TestMethod]
         public void TestRead_Hook_ReceivesAContextWithTheColumnsIndices()
         {
-            IColumnContext seen = null;
+            IColumnContext seen = null!;
             var schema = new DelimitedSchema();
             schema.AddColumn( new StringColumn( "a" ) );
-            schema.AddColumn( new Int32Column( "b" ) { OnParsed = ( ctx, v ) => { seen = ctx; return v; } } );
+            schema.AddColumn( new Int32Column( "b" ) { OnParsed = ( ctx, v ) => { seen = ctx!; return v; } } );
             var reader = new DelimitedReader( new StringReader( "x,5\r\n" ), schema );
 
             Assert.IsTrue( reader.Read() );
@@ -74,7 +74,7 @@ namespace FlatFiles.Test
             schema.AddColumn( new StringColumn( "a" ) );
             schema.AddColumn( new Int32Column( "b" ) );
             var reader = new DelimitedReader( new StringReader( "x,notanumber\r\n" ), schema );
-            ColumnProcessingException captured = null;
+            ColumnProcessingException captured = null!;
             reader.ColumnError += ( _, e ) =>
             {
                 captured = (ColumnProcessingException) e.Exception;
@@ -88,7 +88,7 @@ namespace FlatFiles.Test
             Assert.AreEqual( -1, values[1] );
             Assert.IsNotNull( captured );
             Assert.AreEqual( "notanumber", captured.ColumnValue );
-            Assert.AreEqual( 1, captured.ColumnContext.PhysicalIndex );
+            Assert.AreEqual( 1, captured!.ColumnContext!.PhysicalIndex );
             Assert.AreEqual( 1, captured.ColumnContext.LogicalIndex );
             Assert.AreEqual( "b", captured.ColumnContext.ColumnDefinition.ColumnName );
             Assert.AreEqual( 1, captured.ColumnContext.RecordContext.PhysicalRecordNumber );
@@ -103,7 +103,7 @@ namespace FlatFiles.Test
 
             var exception = Assert.ThrowsExactly<RecordProcessingException>( () => reader.Read() );
 
-            var columnException = (ColumnProcessingException) exception.InnerException;
+            var columnException = (ColumnProcessingException) exception.InnerException!;
             Assert.IsNotNull( columnException?.ColumnContext );
             Assert.AreEqual( 0, columnException.ColumnContext.PhysicalIndex );
         }
@@ -143,7 +143,7 @@ namespace FlatFiles.Test
             schema.AddColumn( new Int32Column( "b" ) );
             var stringWriter = new StringWriter();
             var writer = new DelimitedWriter( stringWriter, schema, new DelimitedOptions { RecordSeparator = "\n" } );
-            ColumnProcessingException captured = null;
+            ColumnProcessingException captured = null!;
             writer.ColumnError += ( _, e ) =>
             {
                 captured = (ColumnProcessingException) e.Exception;
@@ -155,16 +155,16 @@ namespace FlatFiles.Test
 
             Assert.AreEqual( "x,?\n", stringWriter.ToString() );
             Assert.IsNotNull( captured );
-            Assert.AreEqual( 1, captured.ColumnContext.PhysicalIndex );
+            Assert.AreEqual( 1, captured!.ColumnContext!.PhysicalIndex );
             Assert.AreEqual( "b", captured.ColumnContext.ColumnDefinition.ColumnName );
         }
 
         [TestMethod]
         public void TestWrite_Hook_ReceivesAContext()
         {
-            IColumnContext seen = null;
+            IColumnContext seen = null!;
             var schema = new DelimitedSchema();
-            schema.AddColumn( new Int32Column( "a" ) { OnFormatted = ( ctx, v ) => { seen = ctx; return v; } } );
+            schema.AddColumn( new Int32Column( "a" ) { OnFormatted = ( ctx, v ) => { seen = ctx!; return v; } } );
             var stringWriter = new StringWriter();
             var writer = new DelimitedWriter( stringWriter, schema, new DelimitedOptions { RecordSeparator = "\n" } );
 
@@ -180,7 +180,7 @@ namespace FlatFiles.Test
         {
             IColumnContext seen = new ColumnContextStub();
             var schema = new DelimitedSchema();
-            schema.AddColumn( new Int32Column( "a" ) { OnParsed = ( ctx, v ) => { seen = ctx; return v; } } );
+            schema.AddColumn( new Int32Column( "a" ) { OnParsed = ( ctx, v ) => { seen = ctx!; return v; } } );
             var reader = new DelimitedReader( new StringReader( "5\r\n" ), schema, new DelimitedOptions { IsColumnContextDisabled = true } );
 
             Assert.IsTrue( reader.Read() );
@@ -193,15 +193,15 @@ namespace FlatFiles.Test
         /// </summary>
         private sealed class ContextCapturingColumn( string columnName ) : ColumnDefinition<string>( columnName )
         {
-            public IColumnContext Seen { get; private set; }
+            public IColumnContext Seen { get; private set; } = null!;
 
-            protected override string OnParse( IColumnContext context, string value )
+            protected override string OnParse( IColumnContext? context, string value )
             {
-                Seen = context;
+                Seen = context!;
                 return value;
             }
 
-            protected override string OnFormat( IColumnContext context, string value )
+            protected override string OnFormat( IColumnContext? context, string value )
             {
                 return value;
             }
@@ -209,9 +209,9 @@ namespace FlatFiles.Test
 
         private sealed class CountingNullFormatter : INullFormatter
         {
-            public bool IsNullValue( IColumnContext context, string value ) => string.IsNullOrEmpty( value );
+            public bool IsNullValue( IColumnContext? context, string? value ) => string.IsNullOrEmpty( value );
 
-            public string FormatNull( IColumnContext context ) => string.Empty;
+            public string FormatNull( IColumnContext? context ) => string.Empty;
         }
 
         private sealed class ColumnContextStub : IColumnContext

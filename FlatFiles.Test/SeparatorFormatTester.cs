@@ -47,10 +47,10 @@ namespace FlatFiles.Test
             return output.ToString();
         }
 
-        private static List<object[]> Read( string separator, string text )
+        private static List<object?[]> Read( string separator, string text )
         {
             var reader = new DelimitedReader( new StringReader( text ), Schema(), Options( separator ) );
-            List<object[]> records = [];
+            List<object?[]> records = [];
             while (reader.Read())
             {
                 records.Add( reader.GetValues() );
@@ -200,7 +200,7 @@ namespace FlatFiles.Test
         {
             public int Id { get; set; }
 
-            public string Name { get; set; }
+            public string Name { get; set; } = string.Empty;
 
             public decimal? Amount { get; set; }
 

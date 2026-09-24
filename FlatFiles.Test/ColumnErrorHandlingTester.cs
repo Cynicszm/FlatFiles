@@ -19,7 +19,7 @@ namespace FlatFiles.Test
             var csvReader = new DelimitedReader( stringReader, schema );
             csvReader.ColumnError += ( _, e ) =>
             {
-                switch (e.ColumnContext.ColumnDefinition.ColumnName)
+                switch (e.ColumnContext!.ColumnDefinition.ColumnName)
                 {
                     case "Int32":
                         e.Substitution = 1;
@@ -54,7 +54,7 @@ namespace FlatFiles.Test
             var csvReader = new FixedLengthReader( stringReader, schema );
             csvReader.ColumnError += ( _, e ) =>
             {
-                switch (e.ColumnContext.ColumnDefinition.ColumnName)
+                switch (e.ColumnContext!.ColumnDefinition.ColumnName)
                 {
                     case "Int32":
                         e.Substitution = 1;

@@ -14,7 +14,7 @@ namespace FlatFiles.Test
             var outputMapper = DelimitedTypeMapper.Define( () => new Person() );
             outputMapper.Property( x => x.Name );
             outputMapper.CustomMapping( new RecordNumberColumn( "RecordNumber" ) )
-                .WithReader( ( p, v ) => p.RecordNumber = (int) v )
+                .WithReader( ( p, v ) => p.RecordNumber = (int) v! )
                 .WithWriter( p => p.RecordNumber );
             outputMapper.Property( x => x.CreatedOn ).OutputFormat( "MM/dd/yyyy" );
 
@@ -53,7 +53,7 @@ namespace FlatFiles.Test
             var outputMapper = DelimitedTypeMapper.Define( () => new Person() );
             outputMapper.Property( x => x.Name );
             outputMapper.CustomMapping( new RecordNumberColumn( "RecordNumber" ) { IncludeSchema = true } )
-                .WithReader( ( p, v ) => p.RecordNumber = (int) v )
+                .WithReader( ( p, v ) => p.RecordNumber = (int) v! )
                 .WithWriter( p => p.RecordNumber );
             outputMapper.Property( x => x.CreatedOn ).OutputFormat( "MM/dd/yyyy" );
 
@@ -92,7 +92,7 @@ namespace FlatFiles.Test
             var outputMapper = DelimitedTypeMapper.Define( () => new Person() );
             outputMapper.Property( x => x.Name );
             outputMapper.CustomMapping( new RecordNumberColumn( "RecordNumber" ) { IncludeSchema = false } )
-                .WithReader( ( p, v ) => p.RecordNumber = (int) v )
+                .WithReader( ( p, v ) => p.RecordNumber = (int) v! )
                 .WithWriter( p => p.RecordNumber );
             outputMapper.Property( x => x.CreatedOn ).OutputFormat( "MM/dd/yyyy" );
 
@@ -132,7 +132,7 @@ namespace FlatFiles.Test
             outputMapper.Property( x => x.Name );
             outputMapper.Ignored();
             outputMapper.CustomMapping( new RecordNumberColumn( "RecordNumber" ) { IncludeSchema = true } )
-                .WithReader( ( p, v ) => p.RecordNumber = (int) v )
+                .WithReader( ( p, v ) => p.RecordNumber = (int) v! )
                 .WithWriter( p => p.RecordNumber );
             outputMapper.Ignored();
             outputMapper.Property( x => x.CreatedOn ).OutputFormat( "MM/dd/yyyy" );
@@ -211,7 +211,7 @@ namespace FlatFiles.Test
 
         public class Person
         {
-            public string Name { get; set; }
+            public string Name { get; set; } = string.Empty;
 
             public int RecordNumber { get; set; }
 

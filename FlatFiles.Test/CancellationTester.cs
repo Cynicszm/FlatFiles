@@ -253,7 +253,7 @@ namespace FlatFiles.Test
         {
             public int Id { get; set; }
 
-            public string Name { get; set; }
+            public string Name { get; set; } = string.Empty;
         }
         /// <summary>
         ///     An implementation outside the library that supplies only the required members, so the overloads without a
@@ -265,11 +265,11 @@ namespace FlatFiles.Test
 
             public IWriter Writer => throw new NotSupportedException();
 
-            public event EventHandler<ColumnErrorEventArgs> ColumnError { add { } remove { } }
+            public event EventHandler<ColumnErrorEventArgs>? ColumnError { add { } remove { } }
 
-            public event EventHandler<RecordErrorEventArgs> RecordError { add { } remove { } }
+            public event EventHandler<RecordErrorEventArgs>? RecordError { add { } remove { } }
 
-            public ISchema GetSchema() => null;
+            public ISchema GetSchema() => null!;
 
             public void WriteSchema() { }
 

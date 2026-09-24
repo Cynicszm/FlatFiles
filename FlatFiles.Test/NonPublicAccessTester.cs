@@ -148,8 +148,8 @@ namespace FlatFiles.Test
 
         internal class InternalClass
         {
-            internal string Identifier { get; set; }
-            internal string Status { get; set; }
+            internal string Identifier { get; set; } = string.Empty;
+            internal string Status { get; set; } = string.Empty;
             public DateTime? EffectiveDate { get; set; }
             public DateTime? ModificationDate { get; set; }
             internal bool IsInternal = false;

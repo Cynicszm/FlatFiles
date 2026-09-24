@@ -28,7 +28,7 @@ namespace FlatFiles.Test
             Assert.AreEqual( content, output );
         }
 
-        private static object[] ParseValues( string content )
+        private static object?[] ParseValues( string content )
         {
             var stringReader = new StringReader( content );
             var schema = GetSchema();
@@ -39,7 +39,7 @@ namespace FlatFiles.Test
             return values;
         }
 
-        private static string WriteValues( object[] values )
+        private static string WriteValues( object?[] values )
         {
             var schema = GetSchema();
             var stringWriter = new StringWriter();
@@ -92,13 +92,13 @@ namespace FlatFiles.Test
 
         public class Product
         {
-            public string Name { get; set; }
+            public string Name { get; set; } = string.Empty;
 
             public decimal? Cost { get; set; }
 
             public float? Available { get; set; }
 
-            public string Vendor { get; set; }
+            public string Vendor { get; set; } = string.Empty;
         }
     }
 }

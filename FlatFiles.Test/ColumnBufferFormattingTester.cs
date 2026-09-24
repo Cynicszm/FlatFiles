@@ -70,13 +70,13 @@ namespace FlatFiles.Test
         {
             var column = new Int32Column( "c" ) { NullFormatter = NullFormatter.ForValue( "NULL" ) };
 
-            Assert.AreEqual( "NULL", ToBuffer( column, null ) );
+            Assert.AreEqual( "NULL", ToBuffer( column, null! ) );
         }
 
         [TestMethod]
         public void TestFormat_OnFormattingHook_IsAppliedBeforeFormatting()
         {
-            var column = new Int32Column( "c" ) { OnFormatting = ( _, value ) => (int) value * 2 };
+            var column = new Int32Column( "c" ) { OnFormatting = ( _, value ) => (int) value! * 2 };
 
             Assert.AreEqual( "84", ToBuffer( column, 42 ) );
         }
@@ -104,7 +104,7 @@ namespace FlatFiles.Test
         [TestMethod]
         public void TestFormat_BufferOverloadWithoutDestination_Throws()
         {
-            Assert.ThrowsExactly<ArgumentNullException>( () => new Int32Column( "c" ).Format( null, 1, null ) );
+            Assert.ThrowsExactly<ArgumentNullException>( () => new Int32Column( "c" ).Format( null, 1, null! ) );
         }
 
         [TestMethod]
@@ -161,12 +161,12 @@ namespace FlatFiles.Test
         /// </summary>
         private sealed class HexColumn() : ColumnDefinition<int>( "hex" )
         {
-            protected override int OnParse( IColumnContext context, string value )
+            protected override int OnParse( IColumnContext? context, string value )
             {
                 return Convert.ToInt32( value, 16 );
             }
 
-            protected override string OnFormat( IColumnContext context, int value )
+            protected override string OnFormat( IColumnContext? context, int value )
             {
                 return value.ToString( "x", CultureInfo.InvariantCulture );
             }
@@ -177,17 +177,17 @@ namespace FlatFiles.Test
         /// </summary>
         private sealed class FailingColumn() : ColumnDefinition<int>( "fail" )
         {
-            protected override int OnParse( IColumnContext context, string value )
+            protected override int OnParse( IColumnContext? context, string value )
             {
                 return 0;
             }
 
-            protected override string OnFormat( IColumnContext context, int value )
+            protected override string OnFormat( IColumnContext? context, int value )
             {
                 throw new InvalidOperationException( "The value cannot be formatted." );
             }
 
-            protected override void OnFormat( IColumnContext context, int value, IBufferWriter<char> destination )
+            protected override void OnFormat( IColumnContext? context, int value, IBufferWriter<char> destination )
             {
                 destination.Write( "partial".AsSpan() );
                 throw new InvalidOperationException( "The value cannot be formatted." );
@@ -213,22 +213,22 @@ namespace FlatFiles.Test
             public INullFormatter NullFormatter { get; set; } = FlatFiles.NullFormatter.Default;
 
             [Obsolete( "This property has been superseded by the OnParsing delegate." )]
-            public Func<IColumnContext, string, string> OnParsing { get; set; }
+            public Func<IColumnContext?, string, string?>? OnParsing { get; set; } = null!;
 
-            public Func<IColumnContext, object, object> OnParsed { get; set; }
+            public Func<IColumnContext?, object?, object?>? OnParsed { get; set; } = null!;
 
-            public Func<IColumnContext, object, object> OnFormatting { get; set; }
+            public Func<IColumnContext?, object?, object?>? OnFormatting { get; set; } = null!;
 
-            public Func<IColumnContext, string, string> OnFormatted { get; set; }
+            public Func<IColumnContext?, string, string?>? OnFormatted { get; set; } = null!;
 
             public Type ColumnType => typeof( string );
 
-            public object Parse( IColumnContext context, string value )
+            public object Parse( IColumnContext? context, string value )
             {
                 return "constant";
             }
 
-            public string Format( IColumnContext context, object value )
+            public string Format( IColumnContext? context, object? value )
             {
                 return "constant";
             }

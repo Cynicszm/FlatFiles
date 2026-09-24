@@ -57,14 +57,14 @@ namespace FlatFiles.Test
             var mapper = DelimitedTypeMapper.Define( () => new Person() );
             mapper.CustomMapping( new Int32Column( "Id" ) ).WithReader( ( _, person, value ) =>
             {
-                person.Id = (int) value;
+                person.Id = (int) value!;
             } ).WithWriter( ( ctx, person, values ) =>
             {
-                values[ctx.LogicalIndex] = person.Id;
+                values[ctx!.LogicalIndex] = person.Id;
             } );
             mapper.CustomMapping( new StringColumn( "Name" ) ).WithReader( ( person, value ) =>
             {
-                person.Name = (string) value;
+                person.Name = (string) value!;
             } ).WithWriter( p => p.Name );
             mapper.CustomMapping( new DateTimeColumn( "CreatedOn" ) ).WithReader( p => p.CreatedOn ).WithWriter( p => p.CreatedOn );
             mapper.CustomMapping( new DecimalColumn( "Amount" ) ).WithReader( ( _, person, value ) =>
@@ -72,7 +72,7 @@ namespace FlatFiles.Test
                 person.Amount = (decimal?) value;
             } ).WithWriter( ( ctx, person, values ) =>
             {
-                values[ctx.LogicalIndex] = person.Amount;
+                values[ctx!.LogicalIndex] = person.Amount;
             } );
             return mapper;
         }
@@ -89,7 +89,7 @@ namespace FlatFiles.Test
         {
             public int Id { get; set; }
 
-            public string Name { get; set; }
+            public string Name { get; set; } = string.Empty;
 
             public DateTime CreatedOn { get; set; }
 
@@ -205,7 +205,7 @@ namespace FlatFiles.Test
                 }
             } ).WithWriter( ( ctx, c, values ) =>
             {
-                values[ctx.LogicalIndex] = c.Emails.Count > 0 ? c.Emails[0] : null;
+                values[ctx!.LogicalIndex] = c.Emails.Count > 0 ? c.Emails[0] : null;
             } );
             mapper.CustomMapping( new StringColumn( "Email2" ), 15 ).WithReader( ( _, c, email2 ) =>
             {
@@ -215,7 +215,7 @@ namespace FlatFiles.Test
                 }
             } ).WithWriter( ( ctx, c, values ) =>
             {
-                values[ctx.LogicalIndex] = c.Emails.Count > 1 ? c.Emails[1] : null;
+                values[ctx!.LogicalIndex] = c.Emails.Count > 1 ? c.Emails[1] : null;
             } );
             return mapper;
         }
@@ -224,7 +224,7 @@ namespace FlatFiles.Test
         {
             public int Id { get; set; }
 
-            public string Name { get; set; }
+            public string Name { get; set; } = string.Empty;
 
             public List<string> PhoneNumbers { get; set; } = [];
 
@@ -273,22 +273,22 @@ namespace FlatFiles.Test
             } );
             mapper.CustomMapping( new Int32Column( "Id" ) ).WithReader( x => x.Id ).WithWriter( x => x.Id );
             mapper.CustomMapping( new DecimalColumn( "Longitude" ) )
-                .WithReader( ( x, v ) => x.Coordinates.Longitude = (decimal) v )
+                .WithReader( ( x, v ) => x.Coordinates.Longitude = (decimal) v! )
                 .WithWriter( x => x.Coordinates.Longitude );
             mapper.CustomMapping( new DecimalColumn( "Latitude" ) )
                 .WithReader( x => x.Coordinates.Latitude )
                 .WithWriter( x => x.Coordinates.Latitude );
             mapper.CustomMapping( new StringColumn( "Street1" ) )
-                .WithReader( ( x, v ) => x.Address.Street = (string) v )
+                .WithReader( ( x, v ) => x.Address.Street = (string) v! )
                 .WithWriter( x => x.Address.Street );
             mapper.CustomMapping( new StringColumn( "City" ) )
-                .WithReader( ( x, v ) => x.Address.City = (string) v )
+                .WithReader( ( x, v ) => x.Address.City = (string) v! )
                 .WithWriter( x => x.Address.City );
             mapper.CustomMapping( new StringColumn( "State" ) )
-                .WithReader( ( x, v ) => x.Address.State = (string) v )
+                .WithReader( ( x, v ) => x.Address.State = (string) v! )
                 .WithWriter( x => x.Address.State );
             mapper.CustomMapping( new StringColumn( "Zip" ) )
-                .WithReader( ( x, v ) => x.Address.Zip = (string) v )
+                .WithReader( ( x, v ) => x.Address.Zip = (string) v! )
                 .WithWriter( x => x.Address.Zip );
             return mapper;
         }
@@ -345,13 +345,13 @@ namespace FlatFiles.Test
 
         internal class Address
         {
-            public string Street { get; set; }
+            public string Street { get; set; } = string.Empty;
 
-            public string City { get; set; }
+            public string City { get; set; } = string.Empty;
 
-            public string State { get; set; }
+            public string State { get; set; } = string.Empty;
 
-            public string Zip { get; set; }
+            public string Zip { get; set; } = string.Empty;
         }
 
         internal class Geolocation
@@ -365,16 +365,16 @@ namespace FlatFiles.Test
         {
             public int Id { get; set; }
 
-            public Address Address { get; set; }
+            public Address Address { get; set; } = null!;
 
-            public Geolocation Coordinates { get; set; }
+            public Geolocation Coordinates { get; set; } = null!;
         }
 
         [TestMethod]
         public void ShouldConvertLongToTimeSpan()
         {
             var mapper = DelimitedTypeMapper.Define( () => new Session() );
-            mapper.CustomMapping( new Int64Column( "Duration" ) ).WithReader( ( s, d ) => s.Duration = TimeSpan.FromSeconds( (long) d ) );
+            mapper.CustomMapping( new Int64Column( "Duration" ) ).WithReader( ( s, d ) => s.Duration = TimeSpan.FromSeconds( (long) d! ) );
 
             var reader = new StringReader( $"{24 * 60 * 60}" ); // 24 hours
             var csvReader = mapper.GetReader( reader );

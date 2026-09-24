@@ -19,10 +19,10 @@ namespace FlatFiles.Test
         [TestMethod]
         public void TestCtor_Options_TextNull_Throws()
         {
-            TextReader reader = null;
+            TextReader reader = null!;
             var schema = new FixedLengthSchema();
             var options = new FixedLengthOptions();
-            Assert.ThrowsExactly<ArgumentNullException>( () => new FixedLengthReader( reader, schema, options ) );
+            Assert.ThrowsExactly<ArgumentNullException>( () => new FixedLengthReader( reader!, schema, options ) );
         }
 
         /// <summary>
@@ -32,8 +32,8 @@ namespace FlatFiles.Test
         public void TestCtor_SchemaNull_Throws()
         {
             var reader = new StringReader( string.Empty );
-            FixedLengthSchema schema = null;
-            Assert.ThrowsExactly<ArgumentNullException>( () => new FixedLengthReader( reader, schema ) );
+            FixedLengthSchema schema = null!;
+            Assert.ThrowsExactly<ArgumentNullException>( () => new FixedLengthReader( reader, schema! ) );
         }
 
         /// <summary>
@@ -365,7 +365,7 @@ a weird row that should be skipped
             Person[] people = [.. mapper.Read( stringReader, options )];
             Assert.AreEqual( 1, people.Length );
             var person = people.SingleOrDefault();
-            Assert.AreEqual( bob.Id, person.Id );
+            Assert.AreEqual( bob.Id, person!.Id );
             Assert.AreEqual( bob.Name, person.Name );
             Assert.AreEqual( bob.Created, person.Created );
         }
@@ -391,7 +391,7 @@ a weird row that should be skipped
             Person[] people = [.. mapper.Read( stringReader, options )];
             Assert.AreEqual( 1, people.Length );
             var person = people.SingleOrDefault();
-            Assert.AreEqual( bob.Id, person.Id );
+            Assert.AreEqual( bob.Id, person!.Id );
             Assert.AreEqual( bob.Name, person.Name );
             Assert.AreEqual( bob.Created, person.Created );
         }
@@ -407,7 +407,7 @@ a weird row that should be skipped
             mapper.Property( p => p.Name, new Window( 100 ) ).ColumnName( "name" );
             mapper.Property( p => p.Created, new Window( 8 ) ).ColumnName( "created" ).InputFormat( "yyyyMMdd" ).OutputFormat( "yyyyMMdd" );
 
-            var bob = new Person { Id = 123, Name = null, Created = new DateTime( 2013, 1, 19 ) };
+            var bob = new Person { Id = 123, Name = null!, Created = new DateTime( 2013, 1, 19 ) };
             var options = new FixedLengthOptions { FillCharacter = '@' };
 
             var stringWriter = new StringWriter();
@@ -506,7 +506,7 @@ a weird row that should be skipped
         {
             public int Id { get; set; }
 
-            public string Name { get; set; }
+            public string Name { get; set; } = string.Empty;
 
             public DateTime Created { get; set; }
 
@@ -640,7 +640,7 @@ a weird row that should be skipped
             var stringReader = new StringReader( lines );
             var parser = new FixedLengthReader( stringReader, schema );
 
-            List<object[]> records =
+            List<object?[]> records =
             [
                 AssertExtra( parser, "This" ),
                 AssertExtra( parser, "is" ),
@@ -659,12 +659,12 @@ a weird row that should be skipped
             Assert.AreEqual( lines, formatted, "The records did not round-trip." );
         }
 
-        private static object[] AssertExtra( FixedLengthReader reader, string expected )
+        private static object?[] AssertExtra( FixedLengthReader reader, string expected )
         {
             Assert.IsTrue( reader.Read(), "Could not read the next record." );
             var values = reader.GetValues();
             var schema = reader.GetSchema();
-            Assert.AreEqual( schema.ColumnDefinitions.Count, values.Length, "The wrong number of values were parsed." );
+            Assert.AreEqual( schema!.ColumnDefinitions.Count, values.Length, "The wrong number of values were parsed." );
             var value = values[schema.ColumnDefinitions.Count - 1];
             Assert.AreEqual( expected, value, "The wrong extra value was found for the record." );
             return values;
@@ -705,7 +705,7 @@ a weird row that should be skipped
 
         internal class ExtraPerson : Person
         {
-            public string Extra { get; set; }
+            public string Extra { get; set; } = string.Empty;
         }
 
         [TestMethod]
@@ -742,7 +742,7 @@ a weird row that should be skipped
         {
             public int Id { get; set; }
 
-            public string Name { get; set; }
+            public string Name { get; set; } = string.Empty;
 
             public int DeptNo { get; set; }
         }

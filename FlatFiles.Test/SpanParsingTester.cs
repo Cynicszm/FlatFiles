@@ -75,8 +75,8 @@ namespace FlatFiles.Test
             Assert.AreEqual( Guid.Parse( "0f8fad5b-d9cb-469f-a165-70867728950e" ), values[8] );
             Assert.AreEqual( new TimeSpan( 1, 2, 3 ), values[9] );
             Assert.AreEqual( Colour.Green, values[10] );
-            Assert.AreEqual( "AB", Encoding.UTF8.GetString( (byte[]) values[11] ) );
-            CollectionAssert.AreEqual( new[] { 'c', 'd' }, (char[]) values[12] );
+            Assert.AreEqual( "AB", Encoding.UTF8.GetString( (byte[]) values[11]! ) );
+            CollectionAssert.AreEqual( new[] { 'c', 'd' }, (char[]) values[12]! );
         }
 
         [TestMethod]
@@ -235,13 +235,13 @@ namespace FlatFiles.Test
         [TestMethod]
         public void TestRead_ParsingHooks_StillReceiveTheValueAsAString()
         {
-            string parsing = null;
-            object parsed = null;
+            string parsing = null!;
+            object parsed = null!;
             var schema = new FixedLengthSchema();
             schema.AddColumn( new Int32Column( "a" )
             {
                 OnParsing = ( _, v ) => { parsing = v; return v; },
-                OnParsed = ( _, v ) => { parsed = v; return v; }
+                OnParsed = ( _, v ) => { parsed = v!; return v; }
             }, new Window( 4 ) );
             var reader = new FixedLengthReader( new StringReader( "0042\r\n" ), schema );
 
@@ -310,7 +310,7 @@ namespace FlatFiles.Test
         [TestMethod]
         public void TestRead_IgnoredColumn_HooksStillRun()
         {
-            string parsing = null;
+            string parsing = null!;
             var schema = new FixedLengthSchema();
             schema.AddColumn( new IgnoredColumn { OnParsing = ( _, v ) => { parsing = v; return v; } }, new Window( 4 ) );
             schema.AddColumn( new Int32Column( "b" ), new Window( 4 ) );
@@ -343,10 +343,10 @@ namespace FlatFiles.Test
         [TestMethod]
         public void TestRead_HookAsksForTheRawValues_TheyAreCopiedOutOfTheRecord()
         {
-            string[] seen = null;
+            string[] seen = null!;
             var schema = new FixedLengthSchema();
             schema.AddColumn( new StringColumn( "a" ), new Window( 4 ) );
-            schema.AddColumn( new Int32Column( "b" ) { OnParsed = ( ctx, v ) => { seen = ctx.RecordContext.Values; return v; } }, new Window( 4 ) );
+            schema.AddColumn( new Int32Column( "b" ) { OnParsed = ( ctx, v ) => { seen = ctx!.RecordContext.Values!; return v; } }, new Window( 4 ) );
             var reader = new FixedLengthReader( new StringReader( "A0010007\r\n" ), schema );
 
             Assert.IsTrue( reader.Read() );
@@ -357,11 +357,11 @@ namespace FlatFiles.Test
         [TestMethod]
         public void TestRead_RaggedRightShortRecord_TheRawValuesStillCopyOut()
         {
-            string[] seen = null;
+            string[] seen = null!;
             var schema = new FixedLengthSchema();
             schema.AddColumn( new StringColumn( "a" ), new Window( 4 ) );
             schema.AddColumn( new StringColumn( "b" ), new Window( 4 ) );
-            schema.AddColumn( new StringColumn( "c" ) { OnParsed = ( ctx, v ) => { seen = ctx.RecordContext.Values; return v; } }, new Window( 4 ) );
+            schema.AddColumn( new StringColumn( "c" ) { OnParsed = ( ctx, v ) => { seen = ctx!.RecordContext.Values!; return v; } }, new Window( 4 ) );
             var reader = new FixedLengthReader( new StringReader( "A001\r\n" ), schema, new FixedLengthOptions { IsRaggedRight = true } );
 
             Assert.IsTrue( reader.Read() );
@@ -373,7 +373,7 @@ namespace FlatFiles.Test
         public void TestRead_HookWritesToTheRawValues_TheWriteDoesNotReachTheNextColumn()
         {
             var schema = new FixedLengthSchema();
-            schema.AddColumn( new StringColumn( "a" ) { OnParsed = ( context, v ) => { context.RecordContext.Values[1] = "99"; return v; } }, new Window( 4 ) );
+            schema.AddColumn( new StringColumn( "a" ) { OnParsed = ( context, v ) => { context!.RecordContext!.Values![1] = "99"; return v; } }, new Window( 4 ) );
             schema.AddColumn( new Int32Column( "b" ), new Window( 4 ) );
             var reader = new FixedLengthReader( new StringReader( "A0010007\r\n" ), schema );
 
@@ -416,7 +416,7 @@ namespace FlatFiles.Test
             reader.RecordParsed += ( _, e ) =>
             {
                 contexts.Add( e.RecordContext );
-                readWhileCurrent.Add( e.RecordContext.Values );
+                readWhileCurrent.Add( e.RecordContext.Values! );
             };
 
             while (reader.Read())
@@ -437,7 +437,7 @@ namespace FlatFiles.Test
             schema.AddColumn( new StringColumn( "a" ), new Window( 4 ) );
             schema.AddColumn( new Int32Column( "b" ), new Window( 4 ) );
             var reader = new FixedLengthReader( new StringReader( "A001nope\r\n" ), schema );
-            ColumnProcessingException captured = null;
+            ColumnProcessingException captured = null!;
             reader.ColumnError += ( _, e ) =>
             {
                 captured = (ColumnProcessingException) e.Exception;
@@ -451,7 +451,7 @@ namespace FlatFiles.Test
             Assert.AreEqual( -1, values[1] );
             Assert.IsNotNull( captured );
             Assert.AreEqual( "nope", captured.ColumnValue );
-            Assert.AreEqual( 1, captured.ColumnContext.PhysicalIndex );
+            Assert.AreEqual( 1, captured!.ColumnContext!.PhysicalIndex );
             CollectionAssert.AreEqual( new[] { "A001", "nope" }, captured.ColumnContext.RecordContext.Values );
         }
 
@@ -464,7 +464,7 @@ namespace FlatFiles.Test
 
             var exception = Assert.ThrowsExactly<RecordProcessingException>( () => reader.Read() );
 
-            var columnException = (ColumnProcessingException) exception.InnerException;
+            var columnException = (ColumnProcessingException) exception.InnerException!;
             Assert.IsNotNull( columnException );
             Assert.AreEqual( "nope", columnException.ColumnValue );
             Assert.IsNull( columnException.ColumnContext );
@@ -479,7 +479,7 @@ namespace FlatFiles.Test
 
             var exception = Assert.ThrowsExactly<RecordProcessingException>( () => reader.Read() );
 
-            var columnException = (ColumnProcessingException) exception.InnerException;
+            var columnException = (ColumnProcessingException) exception.InnerException!;
             Assert.IsNotNull( columnException?.ColumnContext );
             Assert.AreEqual( "nope", columnException.ColumnValue );
         }
@@ -515,13 +515,13 @@ namespace FlatFiles.Test
         {
             public int StringCalls { get; private set; }
 
-            protected override string OnParse( IColumnContext context, string value )
+            protected override string OnParse( IColumnContext? context, string value )
             {
                 ++StringCalls;
                 return value.ToUpperInvariant();
             }
 
-            protected override string OnFormat( IColumnContext context, string value )
+            protected override string OnFormat( IColumnContext? context, string value )
             {
                 return value;
             }
@@ -535,18 +535,18 @@ namespace FlatFiles.Test
         {
             public int Calls { get; private set; }
 
-            public override object Parse( IColumnContext context, string value )
+            public override object Parse( IColumnContext? context, string value )
             {
                 ++Calls;
                 return value + "!";
             }
 
-            protected override string OnParse( IColumnContext context, string value )
+            protected override string OnParse( IColumnContext? context, string value )
             {
                 return value;
             }
 
-            protected override string OnFormat( IColumnContext context, string value )
+            protected override string OnFormat( IColumnContext? context, string value )
             {
                 return value;
             }
@@ -561,19 +561,19 @@ namespace FlatFiles.Test
 
             public int StringCalls { get; private set; }
 
-            protected override string OnParse( IColumnContext context, string value )
+            protected override string OnParse( IColumnContext? context, string value )
             {
                 ++StringCalls;
                 return value;
             }
 
-            protected override string OnParse( IColumnContext context, ReadOnlySpan<char> value )
+            protected override string OnParse( IColumnContext? context, ReadOnlySpan<char> value )
             {
                 ++SpanCalls;
                 return value.ToString();
             }
 
-            protected override string OnFormat( IColumnContext context, string value )
+            protected override string OnFormat( IColumnContext? context, string value )
             {
                 return value;
             }
@@ -581,9 +581,9 @@ namespace FlatFiles.Test
 
         private sealed class StringOnlyNullFormatter : INullFormatter
         {
-            public bool IsNullValue( IColumnContext context, string value ) => value == "none";
+            public bool IsNullValue( IColumnContext? context, string? value ) => value == "none";
 
-            public string FormatNull( IColumnContext context ) => "none";
+            public string FormatNull( IColumnContext? context ) => "none";
         }
 
         /// <summary>
@@ -603,19 +603,19 @@ namespace FlatFiles.Test
 
             public INullFormatter NullFormatter { get; set; } = FlatFiles.NullFormatter.Default;
 
-            public Func<IColumnContext, string, string> OnParsing { get; set; }
+            public Func<IColumnContext?, string, string?>? OnParsing { get; set; } = null!;
 
-            public Func<IColumnContext, object, object> OnParsed { get; set; }
+            public Func<IColumnContext?, object?, object?>? OnParsed { get; set; } = null!;
 
-            public Func<IColumnContext, object, object> OnFormatting { get; set; }
+            public Func<IColumnContext?, object?, object?>? OnFormatting { get; set; } = null!;
 
-            public Func<IColumnContext, string, string> OnFormatted { get; set; }
+            public Func<IColumnContext?, string, string?>? OnFormatted { get; set; } = null!;
 
             public Type ColumnType => typeof( string );
 
-            public object Parse( IColumnContext context, string value ) => value;
+            public object Parse( IColumnContext? context, string value ) => value;
 
-            public string Format( IColumnContext context, object value ) => (string) value;
+            public string Format( IColumnContext? context, object? value ) => (string) value!;
         }
     }
 }

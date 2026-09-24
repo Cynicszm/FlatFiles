@@ -36,7 +36,7 @@ namespace FlatFiles.Test
             var stringReader = new StringReader( stringWriter.ToString() );
             var reader = new DelimitedReader( stringReader, new DelimitedOptions { IsFirstRecordSchema = true } );
             var parsedSchema = reader.GetSchema();
-            Assert.AreEqual( schema.ColumnDefinitions.Count, parsedSchema.ColumnDefinitions.Count );
+            Assert.AreEqual( schema.ColumnDefinitions.Count, parsedSchema!.ColumnDefinitions.Count );
             Assert.AreEqual( schema.ColumnDefinitions[0].ColumnName, parsedSchema.ColumnDefinitions[0].ColumnName );
 
             Assert.IsTrue( reader.Read(), "The record was not retrieved after the schema." );

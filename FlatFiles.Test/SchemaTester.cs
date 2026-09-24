@@ -17,7 +17,7 @@ namespace FlatFiles.Test
         public void TestAddColumn_NullDefinition_Throws()
         {
             var schema = new DelimitedSchema();
-            Assert.ThrowsExactly<ArgumentNullException>( () => schema.AddColumn( null ) );
+            Assert.ThrowsExactly<ArgumentNullException>( () => schema.AddColumn( null! ) );
         }
 
         /// <summary>

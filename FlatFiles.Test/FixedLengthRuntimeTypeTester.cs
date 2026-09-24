@@ -14,7 +14,7 @@ namespace FlatFiles.Test
         {
             var mapper = FixedLengthTypeMapper.Define( () => new
             {
-                Name = (string) null
+                Name = (string) null!
             } );
             mapper.Property( x => x.Name, 10 ).ColumnName( "Name" );
             var writer = new StringWriter();
@@ -100,7 +100,7 @@ namespace FlatFiles.Test
 
         public class Person
         {
-            public string Name { get; set; }
+            public string Name { get; set; } = string.Empty;
 
             public int? IQ { get; set; }
 

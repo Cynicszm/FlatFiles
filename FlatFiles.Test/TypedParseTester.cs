@@ -227,8 +227,8 @@ namespace FlatFiles.Test
         public void TestRead_RecordParsedHandler_SeesTheParsedValues()
         {
             var reader = Mapper().GetReader( new StringReader( "Alice,3,7,1.50\r\n" ) );
-            object[] seen = null;
-            reader.RecordParsed += ( sender, e ) => seen = e.Values;
+            object?[] seen = null!;
+            reader.RecordParsed += ( sender, e ) => seen = e.Values!;
 
             var people = Read( reader );
 
@@ -341,7 +341,7 @@ namespace FlatFiles.Test
         public void TestFixedLengthRead_RecordParsedHandler_SeesTheParsedValues()
         {
             var reader = FixedMapper().GetReader( new StringReader( "Alice     3   7       1.50\r\n" ) );
-            object[] seen = null;
+            object?[] seen = null!;
             reader.RecordParsed += ( sender, e ) => seen = e.Values;
 
             var people = Read( reader );
@@ -363,7 +363,7 @@ namespace FlatFiles.Test
 
         internal class Person
         {
-            public string Name { get; set; }
+            public string Name { get; set; } = string.Empty;
 
             public int Count { get; set; }
 
@@ -374,7 +374,7 @@ namespace FlatFiles.Test
 
         internal class Numbered
         {
-            public string Name { get; set; }
+            public string Name { get; set; } = string.Empty;
 
             public int Row { get; set; }
         }

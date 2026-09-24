@@ -51,7 +51,7 @@ namespace FlatFiles.Test
             {
                 FormatProvider = null
             };
-            var actual = (int) column.Parse( null, "  -123 " );
+            var actual = (int) column.Parse( null, "  -123 " )!;
             const int expected = -123;
             Assert.AreEqual( expected, actual );
         }
@@ -66,7 +66,7 @@ namespace FlatFiles.Test
             {
                 FormatProvider = CultureInfo.CurrentCulture
             };
-            var actual = (int) column.Parse( null, "  -123 " );
+            var actual = (int) column.Parse( null, "  -123 " )!;
             const int expected = -123;
             Assert.AreEqual( expected, actual );
         }
@@ -96,7 +96,7 @@ namespace FlatFiles.Test
                 IsNullable = false,
                 DefaultValue = DefaultValue.Use( 0 )
             };
-            var value = (int) column.Parse( null, String.Empty );
+            var value = (int) column.Parse( null, String.Empty )!;
             Assert.AreEqual( 0, value, "A default was not provided." );
         }
     }

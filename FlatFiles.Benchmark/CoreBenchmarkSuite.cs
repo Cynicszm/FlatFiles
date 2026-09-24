@@ -122,7 +122,7 @@ namespace FlatFiles.Benchmark
         {
             var reader = new StringReader( data );
             var csvReader = new DelimitedReader( reader );
-            var people = new List<object[]>();
+            var people = new List<object?[]>();
             while (csvReader.Read())
             {
                 people.Add( csvReader.GetValues() );
@@ -326,17 +326,17 @@ namespace FlatFiles.Benchmark
             {
                 var person = new Person
                 {
-                    FirstName = dataReader.GetString( 0 ),
-                    LastName = dataReader.GetString( 1 ),
+                    FirstName = dataReader.GetString( 0 )!,
+                    LastName = dataReader.GetString( 1 )!,
                     Age = dataReader.GetInt32( 2 ),
-                    Street1 = dataReader.GetString( 3 ),
-                    Street2 = dataReader.GetString( 4 ),
-                    City = dataReader.GetString( 5 ),
-                    State = dataReader.GetString( 6 ),
-                    Zip = dataReader.GetString( 7 ),
-                    FavouriteColour = dataReader.GetString( 8 ),
-                    FavouriteFood = dataReader.GetString( 9 ),
-                    FavouriteSport = dataReader.GetString( 10 ),
+                    Street1 = dataReader.GetString( 3 )!,
+                    Street2 = dataReader.GetString( 4 )!,
+                    City = dataReader.GetString( 5 )!,
+                    State = dataReader.GetString( 6 )!,
+                    Zip = dataReader.GetString( 7 )!,
+                    FavouriteColour = dataReader.GetString( 8 )!,
+                    FavouriteFood = dataReader.GetString( 9 )!,
+                    FavouriteSport = dataReader.GetString( 10 )!,
                     CreatedOn = dataReader.GetDateTime( 11 ),
                     IsActive = dataReader.GetBoolean( 12 )
                 };
@@ -386,17 +386,17 @@ namespace FlatFiles.Benchmark
             {
                 var person = new Person
                 {
-                    FirstName = dataReader.GetValue<string>( 0 ),
-                    LastName = dataReader.GetValue<string>( 1 ),
+                    FirstName = dataReader.GetValue<string>( 0 )!,
+                    LastName = dataReader.GetValue<string>( 1 )!,
                     Age = dataReader.GetValue<int>( 2 ),
-                    Street1 = dataReader.GetValue<string>( 3 ),
-                    Street2 = dataReader.GetValue<string>( 4 ),
-                    City = dataReader.GetValue<string>( 5 ),
-                    State = dataReader.GetValue<string>( 6 ),
-                    Zip = dataReader.GetValue<string>( 7 ),
-                    FavouriteColour = dataReader.GetValue<string>( 8 ),
-                    FavouriteFood = dataReader.GetValue<string>( 9 ),
-                    FavouriteSport = dataReader.GetValue<string>( 10 ),
+                    Street1 = dataReader.GetValue<string>( 3 )!,
+                    Street2 = dataReader.GetValue<string>( 4 )!,
+                    City = dataReader.GetValue<string>( 5 )!,
+                    State = dataReader.GetValue<string>( 6 )!,
+                    Zip = dataReader.GetValue<string>( 7 )!,
+                    FavouriteColour = dataReader.GetValue<string>( 8 )!,
+                    FavouriteFood = dataReader.GetValue<string>( 9 )!,
+                    FavouriteSport = dataReader.GetValue<string>( 10 )!,
                     CreatedOn = dataReader.GetValue<DateTime?>( 11 ),
                     IsActive = dataReader.GetValue<bool>( 12 )
                 };
@@ -501,27 +501,27 @@ namespace FlatFiles.Benchmark
 
         public class Person
         {
-            public string FirstName { get; set; }
+            public string FirstName { get; set; } = string.Empty;
 
-            public string LastName { get; set; }
+            public string LastName { get; set; } = string.Empty;
 
             public int Age { get; set; }
 
-            public string Street1 { get; set; }
+            public string Street1 { get; set; } = string.Empty;
 
-            public string Street2 { get; set; }
+            public string Street2 { get; set; } = string.Empty;
 
-            public string City { get; set; }
+            public string City { get; set; } = string.Empty;
 
-            public string State { get; set; }
+            public string State { get; set; } = string.Empty;
 
-            public string Zip { get; set; }
+            public string Zip { get; set; } = string.Empty;
 
-            public string FavouriteColour { get; set; }
+            public string FavouriteColour { get; set; } = string.Empty;
 
-            public string FavouriteFood { get; set; }
+            public string FavouriteFood { get; set; } = string.Empty;
 
-            public string FavouriteSport { get; set; }
+            public string FavouriteSport { get; set; } = string.Empty;
 
             public DateTime? CreatedOn { get; set; }
 
@@ -530,17 +530,17 @@ namespace FlatFiles.Benchmark
 
         public class FieldPerson
         {
-            public string FirstName;
-            public string LastName;
+            public string FirstName = string.Empty;
+            public string LastName = string.Empty;
             public int Age;
-            public string Street1;
-            public string Street2;
-            public string City;
-            public string State;
-            public string Zip;
-            public string FavouriteColour;
-            public string FavouriteFood;
-            public string FavouriteSport;
+            public string Street1 = string.Empty;
+            public string Street2 = string.Empty;
+            public string City = string.Empty;
+            public string State = string.Empty;
+            public string Zip = string.Empty;
+            public string FavouriteColour = string.Empty;
+            public string FavouriteFood = string.Empty;
+            public string FavouriteSport = string.Empty;
             public DateTime? CreatedOn;
             public bool IsActive;
         }

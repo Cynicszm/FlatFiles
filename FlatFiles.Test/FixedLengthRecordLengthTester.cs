@@ -39,7 +39,7 @@ namespace FlatFiles.Test
             List<int> quantities = [];
             while (reader.Read())
             {
-                quantities.Add( (int) reader.GetValues()[2] );
+                quantities.Add( (int) reader.GetValues()[2]! );
             }
             return quantities;
         }
@@ -147,9 +147,9 @@ namespace FlatFiles.Test
 
         public sealed class Item
         {
-            public string Id { get; set; }
+            public string Id { get; set; } = string.Empty;
 
-            public string Name { get; set; }
+            public string Name { get; set; } = string.Empty;
 
             public int Quantity { get; set; }
         }

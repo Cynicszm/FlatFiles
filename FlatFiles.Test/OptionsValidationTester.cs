@@ -58,7 +58,7 @@ namespace FlatFiles.Test
             var options = new DelimitedOptions();
 
             Assert.ThrowsExactly<ArgumentException>( () => options.Separator = "" );
-            Assert.ThrowsExactly<ArgumentException>( () => options.Separator = null );
+            Assert.ThrowsExactly<ArgumentException>( () => options.Separator = null! );
         }
 
         [TestMethod]

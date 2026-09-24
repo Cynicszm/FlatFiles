@@ -19,8 +19,8 @@ namespace FlatFiles.Test
         [TestMethod]
         public void TestCtor_NullWriter_NoSchema_Throws()
         {
-            TextReader reader = null;
-            Assert.ThrowsExactly<ArgumentNullException>( () => new DelimitedReader( reader ) );
+            TextReader reader = null!;
+            Assert.ThrowsExactly<ArgumentNullException>( () => new DelimitedReader( reader! ) );
         }
 
         /// <summary>
@@ -29,9 +29,9 @@ namespace FlatFiles.Test
         [TestMethod]
         public void TestCtor_NullWriter_WithSchema_Throws()
         {
-            TextReader reader = null;
+            TextReader reader = null!;
             var schema = new DelimitedSchema();
-            Assert.ThrowsExactly<ArgumentNullException>( () => new DelimitedReader( reader, schema ) );
+            Assert.ThrowsExactly<ArgumentNullException>( () => new DelimitedReader( reader!, schema ) );
         }
 
         /// <summary>
@@ -41,8 +41,8 @@ namespace FlatFiles.Test
         public void TestCtor_SchemaNull_Throws()
         {
             TextReader reader = new StringReader( string.Empty );
-            DelimitedSchema schema = null;
-            Assert.ThrowsExactly<ArgumentNullException>( () => new DelimitedReader( reader, schema ) );
+            DelimitedSchema schema = null!;
+            Assert.ThrowsExactly<ArgumentNullException>( () => new DelimitedReader( reader, schema! ) );
         }
 
         /// <summary>
@@ -193,8 +193,8 @@ namespace FlatFiles.Test
             var options = new DelimitedOptions { IsFirstRecordSchema = true };
             IReader parser = new DelimitedReader( stringReader, options );
             var schema = parser.GetSchema();
-            Assert.IsTrue( schema.ColumnDefinitions.All( d => d is StringColumn ), "Not all of the columns were treated as strings." );
-            string[] actual = [.. schema.ColumnDefinitions.Select( d => d.ColumnName )];
+            Assert.IsTrue( schema!.ColumnDefinitions.All( d => d is StringColumn ), "Not all of the columns were treated as strings." );
+            string[] actual = [.. schema.ColumnDefinitions.Select( d => d.ColumnName )!];
             string[] expected = [ "a", "b", "c" ];
             CollectionAssert.AreEqual( expected, actual );
         }
@@ -284,7 +284,7 @@ This is not a real record
         {
             public int Id { get; set; }
 
-            public string Name { get; set; }
+            public string Name { get; set; } = string.Empty;
 
             public DateTime Created { get; set; }
 
@@ -377,7 +377,7 @@ This is not a real record
             var options = new DelimitedOptions { IsFirstRecordSchema = true };
             var parser = new DelimitedReader( stringReader, options );
             Assert.IsTrue( parser.Read(), "The record could not be read." );
-            Assert.AreEqual( parser.GetSchema().ColumnDefinitions.Count, parser.GetValues().Length );
+            Assert.AreEqual( parser.GetSchema()!.ColumnDefinitions.Count, parser.GetValues().Length );
         }
 
         /// <summary>
@@ -545,7 +545,7 @@ This is not a real record
             mapper.Property( p => p.Name ).ColumnName( "name" );
             mapper.Property( p => p.Created ).ColumnName( "created" ).InputFormat( "yyyyMMdd" ).OutputFormat( "yyyyMMdd" );
 
-            var bob = new Person { Id = 123, Name = null, Created = new DateTime( 2013, 1, 19 ) };
+            var bob = new Person { Id = 123, Name = null!, Created = new DateTime( 2013, 1, 19 ) };
             var options = new DelimitedOptions { IsFirstRecordSchema = true, Separator = "\t" };
 
             var stringWriter = new StringWriter();
@@ -614,7 +614,7 @@ Stephen,Tyler,""7452 Terrace """"At the Plaza"""" road"",SomeTown,SD, 91234
             Assert.IsTrue( reader.Read(), "Could not read the fourth record." );
             AssertValues( reader, "Stephen", "Tyler", "7452 Terrace \"At the Plaza\" road", "SomeTown", "SD", "91234" );
             Assert.IsTrue( reader.Read(), "Could not read the fifth record." );
-            AssertValues( reader, null, "Blankman",null, "SomeTown", "SD", "00298" );
+            AssertValues( reader, null!, "Blankman",null!, "SomeTown", "SD", "00298" );
             Assert.IsTrue( reader.Read(), "Could not read the sixth record." );
             AssertValues( reader, "Joan \"the bone\", Anne", "Jet", "9th, at Terrace plc", "Desert City", "CO", "00123" );
             Assert.IsFalse( reader.Read(), "Read too many records." );

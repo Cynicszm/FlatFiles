@@ -58,8 +58,8 @@ namespace FlatFiles.Test
             Assert.AreEqual( Guid.Parse( "0f8fad5b-d9cb-469f-a165-70867728950e" ), values[8] );
             Assert.AreEqual( new TimeSpan( 1, 2, 3 ), values[9] );
             Assert.AreEqual( Colour.Green, values[10] );
-            Assert.AreEqual( "AB", Encoding.UTF8.GetString( (byte[]) values[11] ) );
-            CollectionAssert.AreEqual( new[] { 'c', 'd' }, (char[]) values[12] );
+            Assert.AreEqual( "AB", Encoding.UTF8.GetString( (byte[]) values[11]! ) );
+            CollectionAssert.AreEqual( new[] { 'c', 'd' }, (char[]) values[12]! );
         }
 
         [TestMethod]
@@ -129,7 +129,7 @@ namespace FlatFiles.Test
         [TestMethod]
         public void TestRead_RebuiltValuesAsStrings_AreStillTakenFromTheRightPlace()
         {
-            string[] seen = null;
+            string[] seen = null!;
             var schema = new DelimitedSchema();
             schema.AddColumn( new StringColumn( "a" ) );
             schema.AddColumn( new StringColumn( "b" ) );
@@ -185,7 +185,7 @@ namespace FlatFiles.Test
             reader.RecordParsed += ( _, e ) =>
             {
                 contexts.Add( e.RecordContext );
-                readWhileCurrent.Add( e.RecordContext.Values );
+                readWhileCurrent.Add( e.RecordContext.Values! );
             };
 
             while (reader.Read())
@@ -235,10 +235,10 @@ namespace FlatFiles.Test
         [TestMethod]
         public void TestRead_PreservedRecordText_IsTheRecordNotTheValues()
         {
-            string seen = null;
+            string seen = null!;
             var schema = new DelimitedSchema();
             schema.AddColumn( new StringColumn( "a" ) );
-            schema.AddColumn( new StringColumn( "b" ) { OnParsed = ( ctx, v ) => { seen = ctx.RecordContext.Record; return v; } } );
+            schema.AddColumn( new StringColumn( "b" ) { OnParsed = ( ctx, v ) => { seen = ctx!.RecordContext.Record!; return v; } } );
             var reader = new DelimitedReader( new StringReader( "\"one, two\",three\r\n" ), schema, new DelimitedOptions { PreserveRecordText = true } );
 
             Assert.IsTrue( reader.Read() );
@@ -249,10 +249,10 @@ namespace FlatFiles.Test
         [TestMethod]
         public void TestRead_HookAsksForTheRawValues_TheyAreCopiedOutOfTheRecord()
         {
-            string[] seen = null;
+            string[] seen = null!;
             var schema = new DelimitedSchema();
             schema.AddColumn( new StringColumn( "a" ) );
-            schema.AddColumn( new Int32Column( "b" ) { OnParsed = ( ctx, v ) => { seen = ctx.RecordContext.Values; return v; } } );
+            schema.AddColumn( new Int32Column( "b" ) { OnParsed = ( ctx, v ) => { seen = ctx!.RecordContext.Values!; return v; } } );
             var reader = new DelimitedReader( new StringReader( "one,42\r\n" ), schema );
 
             Assert.IsTrue( reader.Read() );
@@ -294,7 +294,7 @@ namespace FlatFiles.Test
             reader.RecordParsed += ( _, e ) =>
             {
                 contexts.Add( e.RecordContext );
-                readWhileCurrent.Add( e.RecordContext.Values );
+                readWhileCurrent.Add( e.RecordContext.Values! );
             };
 
             while (reader.Read())
@@ -312,7 +312,7 @@ namespace FlatFiles.Test
         public void TestRead_HookWritesToTheRawValues_TheWriteDoesNotReachTheNextColumn()
         {
             var schema = new DelimitedSchema();
-            schema.AddColumn( new StringColumn( "a" ) { OnParsed = ( context, v ) => { context.RecordContext.Values[1] = "99"; return v; } } );
+            schema.AddColumn( new StringColumn( "a" ) { OnParsed = ( context, v ) => { context!.RecordContext!.Values![1] = "99"; return v; } } );
             schema.AddColumn( new Int32Column( "b" ) );
             var reader = new DelimitedReader( new StringReader( "x,7\r\n" ), schema );
 
@@ -393,7 +393,7 @@ namespace FlatFiles.Test
             schema.AddColumn( new StringColumn( "a" ) );
             schema.AddColumn( new Int32Column( "b" ) );
             var reader = new DelimitedReader( new StringReader( "one,nope\r\n" ), schema );
-            ColumnProcessingException captured = null;
+            ColumnProcessingException captured = null!;
             reader.ColumnError += ( _, e ) =>
             {
                 captured = (ColumnProcessingException) e.Exception;
@@ -407,7 +407,7 @@ namespace FlatFiles.Test
             Assert.AreEqual( -1, values[1] );
             Assert.IsNotNull( captured );
             Assert.AreEqual( "nope", captured.ColumnValue );
-            CollectionAssert.AreEqual( new[] { "one", "nope" }, captured.ColumnContext.RecordContext.Values );
+            CollectionAssert.AreEqual( new[] { "one", "nope" }, captured!.ColumnContext!.RecordContext.Values );
         }
 
         [TestMethod]
@@ -453,7 +453,7 @@ namespace FlatFiles.Test
         [TestMethod]
         public void TestRead_ParsingHooks_StillReceiveTheValueAsAString()
         {
-            string parsing = null;
+            string parsing = null!;
             var schema = new DelimitedSchema();
             schema.AddColumn( new Int32Column( "a" ) { OnParsing = ( _, v ) => { parsing = v; return v; } } );
             var reader = new DelimitedReader( new StringReader( "42\r\n" ), schema );
@@ -495,19 +495,19 @@ namespace FlatFiles.Test
 
             public int StringCalls { get; private set; }
 
-            protected override string OnParse( IColumnContext context, string value )
+            protected override string OnParse( IColumnContext? context, string value )
             {
                 ++StringCalls;
                 return value;
             }
 
-            protected override string OnParse( IColumnContext context, ReadOnlySpan<char> value )
+            protected override string OnParse( IColumnContext? context, ReadOnlySpan<char> value )
             {
                 ++SpanCalls;
                 return value.ToString();
             }
 
-            protected override string OnFormat( IColumnContext context, string value )
+            protected override string OnFormat( IColumnContext? context, string value )
             {
                 return value;
             }

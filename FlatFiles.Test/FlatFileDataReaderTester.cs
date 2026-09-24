@@ -17,7 +17,7 @@ namespace FlatFiles.Test
             var schema = dataReader.GetSchemaTable();
 
             string[] expectedNames = [ "Id", "Name", "CreatedOn", "IsActive", "VisitCount", "UniqueId", "FavouriteDay" ];
-            string[] actualNames = [.. schema.Rows.Cast<DataRow>().Select( r => r.Field<string>( SchemaTableColumn.ColumnName ) )];
+            string[] actualNames = [.. schema.Rows.Cast<DataRow>().Select( r => r.Field<string>( SchemaTableColumn.ColumnName ) )!];
             CollectionAssert.AreEqual( expectedNames, actualNames );
 
             int[] expectedPositions = [.. Enumerable.Range( 0, 7 )];
@@ -25,7 +25,7 @@ namespace FlatFiles.Test
             CollectionAssert.AreEqual( expectedPositions, actualPositions );
 
             Type[] expectedTypes = [.. Enumerable.Repeat( typeof( string ), 7 )];
-            Type[] actualTypes = [.. schema.Rows.Cast<DataRow>().Select( r => r.Field<Type>( SchemaTableColumn.DataType ) )];
+            Type[] actualTypes = [.. schema.Rows.Cast<DataRow>().Select( r => r.Field<Type>( SchemaTableColumn.DataType ) )!];
             CollectionAssert.AreEqual( expectedTypes, actualTypes );
         }
 
@@ -73,7 +73,7 @@ namespace FlatFiles.Test
             var schemaTable = dataReader.GetSchemaTable();
 
             string[] expectedNames = [ "Id", "Name", "CreatedOn", "IsActive", "VisitCount", "UniqueId" ];
-            string[] actualNames = [.. schemaTable.Rows.Cast<DataRow>().Select( r => r.Field<string>( SchemaTableColumn.ColumnName ) )];
+            string[] actualNames = [.. schemaTable.Rows.Cast<DataRow>().Select( r => r.Field<string>( SchemaTableColumn.ColumnName ) )!];
             CollectionAssert.AreEqual( expectedNames, actualNames );
 
             int[] expectedPositions = [.. Enumerable.Range( 0, 6 )];
@@ -81,7 +81,7 @@ namespace FlatFiles.Test
             CollectionAssert.AreEqual( expectedPositions, actualPositions );
 
             Type[] expectedTypes = [ typeof( int ), typeof( string ), typeof( DateTime ), typeof( bool ), typeof( int ), typeof( Guid ) ];
-            Type[] actualTypes = [.. schemaTable.Rows.Cast<DataRow>().Select( r => r.Field<Type>( SchemaTableColumn.DataType ) )];
+            Type[] actualTypes = [.. schemaTable.Rows.Cast<DataRow>().Select( r => r.Field<Type>( SchemaTableColumn.DataType ) )!];
             CollectionAssert.AreEqual( expectedTypes, actualTypes );
         }
 
@@ -174,7 +174,7 @@ namespace FlatFiles.Test
             Assert.AreEqual( 1, dataReader.GetOrdinal( "C" ) );
 
             var schemaTable = dataReader.GetSchemaTable();
-            string[] columnNames = [.. schemaTable.Rows.OfType<DataRow>().Select( r => r.Field<string>( "ColumnName" ) )];
+            string[] columnNames = [.. schemaTable.Rows.OfType<DataRow>().Select( r => r.Field<string>( "ColumnName" ) )!];
             CollectionAssert.AreEqual( new[] { "A", "C" }, columnNames );
 
             Assert.IsTrue( dataReader.Read() );

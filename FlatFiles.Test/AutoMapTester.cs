@@ -108,9 +108,9 @@ namespace FlatFiles.Test
             Assert.IsFalse( reader.Read(), "No records should have been written." );
 
             var schema = reader.GetSchema();
-            Assert.AreEqual( 4, schema.ColumnDefinitions.Count, "The wrong number of headers were found." );
+            Assert.AreEqual( 4, schema!.ColumnDefinitions.Count, "The wrong number of headers were found." );
             string[] expected = [ "Id", "Name", "CreatedOn", "IsActive" ];
-            string[] actual = [.. schema.ColumnDefinitions.Select( c => c.ColumnName )];
+            string[] actual = [.. schema.ColumnDefinitions.Select( c => c.ColumnName )!];
             CollectionAssert.AreEqual( expected, actual );
         }
 
@@ -135,9 +135,9 @@ namespace FlatFiles.Test
             Assert.IsFalse( reader.Read(), "No records should have been written." );
 
             var schema = reader.GetSchema();
-            Assert.AreEqual( 4, schema.ColumnDefinitions.Count, "The wrong number of headers were found." );
+            Assert.AreEqual( 4, schema!.ColumnDefinitions.Count, "The wrong number of headers were found." );
             string[] expected = [ "Id", "Name", "CreatedOn", "IsActive" ];
-            string[] actual = [.. schema.ColumnDefinitions.Select( c => c.ColumnName )];
+            string[] actual = [.. schema.ColumnDefinitions.Select( c => c.ColumnName )!];
             CollectionAssert.AreEqual( expected, actual );
         }
 
@@ -197,7 +197,7 @@ namespace FlatFiles.Test
         {
             public int Id { get; set; }
 
-            public string Name { get; set; }
+            public string Name { get; set; } = string.Empty;
 
             public DateTime CreatedOn { get; set; }
 

@@ -240,24 +240,24 @@ namespace FlatFiles.Test
 
         public class Address
         {
-            public string Street { get; set; }
+            public string Street { get; set; } = string.Empty;
 
-            public string City { get; set; }
+            public string City { get; set; } = string.Empty;
 
-            public string State { get; set; }
+            public string State { get; set; } = string.Empty;
 
-            public string Zip { get; set; }
+            public string Zip { get; set; } = string.Empty;
         }
 
         public class Person
         {
             public int Id { get; set; }
 
-            public string Name { get; set; }
+            public string Name { get; set; } = string.Empty;
 
-            public Address Address1 { get; set; }
+            public Address Address1 { get; set; } = null!;
 
-            public Address Address2 { get; set; }
+            public Address Address2 { get; set; } = null!;
 
             public bool IsActive { get; set; }
 
@@ -387,30 +387,30 @@ namespace FlatFiles.Test
         {
             public int Id { get; set; }
 
-            public Address Address { get; set; }
+            public Address Address { get; set; } = null!;
 
-            public Level2 Level2 { get; set; }
+            public Level2 Level2 { get; set; } = null!;
         }
 
         public class Level2
         {
-            public string Name { get; set; }
+            public string Name { get; set; } = string.Empty;
 
-            public Level3 Level3 { get; set; }
+            public Level3 Level3 { get; set; } = null!;
         }
 
         public class Level3
         {
             public DateTime CreatedOn { get; set; }
 
-            public Level4 Level4 { get; set; }
+            public Level4 Level4 { get; set; } = null!;
         }
 
         public class Level4
         {
             public bool IsActive { get; set; }
 
-            public Address Address { get; set; }
+            public Address Address { get; set; } = null!;
         }
     }
 }

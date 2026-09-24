@@ -68,7 +68,7 @@ namespace FlatFiles.Test
             List<string> names = [];
             while (flat.Read())
             {
-                names.Add( (string) flat.GetValues()[1] );
+                names.Add( (string) flat.GetValues()[1]! );
             }
             return names;
         }
@@ -77,7 +77,7 @@ namespace FlatFiles.Test
         {
             using var reader = new StreamReader( new MemoryStream( bytes ), encoding, detectBom );
             var flat = new DelimitedReader( reader, Options() );
-            return flat.GetSchema().ColumnDefinitions[0].ColumnName;
+            return flat.GetSchema()!.ColumnDefinitions[0].ColumnName!;
         }
 
         [TestMethod]
@@ -196,7 +196,7 @@ namespace FlatFiles.Test
 
             using var reader = new StreamReader( new MemoryStream( bytes ), Latin1 );
             var flat = new FixedLengthReader( reader, schema );
-            List<object[]> records = [];
+            List<object?[]> records = [];
             while (flat.Read())
             {
                 records.Add( flat.GetValues() );

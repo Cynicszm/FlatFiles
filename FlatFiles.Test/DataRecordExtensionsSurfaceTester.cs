@@ -55,7 +55,7 @@ namespace FlatFiles.Test
 
         private const string Blank = ",,,,,,,,,,,,,,,,,,,,,,,,";
 
-        private static FlatFileDataReader Reader( string record, FlatFileDataReaderOptions options = null )
+        private static FlatFileDataReader Reader( string record, FlatFileDataReaderOptions options = null! )
         {
             var reader = new FlatFileDataReader( new DelimitedReader( new StringReader( record + "\n" ), Schema() ), options );
             Assert.IsTrue( reader.Read() );

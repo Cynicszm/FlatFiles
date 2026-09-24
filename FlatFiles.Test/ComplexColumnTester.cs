@@ -33,7 +33,7 @@ namespace FlatFiles.Test
             Assert.AreEqual( "Tom", values[0] );
             Assert.AreEqual( "Hanselman", values[1] );
             Assert.IsInstanceOfType( values[2], typeof( object[] ) );
-            var playerValues = (object[]) values[2];
+            var playerValues = (object[]) values[2]!;
             Assert.AreEqual( new DateTime( 2016, 06, 04 ), playerValues[0] );
             Assert.AreEqual( 26, playerValues[1] );
             Assert.AreEqual( "Walking Ice", playerValues[2] );
@@ -87,13 +87,13 @@ namespace FlatFiles.Test
 
         public class Player
         {
-            public string FirstName { get; set; }
+            public string FirstName { get; set; } = string.Empty;
 
-            public string LastName { get; set; }
+            public string LastName { get; set; } = string.Empty;
 
-            public Stats Statistics { get; set; }
+            public Stats Statistics { get; set; } = null!;
             
-            public string NickName { get; set; }
+            public string NickName { get; set; } = string.Empty;
         }
 
         public class Stats
@@ -102,7 +102,7 @@ namespace FlatFiles.Test
 
             public int Age { get; set; }
 
-            public string StageName { get; set; }
+            public string StageName { get; set; } = string.Empty;
         }
 
         [TestMethod]
@@ -166,18 +166,18 @@ namespace FlatFiles.Test
 
         internal class Person
         {
-            public string Name { get; set; }
+            public string Name { get; set; } = string.Empty;
 
-            public Pet Pet1 { get; set; }
+            public Pet Pet1 { get; set; } = null!;
 
-            public Pet Pet2 { get; set; }
+            public Pet Pet2 { get; set; } = null!;
         }
 
         internal class Pet
         {
-            public string Name { get; set; }
+            public string Name { get; set; } = string.Empty;
 
-            public string UniversalPetIdentifier { get; set; }
+            public string UniversalPetIdentifier { get; set; } = string.Empty;
         }
     }
 }

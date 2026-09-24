@@ -353,7 +353,7 @@ namespace FlatFiles.Test
 
         internal class Settable
         {
-            public string Name { get; set; }
+            public string Name { get; set; } = string.Empty;
 
             public int Count { get; set; }
         }
@@ -364,7 +364,7 @@ namespace FlatFiles.Test
             {
             }
 
-            public string Name { get; set; }
+            public string Name { get; set; } = string.Empty;
 
             public int Count { get; set; }
         }

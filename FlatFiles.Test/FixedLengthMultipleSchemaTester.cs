@@ -278,15 +278,15 @@ namespace FlatFiles.Test
             Assert.AreEqual( expected, stringWriter.ToString() );
         }
 
-        private static void WriteProperty( IColumnContext ctx, object record, object[] values )
+        private static void WriteProperty( IColumnContext? ctx, object? record, object?[] values )
         {
-            var prop = record.GetType().GetProperties()[ctx.LogicalIndex];
-            values[ctx.LogicalIndex] = prop.GetValue( record, null );
+            var prop = record!.GetType().GetProperties()[ctx!.LogicalIndex];
+            values[ctx.LogicalIndex] = prop.GetValue( record, null )!;
         }
 
         public class HeaderRecord
         {
-            public string BatchName { get; set; }
+            public string BatchName { get; set; } = string.Empty;
 
             public int RecordCount { get; set; }
         }
@@ -304,7 +304,7 @@ namespace FlatFiles.Test
         {
             public int Id { get; set; }
 
-            public string Name { get; set; }
+            public string Name { get; set; } = string.Empty;
 
             public DateTime? CreatedOn { get; set; }
 
@@ -313,14 +313,14 @@ namespace FlatFiles.Test
 
         public class Header
         {
-            public string Name { get; set; }
+            public string Name { get; set; } = string.Empty;
             public DateTime DateCreated { get; set; }
         }
 
         public class DetailRow
         {
             public long CustomerId { get; set; }
-            public string Name2 { get; set; }
+            public string Name2 { get; set; } = string.Empty;
             public DateTime Created { get; set; }
             public decimal AverageSales { get; set; }
         }

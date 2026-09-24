@@ -161,7 +161,7 @@ namespace FlatFiles.Test
             var reader = new DelimitedReader( stringReader, options );
             object[][] expected =
             [
-                [ null, null ]
+                [ null!, null! ]
             ];
             AssertRecords( expected, reader );
         }
@@ -175,8 +175,8 @@ namespace FlatFiles.Test
             var reader = new DelimitedReader( stringReader, options );
             object[][] expected =
             [
-                [ null, null, null ],
-                [ null, null, null ]
+                [ null!, null!, null! ],
+                [ null!, null!, null! ]
             ];
             AssertRecords( expected, reader );
         }
@@ -190,7 +190,7 @@ namespace FlatFiles.Test
             var reader = new DelimitedReader( stringReader, options );
             object[][] expected =
             [
-                [ null ]
+                [ null! ]
             ];
             AssertRecords( expected, reader );
         }
@@ -204,8 +204,8 @@ namespace FlatFiles.Test
             var reader = new DelimitedReader( stringReader, options );
             object[][] expected =
             [
-                [ null ],
-                [ null ]
+                [ null! ],
+                [ null! ]
             ];
             AssertRecords( expected, reader );
         }
@@ -428,7 +428,7 @@ namespace FlatFiles.Test
             var reader = new DelimitedReader( stringReader, options );
             object[][] expected =
             [
-                [ null ]
+                [ null! ]
             ];
             AssertRecords( expected, reader );
         }
@@ -711,29 +711,29 @@ When he's not traveling, he's at home with his lovely wife, children and leather
                 [
                     "26087",
                     "C Country C",
-                    null,
+                    null!,
                     "1",
                     "3",
                     "7",
                     "Randy E",
                     "(555) 555-5500",
-                    null,
+                    null!,
                     "P.O.Box 60,",
-                    null,
-                    null,
+                    null!,
+                    null!,
                     "Woodsland",
                     "CA",
                     "56281",
-                    null,
-                    null,
-                    null,
+                    null!,
+                    null!,
+                    null!,
                     "0292315c-0daa-df11-9397-0019b9e7d4cd",
-                    null,
+                    null!,
                     "0",
                     "8713cbdd-fb50-dc11-a545-000423c05bf1",
                     "40",
                     "79527",
-                    null,
+                    null!,
                     "False"
                 ]
             ];
@@ -824,7 +824,7 @@ When he's not traveling, he's at home with his lovely wife, children and leather
             Assert.IsFalse( reader.Read(), "There were more records read than expected." );
         }
 
-        private static void AssertRecord( object[] expected, object[] actual )
+        private static void AssertRecord( object?[] expected, object?[] actual )
         {
             CollectionAssert.AreEqual( expected, actual );
         }
