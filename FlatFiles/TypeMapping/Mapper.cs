@@ -1,4 +1,5 @@
 ﻿using System;
+using FlatFiles.CodeGeneration;
 using System.Linq;
 using System.Reflection;
 
@@ -91,7 +92,7 @@ namespace FlatFiles.TypeMapping
         {
             // Held on to: the emit code generator defines a type for every factory it is asked for, and this is
             // called once per record.
-            cachedFactory ??= lookup.GetFactory<TEntity>() ?? generator.GetFactory<TEntity>();
+            cachedFactory ??= lookup.GetFactory<TEntity>() ?? MappingAccessors.Factory<TEntity>() ?? generator.GetFactory<TEntity>();
             return cachedFactory();
         }
 
@@ -115,8 +116,9 @@ namespace FlatFiles.TypeMapping
         private IColumnSetter<TEntity>[]? BuildColumnSetters()
         {
             // Building one of these closes a generic type over the column's type, which a runtime without dynamic
-            // code cannot do for a value type it was not built with.
-            if (!DynamicCode.IsSupported || typeof( TEntity ).IsValueType || Member is not null)
+            // code cannot do for a value type it was not built with - unless something registered the closed form
+            // at compile time, which is what MappingAccessors is for.
+            if ((!DynamicCode.IsSupported && !MappingAccessors.Covers( typeof( TEntity ) )) || typeof( TEntity ).IsValueType || Member is not null)
             {
                 return null;
             }
@@ -172,12 +174,27 @@ namespace FlatFiles.TypeMapping
                 return null;
             }
             var columnType = GetTypedColumnType( definition );
-            if (columnType is null || !SupportsTypedParse( definition ))
+            if (columnType is null || !definition.SupportsTypedParse)
             {
                 return null;
             }
             var valueType = columnType.GetGenericArguments()[0];
             var memberType = property.PropertyType;
+            var isNullable = valueType.IsValueType && memberType == typeof( Nullable<> ).MakeGenericType( valueType );
+            if (memberType == valueType || isNullable)
+            {
+                // Something may already hold this member's setter with its types closed, in which case nothing
+                // below has to be reached for - which is what makes this path available without dynamic code.
+                var registered = MappingAccessors.Setter<TEntity>( property.DeclaringType!, property.Name, definition, valueType, isNullable, mapping.Member );
+                if (registered is not null)
+                {
+                    return registered;
+                }
+            }
+            if (!DynamicCode.IsSupported)
+            {
+                return null;
+            }
             if (memberType == valueType)
             {
                 var assigner = assign.CreateDelegate( typeof( Action<,> ).MakeGenericType( typeof( TEntity ), valueType ) );
@@ -203,12 +220,6 @@ namespace FlatFiles.TypeMapping
                 }
             }
             return null;
-        }
-
-        private static bool SupportsTypedParse( ColumnDefinition definition )
-        {
-            var property = GetTypedColumnType( definition )!.GetProperty( "SupportsTypedParse", BindingFlags.Instance | BindingFlags.NonPublic );
-            return property?.GetValue( definition ) is true;
         }
 
         private IColumnSetter<TEntity>[]? cachedSetters;

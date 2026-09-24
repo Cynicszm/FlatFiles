@@ -41,6 +41,7 @@ If you are working with data classes, defining schemas is even easier. You can u
 * [Custom Mapping](#custom-mapping)
 * [Runtime Mapping](#runtime-mapping)
 * [Disabling Optimisation](#disabling-optimisation)
+* [Mapping Under Native AOT](#mapping-under-native-aot)
 * [Non-Public Classes and Members](#non-public-classes-and-members)
 * [ADO.NET DataTables](#adonet-datatables)
 * [FlatFileDataReader](#flatfiledatareader)
@@ -626,6 +627,30 @@ mapper.Property(x => x.Id);
 mapper.Property(x => x.Name);
 mapper.OptimiseMapping(false);  // Use normal reflection to get and set properties
 ```
+
+## Mapping Under Native AOT
+Where the runtime cannot generate code, a type mapper still works - it falls back to reflection, as described above - but it gives up the path that reads a record onto an entity without boxing any value. That path closes `ColumnSetter<TEntity, T>` over each column's type, which needs `MakeGenericType` and a delegate built from a `MethodInfo`, and neither is available for a value type the runtime was not built with.
+
+You can hand the mapper those accessors instead, and get the faster path back:
+
+```csharp
+using FlatFiles.CodeGeneration;
+
+MappingAccessors.AddFactory( () => new Customer() );
+MappingAccessors.AddSetter<Customer, int>( "CustomerId", ( e, v ) => e.CustomerId = v );
+MappingAccessors.AddSetter<Customer, string>( "Name", ( e, v ) => e.Name = v );
+MappingAccessors.AddNullableSetter<Customer, DateTime>( "Closed", ( e, v ) => e.Closed = v );
+```
+
+Each call closes its own generic types where you write it, which is why this works at all: nothing has to be closed later. Register once, before you read - a `[ModuleInitializer]` is the natural home - and nothing else about your mapping changes.
+
+Measured on 10,000 records of 13 columns with the dynamic-code switch off, a delimited read through a type mapper allocates 622 bytes a record unregistered and 359 registered. With the switch on the same read costs 362, so registering reaches what the runtime would have generated rather than approaching it. Where the runtime *can* generate code, registering makes no difference either way - the mapper was already on that path.
+
+Three things worth knowing:
+
+* Registering nothing changes nothing, so you can adopt this one type at a time, and a member you do not register is read exactly as it was.
+* A registration written for one column type is ignored where the mapping uses another, rather than failing part way through a read.
+* A member is registered against the type that **declares** it. A property hiding one of the same name on a base class is a registration of its own, named by the derived type.
 
 ## Non-Public Classes and Members
 Generated code lives in an assembly of its own, so it cannot see a class the rest of the world cannot see. As of FlatFiles 8.2.0 that is handled for you: mapping onto a type out of its reach uses reflection instead, which is slower per value and works, so nothing is needed to map onto an `internal` class. Before 8.2.0 it emitted a factory that could not reach the type, and the first record threw `MethodAccessException`.

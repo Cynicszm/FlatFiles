@@ -1,5 +1,17 @@
-﻿## 8.3.0 (planned)
-**Not released, and not started.** What is written here is the order the remaining work will be done in, kept with the releases so that the reasoning sits beside what it produced. Nothing below breaks anything, so none of it is waiting for a major version.
+﻿## 8.3.0 (unreleased)
+**Not released.** Being built. What is written up here has landed on master; what is under **Next** has not. Nothing in this release breaks anything.
+
+**A mapping can be handed its accessors instead of building them.** A type mapper reads a record onto an entity without boxing any value by closing `ColumnSetter<TEntity, T>` over each column's type. Doing that needs `MakeGenericType` and a delegate made from a `MethodInfo`, so a runtime without dynamic code cannot do it for a value type it was not built with - and under Native AOT the mapper has therefore fallen back to reflection and a box for every value since the path was added in 8.1.0. What 8.1.0 bought has never reached AOT at all.
+
+`FlatFiles.CodeGeneration.MappingAccessors` takes those accessors from the caller instead. `AddSetter<TEntity, T>`, `AddNullableSetter<TEntity, T>` and `AddFactory<TEntity>` each close their generic types where they are written, which is the whole mechanism: nothing is closed later, so nothing has to be closed at run time.
+
+Measured on 10,000 records of 13 columns with the dynamic-code switch off, a delimited read through a type mapper allocated 622 bytes a record and now allocates 359 where the members are registered; fixed-length, 1,062 and now 727. The same reads with the switch on cost 362 and 730, so registered accessors reach the path the runtime would have generated rather than approaching it. With the switch on nothing changes, registered or not.
+
+Registering nothing changes nothing, which is what makes this safe to adopt a type at a time. So does registering the wrong thing: a registration written for a column of another type is refused where it is looked up, and the mapping builds its own accessor as it would have anyway. A member is registered against the type that **declares** it, so a property hiding one of the same name on a base class is a registration of its own.
+
+This is the half of the source generator that has to exist before the generator can emit anything, and it is useful without it: a caller under AOT can write the registrations by hand today. The generator will write the same calls from a module initialiser, and these registrations are what its output is checked against.
+
+**A column is no longer asked by reflection whether it can be parsed into its own type.** `Mapper` held columns as the non-generic `ColumnDefinition` and read `SupportsTypedParse` off the generic subclass through `GetProperty( ..., NonPublic )`. A trimmer is free to remove that property, and a lookup that comes back empty reads as "no" - so the faster path would have switched itself off silently under trimming, which is the same configuration this release is trying to reach. It is declared on the base class now and answered by the column that knows its type.
 
 ### Next
 

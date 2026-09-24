@@ -222,6 +222,18 @@ namespace FlatFiles
                 ?? context?.RecordContext.ExecutionContext.Options.FormatProvider
                 ?? CultureInfo.CurrentCulture;
         }
+
+        /// <summary>
+        ///     Whether this column can be parsed into its own type without going through <see cref="object" />.
+        ///     False here, and answered by the column that knows its type.
+        /// </summary>
+        /// <remarks>
+        ///     Declared on this class rather than the generic one so that a mapper, which holds columns as this
+        ///     type, can ask without reflection. It used to ask by name through <c>GetProperty</c>, which a trimmer
+        ///     is free to remove - and a lookup that comes back empty reads as "no", so the faster path would have
+        ///     switched itself off silently in the one configuration it exists for.
+        /// </remarks>
+        internal virtual bool SupportsTypedParse => false;
     }
 
     /// <summary>
@@ -307,13 +319,13 @@ namespace FlatFiles
             return OnParse( context, IsTrimmed ? value.Trim() : value );
         }
 
-        /// <summary>
-        ///     Whether this column can be parsed into <typeparamref name="T" /> without going through
-        ///     <see cref="object" />. It cannot when anything in the way expects a value of that shape: either of the
-        ///     parsing hooks, which are declared in terms of <see cref="object" /> and <see cref="string" />, or a
-        ///     derived column that replaced one of the <c>Parse</c> methods and so must see every value itself.
-        /// </summary>
-        internal bool SupportsTypedParse => OnParsing is null && OnParsed is null && !OverridesStringParse && !OverridesSpanParse;
+        /// <inheritdoc />
+        /// <remarks>
+        ///     It cannot when anything in the way expects a value of that shape: either of the parsing hooks, which
+        ///     are declared in terms of <see cref="object" /> and <see cref="string" />, or a derived column that
+        ///     replaced one of the <c>Parse</c> methods and so must see every value itself.
+        /// </remarks>
+        internal override bool SupportsTypedParse => OnParsing is null && OnParsed is null && !OverridesStringParse && !OverridesSpanParse;
 
         /// <summary>
         ///     Parses the value into the column's own type rather than into an object. Only valid where
