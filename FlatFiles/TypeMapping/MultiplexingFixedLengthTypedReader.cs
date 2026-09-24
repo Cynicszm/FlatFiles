@@ -4,9 +4,10 @@ using System.Threading.Tasks;
 
 namespace FlatFiles.TypeMapping
 {
-    internal sealed class MultiplexingFixedLengthTypedReader( FixedLengthReader reader ) : IFixedLengthTypedReader<object>
+    internal sealed class MultiplexingFixedLengthTypedReader( FixedLengthReader reader ) : IFixedLengthTypedReader<object>, IEntityAssembler
     {
         private object? current;
+        private bool hasAssembled;
 
         public IReader Reader => reader;
 
@@ -16,6 +17,30 @@ namespace FlatFiles.TypeMapping
         public object Current => current!;
 
         public Func<IRecordContext, object?[], object?>? Deserializer { get; set; }
+
+        /// <summary>
+        ///     The assembler for the layout the current record matched, set as the schema is selected. Null until
+        ///     a record matches, and null throughout where the mappings cannot all be read this way.
+        /// </summary>
+        public IObjectAssembler? Assembler { get; set; }
+
+        /// <summary>
+        ///     Takes each record onto an entity directly, in place of the reader parsing it into an array of
+        ///     objects for a deserialiser to unbox. Installed only where every mapping behind this reader can be
+        ///     read that way, since the reader takes this path for every record once it has one.
+        /// </summary>
+        public void Install()
+        {
+            reader.Assembler = this;
+        }
+
+        void IEntityAssembler.Assemble( IRecoverableRecordContext context, Schema schema, RawRecord values )
+        {
+            // No matcher accepted the record; the values path raises this, and so must this one.
+            var assembler = Assembler ?? throw new FlatFileException( Properties.Resources.MissingMatcher );
+            assembler.Assemble( context, schema, values );
+            hasAssembled = true;
+        }
 
         public event EventHandler<FixedLengthRecordReadEventArgs>? RecordRead
         {
@@ -91,6 +116,13 @@ namespace FlatFiles.TypeMapping
 
         private void SetCurrent()
         {
+            if (hasAssembled)
+            {
+                // The record went straight onto an entity; there is nothing to deserialise.
+                current = Assembler!.Take();
+                hasAssembled = false;
+                return;
+            }
             var values = reader.GetValues();
             IReaderWithMetadata metadataReader = reader;
             var recordContext = metadataReader.GetMetadata();

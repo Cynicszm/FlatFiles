@@ -13,47 +13,57 @@ The unit tests check what a read produces rather than what it costs, so a read t
 
 The integration check reads its six files through schemas rather than type mappers, so nothing it gates touches the mapped path; it reported six files whose cost had not moved, correctly, about reads that were never affected. It now reads each file a fourth way, `mapper`, onto entities through a type mapper, and the tables carry it. Against `Set1Sample3` that scenario reports 184 bytes a record and about a second; with the factory built per record it reports 4,442 bytes a record and takes 150 seconds.
 
-The two formats do not cover the same ground there, which is worth knowing before trusting the figures. A delimited mapper reads through the path that sets each member without boxing the value. A fixed-length file of several record layouts has to be read through `FixedLengthTypeMapperSelector`, which multiplexes deserialisers over a shared values array and never takes that path - so the factory built per record moved the delimited figures twenty-four fold and the fixed-length ones not at all. Making a mapper selector take the same path as a mapper is worth doing and is not done here.
+Adding that scenario showed up two more things, both fixed below: a fixed-length file of several layouts was read onto entities through a path that boxed every value, and a type the generated code cannot see was not read onto at all.
 
-The baseline moves with this release, the samples having gained a scenario rather than changed. The `parse`, `typed` and `values` figures are where 8.1.0 left them, as they read through a schema and nothing here touches that; `mapper` is new, and is the row a change to the mapping path now has to move past.
+**A fixed-length file of several record layouts is read onto entities without boxing its values.** A file whose records follow more than one layout is read through `FixedLengthTypeMapperSelector`, which picks a mapper per record by looking at the record and hands the work to a deserialiser reading an array of parsed values. That array is what 8.1.0 stopped a plain mapper needing, and a selector kept needing it: every value boxed on its way to a property, and the array copied once more for the selector to read. Since the reader now says which schema matched when it hands a record over, a selector can hold one setter list per mapper and use the one the matched schema belongs to. Measured against the integration samples, `Set2Sample1` went from 2,086 bytes a record to 1,908 and from 709 ms to 448, `Set2Sample3` from 1,045 to 829, and `Set2Sample2` from 8,339 to 8,172.
+
+It is all of them or none. The reader takes that path for every record once it has been given an assembler, so a selector holding one mapping that cannot be read that way - a custom reader, a nested entity, anything the mapper already refuses - puts every mapping behind it back on the values path. Five tests read the same records both ways and check the entities match.
+
+A delimited selector cannot do the same, and the reason is in its shape rather than in the work: its predicates are handed the record's values, so the reader has to parse them into an array before it can choose a schema at all, and once that array exists there is nothing to save. A predicate given the record's text instead would settle it, which is a change to the selector's surface rather than to a reader, and is on the list below.
+
+**A type the generated code cannot see is mapped rather than refused.** The emit code generator checks whether a constructor is public before emitting a call to it, and did not ask the same of the type. Mapping onto an internal class with an ordinary public constructor therefore emitted a factory that could not reach it, and the first record threw `MethodAccessException` from generated code - nothing a caller could act on, and nothing that said what to do about it. A mapping onto a type out of the generated code's reach now uses the reflection code generator, which is slower per value and works, exactly as a private constructor already did.
+
+An assembly can let the generated code in by naming `FlatFiles.DynamicAssembly` in an `InternalsVisibleTo`, and one that has is taken at its word: its internal types keep the faster path. That is not a footnote - this repository's own test assembly does it, which is why an internal entity worked in every test ever written here and failed the moment it was tried anywhere else. Five tests now map onto a private nested type, which no `InternalsVisibleTo` can open up.
+
+The baseline moves with this release. The `parse`, `typed` and `values` figures are where 8.1.0 left them, as they read through a schema and nothing here touches that. `mapper` is new, and its fixed-length rows already carry a change: they are what a selector costs now that it reads onto entities directly.
 
 **Delimited**
 
 | Sample | Columns | Records | Scenario | Mean Total Time | Range | MB/s | Bytes/record | Peak heap | Peak working set |
 | --- | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| S1/S1 | 379 | 37,031 | `parse` | 1.40 s | 1.36 s - 1.45 s | 26.3 | 5,685 | 13.5 MB | 49.5 MB |
-| S1/S1 | 379 | 37,031 | `typed` | 1.71 s | 1.64 s - 1.80 s | 21.5 | 5,629 | 13.6 MB | 50.7 MB |
-| S1/S1 | 379 | 37,031 | `values` | 1.67 s | 1.60 s - 1.71 s | 22.1 | 8,685 | 13.5 MB | 51.2 MB |
-| S1/S1 | 379 | 37,031 | `mapper` | 1.21 s | 1.17 s - 1.23 s | 30.3 | 221 | 9.0 MB | 47.5 MB |
+| S1/S1 | 379 | 37,031 | `parse` | 1.37 s | 1.32 s - 1.39 s | 26.8 | 5,685 | 13.5 MB | 49.5 MB |
+| S1/S1 | 379 | 37,031 | `typed` | 1.61 s | 1.58 s - 1.67 s | 22.8 | 5,629 | 13.6 MB | 51.1 MB |
+| S1/S1 | 379 | 37,031 | `values` | 1.59 s | 1.55 s - 1.63 s | 23.1 | 8,685 | 13.5 MB | 51.1 MB |
+| S1/S1 | 379 | 37,031 | `mapper` | 1.17 s | 1.12 s - 1.20 s | 31.4 | 221 | 9.0 MB | 47.6 MB |
 | | | | | | | | | | |
-| S1/S2 | 58 | 344,352 | `parse` | 1.57 s | 1.54 s - 1.60 s | 64.7 | 1,414 | 13.4 MB | 49.4 MB |
-| S1/S2 | 58 | 344,352 | `typed` | 2.03 s | 1.92 s - 2.19 s | 50.1 | 1,338 | 13.5 MB | 51.0 MB |
-| S1/S2 | 58 | 344,352 | `values` | 2.02 s | 1.93 s - 2.05 s | 50.3 | 1,826 | 13.4 MB | 51.1 MB |
-| S1/S2 | 58 | 344,352 | `mapper` | 1.38 s | 1.34 s - 1.42 s | 73.7 | 196 | 13.5 MB | 52.9 MB |
+| S1/S2 | 58 | 344,352 | `parse` | 1.53 s | 1.45 s - 1.57 s | 66.5 | 1,414 | 13.4 MB | 49.2 MB |
+| S1/S2 | 58 | 344,352 | `typed` | 1.79 s | 1.74 s - 1.84 s | 56.8 | 1,338 | 13.4 MB | 50.9 MB |
+| S1/S2 | 58 | 344,352 | `values` | 1.79 s | 1.76 s - 1.82 s | 56.7 | 1,826 | 13.4 MB | 51.1 MB |
+| S1/S2 | 58 | 344,352 | `mapper` | 1.33 s | 1.29 s - 1.37 s | 76.1 | 196 | 13.5 MB | 52.7 MB |
 | | | | | | | | | | |
-| S1/S3 | 196 | 39,337 | `parse` | 1.27 s | 1.20 s - 1.34 s | 35.1 | 3,528 | 13.4 MB | 48.1 MB |
-| S1/S3 | 196 | 39,337 | `typed` | 1.54 s | 1.48 s - 1.71 s | 29.0 | 2,988 | 13.5 MB | 51.9 MB |
-| S1/S3 | 196 | 39,337 | `values` | 1.65 s | 1.60 s - 1.70 s | 27.0 | 4,580 | 13.5 MB | 51.9 MB |
-| S1/S3 | 196 | 39,337 | `mapper` | 1.12 s | 1.10 s - 1.14 s | 40.0 | 200 | 8.7 MB | 47.4 MB |
+| S1/S3 | 196 | 39,337 | `parse` | 1.24 s | 1.16 s - 1.27 s | 36.1 | 3,528 | 13.5 MB | 48.3 MB |
+| S1/S3 | 196 | 39,337 | `typed` | 1.56 s | 1.50 s - 1.68 s | 28.6 | 2,988 | 13.5 MB | 51.7 MB |
+| S1/S3 | 196 | 39,337 | `values` | 1.49 s | 1.44 s - 1.55 s | 30.0 | 4,580 | 13.5 MB | 51.9 MB |
+| S1/S3 | 196 | 39,337 | `mapper` | 1.09 s | 1.08 s - 1.10 s | 41.1 | 200 | 8.7 MB | 47.4 MB |
 
 **Fixed-length**
 
 | Sample | Columns | Records | Scenario | Mean Total Time | Range | MB/s | Bytes/record | Peak heap | Peak working set |
 | --- | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| S2/S1 | 172 | 22,481 | `parse` | 685 ms | 512 ms - 748 ms | 23.5 | 3,759 | 13.8 MB | 48.1 MB |
-| S2/S1 | 172 | 22,481 | `typed` | 734 ms | 681 ms - 795 ms | 22.0 | 3,598 | 13.8 MB | 50.8 MB |
-| S2/S1 | 172 | 22,481 | `values` | 831 ms | 824 ms - 848 ms | 19.4 | 4,306 | 13.8 MB | 51.1 MB |
-| S2/S1 | 172 | 22,481 | `mapper` | 603 ms | 506 ms - 752 ms | 26.7 | 2,086 | 14.0 MB | 52.7 MB |
+| S2/S1 | 172 | 22,481 | `parse` | 494 ms | 453 ms - 598 ms | 32.6 | 3,759 | 13.8 MB | 48.0 MB |
+| S2/S1 | 172 | 22,481 | `typed` | 601 ms | 552 ms - 697 ms | 26.8 | 3,598 | 13.7 MB | 50.8 MB |
+| S2/S1 | 172 | 22,481 | `values` | 582 ms | 567 ms - 597 ms | 27.7 | 4,305 | 13.7 MB | 50.9 MB |
+| S2/S1 | 172 | 22,481 | `mapper` | 468 ms | 455 ms - 494 ms | 34.4 | 1,908 | 14.0 MB | 54.3 MB |
 | | | | | | | | | | |
-| S2/S2 | 235 | 1,790 | `parse` | 137 ms | 127 ms - 148 ms | 43.6 | 12,089 | 12.5 MB | 45.6 MB |
-| S2/S2 | 235 | 1,790 | `typed` | 164 ms | 159 ms - 166 ms | 36.5 | 11,266 | 12.7 MB | 47.5 MB |
-| S2/S2 | 235 | 1,790 | `values` | 161 ms | 157 ms - 166 ms | 37.2 | 13,171 | 12.9 MB | 47.7 MB |
-| S2/S2 | 235 | 1,790 | `mapper` | 157 ms | 152 ms - 163 ms | 38.0 | 8,339 | 12.3 MB | 49.7 MB |
+| S2/S2 | 235 | 1,790 | `parse` | 127 ms | 113 ms - 170 ms | 47.0 | 12,090 | 13.0 MB | 45.5 MB |
+| S2/S2 | 235 | 1,790 | `typed` | 145 ms | 136 ms - 162 ms | 41.2 | 11,269 | 12.8 MB | 47.6 MB |
+| S2/S2 | 235 | 1,790 | `values` | 150 ms | 136 ms - 175 ms | 39.9 | 13,169 | 13.0 MB | 47.6 MB |
+| S2/S2 | 235 | 1,790 | `mapper` | 150 ms | 144 ms - 152 ms | 39.9 | 8,172 | 12.5 MB | 50.1 MB |
 | | | | | | | | | | |
-| S2/S3 | 34 | 18,047 | `parse` | 168 ms | 163 ms - 173 ms | 25.9 | 1,882 | 13.4 MB | 46.2 MB |
-| S2/S3 | 34 | 18,047 | `typed` | 220 ms | 213 ms - 231 ms | 19.7 | 1,648 | 13.3 MB | 48.4 MB |
-| S2/S3 | 34 | 18,047 | `values` | 223 ms | 215 ms - 227 ms | 19.4 | 1,916 | 13.4 MB | 48.4 MB |
-| S2/S3 | 34 | 18,047 | `mapper` | 206 ms | 197 ms - 217 ms | 21.1 | 1,045 | 12.8 MB | 49.8 MB |
+| S2/S3 | 34 | 18,047 | `parse` | 173 ms | 157 ms - 184 ms | 25.1 | 1,882 | 13.0 MB | 46.4 MB |
+| S2/S3 | 34 | 18,047 | `typed` | 303 ms | 260 ms - 356 ms | 14.3 | 1,648 | 13.2 MB | 48.4 MB |
+| S2/S3 | 34 | 18,047 | `values` | 249 ms | 230 ms - 264 ms | 17.4 | 1,916 | 12.9 MB | 48.5 MB |
+| S2/S3 | 34 | 18,047 | `mapper` | 199 ms | 193 ms - 210 ms | 21.7 | 829 | 13.0 MB | 50.2 MB |
 
 Each row is one sample loaded 5 times, each in a process of its own that starts, reads the file once and
 exits - which is how the library is mostly used - and the figures are the mean of those 5. Everything a
@@ -84,7 +94,6 @@ the range shows what is left. `FlatFiles.Benchmark` is the project that measures
 statistics rather than a mean; these figures are the other question - what one job costs end to end - and
 show the shape of the work rather than a number to compare release to release, which is why neither Mean
 Total Time nor MB/s is gated.
-
 ### Next
 
 In the order they will be built. None of these breaks anything, so none of them is waiting for a major version.
@@ -103,8 +112,7 @@ In the order they will be built. None of these breaks anything, so none of them 
 
   What is wanted is one way of saying it on both readers: refuse a short record or pad it, refuse a long one or discard the surplus, with the current behaviour as the default so nothing changes for anyone who does not ask. Whatever is chosen has to be visible - a record silently read one column out of step is the worst of the available outcomes, and is what happens now.
 
-- **A mapper selector should read the way a mapper does.** `FixedLengthTypeMapperSelector` multiplexes a deserialiser per matched layout over a shared values array, so a file of several record layouts read onto entities never takes the path that sets each member without boxing the value - the path 8.1.0 added and the one a delimited mapper takes. A caller whose fixed-length file has more than one layout, which is most of the reason to have a selector, gets none of it. Found by putting a mapped read into the integration check: the factory built per record moved the delimited figures twenty-four fold and the fixed-length ones not at all, because the fixed-length ones were never on that path.
-- **An internal entity type cannot be mapped when mapping is optimised.** The emit code generator checks whether a constructor is public before emitting a call to it, but not whether the type is, so a mapping onto an internal class with an ordinary public constructor emits a factory that cannot reach it and throws `MethodAccessException` on the first record. The reflective fallback next to it is the answer; it is the visibility of the type that has to be asked about as well. Nothing in the suite maps onto an internal type, which is why this has been true for as long as the check has been there.
+- **A delimited selector should be able to match on the record's text.** `DelimitedTypeMapperSelector` and `DelimitedSchemaSelector` are given each record's values to choose a schema by, so the reader has to parse a record into an array of values before it can decide what the record is - which is the one thing that stops a selected delimited mapping being read straight onto an entity, as a fixed-length one now is. A predicate over the record's text, beside the one over its values, would leave the choice to the caller: match on text and keep the faster path, or match on values and pay for them.
 
 **Considered and already covered.** Seven more ideas came out of the same review and turned out to need no work. They are recorded so that nobody spends an afternoon rediscovering it.
 

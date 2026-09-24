@@ -6,6 +6,13 @@ namespace FlatFiles.TypeMapping
 {
     internal sealed class Mapper<TEntity>( MemberLookup lookup, ICodeGenerator codeGenerator, IMemberAccessor? member ) : IMapper<TEntity>
     {
+        // Emitted code cannot reach a type the rest of the world cannot see, and finds out by throwing from
+        // generated code on the first record. Where the entity is out of its reach the mapping is read
+        // reflectively, which is slower per value and works.
+        private readonly ICodeGenerator generator = TypeVisibility.IsAccessible( typeof( TEntity ) )
+            ? codeGenerator
+            : new ReflectionCodeGenerator();
+
         private Func<IRecordContext, object?[], TEntity>? cachedReader;
         private Action<IRecordContext, TEntity, object?[]>? cachedWriter;
 
@@ -33,7 +40,7 @@ namespace FlatFiles.TypeMapping
             var build = Builder( supplied, constructorMapping );
 
             var memberMappings = GetReaderMemberMappings( mappings, constructorMapping );
-            var deserializer = codeGenerator.GetReader<TEntity>( memberMappings );
+            var deserializer = generator.GetReader<TEntity>( memberMappings );
             var nestedMappers = GetNestedMappers( mappings );
             if (nestedMappers.Length != 0)
             {
@@ -74,9 +81,9 @@ namespace FlatFiles.TypeMapping
             }
             if (constructorMapping is not null)
             {
-                return codeGenerator.GetConstructor<TEntity>( constructorMapping );
+                return generator.GetConstructor<TEntity>( constructorMapping );
             }
-            var factory = codeGenerator.GetFactory<TEntity>();
+            var factory = generator.GetFactory<TEntity>();
             return _ => factory();
         }
 
@@ -84,7 +91,7 @@ namespace FlatFiles.TypeMapping
         {
             // Held on to: the emit code generator defines a type for every factory it is asked for, and this is
             // called once per record.
-            cachedFactory ??= lookup.GetFactory<TEntity>() ?? codeGenerator.GetFactory<TEntity>();
+            cachedFactory ??= lookup.GetFactory<TEntity>() ?? generator.GetFactory<TEntity>();
             return cachedFactory();
         }
 
@@ -206,6 +213,12 @@ namespace FlatFiles.TypeMapping
 
         private IColumnSetter<TEntity>[]? cachedSetters;
 
+        IObjectAssembler? IMapper.GetAssembler()
+        {
+            var setters = GetColumnSetters();
+            return setters is null ? null : new ObjectAssembler<TEntity>( this, setters );
+        }
+
         Func<IRecordContext, object?[], object?> IMapper.GetReader()
         {
             var reader = GetReader();
@@ -220,7 +233,7 @@ namespace FlatFiles.TypeMapping
             }
             var mappings = lookup.GetMappings();
             var memberMappings = GetWriterMemberMappings( mappings );
-            var serializer = codeGenerator.GetWriter<TEntity>( memberMappings );
+            var serializer = generator.GetWriter<TEntity>( memberMappings );
             var nestedMappers = GetNestedMappers( mappings );
             if (nestedMappers.Length != 0)
             {
@@ -308,7 +321,7 @@ namespace FlatFiles.TypeMapping
         {
             var entityType = childMember.Type;
             var mapperType = typeof( Mapper<> ).MakeGenericType( entityType );
-            var mapper = (IMapper) Activator.CreateInstance( mapperType, lookup, codeGenerator, childMember )!;
+            var mapper = (IMapper) Activator.CreateInstance( mapperType, lookup, generator, childMember )!;
             return mapper;
         }
     }

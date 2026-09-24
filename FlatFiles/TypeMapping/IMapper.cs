@@ -11,6 +11,14 @@ namespace FlatFiles.TypeMapping
         Func<IRecordContext, object?[], object?> GetReader();
 
         Action<IRecordContext, object?, object?[]> GetWriter();
+
+        /// <summary>
+        ///     Something to read a record onto an entity with, without any value becoming an <see cref="object" />,
+        ///     or null where this mapping cannot be read that way. For a reader that knows the entity only as an
+        ///     object, which is what a mapper selector leaves it as.
+        /// </summary>
+        /// <returns>The assembler, or null to read through the array of parsed values as before.</returns>
+        IObjectAssembler? GetAssembler();
     }
 
     internal interface IMapper<TEntity> : IMapper
