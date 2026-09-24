@@ -82,9 +82,13 @@ namespace FlatFiles.TypeMapping
 
         public TEntity CreateEntity()
         {
-            var factory = lookup.GetFactory<TEntity>() ?? codeGenerator.GetFactory<TEntity>();
-            return factory();
+            // Held on to: the emit code generator defines a type for every factory it is asked for, and this is
+            // called once per record.
+            cachedFactory ??= lookup.GetFactory<TEntity>() ?? codeGenerator.GetFactory<TEntity>();
+            return cachedFactory();
         }
+
+        private Func<TEntity>? cachedFactory;
 
         /// <summary>
         ///     Builds one setter per column, or answers null where anything about the mapping means a value has to
