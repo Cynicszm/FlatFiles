@@ -631,7 +631,11 @@ mapper.OptimiseMapping(false);  // Use normal reflection to get and set properti
 ## Mapping Under Native AOT
 Where the runtime cannot generate code, a type mapper still works - it falls back to reflection, as described above - but it gives up the path that reads a record onto an entity without boxing any value. That path closes `ColumnSetter<TEntity, T>` over each column's type, which needs `MakeGenericType` and a delegate built from a `MethodInfo`, and neither is available for a value type the runtime was not built with.
 
-You can hand the mapper those accessors instead, and get the faster path back:
+**This is handled for you.** The package carries a source generator that looks for the calls naming an entity - `Define<T>()` and `DefineDynamic( typeof( T ) )` - and writes those accessors for each type it finds, registering them from a module initialiser. You do nothing, and a mapped read costs what it costs where the runtime can generate code.
+
+It tells you, at information level, about any member it could not write for and why: no setter, a setter that is not public, an init-only setter, or a type no column reads. Those members are read the slower way, which is what would have happened anyway.
+
+Where the generator cannot see a mapping - a type named only at run time, or one from an assembly that does not reference this package - you can register the accessors yourself:
 
 ```csharp
 using FlatFiles.CodeGeneration;
@@ -642,7 +646,7 @@ MappingAccessors.AddSetter<Customer, string>( "Name", ( e, v ) => e.Name = v );
 MappingAccessors.AddNullableSetter<Customer, DateTime>( "Closed", ( e, v ) => e.Closed = v );
 ```
 
-Each call closes its own generic types where you write it, which is why this works at all: nothing has to be closed later. Register once, before you read - a `[ModuleInitializer]` is the natural home - and nothing else about your mapping changes.
+Each call closes its own generic types where you write it, which is why this works at all: nothing has to be closed later. Register once, before you read - a `[ModuleInitializer]` is the natural home, and is where the generator puts its own - and nothing else about your mapping changes.
 
 Measured on 10,000 records of 13 columns with the dynamic-code switch off, a delimited read through a type mapper allocates 622 bytes a record unregistered and 359 registered. With the switch on the same read costs 362, so registering reaches what the runtime would have generated rather than approaching it. Where the runtime *can* generate code, registering makes no difference either way - the mapper was already on that path.
 
