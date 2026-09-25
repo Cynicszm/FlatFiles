@@ -34,7 +34,7 @@ namespace FlatFiles.Generator
         private static readonly DiagnosticDescriptor MemberNotWritten = new(
             "FF1001",
             "A member has no generated accessor",
-            "'{0}.{1}' has no generated setter, because {2}; a mapping that uses it builds one at run time instead",
+            "'{0}.{1}' has no generated accessor for being {2}, because {3}; a mapping that uses it builds one at run time instead",
             "FlatFiles.Mapping",
             DiagnosticSeverity.Info,
             true );
@@ -189,26 +189,36 @@ namespace FlatFiles.Generator
         private static MappedMember Member( IPropertySymbol property )
         {
             var where = Position( property );
-            if (property.SetMethod is not { } setter)
+            var underlying = Underlying( property.Type );
+            var carried = underlying ?? property.Type;
+            // The type stops both directions at once, so it is asked about first and answered once.
+            if (!CanBeCarriedBy( carried ))
             {
-                return MappedMember.Refused( property.Name, "it has no setter", where );
-            }
-            if (setter.DeclaredAccessibility != Accessibility.Public)
-            {
-                return MappedMember.Refused( property.Name, "its setter is not public", where );
-            }
-            if (setter.IsInitOnly)
-            {
-                return MappedMember.Refused( property.Name, "its setter is init-only, and can only be used while the entity is being built", where );
+                return MappedMember.Refused( property.Name, $"no column reads or writes {carried.ToDisplayString()}", where );
             }
 
-            var underlying = Underlying( property.Type );
-            var parsed = underlying ?? property.Type;
-            if (!CanBeParsedTo( parsed ))
+            var setterRefusal = property.SetMethod switch
             {
-                return MappedMember.Refused( property.Name, $"no column parses to {parsed.ToDisplayString()}", where );
-            }
-            return MappedMember.Writable( property.Name, parsed.ToDisplayString( SymbolDisplayFormat.FullyQualifiedFormat ), underlying is not null );
+                null => "it has no setter",
+                { DeclaredAccessibility: not Accessibility.Public } => "its setter is not public",
+                { IsInitOnly: true } => "its setter is init-only, and can only be used while the entity is being built",
+                _ => null
+            };
+            var getterRefusal = property.GetMethod switch
+            {
+                null => "it has no getter",
+                { DeclaredAccessibility: not Accessibility.Public } => "its getter is not public",
+                _ => null
+            };
+
+            return MappedMember.Accessible( property.Name,
+                carried.ToDisplayString( SymbolDisplayFormat.FullyQualifiedFormat ),
+                underlying is not null,
+                setterRefusal is null,
+                getterRefusal is null,
+                setterRefusal,
+                getterRefusal,
+                where );
         }
 
         /// <summary>
@@ -224,10 +234,11 @@ namespace FlatFiles.Generator
         }
 
         /// <summary>
-        ///     Whether the library has a column that reads a value of this type. A member of any other type is
-        ///     left alone, since a registration nothing matches would be written and never used.
+        ///     Whether the library has a column that carries a value of this type, in either direction. A member
+        ///     of any other type is left alone, since a registration nothing matches would be written and never
+        ///     used.
         /// </summary>
-        private static bool CanBeParsedTo( ITypeSymbol type )
+        private static bool CanBeCarriedBy( ITypeSymbol type )
         {
             if (type.TypeKind == TypeKind.Enum)
             {
@@ -285,17 +296,23 @@ namespace FlatFiles.Generator
                 }
                 foreach (var member in entity.Members)
                 {
-                    if (member.Refusal is not null)
-                    {
-                        output.ReportDiagnostic( Diagnostic.Create( MemberNotWritten, Where( member.Position ), entity.QualifiedName, member.Name, member.Refusal ) );
-                    }
+                    Say( output, entity, member, member.SetterRefusal, "read onto" );
+                    Say( output, entity, member, member.GetterRefusal, "written from" );
                 }
-                var writable = entity.Members.Where( static x => x.Refusal is null ).ToImmutableArray();
-                if (!entity.CanBeConstructed && writable.Length == 0)
+                var usable = entity.Members.Where( static x => x.CanSet || x.CanGet ).ToImmutableArray();
+                if (!entity.CanBeConstructed && usable.Length == 0)
                 {
                     continue;
                 }
-                output.AddSource( $"{entity.HintName}.Accessors.g.cs", SourceText.From( Registrations( entity, writable ), Encoding.UTF8 ) );
+                output.AddSource( $"{entity.HintName}.Accessors.g.cs", SourceText.From( Registrations( entity, usable ), Encoding.UTF8 ) );
+            }
+        }
+
+        private static void Say( SourceProductionContext output, MappedEntity entity, MappedMember member, string? refusal, string direction )
+        {
+            if (refusal is not null)
+            {
+                output.ReportDiagnostic( Diagnostic.Create( MemberNotWritten, Where( member.Position ), entity.QualifiedName, member.Name, direction, refusal ) );
             }
         }
 
@@ -312,7 +329,7 @@ namespace FlatFiles.Generator
                     new LinePosition( position.EndLine, position.EndCharacter ) ) );
         }
 
-        private static string Registrations( MappedEntity entity, ImmutableArray<MappedMember> writable )
+        private static string Registrations( MappedEntity entity, ImmutableArray<MappedMember> usable )
         {
             var builder = new StringBuilder();
             builder.AppendLine( "// <auto-generated/>" );
@@ -330,10 +347,18 @@ namespace FlatFiles.Generator
             {
                 builder.AppendLine( $"            global::FlatFiles.CodeGeneration.MappingAccessors.AddFactory( static () => new {entity.QualifiedName}() );" );
             }
-            foreach (var member in writable)
+            foreach (var member in usable)
             {
-                var method = member.IsNullable ? "AddNullableSetter" : "AddSetter";
-                builder.AppendLine( $"            global::FlatFiles.CodeGeneration.MappingAccessors.{method}<{entity.QualifiedName}, {member.ValueType}>( \"{member.Name}\", static ( entity, value ) => entity.{member.Name} = value );" );
+                if (member.CanSet)
+                {
+                    var method = member.IsNullable ? "AddNullableSetter" : "AddSetter";
+                    builder.AppendLine( $"            global::FlatFiles.CodeGeneration.MappingAccessors.{method}<{entity.QualifiedName}, {member.ValueType}>( \"{member.Name}\", static ( entity, value ) => entity.{member.Name} = value );" );
+                }
+                if (member.CanGet)
+                {
+                    var method = member.IsNullable ? "AddNullableGetter" : "AddGetter";
+                    builder.AppendLine( $"            global::FlatFiles.CodeGeneration.MappingAccessors.{method}<{entity.QualifiedName}, {member.ValueType}>( \"{member.Name}\", static entity => entity.{member.Name} );" );
+                }
             }
             builder.AppendLine( "        }" );
             builder.AppendLine( "    }" );

@@ -5,4 +5,4 @@
 
 Rule ID | Category | Severity | Notes
 --------|----------|----------|-------
-FF1001 | FlatFiles.Mapping | Info | A member has no generated accessor, so a mapping that uses it builds one at run time.
+FF1001 | FlatFiles.Mapping | Info | A member has no generated accessor in one direction, so a mapping that uses it that way builds one at run time.

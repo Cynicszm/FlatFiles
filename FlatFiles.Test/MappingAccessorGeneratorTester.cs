@@ -120,7 +120,7 @@ namespace FlatFiles.Test
         }
 
         [TestMethod]
-        public void TestTypeThatCanNeitherBeBuiltNorSet_IsWrittenForAtAll()
+        public void TestTypeThatCanOnlyBeWrittenFrom_GetsItsGetters()
         {
             var written = Run( """
                 using FlatFiles.TypeMapping;
@@ -128,6 +128,29 @@ namespace FlatFiles.Test
                 {
                     public Customer( int id ) => Id = id;
                     public int Id { get; }
+                }
+                public static class Program
+                {
+                    public static void Main() => DelimitedTypeMapper.Define<Customer>();
+                }
+                """ );
+
+            // Nothing can be read onto it, but everything about it can be written from - which is half a
+            // mapping and worth having.
+            StringAssert.Contains( written.Single(), "AddGetter<global::Customer, int>( \"Id\"" );
+            Assert.DoesNotContain( "AddSetter", written.Single(), "There is no setter to register." );
+            Assert.DoesNotContain( "AddFactory", written.Single(), "There is nothing to build it with." );
+        }
+
+        [TestMethod]
+        public void TestTypeWithNothingReachable_IsNotWrittenForAtAll()
+        {
+            var written = Run( """
+                using FlatFiles.TypeMapping;
+                public class Customer
+                {
+                    public Customer( int id ) => Id = id;
+                    private int Id { get; }
                 }
                 public static class Program
                 {
@@ -174,10 +197,17 @@ namespace FlatFiles.Test
             StringAssert.Contains( source, "AddSetter<global::Customer, byte[]>( \"Raw\"" );
             StringAssert.Contains( source, "AddSetter<global::Customer, string>( \"Text\"" );
 
-            foreach (var refused in new[] { "ReadOnly", "Hidden", "Once", "Nested" })
+            // Readable but not settable, so each gets a getter and no setter.
+            foreach (var readOnly in new[] { "ReadOnly", "Hidden", "Once" })
             {
-                Assert.DoesNotContain( $"\"{refused}\"", source, $"{refused} cannot be set this way." );
+                StringAssert.Contains( source, $"AddGetter<global::Customer, int>( \"{readOnly}\"" );
+                Assert.DoesNotContain( $"AddSetter<global::Customer, int>( \"{readOnly}\"", source, $"{readOnly} cannot be set this way." );
             }
+            Assert.DoesNotContain( $"\"Nested\"", source, "No column carries an entity." );
+
+            // Everything writable is readable here, so each of those has both.
+            StringAssert.Contains( source, $"AddGetter<global::Customer, int>( \"Whole\"" );
+            StringAssert.Contains( source, $"AddNullableGetter<global::Customer, decimal>( \"Amount\"" );
         }
 
         [TestMethod]
@@ -221,7 +251,9 @@ namespace FlatFiles.Test
                 }
                 """ );
 
-            StringAssert.Contains( Reported.Single().GetMessage(), "no column parses to System.Uri" );
+            var said = Reported.Single();
+            StringAssert.Contains( said.GetMessage(), "no column reads or writes System.Uri" );
+            Assert.AreEqual( DiagnosticSeverity.Info, said.Severity );
         }
 
         [TestMethod]

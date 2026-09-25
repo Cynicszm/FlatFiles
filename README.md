@@ -635,7 +635,9 @@ Where the runtime cannot generate code, a type mapper still works - it falls bac
 
 It tells you, at information level, about any member it could not write for and why: no setter, a setter that is not public, an init-only setter, or a type no column reads. Those members are read the slower way, which is what would have happened anyway.
 
-The same applies to writing: a record is formatted straight from the entity, without its values being boxed into an array first, wherever the mapping allows it.
+The same applies to writing: a record is formatted straight from the entity, without its values being boxed into an array first, and the generator writes the accessors for that direction too.
+
+A property need not allow both. One that is get-only, or whose setter is private or `init`, is written from but not read onto, and the generator emits what it can for each direction separately.
 
 Where the generator cannot see a mapping - a type named only at run time, or one from an assembly that does not reference this package - you can register the accessors yourself:
 

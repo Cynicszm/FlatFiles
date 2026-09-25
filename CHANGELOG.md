@@ -11,6 +11,10 @@ Registering nothing changes nothing, which is what makes this safe to adopt a ty
 
 This is the half of the source generator that has to exist before the generator can emit anything, and it is useful without it: a caller under AOT can write the registrations by hand today. The generator will write the same calls from a module initialiser, and these registrations are what its output is checked against.
 
+**The generator writes the accessors for both directions.** It emitted setters; it now emits getters beside them, so a caller under Native AOT writes as cheaply as it reads without registering anything. Measured from a consuming project with the dynamic-code switch off, a delimited write through a type mapper allocates **76 bytes a record**, against 513 before any of this release's work and 79 on a runtime that can generate code.
+
+The two directions are asked about separately, because a property need not allow both. A get-only property, or one whose setter is private or `init`, is written from and not read onto; the getter is emitted and the setter is not. Each direction that cannot be written for is said aloud at information level, naming which way round it was and why - a member that falls back when read is not necessarily one that falls back when written.
+
 **A record is written straight from the entity it comes from.** A typed write read each member into an `object?[]` and handed that to the schema, which formatted each value and threw the array away. Every value of a value type was boxed to make the trip, and unboxed a few frames later by the column that formatted it. A mapper now builds one getter per column, each closed over the column's own type, and the writer asks each for its member as the record is formatted.
 
 Measured on 10,000 records of 13 columns, a delimited write through a type mapper allocated 515 bytes a record and now allocates 79; fixed-length, 1,139 and now 703. Writing the same values as a caller-supplied array of objects costs 72, so what a mapped write adds over a hand-written one has gone from 443 bytes a record to 7.

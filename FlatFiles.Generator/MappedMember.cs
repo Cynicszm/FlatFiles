@@ -3,43 +3,64 @@
 namespace FlatFiles.Generator
 {
     /// <summary>
-    ///     A property of a mapped entity, and either how to write a setter for it or why nothing can be.
+    ///     A property of a mapped entity: what can be written for it in each direction, and why anything that
+    ///     cannot be.
     /// </summary>
+    /// <remarks>
+    ///     The two directions are asked separately because a property need not allow both. A get-only property is
+    ///     written from and not read onto; one with a private setter is the same. Whichever direction is available
+    ///     is worth having, and the other is said aloud rather than left to be noticed in a profile.
+    /// </remarks>
     internal readonly struct MappedMember : IEquatable<MappedMember>
     {
-        private MappedMember( string name, string valueType, bool isNullable, string? refusal, SourcePosition position )
+        private MappedMember( string name, string valueType, bool isNullable, bool canSet, bool canGet, string? setterRefusal, string? getterRefusal, SourcePosition position )
         {
             Name = name;
             ValueType = valueType;
             IsNullable = isNullable;
-            Refusal = refusal;
+            CanSet = canSet;
+            CanGet = canGet;
+            SetterRefusal = setterRefusal;
+            GetterRefusal = getterRefusal;
             Position = position;
         }
 
-        public static MappedMember Writable( string name, string valueType, bool isNullable )
+        public static MappedMember Accessible( string name, string valueType, bool isNullable, bool canSet, bool canGet, string? setterRefusal, string? getterRefusal, SourcePosition position )
         {
-            return new MappedMember( name, valueType, isNullable, null, default );
+            return new MappedMember( name, valueType, isNullable, canSet, canGet, setterRefusal, getterRefusal, position );
         }
 
+        /// <summary>
+        ///     Nothing can be written for this member in either direction, for one reason that covers both.
+        /// </summary>
         public static MappedMember Refused( string name, string refusal, SourcePosition position )
         {
-            return new MappedMember( name, string.Empty, false, refusal, position );
+            return new MappedMember( name, string.Empty, false, false, false, refusal, null, position );
         }
 
         public string Name { get; }
 
         /// <summary>
-        ///     The type a column would have to parse to. For a nullable member that is the underlying type, since
-        ///     that is what the column answers and what the registration is written in terms of.
+        ///     The type a column would have to read or write. For a nullable member that is the underlying type,
+        ///     since that is what the column deals in and what the registration is written in terms of.
         /// </summary>
         public string ValueType { get; }
 
         public bool IsNullable { get; }
 
+        public bool CanSet { get; }
+
+        public bool CanGet { get; }
+
         /// <summary>
-        ///     Why no setter can be written, or null where one can.
+        ///     Why this member cannot be read onto, or null where it can.
         /// </summary>
-        public string? Refusal { get; }
+        public string? SetterRefusal { get; }
+
+        /// <summary>
+        ///     Why this member cannot be written from, or null where it can.
+        /// </summary>
+        public string? GetterRefusal { get; }
 
         /// <summary>
         ///     Where to point when saying so.
@@ -51,7 +72,10 @@ namespace FlatFiles.Generator
             return Name == other.Name
                 && ValueType == other.ValueType
                 && IsNullable == other.IsNullable
-                && Refusal == other.Refusal
+                && CanSet == other.CanSet
+                && CanGet == other.CanGet
+                && SetterRefusal == other.SetterRefusal
+                && GetterRefusal == other.GetterRefusal
                 && Position.Equals( other.Position );
         }
 
@@ -65,7 +89,10 @@ namespace FlatFiles.Generator
             var hash = Name?.GetHashCode() ?? 0;
             hash = ( hash * 397 ) ^ ( ValueType?.GetHashCode() ?? 0 );
             hash = ( hash * 397 ) ^ ( IsNullable ? 1 : 0 );
-            return ( hash * 397 ) ^ ( Refusal?.GetHashCode() ?? 0 );
+            hash = ( hash * 397 ) ^ ( CanSet ? 2 : 0 );
+            hash = ( hash * 397 ) ^ ( CanGet ? 4 : 0 );
+            hash = ( hash * 397 ) ^ ( SetterRefusal?.GetHashCode() ?? 0 );
+            return ( hash * 397 ) ^ ( GetterRefusal?.GetHashCode() ?? 0 );
         }
     }
 
