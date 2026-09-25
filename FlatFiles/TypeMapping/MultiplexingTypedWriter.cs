@@ -65,13 +65,29 @@ namespace FlatFiles.TypeMapping
             await writer.WriteAsync( values, cancellationToken ).ConfigureAwait( false );
         }
 
+        /// <summary>
+        ///     Fills one array for the whole write rather than one per record, resized where a record belongs to
+        ///     a schema of a different width - which is the one thing this writer has to allow for that the
+        ///     single-schema one does not.
+        /// </summary>
         private object?[] Serialize( object entity )
         {
             var context = injector.SetMatcher( entity );
-            var values = new object?[context.LogicalCount];
+            if (values.Length != context.LogicalCount)
+            {
+                values = new object?[context.LogicalCount];
+            }
+            else
+            {
+                // Cleared rather than assumed: a mapping need not write every slot, and a value left behind by
+                // the record before would be written as though it belonged to this one.
+                Array.Clear( values, 0, values.Length );
+            }
             var recordContext = writer.GetMetadata();
             context.Serialize( recordContext, entity, values );
             return values;
         }
+
+        private object?[] values = [];
     }
 }
