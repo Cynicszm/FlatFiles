@@ -80,5 +80,9 @@ namespace FlatFiles
             var provider = GetFormatProvider( context, FormatProvider );
             WriteFormatted( destination, value, OutputFormat, provider );
         }
+
+        /// <inheritdoc />
+        /// <remarks>It asks, so a provider on the options has to reach it.</remarks>
+        internal override bool UsesFormatProvider => true;
     }
 }

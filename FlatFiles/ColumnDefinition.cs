@@ -209,6 +209,35 @@ namespace FlatFiles
         }
 
         /// <summary>
+        ///     Whether this column ever asks what format provider to use. False for a column that parses and formats
+        ///     without one - text, a boolean, a byte array - which is most of them.
+        /// </summary>
+        /// <remarks>
+        ///     The options' provider reaches a column only through a column context, so a column that consults one
+        ///     needs a context built for it wherever the options carry a provider. A column that never asks does
+        ///     not, and building one for it costs an allocation per column per record for nothing: setting a culture
+        ///     on the options used to cost 40 bytes a column on every record, on reading and writing alike, whatever
+        ///     the columns were. A column declared outside the library is given a context regardless, by
+        ///     <see cref="IsColumnContextRequired" />, because it may read one in its own parsing or formatting.
+        /// </remarks>
+        internal virtual bool UsesFormatProvider => false;
+
+        /// <summary>
+        ///     Whether parsing or formatting a value for this column needs a column context built for it.
+        /// </summary>
+        /// <param name="definition">The column about to be parsed or formatted.</param>
+        /// <param name="options">The options the reader or writer is running with.</param>
+        /// <remarks>
+        ///     A schema holds its columns as <see cref="IColumnDefinition" />, which anyone may implement, so an
+        ///     implementation this class knows nothing about is assumed to want the provider.
+        /// </remarks>
+        internal static bool NeedsColumnContext( IColumnDefinition definition, IOptions options )
+        {
+            return definition.IsColumnContextRequired
+                || ( options.FormatProvider is not null && ( definition is not ColumnDefinition column || column.UsesFormatProvider ) );
+        }
+
+        /// <summary>
         ///     Gets the format provider to use. If the given provider is not null, it will be used.
         ///     Otherwise, the format provider set on the options object will be used. As a last resort,
         ///     the current culture specified by the operating system will be used.
