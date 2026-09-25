@@ -42,6 +42,7 @@ If you are working with data classes, defining schemas is even easier. You can u
 * [Runtime Mapping](#runtime-mapping)
 * [Disabling Optimisation](#disabling-optimisation)
 * [Mapping Under Native AOT](#mapping-under-native-aot)
+    * [Turning generation off](#turning-generation-off)
 * [Non-Public Classes and Members](#non-public-classes-and-members)
 * [ADO.NET DataTables](#adonet-datatables)
 * [FlatFileDataReader](#flatfiledatareader)
@@ -664,6 +665,23 @@ Three things worth knowing:
 * Registering nothing changes nothing, so you can adopt this one type at a time, and a member you do not register is read exactly as it was.
 * A registration written for one column type is ignored where the mapping uses another, rather than failing part way through a read.
 * A member is registered against the type that **declares** it. A property hiding one of the same name on a base class is a registration of its own, named by the derived type.
+
+### Turning generation off
+The generator writes registrations for every entity it finds, which is what makes it worth having and is also not
+everybody's preference. Set one property to have it write nothing:
+
+```xml
+<PropertyGroup>
+  <FlatFilesGenerateAccessors>false</FlatFilesGenerateAccessors>
+</PropertyGroup>
+```
+
+Nothing breaks when it is off. A mapping builds its own accessors at run time, exactly as it did before the
+generator existed - which costs a boxed value per member on a runtime that cannot generate code, and nothing at
+all on one that can. You can also pass it on the command line, `-p:FlatFilesGenerateAccessors=false`, and you can
+still register accessors by hand as above.
+
+`ExcludeAssets="analyzers"` on the package reference does **not** turn it off, which is why this property exists.
 
 ## Non-Public Classes and Members
 Generated code lives in an assembly of its own, so it cannot see a class the rest of the world cannot see. As of FlatFiles 8.2.0 that is handled for you: mapping onto a type out of its reach uses reflection instead, which is slower per value and works, so nothing is needed to map onto an `internal` class. Before 8.2.0 it emitted a factory that could not reach the type, and the first record threw `MethodAccessException`.

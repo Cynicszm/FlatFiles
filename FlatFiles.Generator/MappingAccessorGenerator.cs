@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 
@@ -39,16 +40,50 @@ namespace FlatFiles.Generator
             DiagnosticSeverity.Info,
             true );
 
+        /// <summary>
+        ///     The MSBuild property that turns generation off, made visible to the compiler by the props file this
+        ///     package ships. <c>ExcludeAssets="analyzers"</c> on the package reference does not turn it off, which
+        ///     is why the property exists.
+        /// </summary>
+        private const string WantedProperty = "build_property.FlatFilesGenerateAccessors";
+
         /// <inheritdoc />
         public void Initialize( IncrementalGeneratorInitializationContext context )
         {
+            // Projected to a bool before anything else sees it: the options themselves change on every edit, and a
+            // pipeline step that depends on them directly would run again each time. The bool almost never changes,
+            // so everything downstream stays cached.
+            var wanted = context.AnalyzerConfigOptionsProvider.Select( static ( provider, _ ) => IsWanted( provider ) );
+
             var entities = context.SyntaxProvider
                 .CreateSyntaxProvider( static ( node, _ ) => IsWorthLookingAt( node ), static ( syntax, _ ) => Entity( syntax ) )
                 .Where( static entity => entity.HasValue )
                 .Select( static ( entity, _ ) => entity!.Value )
                 .Collect();
 
-            context.RegisterSourceOutput( entities, static ( output, found ) => Emit( output, found ) );
+            context.RegisterSourceOutput( entities.Combine( wanted ), static ( output, found ) =>
+            {
+                if (!found.Right)
+                {
+                    return;
+                }
+                Emit( output, found.Left );
+            } );
+        }
+
+        /// <summary>
+        ///     Whether the project wants anything written for it.
+        /// </summary>
+        /// <remarks>
+        ///     Absent means yes, and so does a value that is not a boolean: a caller who has not asked gets what the
+        ///     package is for, and one who has written something unparseable is better served by the generator
+        ///     carrying on than by silently doing nothing.
+        /// </remarks>
+        private static bool IsWanted( AnalyzerConfigOptionsProvider provider )
+        {
+            return !provider.GlobalOptions.TryGetValue( WantedProperty, out var value )
+                || !bool.TryParse( value, out var wanted )
+                || wanted;
         }
 
         /// <summary>

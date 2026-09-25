@@ -81,6 +81,12 @@
           Pack="true"
           PackagePath="analyzers/dotnet/cs"
           Visible="false" />
+    <!-- Declares FlatFilesGenerateAccessors to the compiler, so the generator can be told to write nothing.
+         build applies to a project that references this package; buildTransitive to one that gets it through
+         another package. -->
+    <None Include="build\Cynicszm.FlatFiles.props"
+          Pack="true"
+          PackagePath="build;buildTransitive" />
   </ItemGroup>
 
 </Project>

@@ -1,6 +1,18 @@
 ﻿## 8.5.0 (unreleased)
 **Not released.** Being built. What is written up here has landed on master; what is under **Next** has not. Nothing in this release breaks anything.
 
+**The source generator can be told to write nothing.** It writes accessor registrations for every entity it finds at a `Define<T>()` or `DefineDynamic( typeof( T ) )` call site, which is what makes it worth having and is also not everybody's preference. `ExcludeAssets="analyzers"` on the package reference does not turn it off - tried, and the registrations are still written - so until now a caller who wanted it off had no way to ask.
+
+```xml
+<PropertyGroup>
+  <FlatFilesGenerateAccessors>false</FlatFilesGenerateAccessors>
+</PropertyGroup>
+```
+
+The package carries a props file declaring the property to the compiler, in `build` for a project that references the package and `buildTransitive` for one that gets it through another. Absent means yes, and so does a value that is not a boolean: a caller who has not asked gets what the package is for, and one who has typed the value wrong is better served by the generator carrying on than by it silently doing nothing. Nothing breaks when it is off - a mapping builds its own accessors at run time, exactly as it did before the generator existed.
+
+It was checked through a real package reference rather than only in the generator's tests, because that is where this would fail: packed to a version of its own to dodge NuGet's cache, referenced from a local feed, and built three ways. By default the consumer gets `Customer.Accessors.g.cs`; with the property set on the command line or in the project file it gets nothing, and all three builds succeed.
+
 **Setting a format provider used to cost an allocation per column per record, and now costs nothing.** A column reaches the options' provider only through a column context, so one was built for every column of every record wherever the options carried one - 40 bytes apiece, on reading and writing alike. Most columns never ask: text, a boolean, a byte array. On the widest sample that was 15 KB a record spent so that a handful of date columns could ask a question the others never ask.
 
 Three changes, each measured on its own:
@@ -181,7 +193,6 @@ the baseline either way, so a change in the bytes written fails the check whatev
 
 In the order they will be built. None of these breaks anything, so none of them is waiting for a major version.
 
-- **A way to ask for generation to be left alone.** The generator writes registrations for every entity it finds, and nothing turns that off. `ExcludeAssets="analyzers"` on the package reference does not do it - tried, and the registrations are still written - so a caller who needs generation off has no way to ask. An MSBuild property of this package's own would settle it.
 - **Attribute-based mapping.** The library has no attribute types at all. Every mapping is written out in fluent calls, which is the right default for a file whose shape is not the class's business, and the wrong one for the common case where a class exists to mirror a file.
 - **Comment and blank-line skipping.** Both option classes can express it today only through a `RecordRead` handler on every reader. A comment prefix and a skip-blank-lines flag on the options would cover most of what those handlers are written for. Small, and the least glamorous thing on this list.
 - **UTF-8 `Stream` input.** Reading from a `Stream` without wrapping it in a `StreamReader`, with the encoding and any byte order mark handled by the reader. This was ranked first, and first for the wrong reason: the entry claimed it was the one change that would take allocation below CsvHelper. Measured, decoding 1.36 MB of UTF-8 costs 0.2 ms and about one byte a record, because `StreamReader` reuses its buffers, and reading the same file through a `StreamReader` rather than a `StringReader` allocates exactly the same 741 bytes a record. It is worth having as a convenience, and for files whose encoding has to be sniffed rather than assumed, but not as a performance change.
