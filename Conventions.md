@@ -260,7 +260,7 @@ Three properties in `FlatFiles.csproj` carry the version and they do not move to
 `AssemblyVersion` and `FileVersion` are the assembly's, and have been bumped historically in the
 **first commit of the cycle** - the first change made after a release goes out, not the release itself.
 
-Whichever moment is chosen, the two have to end up in step before the tag. 8.2.0 shipped with an
+Whichever moment is chosen, the two have to end up in step before the tag, and `publish.yml` now refuses a release whose assembly does not report what its package says. 8.2.0 shipped with an
 assembly reporting 8.1.0.0, because the work commits did not touch it and the release pull request set
 only `Version`. Nothing broke - the strong-name identity simply stayed where 8.1.0 left it, and the
 package version and Source Link were right - but the assembly misreports itself, and that is permanent
