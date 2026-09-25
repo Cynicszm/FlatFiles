@@ -3,6 +3,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using FlatFiles.Properties;
+using FlatFiles.TypeMapping;
 
 namespace FlatFiles
 {
@@ -48,6 +49,45 @@ namespace FlatFiles
         ///     Formats the record into the buffer: each value is formatted by its column straight into the buffer and
         ///     then padded or truncated in place to its window. The record is then written in one go.
         /// </summary>
+        public void WriteRecord<TEntity>( TEntity entity, IColumnGetter<TEntity>[] getters )
+        {
+            Metadata = null;
+            FormatRecord( entity, getters );
+            writer.Write( buffer.WrittenSpan );
+        }
+
+        public async Task WriteRecordAsync<TEntity>( TEntity entity, IColumnGetter<TEntity>[] getters, CancellationToken cancellationToken = default )
+        {
+            Metadata = null;
+            FormatRecord( entity, getters );
+            await writer.WriteAsync( buffer.WrittenMemory, cancellationToken ).ConfigureAwait( false );
+        }
+
+        /// <summary>
+        ///     Formats a record from the entity it comes from. The schema is the one the writer was built with:
+        ///     this path is only taken where nothing chooses a schema per record, there being no values to choose
+        ///     one by.
+        /// </summary>
+        private void FormatRecord<TEntity>( TEntity entity, IColumnGetter<TEntity>[] getters )
+        {
+            var currentSchema = ActualSchema!;
+            var metadata = NewRecordContext( currentSchema, null, null );
+            Metadata = metadata;
+            if (getters.Length != currentSchema.ColumnDefinitions.PhysicalCount)
+            {
+                throw new RecordProcessingException( metadata, Resources.WrongNumberOfValues );
+            }
+            metadata.ColumnError += ColumnError;
+            buffer.Clear();
+            currentSchema.FormatValues( metadata, entity, getters, buffer, this );
+        }
+
+        /// <summary>
+        ///     Whether a record can be written without the values being worked out first, which it cannot where an
+        ///     injector picks the schema from them.
+        /// </summary>
+        public bool CanWriteFromEntity => injector is null && ActualSchema is not null;
+
         private void FormatRecord( object?[] values )
         {
             var currentSchema = GetSchema( values );

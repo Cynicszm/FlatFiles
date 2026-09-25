@@ -3,6 +3,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using FlatFiles.Properties;
+using FlatFiles.TypeMapping;
 
 namespace FlatFiles
 {
@@ -150,16 +151,7 @@ namespace FlatFiles
         public void Write( object?[] values )
         {
             ArgumentNullException.ThrowIfNull( values );
-            if (!isSchemaWritten)
-            {
-                if (recordWriter.Options.IsFirstRecordSchema && recordWriter.ActualSchema is not null)
-                {
-                    recordWriter.WriteSchema();
-                    recordWriter.WriteRecordSeparator();
-                    ++recordWriter.PhysicalRecordNumber;
-                }
-                isSchemaWritten = true;
-            }
+            WriteSchemaIfNeeded();
             try
             {
                 recordWriter.WriteRecord( values );
@@ -198,16 +190,7 @@ namespace FlatFiles
         {
             cancellationToken.ThrowIfCancellationRequested();
             ArgumentNullException.ThrowIfNull( values );
-            if (!isSchemaWritten)
-            {
-                if (recordWriter.Options.IsFirstRecordSchema && recordWriter.ActualSchema is not null)
-                {
-                    await recordWriter.WriteSchemaAsync( cancellationToken ).ConfigureAwait( false );
-                    await recordWriter.WriteRecordSeparatorAsync( cancellationToken ).ConfigureAwait( false );
-                    ++recordWriter.PhysicalRecordNumber;
-                }
-                isSchemaWritten = true;
-            }
+            await WriteSchemaIfNeededAsync( cancellationToken ).ConfigureAwait( false );
             try
             {
                 await recordWriter.WriteRecordAsync( values, cancellationToken ).ConfigureAwait( false );
@@ -291,6 +274,71 @@ namespace FlatFiles
                 return recordWriter.Metadata;
             }
             return GetUncachedMetadata( recordWriter.ActualSchema );
+        }
+
+        /// <summary>
+        ///     Writes the header before the first record, once, whichever way that record is written.
+        /// </summary>
+        private void WriteSchemaIfNeeded()
+        {
+            if (!isSchemaWritten)
+            {
+                if (recordWriter.Options.IsFirstRecordSchema && recordWriter.ActualSchema is not null)
+                {
+                    recordWriter.WriteSchema();
+                    recordWriter.WriteRecordSeparator();
+                    ++recordWriter.PhysicalRecordNumber;
+                }
+                isSchemaWritten = true;
+            }
+        }
+
+        private async Task WriteSchemaIfNeededAsync( CancellationToken cancellationToken )
+        {
+            if (!isSchemaWritten)
+            {
+                if (recordWriter.Options.IsFirstRecordSchema && recordWriter.ActualSchema is not null)
+                {
+                    await recordWriter.WriteSchemaAsync( cancellationToken ).ConfigureAwait( false );
+                    await recordWriter.WriteRecordSeparatorAsync( cancellationToken ).ConfigureAwait( false );
+                    ++recordWriter.PhysicalRecordNumber;
+                }
+                isSchemaWritten = true;
+            }
+        }
+
+        bool IWriterWithMetadata.CanWriteFromEntity => recordWriter.CanWriteFromEntity;
+
+        void IWriterWithMetadata.WriteFromEntity<TEntity>( TEntity entity, IColumnGetter<TEntity>[] getters )
+        {
+            WriteSchemaIfNeeded();
+            try
+            {
+                recordWriter.WriteRecord( entity, getters );
+                recordWriter.WriteRecordSeparator();
+                ++recordWriter.PhysicalRecordNumber;
+                ++recordWriter.LogicalRecordNumber;
+            }
+            catch (RecordProcessingException exception)
+            {
+                ProcessError( exception );
+            }
+        }
+
+        async Task IWriterWithMetadata.WriteFromEntityAsync<TEntity>( TEntity entity, IColumnGetter<TEntity>[] getters, CancellationToken cancellationToken )
+        {
+            await WriteSchemaIfNeededAsync( cancellationToken ).ConfigureAwait( false );
+            try
+            {
+                await recordWriter.WriteRecordAsync( entity, getters, cancellationToken ).ConfigureAwait( false );
+                await recordWriter.WriteRecordSeparatorAsync( cancellationToken ).ConfigureAwait( false );
+                ++recordWriter.PhysicalRecordNumber;
+                ++recordWriter.LogicalRecordNumber;
+            }
+            catch (RecordProcessingException exception)
+            {
+                ProcessError( exception );
+            }
         }
 
         IRecordContext IWriterWithMetadata.GetMetadata()

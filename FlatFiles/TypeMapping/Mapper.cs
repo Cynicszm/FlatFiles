@@ -222,6 +222,102 @@ namespace FlatFiles.TypeMapping
             return null;
         }
 
+        /// <summary>
+        ///     One getter per column, for writing a record from an entity without any value becoming an
+        ///     <see cref="object" />, or null where this mapping cannot be written that way.
+        /// </summary>
+        /// <returns>The getters, or null to write through the array of values as before.</returns>
+        public IColumnGetter<TEntity>[]? GetColumnGetters()
+        {
+            if (cachedGetters is not null)
+            {
+                return cachedGetters.Length == 0 ? null : cachedGetters;
+            }
+            cachedGetters = BuildColumnGetters() ?? [];
+            return cachedGetters.Length == 0 ? null : cachedGetters;
+        }
+
+        private IColumnGetter<TEntity>[]? BuildColumnGetters()
+        {
+            // The same conditions the setters have: closing a generic over the column's type needs dynamic code,
+            // unless something registered the closed form already.
+            if ((!DynamicCode.IsSupported && !MappingAccessors.Covers( typeof( TEntity ) )) || typeof( TEntity ).IsValueType || Member is not null)
+            {
+                return null;
+            }
+            var mappings = lookup.GetMappings();
+            if (mappings.Any( m => m.Member?.ParentAccessor is not null ))
+            {
+                return null;
+            }
+            var writerMappings = GetWriterMemberMappings( mappings );
+            if (writerMappings.Length == 0 || writerMappings.Length != lookup.LogicalCount)
+            {
+                return null;
+            }
+            var getters = new IColumnGetter<TEntity>[writerMappings.Length];
+            foreach (var mapping in writerMappings)
+            {
+                var getter = BuildColumnGetter( mapping );
+                if (getter is null || mapping.LogicalIndex < 0 || mapping.LogicalIndex >= getters.Length)
+                {
+                    return null;
+                }
+                getters[mapping.LogicalIndex] = getter;
+            }
+            return Array.Exists( getters, g => g is null ) ? null : getters;
+        }
+
+        private static IColumnGetter<TEntity>? BuildColumnGetter( IMemberMapping mapping )
+        {
+            if (mapping.Writer is not null || mapping.Member is null)
+            {
+                return null;
+            }
+            if (mapping.Member.MemberInfo is not PropertyInfo property)
+            {
+                return null;
+            }
+            if (mapping.ColumnDefinition is IMetadataColumn)
+            {
+                // Its value comes from the context rather than from the entity.
+                return null;
+            }
+            // Public only, for the same reason the setters are: a mapping that uses a non-public member should
+            // behave as it does today rather than working only on this path.
+            var read = property.GetGetMethod( false );
+            if (read is null || mapping.ColumnDefinition is not ColumnDefinition definition)
+            {
+                return null;
+            }
+            var columnType = GetTypedColumnType( definition );
+            if (columnType is null || !definition.SupportsTypedFormat)
+            {
+                return null;
+            }
+            var valueType = columnType.GetGenericArguments()[0];
+            var memberType = property.PropertyType;
+            var isNullable = valueType.IsValueType && memberType == typeof( Nullable<> ).MakeGenericType( valueType );
+            if (memberType != valueType && !isNullable)
+            {
+                return null;
+            }
+            var registered = MappingAccessors.Getter<TEntity>( property.DeclaringType!, property.Name, definition, valueType, isNullable );
+            if (registered is not null)
+            {
+                return registered;
+            }
+            if (!DynamicCode.IsSupported)
+            {
+                return null;
+            }
+            var reader = read.CreateDelegate( typeof( Func<,> ).MakeGenericType( typeof( TEntity ), memberType ) );
+            var getterType = ( isNullable ? typeof( NullableColumnGetter<,> ) : typeof( ColumnGetter<,> ) ).MakeGenericType( typeof( TEntity ), valueType );
+            return (IColumnGetter<TEntity>) Activator.CreateInstance( getterType, definition, reader )!;
+        }
+
+        private IColumnGetter<TEntity>[]? cachedGetters;
+
         private IColumnSetter<TEntity>[]? cachedSetters;
 
         IObjectAssembler? IMapper.GetAssembler()
