@@ -1,4 +1,4 @@
-# Publishes Cynicszm.FlatFiles to NuGet using trusted publishing, so no API key is
+﻿# Publishes Cynicszm.FlatFiles to NuGet using trusted publishing, so no API key is
 # stored in this repository. The job asks GitHub for a short-lived OIDC token, nuget.org
 # checks it against the publishing policy registered there and hands back a temporary
 # key that expires in an hour.
@@ -47,16 +47,18 @@ jobs:
 
       - name: Integration check
         # Runs here and nowhere else. What it guards is a release going out with something moved, not
-        # a branch being wrong for an hour, and it costs about a minute and a half and 210 MB of disk
-        # on whatever runs it - not worth spending on every pull request.
+        # a branch being wrong for an hour, and it costs about eight minutes, 210 MB of disk and a peak
+        # of some 700 MB of memory on whatever runs it - not worth spending on every pull request.
         #
-        # Six committed samples - three delimited, three fixed-length - unpacked, read end to end and
-        # compared against FlatFiles.IntegrationTest/Baseline.json. Nothing is generated here: the
-        # samples are committed compressed beside the profiles and only rebuilt when somebody asks,
-        # because they are the input every figure is gated against. The baseline pins a SHA-256 of
-        # each, and a run reading different bytes is refused rather than reported. How many records
-        # each sample yields and how many it refuses are exact; what a read allocates is gated at 2%.
-        # How long a read takes is reported and not gated, because it is not stable enough to gate on.
+        # Six committed samples - three delimited, three fixed-length - unpacked, read end to end,
+        # written back, and compared against FlatFiles.IntegrationTest/Baseline.json. Nothing is
+        # generated here: the samples are committed compressed beside the profiles and only rebuilt
+        # when somebody asks, because they are the input every figure is gated against. The baseline
+        # pins a SHA-256 of each, and a run reading different bytes is refused rather than reported.
+        # How many records each sample yields and how many it refuses are exact; what a read or a
+        # write allocates is gated at 2%; and what each writing scenario produced is pinned by hash,
+        # so a writer that starts writing something else fails even where the figures beside it hold.
+        # How long any of it takes is reported and not gated, because it is not stable enough to gate on.
         #
         # A failure here is a change in what the library does with one of the integration test files. If it
         # was meant, take a new baseline and say so in the changelog.

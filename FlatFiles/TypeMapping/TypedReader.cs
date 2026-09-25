@@ -6,7 +6,7 @@ namespace FlatFiles.TypeMapping
 {
     internal abstract class TypedReader<TEntity>( IMapper<TEntity> mapper ) : ITypedReader<TEntity>, IEntityAssembler
     {
-        private readonly Func<IRecordContext, object?[], TEntity> deserializer = mapper.GetReader();
+        private readonly Func<IRecordContext, object?[], TEntity> deserialiser = mapper.GetReader();
         // Non-null where every column and member this mapper covers can be read without boxing a value.
         private readonly IColumnSetter<TEntity>[]? setters = mapper.GetColumnSetters();
         private TEntity? current;
@@ -106,7 +106,7 @@ namespace FlatFiles.TypeMapping
             var metadataReader = (IReaderWithMetadata) Reader;
             var values = metadataReader.GetCurrentValues();
             var recordContext = metadataReader.GetMetadata();
-            current = deserializer( recordContext, values ); // Won't be null is Read returns true
+            current = deserialiser( recordContext, values ); // Won't be null is Read returns true
         }
 
         public bool Skip()

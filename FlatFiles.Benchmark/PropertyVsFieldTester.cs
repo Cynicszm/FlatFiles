@@ -70,9 +70,9 @@ namespace FlatFiles.Benchmark
 
             var writer = new StringWriter();
             mapper.Write( writer, propertyPeople );
-            var serialized = writer.ToString();
+            var serialised = writer.ToString();
 
-            var reader = new StringReader( serialized );
+            var reader = new StringReader( serialised );
             _ = mapper.Read( reader ).ToArray();
         }
 
@@ -96,9 +96,9 @@ namespace FlatFiles.Benchmark
 
             var writer = new StringWriter();
             mapper.Write( writer, fieldPeople );
-            var serialized = writer.ToString();
+            var serialised = writer.ToString();
 
-            var reader = new StringReader( serialized );
+            var reader = new StringReader( serialised );
             _ = mapper.Read( reader ).ToArray();
         }
         

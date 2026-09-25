@@ -120,7 +120,7 @@ namespace FlatFiles.Test
         }
 
         [TestMethod]
-        public void TestInternalType_Unoptimized()
+        public void TestInternalType_Unoptimised()
         {
             var mapper = DelimitedTypeMapper.DefineDynamic( typeof( InternalPerson ) );
             mapper.StringProperty( "Name" ).ColumnName( "Name" );

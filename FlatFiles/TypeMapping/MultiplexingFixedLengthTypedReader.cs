@@ -16,7 +16,7 @@ namespace FlatFiles.TypeMapping
         // FIXME: We should throw an exception if no or all records read
         public object Current => current!;
 
-        public Func<IRecordContext, object?[], object?>? Deserializer { get; set; }
+        public Func<IRecordContext, object?[], object?>? Deserialiser { get; set; }
 
         /// <summary>
         ///     The assembler for the layout the current record matched, set as the schema is selected. Null until
@@ -128,8 +128,8 @@ namespace FlatFiles.TypeMapping
             var recordContext = metadataReader.GetMetadata();
             // No matcher accepted the record and no default took it, so the underlying reader parsed it with a schema
             // built from its own values and there is nothing to make an entity with.
-            var deserializer = Deserializer ?? throw new FlatFileException( Properties.Resources.MissingMatcher );
-            current = deserializer( recordContext, values );
+            var deserialiser = Deserialiser ?? throw new FlatFileException( Properties.Resources.MissingMatcher );
+            current = deserialiser( recordContext, values );
         }
 
         public bool Skip()

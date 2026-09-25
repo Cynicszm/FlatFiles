@@ -4,6 +4,7 @@ using System.Data;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using BenchmarkDotNet.Attributes;
 using FlatFiles.TypeMapping;
@@ -40,12 +41,24 @@ namespace FlatFiles.Benchmark
             var fixedLengthWriter = new StringWriter();
             GetFixedLengthMapper().Write( fixedLengthWriter, sample, FixedLengthOptions );
             fixedLengthData = fixedLengthWriter.ToString();
+
+            quotedSample = [.. GetMapper().Read( new StringReader( quotedData ), new DelimitedOptions { IsFirstRecordSchema = true } )];
+            fieldSample = [.. sample.Select( ToFieldPerson )];
+            valueSample = [.. sample.Select( ToValues )];
+            textSample = [.. sample.Select( ToText )];
         }
 
         private static readonly FixedLengthOptions FixedLengthOptions = new() { RecordSeparator = Environment.NewLine };
 
         private readonly List<Person> sample;
         private readonly string fixedLengthData;
+
+        // The writing benchmarks are given their entities and their value arrays already built, so that what they
+        // measure is the cost of writing rather than the cost of preparing something to write.
+        private readonly List<Person> quotedSample;
+        private readonly List<FieldPerson> fieldSample;
+        private readonly List<object?[]> valueSample;
+        private readonly List<object?[]> textSample;
 
         private static IDelimitedTypeMapper<Person> GetMapper()
         {
@@ -85,6 +98,112 @@ namespace FlatFiles.Benchmark
             return mapper;
         }
 
+        private static IDelimitedTypeMapper<FieldPerson> GetFieldMapper()
+        {
+            var mapper = DelimitedTypeMapper.Define( () => new FieldPerson() );
+            mapper.Property( x => x.FirstName );
+            mapper.Property( x => x.LastName );
+            mapper.Property( x => x.Age );
+            mapper.Property( x => x.Street1 );
+            mapper.Property( x => x.Street2 );
+            mapper.Property( x => x.City );
+            mapper.Property( x => x.State );
+            mapper.Property( x => x.Zip );
+            mapper.Property( x => x.FavouriteColour );
+            mapper.Property( x => x.FavouriteFood );
+            mapper.Property( x => x.FavouriteSport );
+            mapper.Property( x => x.CreatedOn );
+            mapper.Property( x => x.IsActive );
+            return mapper;
+        }
+
+        private static IDelimitedTypeMapper<Person> GetUnoptimisedMapper()
+        {
+            var mapper = GetMapper();
+            mapper.OptimiseMapping( false );
+            return mapper;
+        }
+
+        private static IDelimitedTypeMapper<Person> GetCustomMappingMapper( bool optimise )
+        {
+            var mapper = DelimitedTypeMapper.Define( () => new Person() );
+            mapper.OptimiseMapping( optimise );
+            mapper.CustomMapping( new StringColumn( "FirstName" ) ).WithWriter( p => p.FirstName );
+            mapper.CustomMapping( new StringColumn( "LastName" ) ).WithWriter( p => p.LastName );
+            mapper.CustomMapping( new Int32Column( "Age" ) ).WithWriter( p => p.Age );
+            mapper.CustomMapping( new StringColumn( "Street1" ) ).WithWriter( p => p.Street1 );
+            mapper.CustomMapping( new StringColumn( "Street2" ) ).WithWriter( p => p.Street2 );
+            mapper.CustomMapping( new StringColumn( "City" ) ).WithWriter( p => p.City );
+            mapper.CustomMapping( new StringColumn( "State" ) ).WithWriter( p => p.State );
+            mapper.CustomMapping( new StringColumn( "Zip" ) ).WithWriter( p => p.Zip );
+            mapper.CustomMapping( new StringColumn( "FavouriteColour" ) ).WithWriter( p => p.FavouriteColour );
+            mapper.CustomMapping( new StringColumn( "FavouriteFood" ) ).WithWriter( p => p.FavouriteFood );
+            mapper.CustomMapping( new StringColumn( "FavouriteSport" ) ).WithWriter( p => p.FavouriteSport );
+            mapper.CustomMapping( new DateTimeColumn( "CreatedOn" ) ).WithWriter( p => p.CreatedOn );
+            mapper.CustomMapping( new BooleanColumn( "IsActive" ) ).WithWriter( p => p.IsActive );
+            return mapper;
+        }
+
+        private static FixedLengthSchema GetFixedLengthSchema()
+        {
+            var schema = new FixedLengthSchema();
+            schema.AddColumn( new StringColumn( "FirstName" ), new Window( 10 ) );
+            schema.AddColumn( new StringColumn( "LastName" ), new Window( 10 ) );
+            schema.AddColumn( new Int32Column( "Age" ), new Window( 3 ) );
+            schema.AddColumn( new StringColumn( "Street1" ), new Window( 20 ) );
+            schema.AddColumn( new StringColumn( "Street2" ), new Window( 10 ) );
+            schema.AddColumn( new StringColumn( "City" ), new Window( 12 ) );
+            schema.AddColumn( new StringColumn( "State" ), new Window( 2 ) );
+            schema.AddColumn( new StringColumn( "Zip" ), new Window( 6 ) );
+            schema.AddColumn( new StringColumn( "FavouriteColour" ), new Window( 8 ) );
+            schema.AddColumn( new StringColumn( "FavouriteFood" ), new Window( 20 ) );
+            schema.AddColumn( new StringColumn( "FavouriteSport" ), new Window( 8 ) );
+            schema.AddColumn( new DateTimeColumn( "CreatedOn" ) { OutputFormat = "yyyy-MM-dd" }, new Window( 10 ) );
+            schema.AddColumn( new BooleanColumn( "IsActive" ), new Window( 5 ) );
+            return schema;
+        }
+
+        private static FieldPerson ToFieldPerson( Person person )
+        {
+            return new FieldPerson
+            {
+                FirstName = person.FirstName,
+                LastName = person.LastName,
+                Age = person.Age,
+                Street1 = person.Street1,
+                Street2 = person.Street2,
+                City = person.City,
+                State = person.State,
+                Zip = person.Zip,
+                FavouriteColour = person.FavouriteColour,
+                FavouriteFood = person.FavouriteFood,
+                FavouriteSport = person.FavouriteSport,
+                CreatedOn = person.CreatedOn,
+                IsActive = person.IsActive
+            };
+        }
+
+        // A writer with no schema treats every column as a string column, so the schemaless benchmark is given its
+        // values already turned into text rather than being asked to convert them.
+        private static object?[] ToText( Person person )
+        {
+            return
+            [
+                person.FirstName, person.LastName, person.Age.ToString(), person.Street1, person.Street2, person.City,
+                person.State, person.Zip, person.FavouriteColour, person.FavouriteFood, person.FavouriteSport,
+                person.CreatedOn?.ToString(), person.IsActive.ToString()
+            ];
+        }
+
+        private static object?[] ToValues( Person person )
+        {
+            return
+            [
+                person.FirstName, person.LastName, person.Age, person.Street1, person.Street2, person.City, person.State,
+                person.Zip, person.FavouriteColour, person.FavouriteFood, person.FavouriteSport, person.CreatedOn, person.IsActive
+            ];
+        }
+
         [Benchmark]
         public string RunFlatFiles_TypeMapper_Write()
         {
@@ -94,7 +213,7 @@ namespace FlatFiles.Benchmark
         }
 
         [Benchmark]
-        public int RunFlatFiles_FixedLength_TypeMapper()
+        public int RunFlatFiles_FixedLength_TypeMapper_Read()
         {
             return GetFixedLengthMapper().Read( new StringReader( fixedLengthData ), FixedLengthOptions ).Count();
         }
@@ -118,7 +237,140 @@ namespace FlatFiles.Benchmark
         }
 
         [Benchmark]
-        public void RunFlatFiles_NoSchema()
+        public async Task<string> RunFlatFiles_TypeMapper_Async_Write()
+        {
+            var writer = new StringWriter();
+            await GetMapper().WriteAsync( writer, sample, new DelimitedOptions { IsFirstRecordSchema = true } ).ConfigureAwait( false );
+            return writer.ToString();
+        }
+
+        [Benchmark]
+        public string RunFlatFiles_TypeMapper_Quoted_Write()
+        {
+            var writer = new StringWriter();
+            GetMapper().Write( writer, quotedSample, new DelimitedOptions { IsFirstRecordSchema = true } );
+            return writer.ToString();
+        }
+
+        [Benchmark]
+        public string RunFlatFiles_TypeMapper_Fields_Write()
+        {
+            var writer = new StringWriter();
+            GetFieldMapper().Write( writer, fieldSample, new DelimitedOptions { IsFirstRecordSchema = true } );
+            return writer.ToString();
+        }
+
+        [Benchmark]
+        public string RunFlatFiles_TypeMapper_Unoptimised_Write()
+        {
+            var writer = new StringWriter();
+            GetUnoptimisedMapper().Write( writer, sample, new DelimitedOptions { IsFirstRecordSchema = true } );
+            return writer.ToString();
+        }
+
+        [Benchmark]
+        public string RunFlatFiles_TypeMapper_CustomMapping_Write()
+        {
+            var writer = new StringWriter();
+            GetCustomMappingMapper( true ).Write( writer, sample, new DelimitedOptions { IsFirstRecordSchema = true } );
+            return writer.ToString();
+        }
+
+        [Benchmark]
+        public string RunFlatFiles_TypeMapper_CustomMapping_Unoptimised_Write()
+        {
+            var writer = new StringWriter();
+            GetCustomMappingMapper( false ).Write( writer, sample, new DelimitedOptions { IsFirstRecordSchema = true } );
+            return writer.ToString();
+        }
+
+        [Benchmark]
+        public string RunFlatFiles_AutoMapped_Write()
+        {
+            var writer = new StringWriter();
+            var typedWriter = DelimitedTypeMapper.GetAutoMappedWriter<Person>( writer );
+            foreach (var person in sample)
+            {
+                typedWriter.Write( person );
+            }
+            return writer.ToString();
+        }
+
+        [Benchmark]
+        public string RunFlatFiles_NoSchema_Write()
+        {
+            var writer = new StringWriter();
+            var csvWriter = new DelimitedWriter( writer );
+            foreach (var values in textSample)
+            {
+                csvWriter.Write( values );
+            }
+            return writer.ToString();
+        }
+
+        [Benchmark]
+        public string RunFlatFiles_Schema_Write()
+        {
+            var writer = new StringWriter();
+            var csvWriter = new DelimitedWriter( writer, GetSchema(), new DelimitedOptions { IsFirstRecordSchema = true } );
+            foreach (var values in valueSample)
+            {
+                csvWriter.Write( values );
+            }
+            return writer.ToString();
+        }
+
+        [Benchmark]
+        public string RunFlatFiles_FixedLength_Schema_Write()
+        {
+            var writer = new StringWriter();
+            var fixedLengthWriter = new FixedLengthWriter( writer, GetFixedLengthSchema(), FixedLengthOptions );
+            foreach (var values in valueSample)
+            {
+                fixedLengthWriter.Write( values );
+            }
+            return writer.ToString();
+        }
+
+        [Benchmark]
+        public async Task<string> RunCsvHelper_Async_Write()
+        {
+            var writer = new StringWriter();
+            var csvWriter = new CsvHelper.CsvWriter( writer, CultureInfo.InvariantCulture );
+            await csvWriter.WriteRecordsAsync( sample ).ConfigureAwait( false );
+            await csvWriter.FlushAsync().ConfigureAwait( false );
+            return writer.ToString();
+        }
+
+        // The floor: the same records turned into the same text with nothing in the way. Everything above is paying
+        // for a schema, quoting and error handling that this does not do.
+        [Benchmark]
+        public string RunStringJoin_Write()
+        {
+            var builder = new StringBuilder();
+            builder.Append( "FirstName,LastName,Age,Street1,Street2,City,State,Zip,FavouriteColour,FavouriteFood,FavouriteSport,CreatedOn,IsActive" );
+            builder.Append( Environment.NewLine );
+            foreach (var person in sample)
+            {
+                builder.Append( person.FirstName ).Append( ',' )
+                    .Append( person.LastName ).Append( ',' )
+                    .Append( person.Age ).Append( ',' )
+                    .Append( person.Street1 ).Append( ',' )
+                    .Append( person.Street2 ).Append( ',' )
+                    .Append( person.City ).Append( ',' )
+                    .Append( person.State ).Append( ',' )
+                    .Append( person.Zip ).Append( ',' )
+                    .Append( person.FavouriteColour ).Append( ',' )
+                    .Append( person.FavouriteFood ).Append( ',' )
+                    .Append( person.FavouriteSport ).Append( ',' )
+                    .Append( person.CreatedOn?.ToString() ).Append( ',' )
+                    .Append( person.IsActive ).Append( Environment.NewLine );
+            }
+            return builder.ToString();
+        }
+
+        [Benchmark]
+        public void RunFlatFiles_NoSchema_Read()
         {
             var reader = new StringReader( data );
             var csvReader = new DelimitedReader( reader );
@@ -130,7 +382,7 @@ namespace FlatFiles.Benchmark
         }
 
         [Benchmark]
-        public void RunFlatFiles_TypeMapper()
+        public void RunFlatFiles_TypeMapper_Read()
         {
             var mapper = DelimitedTypeMapper.Define( () => new Person() );
             mapper.Property( x => x.FirstName );
@@ -152,7 +404,7 @@ namespace FlatFiles.Benchmark
         }
 
         [Benchmark]
-        public async Task RunFlatFiles_TypeMapper_Async()
+        public async Task RunFlatFiles_TypeMapper_Async_Read()
         {
             var mapper = DelimitedTypeMapper.Define( () => new Person() );
             mapper.Property( x => x.FirstName );
@@ -179,7 +431,7 @@ namespace FlatFiles.Benchmark
         }
 
         [Benchmark]
-        public void RunFlatFiles_TypeMapper_Quoted()
+        public void RunFlatFiles_TypeMapper_Quoted_Read()
         {
             var mapper = DelimitedTypeMapper.Define( () => new Person() );
             mapper.Property( x => x.FirstName );
@@ -201,7 +453,7 @@ namespace FlatFiles.Benchmark
         }
 
         [Benchmark]
-        public void RunFlatFiles_TypeMapper_Fields()
+        public void RunFlatFiles_TypeMapper_Fields_Read()
         {
             var mapper = DelimitedTypeMapper.Define( () => new FieldPerson() );
             mapper.Property( x => x.FirstName );
@@ -223,7 +475,7 @@ namespace FlatFiles.Benchmark
         }
 
         [Benchmark]
-        public void RunFlatFiles_TypeMapper_Unoptimized()
+        public void RunFlatFiles_TypeMapper_Unoptimised_Read()
         {
             var mapper = DelimitedTypeMapper.Define( () => new Person() );
             mapper.OptimiseMapping( false );
@@ -246,7 +498,7 @@ namespace FlatFiles.Benchmark
         }
 
         [Benchmark]
-        public void RunFlatFiles_TypeMapper_CustomMapping()
+        public void RunFlatFiles_TypeMapper_CustomMapping_Read()
         {
             var mapper = DelimitedTypeMapper.Define( () => new Person() );
             mapper.CustomMapping( new StringColumn( "FirstName" ) ).WithReader( p => p.FirstName );
@@ -268,7 +520,7 @@ namespace FlatFiles.Benchmark
         }
 
         [Benchmark]
-        public void RunFlatFiles_TypeMapper_CustomMapping_Unoptimized()
+        public void RunFlatFiles_TypeMapper_CustomMapping_Unoptimised_Read()
         {
             var mapper = DelimitedTypeMapper.Define( () => new Person() );
             mapper.OptimiseMapping( false );
@@ -291,7 +543,7 @@ namespace FlatFiles.Benchmark
         }
 
         [Benchmark]
-        public void RunFlatFiles_AutoMapped()
+        public void RunFlatFiles_AutoMapped_Read()
         {
             var reader = new StringReader( data );
             var csvReader = DelimitedTypeMapper.GetAutoMappedReader<Person>( reader );
@@ -303,7 +555,7 @@ namespace FlatFiles.Benchmark
         }
 
         [Benchmark]
-        public async Task RunFlatFiles_AutoMapped_Async()
+        public async Task RunFlatFiles_AutoMapped_Async_Read()
         {
             var reader = new StringReader( data );
             var csvReader = await DelimitedTypeMapper.GetAutoMappedReaderAsync<Person>( reader );
@@ -315,7 +567,7 @@ namespace FlatFiles.Benchmark
         }
 
         [Benchmark]
-        public void RunFlatFiles_FlatFileDataReader_ByPosition()
+        public void RunFlatFiles_FlatFileDataReader_ByPosition_Read()
         {
             var reader = new StringReader( data );
             var schema = GetSchema();
@@ -345,7 +597,7 @@ namespace FlatFiles.Benchmark
         }
 
         [Benchmark]
-        public void RunFlatFiles_FlatFileDataReader_ByName()
+        public void RunFlatFiles_FlatFileDataReader_ByName_Read()
         {
             var reader = new StringReader( data );
             var schema = GetSchema();
@@ -375,7 +627,7 @@ namespace FlatFiles.Benchmark
         }
 
         [Benchmark]
-        public void RunFlatFiles_FlatFileDataReader_GetValue()
+        public void RunFlatFiles_FlatFileDataReader_GetValue_Read()
         {
             var reader = new StringReader( data );
             var schema = GetSchema();
@@ -405,7 +657,7 @@ namespace FlatFiles.Benchmark
         }
 
         [Benchmark]
-        public void RunFlatFiles_DataTable()
+        public void RunFlatFiles_DataTable_Read()
         {
             var reader = new StringReader( data );
             var schema = GetSchema();
@@ -434,7 +686,7 @@ namespace FlatFiles.Benchmark
         }
 
         [Benchmark]
-        public void RunCsvHelper()
+        public void RunCsvHelper_Read()
         {
             var reader = new StringReader( data );
             var csvReader = new CsvHelper.CsvReader( reader, CultureInfo.InvariantCulture );
@@ -446,7 +698,7 @@ namespace FlatFiles.Benchmark
         }
 
         [Benchmark]
-        public async Task RunCsvHelper_Async()
+        public async Task RunCsvHelper_Async_Read()
         {
             var reader = new StringReader( data );
             var csvReader = new CsvHelper.CsvReader( reader, CultureInfo.InvariantCulture );
@@ -460,7 +712,7 @@ namespace FlatFiles.Benchmark
         }
 
         [Benchmark]
-        public void RunCsvHelper_Quoted()
+        public void RunCsvHelper_Quoted_Read()
         {
             var reader = new StringReader( quotedData );
             var csvReader = new CsvHelper.CsvReader( reader, CultureInfo.InvariantCulture );
@@ -472,7 +724,7 @@ namespace FlatFiles.Benchmark
         }
 
         [Benchmark]
-        public void RunStringSplit()
+        public void RunStringSplit_Read()
         {
             var lines = data.Split( Environment.NewLine );
             var records = lines.Skip( 1 ).Select( l => l.Split( "," ) );

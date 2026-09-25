@@ -19,8 +19,8 @@ namespace FlatFiles.Test
                 Bigger = uint.MaxValue,
                 Huge = ulong.MaxValue
             };
-            var deserialized = RoundTrip( mapper, thing );
-            AssertEqual( thing, deserialized );
+            var deserialised = RoundTrip( mapper, thing );
+            AssertEqual( thing, deserialised );
         }
 
         [TestMethod]
@@ -34,8 +34,8 @@ namespace FlatFiles.Test
                 Bigger = uint.MinValue,
                 Huge = ulong.MinValue
             };
-            var deserialized = RoundTrip( mapper, thing );
-            AssertEqual( thing, deserialized );
+            var deserialised = RoundTrip( mapper, thing );
+            AssertEqual( thing, deserialised );
         }
 
         private static IDelimitedTypeMapper<WeirdThing> GetWeirdMapper()
@@ -56,8 +56,8 @@ namespace FlatFiles.Test
             using var reader = new StringReader( output );
             WeirdThing[] things = [.. mapper.Read( reader )];
             Assert.AreEqual( 1, things.Length );
-            var deserialized = things.Single();
-            return deserialized;
+            var deserialised = things.Single();
+            return deserialised;
         }
 
         private static void AssertEqual( WeirdThing thing1, WeirdThing thing2 )

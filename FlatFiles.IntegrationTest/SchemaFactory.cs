@@ -68,14 +68,23 @@ namespace FlatFiles.IntegrationTest
             var selector = new FixedLengthSchemaSelector();
             foreach (var type in profile.RecordTypes)
             {
-                var schema = new FixedLengthSchema();
-                foreach (var column in type.Columns)
-                {
-                    schema.AddColumn( typed ? ColumnFor( column ) : new StringColumn( column.Name ), new Window( column.Window ) );
-                }
-                selector.When( Predicate( type ) ).Use( schema );
+                selector.When( Predicate( type ) ).Use( CreateLayout( type, typed ) );
             }
             return selector;
+        }
+
+        /// <summary>
+        ///     One record layout's schema. Writing a file of several layouts needs them one at a time, behind an
+        ///     injector rather than a selector, so the schema is built here and the choosing left to the caller.
+        /// </summary>
+        public static FixedLengthSchema CreateLayout( RecordTypeProfile type, bool typed )
+        {
+            var schema = new FixedLengthSchema();
+            foreach (var column in type.Columns)
+            {
+                schema.AddColumn( typed ? ColumnFor( column ) : new StringColumn( column.Name ), new Window( column.Window ) );
+            }
+            return schema;
         }
 
         public static Func<string, bool> Predicate( RecordTypeProfile type )

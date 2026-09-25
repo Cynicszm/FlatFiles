@@ -1,5 +1,168 @@
-﻿## 8.4.0 (planned)
-**Not released, and not started.** What is written here is the order the remaining work will be done in, kept with the releases so that the reasoning sits beside what it produced. Nothing below breaks anything, so none of it is waiting for a major version.
+﻿## 8.4.0 (unreleased)
+**Not released.** Being built. What is written up here has landed on master; what is under **Next** has not. Nothing in this release changes what the library does - so far it is entirely about being able to see what the library does.
+
+**Writing is measured now, in both places that measure.** Reading has been measured from two directions for several releases: `FlatFiles.Benchmark` for a warm steady state and `FlatFiles.IntegrationTest` for what one cold job costs end to end. Writing had three benchmarks against nineteen for reading, and no integration scenario at all - so the release before last could move a write from 515 bytes a record to 79 with nothing in the repository able to say so afterwards, and a regression putting it back would have gone out unremarked.
+
+**The benchmark suite has twelve more, one for every reading case that had no counterpart**: no schema, a schema with values, a type mapper, asynchronously, quoted fields, fields rather than properties, unoptimised, custom mapping both ways, auto-mapped, fixed-length through a schema, CsvHelper asynchronously, and a floor that builds the same text with a `StringBuilder`. Every benchmark's name now ends in the direction it measures, so `--filter *_Read` runs one half and `--filter *_Write` the other, and the command line is passed through to BenchmarkDotNet for that to be worth anything. The suite also reports allocation now, which it did not: the whole of the last release was about what the writing path allocates, against a suite that could not have shown it.
+
+They were checked before being trusted. Every delimited case writing the same records agrees to the character - 1,140,119 bytes for the nine that write a header and 1,140,000 for the schemaless one that does not, the difference being exactly the header - which is what makes the floor a floor rather than a different measurement. Measured against a discarding writer, so that the output buffer does not swamp it, a mapped write costs **75 bytes a record** against **72** for handing the writer an array of values: the mapper adds three. `OptimiseMapping( false )` costs nothing on the writing path any more, which is worth knowing and was not.
+
+**The integration gate has three writing scenarios**, `write-text`, `write-typed` and `write-mapper`, mirroring the reading ones - which are now `read-parse`, `read-typed`, `read-values` and `read-mapper`, named the same way and measuring exactly what they did before. Each reads its records out of the sample before the measurement starts, so what it reports is the write. A fixed-length sample of several layouts is written through a `FixedLengthSchemaInjector`, one schema per layout, which is what a caller with such a file writes.
+
+**What each write produced is pinned by hash**, and that is the stronger half of the gate. Whether a write reproduces the file it read is reported rather than gated, because four of the six samples cannot reproduce it and are not meant to: a string column trims, so a field of eleven spaces comes back empty; some fixed-length layouts have windows that stop short of the record, so its tail is never read; and a ragged final column's padding is not part of its value. Pinning the bytes instead means a writer that quietly starts writing something else fails whether or not its output ever matched the sample. The writing scenarios format with the invariant culture so the hash means the same thing on the runner as it does on a desk.
+
+**The measured processes now run with tiered compilation off**, which the first writing figures made necessary. Tier-0 code on the formatting path allocates about twice what optimised code does, and the sample of twenty-six record layouts warms each of them separately, so its writing scenarios measured anywhere between 6,355 and 7,752 bytes a record from one process to the next - a fifth of the figure, from nothing but how far the runtime had got before it promoted anything. A gate cannot live with that. With every method compiled optimised on its first call the same measurement repeats to two bytes. The run is still cold and still pays for compiling the path it takes; what it no longer reports is the runtime's warm-up. It changes almost nothing else - both delimited samples measure identically either way and the fixed-length reads move by under 1% - but it does mean the fixed-length writing figures below are half what they would have been, and the earlier ones were the JIT rather than the library.
+
+**Three things the figures say**, none of which anything in the repository could have said a week ago:
+
+- **The delimited writer allocates about twice what the delimited reader does; the fixed-length writer costs about what the fixed-length reader costs.** Delimited: 5,685 bytes a record read against 15,405 written, 1,414 against 2,410, 3,528 against 8,074. Fixed-length: 3,735 against 3,867, 12,068 against 13,136, and 1,859 against 1,668 - which is a write costing *less* than the read of the same file. Whatever is worth doing next to the writing path, it is in the delimited half of it.
+- **A mapped write costs what a write through a schema costs.** Delimited, within three bytes a record - 15,408 against 15,405, 2,411 against 2,410, 8,076 against 8,074 - which is the typed getters of 8.3.0 seen at a scale the benchmarks cannot reach. Fixed-length costs about 5% more. A mapped *read* is far cheaper than a read through a schema, because the mapping ignores most columns and never parses them; a mapped write still writes every column, so it cannot be.
+- **Giving a column its own type costs time on the way out but not allocation.** `write-typed` and `write-text` allocate the same bytes a record to the byte on every sample, and `write-typed` takes between a quarter and a third longer.
+
+**Spelling, everywhere it was ours to choose.** `Conventions.md` has asked for British English in identifiers and comments since before 8.0.0, and the library's own internals had not been swept: `Serialize`, `Serializer`, `Deserializer` and `Initialize` on the type-mapper injectors, selectors, multiplexing readers and typed reader and writer, along with thirteen doc comments offering "further customizations". All of them are internal or private, so no published name moved and package validation has nothing to say. The test and benchmark projects had `Unoptimized` in six method names and a handful of locals. What the framework spells the American way is left alone, as the convention already says: `ModuleInitializer`, `IIncrementalGenerator.Initialize`, `AssemblyInitialize`, `JsonSerializer`, `OperationCanceledException`.
+
+The baseline moves, so the full table is here - six samples, seven scenarios apiece, from the runs the baseline was taken from. The reading figures are unchanged from 8.3.0 within measurement noise, which is what a rename of the scenarios should do.
+
+**Delimited, read**
+
+| Sample | Columns | Records | Scenario | Mean Total Time | Range | MB/s | Bytes/record | Peak heap | Peak working set |
+| --- | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| S1/S1 | 379 | 37,031 | `read-parse` | 915 ms | 892 ms - 935 ms | 40.2 | 5,685 | 13.5 MB | 48.8 MB |
+| S1/S1 | 379 | 37,031 | `read-typed` | 1.15 s | 1.14 s - 1.16 s | 32.1 | 5,629 | 13.6 MB | 50.0 MB |
+| S1/S1 | 379 | 37,031 | `read-values` | 1.17 s | 1.15 s - 1.21 s | 31.4 | 8,685 | 13.5 MB | 50.0 MB |
+| | | | | | | | | | |
+| S1/S2 | 58 | 344,352 | `read-parse` | 1.49 s | 1.42 s - 1.57 s | 68.3 | 1,414 | 13.4 MB | 48.5 MB |
+| S1/S2 | 58 | 344,352 | `read-typed` | 1.90 s | 1.88 s - 1.92 s | 53.5 | 1,338 | 13.4 MB | 49.9 MB |
+| S1/S2 | 58 | 344,352 | `read-values` | 1.94 s | 1.90 s - 2.03 s | 52.4 | 1,826 | 13.5 MB | 49.8 MB |
+| | | | | | | | | | |
+| S1/S3 | 196 | 39,337 | `read-parse` | 776 ms | 725 ms - 866 ms | 57.6 | 3,528 | 13.4 MB | 48.8 MB |
+| S1/S3 | 196 | 39,337 | `read-typed` | 1.34 s | 1.17 s - 1.75 s | 33.4 | 2,988 | 13.5 MB | 50.8 MB |
+| S1/S3 | 196 | 39,337 | `read-values` | 1.31 s | 1.19 s - 1.53 s | 34.2 | 4,580 | 13.4 MB | 50.8 MB |
+
+**Fixed-length, read**
+
+| Sample | Columns | Records | Scenario | Mean Total Time | Range | MB/s | Bytes/record | Peak heap | Peak working set |
+| --- | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| S2/S1 | 172 | 22,481 | `read-parse` | 185 ms | 176 ms - 195 ms | 87.0 | 3,735 | 13.3 MB | 49.5 MB |
+| S2/S1 | 172 | 22,481 | `read-typed` | 248 ms | 234 ms - 289 ms | 65.0 | 3,574 | 13.7 MB | 51.5 MB |
+| S2/S1 | 172 | 22,481 | `read-values` | 264 ms | 237 ms - 307 ms | 61.0 | 4,282 | 13.5 MB | 51.4 MB |
+| | | | | | | | | | |
+| S2/S2 | 235 | 1,790 | `read-parse` | 73 ms | 67 ms - 85 ms | 81.7 | 12,068 | 12.1 MB | 48.2 MB |
+| S2/S2 | 235 | 1,790 | `read-typed` | 112 ms | 104 ms - 124 ms | 53.4 | 11,245 | 12.5 MB | 50.5 MB |
+| S2/S2 | 235 | 1,790 | `read-values` | 108 ms | 99 ms - 122 ms | 55.4 | 13,147 | 12.3 MB | 50.3 MB |
+| | | | | | | | | | |
+| S2/S3 | 34 | 18,047 | `read-parse` | 87 ms | 83 ms - 96 ms | 49.8 | 1,859 | 12.8 MB | 48.6 MB |
+| S2/S3 | 34 | 18,047 | `read-typed` | 142 ms | 137 ms - 152 ms | 30.5 | 1,624 | 12.7 MB | 50.7 MB |
+| S2/S3 | 34 | 18,047 | `read-values` | 144 ms | 136 ms - 154 ms | 30.2 | 1,892 | 12.9 MB | 50.7 MB |
+
+**Delimited, written**
+
+| Sample | Columns | Records | Scenario | Mean Total Time | Range | MB/s | Bytes/record | Peak heap | Peak working set |
+| --- | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| S1/S1 | 379 | 37,031 | `write-text` | 1.08 s | 1,000 ms - 1.17 s | 33.3 | 15,405 | 324.0 MB | 375.0 MB |
+| S1/S1 | 379 | 37,031 | `write-typed` | 1.39 s | 1.32 s - 1.41 s | 27.2 | 15,405 | 322.0 MB | 374.9 MB |
+| | | | | | | | | | |
+| S1/S2 | 58 | 344,352 | `write-text` | 2.20 s | 1.66 s - 4.28 s | 42.7 | 2,410 | 624.2 MB | 680.4 MB |
+| S1/S2 | 58 | 344,352 | `write-typed` | 2.13 s | 2.03 s - 2.33 s | 47.6 | 2,410 | 599.3 MB | 656.5 MB |
+| | | | | | | | | | |
+| S1/S3 | 196 | 39,337 | `write-text` | 825 ms | 782 ms - 871 ms | 54.2 | 8,074 | 207.1 MB | 257.5 MB |
+| S1/S3 | 196 | 39,337 | `write-typed` | 1.09 s | 1.04 s - 1.14 s | 41.9 | 8,074 | 187.0 MB | 234.4 MB |
+
+**Fixed-length, written**
+
+| Sample | Columns | Records | Scenario | Mean Total Time | Range | MB/s | Bytes/record | Peak heap | Peak working set |
+| --- | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| S2/S1 | 172 | 22,481 | `write-text` | 272 ms | 244 ms - 332 ms | 58.4 | 3,867 | 59.1 MB | 103.1 MB |
+| S2/S1 | 172 | 22,481 | `write-typed` | 274 ms | 247 ms - 297 ms | 57.7 | 3,867 | 56.8 MB | 99.9 MB |
+| | | | | | | | | | |
+| S2/S2 | 235 | 1,790 | `write-text` | 67 ms | 61 ms - 75 ms | 88.7 | 13,136 | 26.8 MB | 65.0 MB |
+| S2/S2 | 235 | 1,790 | `write-typed` | 82 ms | 72 ms - 89 ms | 73.1 | 13,138 | 26.1 MB | 65.3 MB |
+| | | | | | | | | | |
+| S2/S3 | 34 | 18,047 | `write-text` | 95 ms | 91 ms - 100 ms | 45.8 | 1,668 | 36.8 MB | 78.9 MB |
+| S2/S3 | 34 | 18,047 | `write-typed` | 129 ms | 114 ms - 142 ms | 33.7 | 1,668 | 35.9 MB | 77.6 MB |
+
+**Delimited, read through a type mapper**
+
+| Sample | Columns | Records | Mean Total Time | Range | MB/s | Bytes/record | Peak heap | Peak working set |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| S1/S1 | 379 | 37,031 | 726 ms | 696 ms - 757 ms | 50.6 | 221 | 9.0 MB | 46.8 MB |
+| S1/S2 | 58 | 344,352 | 2.18 s | 1.27 s - 3.01 s | 46.6 | 196 | 13.5 MB | 52.0 MB |
+| S1/S3 | 196 | 39,337 | 675 ms | 618 ms - 734 ms | 66.2 | 200 | 8.7 MB | 46.4 MB |
+
+**Fixed-length, read through a type mapper**
+
+| Sample | Columns | Records | Mean Total Time | Range | MB/s | Bytes/record | Peak heap | Peak working set |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| S2/S1 | 172 | 22,481 | 266 ms | 254 ms - 278 ms | 60.6 | 1,884 | 13.6 MB | 55.8 MB |
+| S2/S2 | 235 | 1,790 | 150 ms | 143 ms - 156 ms | 39.8 | 8,146 | 10.8 MB | 53.2 MB |
+| S2/S3 | 34 | 18,047 | 165 ms | 156 ms - 173 ms | 26.3 | 805 | 12.3 MB | 52.7 MB |
+
+**Delimited, written through a type mapper**
+
+| Sample | Columns | Records | Mean Total Time | Range | MB/s | Bytes/record | Peak heap | Peak working set |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| S1/S1 | 379 | 37,031 | 897 ms | 867 ms - 917 ms | 15.8 | 15,408 | 21.9 MB | 65.9 MB |
+| S1/S2 | 58 | 344,352 | 1.75 s | 1.55 s - 1.99 s | 17.6 | 2,411 | 61.9 MB | 107.4 MB |
+| S1/S3 | 196 | 39,337 | 683 ms | 659 ms - 704 ms | 34.0 | 8,076 | 22.4 MB | 66.3 MB |
+
+**Fixed-length, written through a type mapper**
+
+| Sample | Columns | Records | Mean Total Time | Range | MB/s | Bytes/record | Peak heap | Peak working set |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| S2/S1 | 172 | 22,481 | 264 ms | 231 ms - 298 ms | 60.2 | 4,088 | 20.2 MB | 66.3 MB |
+| S2/S2 | 235 | 1,790 | 85 ms | 80 ms - 87 ms | 70.5 | 13,458 | 16.4 MB | 59.0 MB |
+| S2/S3 | 34 | 18,047 | 106 ms | 99 ms - 125 ms | 40.8 | 1,842 | 19.1 MB | 61.6 MB |
+
+Each row is one sample handled 5 times, each in a process of its own that starts, reads or writes the
+file once and exits - which is how the library is mostly used - and the figures are the mean of those 5.
+Everything a job pays for is inside them: the runtime compiling the parse or format path on first use, the
+schema being built, the file being opened. The three reading scenarios are cumulative:
+`read-parse` reads every column as text and asks for no value, `read-typed` gives each single-typed column
+its own type, and `read-values` is `read-typed` with `GetValues` called on every record. The difference
+between two of them is the cost of the step between.
+
+`write-text` and `write-typed` are the same pair the other way round: the records read out of the sample
+and written back, as text and with each single-typed column given its own type. The records are read into
+memory first and that is **not** measured, so what these rows report is the write. It is also why their
+peak figures are large: the whole sample is being held, which on the widest of them is several hundred
+megabytes that the writer has nothing to do with.
+
+The mapped scenarios have tables of their own because they are not a further step but a different path:
+the file read onto entities, or written from them, through a type mapper - the only scenarios that build
+an entity or use the accessors a mapper makes per column. They map the first column of each kind the
+profile knows about and ignore the rest, which costs the reader the column but not the parse, so their
+figures are far below the others and mean something different. Read each set against itself and against
+the same set in an earlier release.
+
+| Column | What it measures |
+| --- | --- |
+| Columns | Columns in the schema; for a fixed-length sample, in its widest record layout. |
+| Records | Records the reader yielded. Gated exactly. No sample is built to have a record refused, so any refusal fails the check whatever else agrees. |
+| Mean Total Time | Mean wall clock of 5 cold runs: opening the file, building the schema, constructing the reader or writer, taking or writing every record, and disposing, in a process that has done nothing else. Nothing is amortised over work a real caller never performs. **Reported, never gated.** |
+| Range | The quickest and slowest of those 5 loads, so the spread behind the mean is visible rather than implied. |
+| MB/s | File size divided by Mean Total Time, so it carries the same caveats. |
+| Bytes/record | Mean bytes allocated across a load or a write, divided by records. Deterministic for given bytes on a given runtime, and repeats to within 0.1% here. **Gated at 2%.** |
+| Peak heap | The largest the managed heap reached in any of the 5 loads, sampled every 5 ms. Reported. |
+| Peak working set | The largest peak working set any of those processes reached. Each does one load and exits, so the figure is a whole job's footprint, most of it runtime start-up rather than the read. Reported. |
+
+
+Each process runs with tiered compilation off, so every method is compiled optimised the first time it is
+called. The run is still cold - it pays for compiling the path it takes - but what it allocates no longer
+depends on how far the runtime got before promoting anything, which on the sample of twenty-six record
+layouts moved a writing figure by a fifth from one process to the next. Both delimited samples measure
+identically either way.
+
+Averaging 5 whole processes takes most of the machine noise out, but a cold start is noisy by nature and
+the range shows what is left. `FlatFiles.Benchmark` is the project that measures a warm steady state, with
+statistics rather than a mean; these figures are the other question - what one job costs end to end - and
+show the shape of the work rather than a number to compare release to release, which is why neither Mean
+Total Time nor MB/s is gated.
+
+Whether `write-text` wrote the file it read: S1/S1 `write-text` differs; S1/S2 `write-text` differs; S1/S3 `write-text` differs; S2/S1 `write-text` differs; S2/S2 `write-text` same; S2/S3 `write-text` same. A sample it cannot
+reproduce is not a fault - a string column trims, so a field of spaces comes back empty; some
+fixed-length layouts have windows that stop short of the record, so its tail is never read; and a
+ragged final column's padding is not part of its value. What each write produced is pinned by hash in
+the baseline either way, so a change in the bytes written fails the check whatever this says.
 
 ### Next
 
@@ -15,6 +178,7 @@ In the order they will be built. None of these breaks anything, so none of them 
 
   What is wanted is one way of saying it on both readers: refuse a short record or pad it, refuse a long one or discard the surplus, with the current behaviour as the default so nothing changes for anyone who does not ask. Whatever is chosen has to be visible - a record silently read one column out of step is the worst of the available outcomes, and is what happens now.
 
+- **The delimited writing path allocates about twice what the delimited reading path does.** Now that both directions are measured, the widest sample reads at 5,685 bytes a record and writes at 15,405, and the ratio holds across all three delimited samples - while the fixed-length writer costs about what the fixed-length reader costs, and on the shortest record rather less. So this is one writer rather than writing, and it is where the room is.
 - **A delimited selector should be able to match on the record's text.** `DelimitedTypeMapperSelector` and `DelimitedSchemaSelector` are given each record's values to choose a schema by, so the reader has to parse a record into an array of values before it can decide what the record is - which is the one thing that stops a selected delimited mapping being read straight onto an entity, as a fixed-length one now is. A predicate over the record's text, beside the one over its values, would leave the choice to the caller: match on text and keep the faster path, or match on values and pay for them.
 
 **Considered and already covered.** Seven more ideas came out of the same review and turned out to need no work. They are recorded so that nobody spends an afternoon rediscovering it.

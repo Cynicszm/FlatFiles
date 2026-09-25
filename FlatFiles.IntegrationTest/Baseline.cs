@@ -11,7 +11,8 @@ namespace FlatFiles.IntegrationTest
     ///     calls it a change rather than noise.
     /// </summary>
     /// <remarks>
-    ///     Two figures are gated and one is not. How many records a sample yields is exact: a change there is a
+    ///     Three figures are gated and one is not. What a write scenario wrote is pinned by hash, so the bytes
+    ///     the library writes cannot move without somebody saying so. How many records a sample yields is exact: a change there is a
     ///     change in what the library does with a real-shaped file, whether or not anybody meant it, and it
     ///     catches a record being refused as surely as a count of refusals would, because a refused record is one
     ///     the run did not yield. What a read allocates is deterministic to the byte for a given file and runtime,
@@ -87,6 +88,11 @@ namespace FlatFiles.IntegrationTest
         public long Records { get; set; }
 
         public double BytesPerRecord { get; set; }
+
+        /// <summary>
+        ///     What a write scenario wrote, by hash. Empty for a reading scenario, which writes nothing.
+        /// </summary>
+        public string Written { get; set; } = string.Empty;
     }
 
     [JsonSourceGenerationOptions( PropertyNameCaseInsensitive = true, WriteIndented = true )]

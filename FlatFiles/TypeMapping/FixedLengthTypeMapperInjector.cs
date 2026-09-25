@@ -94,7 +94,7 @@ namespace FlatFiles.TypeMapping
                 if (context is null && matcher.Predicate( entity ))
                 {
                     matcher.IsMatch = true;
-                    matcher.Initialize();
+                    matcher.Initialise();
                     context = matcher;
                 }
                 else
@@ -110,7 +110,7 @@ namespace FlatFiles.TypeMapping
             {
                 throw new FlatFileException( Resources.MissingMatcher );
             }
-            defaultMatcher.Initialize();
+            defaultMatcher.Initialise();
             return defaultMatcher;
         }
 
@@ -124,29 +124,29 @@ namespace FlatFiles.TypeMapping
 
             public int LogicalCount { get; private set; }
 
-            private Action<IRecordContext, object?, object?[]>? Serializer { get; set; }
+            private Action<IRecordContext, object?, object?[]>? Serialiser { get; set; }
 
-            void ITypeMatcherContext.Serialize( IRecordContext context, object? value, object?[] values )
+            void ITypeMatcherContext.Serialise( IRecordContext context, object? value, object?[] values )
             {
-                Serializer!(context, value, values);
+                Serialiser!(context, value, values);
             }
 
-            public void Initialize()
+            public void Initialise()
             {
-                if (Serializer is not null)
+                if (Serialiser is not null)
                 {
                     return;
                 }
                 var source = (IMapperSource) TypeMapper;
                 var mapper = source.GetMapper();
                 LogicalCount = mapper.LogicalCount;
-                Serializer = mapper.GetWriter();
+                Serialiser = mapper.GetWriter();
             }
 
             public FixedLengthSchema Reset()
             {
                 LogicalCount = 0;
-                Serializer = null;
+                Serialiser = null;
                 var schema = TypeMapper.GetSchema();
                 return schema;
             }

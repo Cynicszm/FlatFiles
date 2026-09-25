@@ -62,7 +62,7 @@ namespace FlatFiles.Test
         }
 
         [TestMethod]
-        public void ShouldDeduceSchemaForType_ColumnNameCustomization()
+        public void ShouldDeduceSchemaForType_ColumnNameCustomisation()
         {
             var stringWriter = new StringWriter();
             var nameResolver = AutoMapResolver.For( m => $"Prefix_{m.Name}_Postfix" );

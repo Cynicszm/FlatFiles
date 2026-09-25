@@ -158,11 +158,11 @@ namespace FlatFiles.Test
             Assert.AreEqual( expected.Other.Name, read.Other.Name );
         }
 
-        private static IDynamicDelimitedTypeMapper DelimitedMapper( bool optimized = true )
+        private static IDynamicDelimitedTypeMapper DelimitedMapper( bool optimised = true )
         {
             var mapper = DelimitedTypeMapper.DefineDynamic( typeof( Everything ) );
             mapper.UseFactory( typeof( Everything ), () => new Everything() );
-            mapper.OptimiseMapping( optimized );
+            mapper.OptimiseMapping( optimised );
             mapper.BooleanProperty( "Bool" );
             mapper.ByteArrayProperty( "Bytes" );
             mapper.ByteProperty( "Byte" );
@@ -201,11 +201,11 @@ namespace FlatFiles.Test
             return mapper;
         }
 
-        private static IDynamicFixedLengthTypeMapper FixedLengthMapper( bool optimized = true )
+        private static IDynamicFixedLengthTypeMapper FixedLengthMapper( bool optimised = true )
         {
             var mapper = FixedLengthTypeMapper.DefineDynamic( typeof( Everything ) );
             mapper.UseFactory( typeof( Everything ), () => new Everything() );
-            mapper.OptimiseMapping( optimized );
+            mapper.OptimiseMapping( optimised );
             mapper.BooleanProperty( "Bool", 5 );
             mapper.ByteArrayProperty( "Bytes", 6 );
             mapper.ByteProperty( "Byte", 3 );
@@ -259,7 +259,7 @@ namespace FlatFiles.Test
         }
 
         [TestMethod]
-        public void TestDelimitedDynamic_Unoptimized_RoundTrips()
+        public void TestDelimitedDynamic_Unoptimised_RoundTrips()
         {
             var mapper = DelimitedMapper( false );
             var options = new DelimitedOptions { RecordSeparator = "\n" };
@@ -286,7 +286,7 @@ namespace FlatFiles.Test
         }
 
         [TestMethod]
-        public void TestFixedLengthDynamic_Unoptimized_RoundTrips()
+        public void TestFixedLengthDynamic_Unoptimised_RoundTrips()
         {
             var mapper = FixedLengthMapper( false );
             var options = new FixedLengthOptions { RecordSeparator = "\n" };
