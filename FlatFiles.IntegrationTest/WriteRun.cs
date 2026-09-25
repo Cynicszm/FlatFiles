@@ -177,8 +177,12 @@ namespace FlatFiles.IntegrationTest
         public static void Write( FileProfile profile, string destination, string scenario, WriteSource source )
         {
             Directory.CreateDirectory( Path.GetDirectoryName( destination )! );
-            using (var stream = new FileStream( destination, FileMode.Create, FileAccess.Write, FileShare.None, 1 << 20 ))
-            using (var text = new StreamWriter( stream, new UTF8Encoding( false ), 1 << 20 ))
+            // The framework's own buffer sizes: see the note on the reading side. A megabyte apiece here came to
+            // about three megabytes inside every write measurement, which on the sample of 1,790 records was 3,601
+            // of the 3,689 bytes a record it reported - and which hid a regression of fifty bytes a record inside
+            // the two percent the check allows.
+            using (var stream = new FileStream( destination, FileMode.Create, FileAccess.Write, FileShare.None ))
+            using (var text = new StreamWriter( stream, new UTF8Encoding( false ) ))
             {
                 if (scenario == Mapped)
                 {
