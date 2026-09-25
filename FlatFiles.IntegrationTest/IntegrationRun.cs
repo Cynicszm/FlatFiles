@@ -214,7 +214,10 @@ namespace FlatFiles.IntegrationTest
             var taken = 0L;
             var refused = 0L;
 
-            using (var stream = new FileStream( path, FileMode.Open, FileAccess.Read, FileShare.Read, 1 << 20 ))
+            // The framework's own buffer sizes, deliberately. A buffer the harness picks is allocated inside the
+            // measurement and divided into every figure it reports: a megabyte here was a twentieth of what the
+            // shortest sample appeared to cost to read, and most of what it appeared to cost to write.
+            using (var stream = new FileStream( path, FileMode.Open, FileAccess.Read, FileShare.Read ))
             using (var text = new StreamReader( stream ))
             {
                 if (scenario == Mapped)

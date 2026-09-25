@@ -40,294 +40,294 @@
       "Profile": "Set1Sample1",
       "Scenario": "read-parse",
       "Records": 37031,
-      "BytesPerRecord": 5685,
+      "BytesPerRecord": 5656.8,
       "Written": ""
     },
     {
       "Profile": "Set1Sample1",
       "Scenario": "read-typed",
       "Records": 37031,
-      "BytesPerRecord": 5628.9,
+      "BytesPerRecord": 5600.7,
       "Written": ""
     },
     {
       "Profile": "Set1Sample1",
       "Scenario": "read-values",
       "Records": 37031,
-      "BytesPerRecord": 8684.8,
+      "BytesPerRecord": 8656.8,
       "Written": ""
     },
     {
       "Profile": "Set1Sample1",
       "Scenario": "read-mapper",
       "Records": 37031,
-      "BytesPerRecord": 220.8,
+      "BytesPerRecord": 192.5,
       "Written": ""
     },
     {
       "Profile": "Set1Sample1",
       "Scenario": "write-text",
       "Records": 37031,
-      "BytesPerRecord": 244.8,
+      "BytesPerRecord": 75.2,
       "Written": "8be96b9eff1ee9c53d50cfc4a39a2d585e38aca50bc2357339d760a3c2ed7ec9"
     },
     {
       "Profile": "Set1Sample1",
       "Scenario": "write-typed",
       "Records": 37031,
-      "BytesPerRecord": 245.2,
+      "BytesPerRecord": 75.5,
       "Written": "a3077a05aa7df9becc2d476d8d9535a1fe8f20ccdd8a7b13a45d9febab79d0e0"
     },
     {
       "Profile": "Set1Sample1",
       "Scenario": "write-mapper",
       "Records": 37031,
-      "BytesPerRecord": 248.1,
+      "BytesPerRecord": 78.4,
       "Written": "6463759e167cfe7f61818cd1dc7c6f7117cb1513906f47c736f396f612fd7062"
     },
     {
       "Profile": "Set1Sample2",
       "Scenario": "read-parse",
       "Records": 344352,
-      "BytesPerRecord": 1413.6,
+      "BytesPerRecord": 1410.5,
       "Written": ""
     },
     {
       "Profile": "Set1Sample2",
       "Scenario": "read-typed",
       "Records": 344352,
-      "BytesPerRecord": 1337.7,
+      "BytesPerRecord": 1334.7,
       "Written": ""
     },
     {
       "Profile": "Set1Sample2",
       "Scenario": "read-values",
       "Records": 344352,
-      "BytesPerRecord": 1825.7,
+      "BytesPerRecord": 1822.7,
       "Written": ""
     },
     {
       "Profile": "Set1Sample2",
       "Scenario": "read-mapper",
       "Records": 344352,
-      "BytesPerRecord": 195.5,
+      "BytesPerRecord": 192.5,
       "Written": ""
     },
     {
       "Profile": "Set1Sample2",
       "Scenario": "write-text",
       "Records": 344352,
-      "BytesPerRecord": 90.4,
+      "BytesPerRecord": 72.1,
       "Written": "0d5843845086a066aa775c3455e21dac6277155ff0e1dfd1ff02f30cf7ff1cd7"
     },
     {
       "Profile": "Set1Sample2",
       "Scenario": "write-typed",
       "Records": 344352,
-      "BytesPerRecord": 90.4,
+      "BytesPerRecord": 72.1,
       "Written": "b991061356bac4947c174131f898daac7bcf5c07dd15e010f2578cf0127af3e6"
     },
     {
       "Profile": "Set1Sample2",
       "Scenario": "write-mapper",
       "Records": 344352,
-      "BytesPerRecord": 90.5,
+      "BytesPerRecord": 72.3,
       "Written": "4cb2a9f045648982101c9ab0746f948cb634b5ebd4ad527834feb4aac59dfc99"
     },
     {
       "Profile": "Set1Sample3",
       "Scenario": "read-parse",
       "Records": 39337,
-      "BytesPerRecord": 3528.1,
+      "BytesPerRecord": 3501.4,
       "Written": ""
     },
     {
       "Profile": "Set1Sample3",
       "Scenario": "read-typed",
       "Records": 39337,
-      "BytesPerRecord": 2987.8,
+      "BytesPerRecord": 2961.2,
       "Written": ""
     },
     {
       "Profile": "Set1Sample3",
       "Scenario": "read-values",
       "Records": 39337,
-      "BytesPerRecord": 4579.8,
+      "BytesPerRecord": 4553.2,
       "Written": ""
     },
     {
       "Profile": "Set1Sample3",
       "Scenario": "read-mapper",
       "Records": 39337,
-      "BytesPerRecord": 200.3,
+      "BytesPerRecord": 173.7,
       "Written": ""
     },
     {
       "Profile": "Set1Sample3",
       "Scenario": "write-text",
       "Records": 39337,
-      "BytesPerRecord": 233.5,
+      "BytesPerRecord": 73.8,
       "Written": "173e2f0bb18b70c40b8913e3f5f86a86e370ee859b36146b6ebf0990b138d1a2"
     },
     {
       "Profile": "Set1Sample3",
       "Scenario": "write-typed",
       "Records": 39337,
-      "BytesPerRecord": 233.7,
+      "BytesPerRecord": 74,
       "Written": "2cef52b259c3cdfabf1a58382b333a19adb1272207e8233c05cc5b7d5fc67780"
     },
     {
       "Profile": "Set1Sample3",
       "Scenario": "write-mapper",
       "Records": 39337,
-      "BytesPerRecord": 235.5,
+      "BytesPerRecord": 75.8,
       "Written": "7c3f2ab1c7b587e87b55f19fbe01e86073e3b8983e40d22ae0884bf6700a4bf3"
     },
     {
       "Profile": "Set2Sample1",
       "Scenario": "read-parse",
       "Records": 22481,
-      "BytesPerRecord": 3655.1,
+      "BytesPerRecord": 3608.8,
       "Written": ""
     },
     {
       "Profile": "Set2Sample1",
       "Scenario": "read-typed",
       "Records": 22481,
-      "BytesPerRecord": 3493.5,
+      "BytesPerRecord": 3447.3,
       "Written": ""
     },
     {
       "Profile": "Set2Sample1",
       "Scenario": "read-values",
       "Records": 22481,
-      "BytesPerRecord": 4201.8,
+      "BytesPerRecord": 4155.4,
       "Written": ""
     },
     {
       "Profile": "Set2Sample1",
       "Scenario": "read-mapper",
       "Records": 22481,
-      "BytesPerRecord": 1803.6,
+      "BytesPerRecord": 1757.2,
       "Written": ""
     },
     {
       "Profile": "Set2Sample1",
       "Scenario": "write-text",
       "Records": 22481,
-      "BytesPerRecord": 366.6,
+      "BytesPerRecord": 87.1,
       "Written": "d59db1db8f887ef3493df35b59a51ce908f6d9c06146f4286400ac6acd6a9ab4"
     },
     {
       "Profile": "Set2Sample1",
       "Scenario": "write-typed",
       "Records": 22481,
-      "BytesPerRecord": 367.5,
+      "BytesPerRecord": 88,
       "Written": "533b55523a77b35bab0a7701a5425bde43246fa7e54656a998c5bdcafc05bfc8"
     },
     {
       "Profile": "Set2Sample1",
       "Scenario": "write-mapper",
       "Records": 22481,
-      "BytesPerRecord": 508.2,
+      "BytesPerRecord": 228.5,
       "Written": "cfc9ffd8abededc7c51532f60a6a891ba9e61f11e10b3102aaff38cab88117df"
     },
     {
       "Profile": "Set2Sample2",
       "Scenario": "read-parse",
       "Records": 1790,
-      "BytesPerRecord": 12011.3,
+      "BytesPerRecord": 11429.2,
       "Written": ""
     },
     {
       "Profile": "Set2Sample2",
       "Scenario": "read-typed",
       "Records": 1790,
-      "BytesPerRecord": 11188.5,
+      "BytesPerRecord": 10604.9,
       "Written": ""
     },
     {
       "Profile": "Set2Sample2",
       "Scenario": "read-values",
       "Records": 1790,
-      "BytesPerRecord": 13091.8,
+      "BytesPerRecord": 12506.9,
       "Written": ""
     },
     {
       "Profile": "Set2Sample2",
       "Scenario": "read-mapper",
       "Records": 1790,
-      "BytesPerRecord": 8087.2,
+      "BytesPerRecord": 7505.1,
       "Written": ""
     },
     {
       "Profile": "Set2Sample2",
       "Scenario": "write-text",
       "Records": 1790,
-      "BytesPerRecord": 3688.5,
+      "BytesPerRecord": 178.9,
       "Written": "1967588b4d6f46fab40908c07680d8f7e4fa8eb46e3f9f8287306bfb94770810"
     },
     {
       "Profile": "Set2Sample2",
       "Scenario": "write-typed",
       "Records": 1790,
-      "BytesPerRecord": 3696.1,
+      "BytesPerRecord": 185.7,
       "Written": "083683d4c57abc95e2242aa93f3d088d14edef2973bc08c2a57afd55fdcb3944"
     },
     {
       "Profile": "Set2Sample2",
       "Scenario": "write-mapper",
       "Records": 1790,
-      "BytesPerRecord": 3956.8,
+      "BytesPerRecord": 443.1,
       "Written": "669baf3098cb8afa4fed072fa08f1677de613728a835406b14d6b856dd8e280a"
     },
     {
       "Profile": "Set2Sample3",
       "Scenario": "read-parse",
       "Records": 18047,
-      "BytesPerRecord": 1831.4,
+      "BytesPerRecord": 1773.5,
       "Written": ""
     },
     {
       "Profile": "Set2Sample3",
       "Scenario": "read-typed",
       "Records": 18047,
-      "BytesPerRecord": 1596.9,
+      "BytesPerRecord": 1539.1,
       "Written": ""
     },
     {
       "Profile": "Set2Sample3",
       "Scenario": "read-values",
       "Records": 18047,
-      "BytesPerRecord": 1864.8,
+      "BytesPerRecord": 1806.8,
       "Written": ""
     },
     {
       "Profile": "Set2Sample3",
       "Scenario": "read-mapper",
       "Records": 18047,
-      "BytesPerRecord": 777,
+      "BytesPerRecord": 719.5,
       "Written": ""
     },
     {
       "Profile": "Set2Sample3",
       "Scenario": "write-text",
       "Records": 18047,
-      "BytesPerRecord": 422.7,
+      "BytesPerRecord": 74.8,
       "Written": "cc5d0fd5704899c59f7b520ed98f0f61b6620d627a89491f75922d4c209609ec"
     },
     {
       "Profile": "Set2Sample3",
       "Scenario": "write-typed",
       "Records": 18047,
-      "BytesPerRecord": 423,
+      "BytesPerRecord": 74.9,
       "Written": "8acd81506569f151c0116447ea84e90e4f0239c1836e5a91fe3798a9351cd738"
     },
     {
       "Profile": "Set2Sample3",
       "Scenario": "write-mapper",
       "Records": 18047,
-      "BytesPerRecord": 569.9,
+      "BytesPerRecord": 221.8,
       "Written": "3cb7d2ff28339eb3d40c29494fa5baab7ed16955e2ee2866feef0d7ac2d769e0"
     }
   ]
