@@ -35,6 +35,13 @@ namespace FlatFiles.TypeMapping
         IColumnSetter<TEntity>[]? GetColumnSetters();
 
         /// <summary>
+        ///     One getter per column, for writing a record from an entity without any value becoming an
+        ///     <see cref="object" />, or null where this mapping cannot be written that way.
+        /// </summary>
+        /// <returns>The getters, or null to write through the array of values as before.</returns>
+        IColumnGetter<TEntity>[]? GetColumnGetters();
+
+        /// <summary>
         ///     Makes an entity for a record to be read onto.
         /// </summary>
         /// <returns>A new entity.</returns>

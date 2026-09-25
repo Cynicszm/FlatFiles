@@ -234,6 +234,20 @@ namespace FlatFiles
         ///     switched itself off silently in the one configuration it exists for.
         /// </remarks>
         internal virtual bool SupportsTypedParse => false;
+
+        /// <summary>
+        ///     Whether a value of this column's own type can be formatted without going through
+        ///     <see cref="object" />. False here, and answered by the column that knows its type.
+        /// </summary>
+        internal virtual bool SupportsTypedFormat => false;
+
+        /// <summary>
+        ///     Writes what stands for no value at all, for a member that holds none.
+        /// </summary>
+        internal void FormatNull( IColumnContext? context, IBufferWriter<char> destination )
+        {
+            destination.Write( ( NullFormatter.FormatNull( context ) ?? string.Empty ).AsSpan() );
+        }
     }
 
     /// <summary>
@@ -326,6 +340,55 @@ namespace FlatFiles
         ///     replaced one of the <c>Parse</c> methods and so must see every value itself.
         /// </remarks>
         internal override bool SupportsTypedParse => OnParsing is null && OnParsed is null && !OverridesStringParse && !OverridesSpanParse;
+
+        /// <inheritdoc />
+        /// <remarks>
+        ///     It cannot when anything in the way expects a value of another shape: either formatting hook, which
+        ///     are declared in terms of <see cref="object" /> and <see cref="string" />, or a derived column that
+        ///     replaced one of the <c>Format</c> methods and so must see every value itself.
+        /// </remarks>
+        internal override bool SupportsTypedFormat => OnFormatting is null && OnFormatted is null && !OverridesObjectFormat && !OverridesBufferFormat;
+
+        /// <summary>
+        ///     Formats a value of the column's own type straight into the buffer. Only valid where
+        ///     <see cref="SupportsTypedFormat" /> says so; what the ordinary path does short of the hooks - the
+        ///     null formatter included - happens here too.
+        /// </summary>
+        /// <param name="context">Holds information about the column currently being processed.</param>
+        /// <param name="value">The value to format.</param>
+        /// <param name="destination">The buffer to append the formatted value to.</param>
+        internal void FormatTyped( IColumnContext? context, T value, IBufferWriter<char> destination )
+        {
+            // The guard on the type comes first deliberately. `value is null` alone asks the question of an
+            // unconstrained T by boxing it, which costs a box for every value of a value type - the whole thing
+            // this path exists to avoid. Asking about the type folds to a constant where T is a value type, and
+            // the test that would box is never reached.
+            if (!typeof( T ).IsValueType && value is null)
+            {
+                FormatNull( context, destination );
+                return;
+            }
+            OnFormat( context, value, destination );
+        }
+
+        /// <summary>
+        ///     Whether the runtime type replaced <see cref="Format(IColumnContext?, object?)" />, in which case
+        ///     every value has to reach it as an object.
+        /// </summary>
+        private bool OverridesObjectFormat => overridesObjectFormat ??=
+            GetType().GetMethod( nameof( Format ), [typeof( IColumnContext ), typeof( object )] )?.DeclaringType != typeof( ColumnDefinition<T> );
+
+        private bool? overridesObjectFormat;
+
+        /// <summary>
+        ///     Whether the runtime type replaced <see cref="Format(IColumnContext?, object?, IBufferWriter{char})" />.
+        ///     Asked once per column rather than once per value, because the answer is a reflection lookup and
+        ///     never changes.
+        /// </summary>
+        private bool OverridesBufferFormat => overridesBufferFormat ??=
+            GetType().GetMethod( nameof( Format ), [typeof( IColumnContext ), typeof( object ), typeof( IBufferWriter<char> )] )?.DeclaringType != typeof( ColumnDefinition<T> );
+
+        private bool? overridesBufferFormat;
 
         /// <summary>
         ///     Parses the value into the column's own type rather than into an object. Only valid where

@@ -9,6 +9,9 @@ namespace FlatFiles.TypeMapping
         private readonly Action<IRecordContext, TEntity, object[]> serializer = mapper.GetWriter();
         private readonly int logicalCount = mapper.LogicalCount;
 
+        // Non-null where every column and member this mapping covers can be written without boxing a value.
+        private readonly IColumnGetter<TEntity>[]? getters = mapper.GetColumnGetters();
+
         /// <summary>
         ///     Raised when an error occurs while processing a column.
         /// </summary>
@@ -53,6 +56,12 @@ namespace FlatFiles.TypeMapping
 
         public void Write( TEntity entity )
         {
+            if (getters is not null && writer.CanWriteFromEntity)
+            {
+                // Straight from the entity: nothing is boxed on the way, and no array is filled to hold it.
+                writer.WriteFromEntity( entity, getters );
+                return;
+            }
             var values = Serialize( entity );
             writer.Write( values );
         }
@@ -65,6 +74,11 @@ namespace FlatFiles.TypeMapping
         public async Task WriteAsync( TEntity entity, CancellationToken cancellationToken )
         {
             cancellationToken.ThrowIfCancellationRequested();
+            if (getters is not null && writer.CanWriteFromEntity)
+            {
+                await writer.WriteFromEntityAsync( entity, getters, cancellationToken ).ConfigureAwait( false );
+                return;
+            }
             var values = Serialize( entity );
             await writer.WriteAsync( values, cancellationToken ).ConfigureAwait( false );
         }

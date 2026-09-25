@@ -635,6 +635,8 @@ Where the runtime cannot generate code, a type mapper still works - it falls bac
 
 It tells you, at information level, about any member it could not write for and why: no setter, a setter that is not public, an init-only setter, or a type no column reads. Those members are read the slower way, which is what would have happened anyway.
 
+The same applies to writing: a record is formatted straight from the entity, without its values being boxed into an array first, wherever the mapping allows it.
+
 Where the generator cannot see a mapping - a type named only at run time, or one from an assembly that does not reference this package - you can register the accessors yourself:
 
 ```csharp
@@ -644,6 +646,11 @@ MappingAccessors.AddFactory( () => new Customer() );
 MappingAccessors.AddSetter<Customer, int>( "CustomerId", ( e, v ) => e.CustomerId = v );
 MappingAccessors.AddSetter<Customer, string>( "Name", ( e, v ) => e.Name = v );
 MappingAccessors.AddNullableSetter<Customer, DateTime>( "Closed", ( e, v ) => e.Closed = v );
+
+// And for writing:
+MappingAccessors.AddGetter<Customer, int>( "CustomerId", e => e.CustomerId );
+MappingAccessors.AddGetter<Customer, string>( "Name", e => e.Name );
+MappingAccessors.AddNullableGetter<Customer, DateTime>( "Closed", e => e.Closed );
 ```
 
 Each call closes its own generic types where you write it, which is why this works at all: nothing has to be closed later. Register once, before you read - a `[ModuleInitializer]` is the natural home, and is where the generator puts its own - and nothing else about your mapping changes.

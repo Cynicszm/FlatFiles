@@ -335,6 +335,68 @@ namespace FlatFiles
             }
         }
 
+        /// <summary>
+        ///     Formats a record straight from the entity it is written from, asking each column's getter for its
+        ///     member rather than being handed an array of values that were boxed to fill it.
+        /// </summary>
+        /// <typeparam name="TEntity">The type being written from.</typeparam>
+        /// <param name="context">The metadata for the record currently being processed.</param>
+        /// <param name="entity">The entity being written.</param>
+        /// <param name="getters">One per logical column, in the order the schema declares them.</param>
+        /// <param name="destination">The buffer that receives the formatted record.</param>
+        /// <param name="handler">Receives a callback before and after each column is formatted.</param>
+        internal void FormatValues<TEntity>( IRecoverableRecordContext context, TEntity entity, IColumnGetter<TEntity>[] getters, RecordBuffer destination, IFormattedColumnHandler handler )
+        {
+            var definitions = ColumnDefinitions;
+            for (int columnIndex = 0, valueIndex = 0, columnCount = definitions.Count; columnIndex != columnCount; ++columnIndex)
+            {
+                var definition = definitions[columnIndex];
+                handler.ColumnStarting( columnIndex, destination );
+                var start = destination.Length;
+                if (definition is IMetadataColumn)
+                {
+                    // Its value comes from the context rather than from the entity, as when parsing.
+                    FormatWithContext( NewColumnContext( context, columnIndex, valueIndex ), null, destination );
+                    ++valueIndex;
+                }
+                else if (!definition.IsIgnored)
+                {
+                    FormatMember( context, columnIndex, valueIndex, entity, getters[valueIndex], destination );
+                    ++valueIndex;
+                }
+                else
+                {
+                    FormatValue( context, columnIndex, -1, null, destination );
+                }
+                handler.ColumnFormatted( columnIndex, start, destination );
+            }
+        }
+
+        private void FormatMember<TEntity>( IRecoverableRecordContext context, int columnIndex, int valueIndex, TEntity entity, IColumnGetter<TEntity> getter, RecordBuffer destination )
+        {
+            var options = context.ExecutionContext.Options;
+            var definition = ColumnDefinitions[columnIndex];
+            // As when parsing: no context unless the column asks for one, or something fails and the error needs
+            // one to describe itself.
+            var needsContext = !options.IsColumnContextDisabled && ( definition.IsColumnContextRequired || options.FormatProvider is not null );
+            var columnContext = needsContext ? NewColumnContext( context, columnIndex, valueIndex ) : null;
+            var start = destination.Length;
+            try
+            {
+                getter.Write( columnContext, entity, destination );
+            }
+            catch (Exception exception)
+            {
+                // Whatever the column managed to write before it failed must not leak into the record.
+                destination.Truncate( start );
+                if (options.IsColumnContextDisabled)
+                {
+                    throw new ColumnProcessingException( definition, valueIndex, getter.Read( entity ), exception );
+                }
+                RecoverFormat( columnContext ?? NewColumnContext( context, columnIndex, valueIndex ), getter.Read( entity ), destination, exception );
+            }
+        }
+
         private void FormatValue( IRecoverableRecordContext context, int columnIndex, int valueIndex, object? value, RecordBuffer destination )
         {
             var options = context.ExecutionContext.Options;

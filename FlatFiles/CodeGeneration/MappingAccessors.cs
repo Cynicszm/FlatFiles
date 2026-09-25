@@ -41,6 +41,8 @@ namespace FlatFiles.CodeGeneration
     {
         private static readonly ConcurrentDictionary<Registration, Accessor> setters = new();
 
+        private static readonly ConcurrentDictionary<Registration, Accessor> getters = new();
+
         private static readonly ConcurrentDictionary<Type, object> factories = new();
 
         /// <summary>
@@ -98,9 +100,63 @@ namespace FlatFiles.CodeGeneration
                 ( definition, _ ) => new NullableColumnSetter<TEntity, T>( (ColumnDefinition<T>) definition, assign ) );
         }
 
+        /// <summary>
+        ///     Registers how a member is read for writing, where it is of the column's own type.
+        /// </summary>
+        /// <typeparam name="TEntity">The type declaring the member.</typeparam>
+        /// <typeparam name="T">The type the member holds and the column formats.</typeparam>
+        /// <param name="member">The member's name.</param>
+        /// <param name="read">Reads the member.</param>
+        /// <exception cref="ArgumentNullException">The name or the delegate is null.</exception>
+        public static void AddGetter<TEntity, T>( string member, Func<TEntity, T> read )
+        {
+            ArgumentNullException.ThrowIfNull( member );
+            ArgumentNullException.ThrowIfNull( read );
+            getters[new Registration( typeof( TEntity ), member )] = new Accessor( typeof( T ), false,
+                ( definition, _ ) => new ColumnGetter<TEntity, T>( (ColumnDefinition<T>) definition, read ) );
+        }
+
+        /// <summary>
+        ///     Registers how a member is read for writing, where it holds the nullable form of what the column
+        ///     writes.
+        /// </summary>
+        /// <typeparam name="TEntity">The type declaring the member.</typeparam>
+        /// <typeparam name="T">The type the column formats.</typeparam>
+        /// <param name="member">The member's name.</param>
+        /// <param name="read">Reads the member.</param>
+        /// <exception cref="ArgumentNullException">The name or the delegate is null.</exception>
+        public static void AddNullableGetter<TEntity, T>( string member, Func<TEntity, T?> read )
+            where T : struct
+        {
+            ArgumentNullException.ThrowIfNull( member );
+            ArgumentNullException.ThrowIfNull( read );
+            getters[new Registration( typeof( TEntity ), member )] = new Accessor( typeof( T ), true,
+                ( definition, _ ) => new NullableColumnGetter<TEntity, T>( (ColumnDefinition<T>) definition, read ) );
+        }
+
+        internal static IColumnGetter<TEntity>? Getter<TEntity>( Type declaring, string member, ColumnDefinition definition, Type columnType, bool isNullable )
+        {
+            if (!getters.TryGetValue( new Registration( declaring, member ), out var registered ))
+            {
+                return null;
+            }
+            if (registered.ColumnType != columnType || registered.IsNullable != isNullable)
+            {
+                return null;
+            }
+            return registered.Build( definition, null! ) as IColumnGetter<TEntity>;
+        }
+
         internal static bool Covers( Type entity )
         {
             foreach (var registration in setters.Keys)
+            {
+                if (registration.Declaring.IsAssignableFrom( entity ))
+                {
+                    return true;
+                }
+            }
+            foreach (var registration in getters.Keys)
             {
                 if (registration.Declaring.IsAssignableFrom( entity ))
                 {

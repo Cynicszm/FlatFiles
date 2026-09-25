@@ -141,6 +141,129 @@ namespace FlatFiles.Test
             Assert.ThrowsExactly<ArgumentNullException>( () => MappingAccessors.AddFactory<Plain>( null! ) );
         }
 
+        [TestMethod]
+        public void TestRegisteredGetter_IsUsed()
+        {
+            var used = 0;
+            MappingAccessors.AddGetter<Written, int>( nameof( Written.Id ), e =>
+            {
+                ++used;
+                return e.Id;
+            } );
+
+            var written = Write<Written>( m => m.Property( x => x.Id ), new Written { Id = 4 } );
+
+            Assert.AreEqual( "4\r\n", written );
+            Assert.AreEqual( 1, used, "The mapping built its own getter instead of using the one registered." );
+        }
+
+        [TestMethod]
+        public void TestRegisteredGetter_WithoutDynamicCode_IsStillUsed()
+        {
+            var used = 0;
+            MappingAccessors.AddGetter<WrittenWithout, int>( nameof( WrittenWithout.Id ), e =>
+            {
+                ++used;
+                return e.Id;
+            } );
+
+            WithoutDynamicCode( () =>
+            {
+                var written = Write<WrittenWithout>( m => m.Property( x => x.Id ), new WrittenWithout { Id = 6 } );
+
+                Assert.AreEqual( "6\r\n", written );
+                Assert.AreEqual( 1, used, "Without dynamic code the registration is the only way onto this path." );
+            } );
+        }
+
+        [TestMethod]
+        public void TestRegisteredNullableGetter_WritesWhatTheMemberHolds()
+        {
+            MappingAccessors.AddNullableGetter<WrittenOptional, int>( nameof( WrittenOptional.Id ), e => e.Id );
+
+            var held = Write<WrittenOptional>( m => m.Property( x => x.Id ), new WrittenOptional { Id = 8 } );
+            var nothing = Write<WrittenOptional>( m => m.Property( x => x.Id ), new WrittenOptional { Id = null } );
+
+            Assert.AreEqual( "8\r\n", held );
+            Assert.AreEqual( "\r\n", nothing, "A member holding nothing should write what the null formatter says." );
+        }
+
+        [TestMethod]
+        public void TestGetterRegisteredForAnotherColumnType_IsIgnored()
+        {
+            var used = 0;
+            // Registered as a whole number, but the mapping gives the member a column of text.
+            MappingAccessors.AddGetter<WrittenMismatch, int>( nameof( WrittenMismatch.Value ), e => ++used );
+
+            var mapper = DelimitedTypeMapper.Define<WrittenMismatch>();
+            mapper.Property( x => x.Value );
+            var writer = new StringWriter();
+            mapper.Write( writer, [new WrittenMismatch { Value = "text" }], new DelimitedOptions { RecordSeparator = "\r\n" } );
+
+            Assert.AreEqual( "text\r\n", writer.ToString() );
+            Assert.AreEqual( 0, used, "A registration written for another column type was used anyway." );
+        }
+
+        [TestMethod]
+        public void TestAddGetter_RefusesNothing()
+        {
+            Assert.ThrowsExactly<ArgumentNullException>( () => MappingAccessors.AddGetter<Written, int>( null!, e => e.Id ) );
+            Assert.ThrowsExactly<ArgumentNullException>( () => MappingAccessors.AddGetter<Written, int>( "Id", null! ) );
+            Assert.ThrowsExactly<ArgumentNullException>( () => MappingAccessors.AddNullableGetter<WrittenOptional, int>( "Id", null! ) );
+        }
+
+        [TestMethod]
+        public void TestAGetterRegisteredForTheNonNullableForm_IsIgnoredForANullableMember()
+        {
+            var used = 0;
+            // The member holds a nullable whole number; this is registered for the plain one.
+            MappingAccessors.AddGetter<WrittenShape, int>( nameof( WrittenShape.Id ), e =>
+            {
+                ++used;
+                return 0;
+            } );
+
+            var written = Write<WrittenShape>( m => m.Property( x => x.Id ), new WrittenShape { Id = 5 } );
+
+            Assert.AreEqual( "5\r\n", written );
+            Assert.AreEqual( 0, used, "A registration of the wrong shape was used anyway." );
+        }
+
+        public sealed class WrittenShape
+        {
+            public int? Id { get; set; }
+        }
+
+        private static string Write<TEntity>( Action<IDelimitedTypeMapper<TEntity>> configure, TEntity entity )
+            where TEntity : new()
+        {
+            var mapper = DelimitedTypeMapper.Define<TEntity>();
+            configure( mapper );
+            var writer = new StringWriter();
+            mapper.Write( writer, [entity], new DelimitedOptions { RecordSeparator = "\r\n" } );
+            return writer.ToString();
+        }
+
+        public sealed class Written
+        {
+            public int Id { get; set; }
+        }
+
+        public sealed class WrittenWithout
+        {
+            public int Id { get; set; }
+        }
+
+        public sealed class WrittenOptional
+        {
+            public int? Id { get; set; }
+        }
+
+        public sealed class WrittenMismatch
+        {
+            public string Value { get; set; } = string.Empty;
+        }
+
         private static TEntity Read<TEntity>( Action<IDelimitedTypeMapper<TEntity>> configure, string text, int expected = 1 )
             where TEntity : new()
         {
