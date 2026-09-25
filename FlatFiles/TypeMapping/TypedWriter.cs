@@ -69,12 +69,22 @@ namespace FlatFiles.TypeMapping
             await writer.WriteAsync( values, cancellationToken ).ConfigureAwait( false );
         }
 
+        /// <summary>
+        ///     Fills one array for the whole write rather than one per record. Nothing downstream keeps it: the
+        ///     record is formatted before the call returns, and no handler on the writing side is handed the
+        ///     values - which is what a <c>RecordParsed</c> handler does on the reading side, and why that one
+        ///     needs an array of its own.
+        /// </summary>
         private object[] Serialize( TEntity entity )
         {
-            var values = new object[logicalCount];
+            // Cleared rather than assumed: a mapping need not write every slot, and a value left behind by the
+            // record before would be written as though it belonged to this one.
+            Array.Clear( values, 0, values.Length );
             var recordContext = writer.GetMetadata();
             serializer( recordContext, entity, values );
             return values;
         }
+
+        private readonly object[] values = new object[mapper.LogicalCount];
     }
 }
