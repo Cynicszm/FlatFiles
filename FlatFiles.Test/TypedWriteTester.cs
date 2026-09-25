@@ -121,6 +121,159 @@ namespace FlatFiles.Test
             Assert.AreEqual( straight, throughValues );
         }
 
+        [TestMethod]
+        public void TestAReferenceMemberHoldingNothing_IsWrittenAsNothing()
+        {
+            var writer = new StringWriter();
+            var mapper = DelimitedTypeMapper.Define<Person>();
+            mapper.Property( x => x.Id );
+            mapper.Property( x => x.Name );
+
+            mapper.Write( writer, [new Person { Id = 1, Name = null }], new DelimitedOptions { RecordSeparator = "\r\n" } );
+
+            Assert.AreEqual( "1,\r\n", writer.ToString() );
+        }
+
+        [TestMethod]
+        public void TestWithTheColumnContextDisabled_StillWritesFromTheEntity()
+        {
+            var writer = new StringWriter();
+            var mapper = DelimitedTypeMapper.Define<Person>();
+            mapper.Property( x => x.Id );
+            mapper.Property( x => x.Amount );
+
+            mapper.Write( writer, [new Person { Id = 1, Amount = 2.5m }],
+                new DelimitedOptions { RecordSeparator = "\r\n", IsColumnContextDisabled = true } );
+
+            Assert.AreEqual( "1,2.5\r\n", writer.ToString() );
+        }
+
+        [TestMethod]
+        public void TestWithTheColumnContextDisabled_AFailureSaysWhichColumnAndValue()
+        {
+            var mapper = DelimitedTypeMapper.Define<Person>();
+            mapper.Property( x => x.Id );
+            mapper.Property( x => x.Amount ).OutputFormat( "Z" );
+
+            var writer = new StringWriter();
+            var column = Assert.ThrowsExactly<ColumnProcessingException>( () => mapper.Write( writer, [new Person { Id = 1, Amount = 12.34m }],
+                new DelimitedOptions { RecordSeparator = "\r\n", IsColumnContextDisabled = true } ) );
+
+            Assert.AreEqual( 12.34m, column.ColumnValue, "The failure should name the value it could not format." );
+        }
+
+        [TestMethod]
+        public async Task TestAFixedLengthWriteAsynchronously_WritesFromTheEntity()
+        {
+            var mapper = FixedLengthTypeMapper.Define<Person>();
+            mapper.Property( x => x.Id, 3 );
+            mapper.Property( x => x.Name, 10 );
+
+            var writer = new StringWriter();
+            var typed = mapper.GetWriter( writer, new FixedLengthOptions { RecordSeparator = "\r\n" } );
+            await typed.WriteAsync( new Person { Id = 1, Name = "Bob" } );
+
+            Assert.AreEqual( "1  Bob       \r\n", writer.ToString() );
+        }
+
+        [TestMethod]
+        public void TestAMemberWithoutAPublicGetter_PutsTheMappingBackOnTheValuesPath()
+        {
+            var mapper = DelimitedTypeMapper.Define<Guarded>();
+            mapper.Property( x => x.Id );
+            mapper.Property( x => x.Hidden );
+
+            var writer = new StringWriter();
+            mapper.Write( writer, [new Guarded { Id = 1 }], new DelimitedOptions { RecordSeparator = "\r\n" } );
+
+            Assert.AreEqual( "1,kept\r\n", writer.ToString() );
+        }
+
+        [TestMethod]
+        public void TestAMetadataColumn_PutsTheMappingBackOnTheValuesPath()
+        {
+            var mapper = DelimitedTypeMapper.Define<Person>();
+            mapper.Property( x => x.Id );
+            mapper.CustomMapping( new RecordNumberColumn( "Number" ) ).WithWriter( ( Person _, object?[] _ ) => { } );
+            mapper.Property( x => x.Name );
+
+            var writer = new StringWriter();
+            mapper.Write( writer, [new Person { Id = 1, Name = "Bob" }, new Person { Id = 2, Name = "Ann" }],
+                new DelimitedOptions { RecordSeparator = "\r\n" } );
+
+            Assert.AreEqual( "1,1,Bob\r\n2,2,Ann\r\n", writer.ToString() );
+        }
+
+        public sealed class Guarded
+        {
+            public int Id { get; set; }
+
+            public string Hidden { internal get; set; } = "kept";
+
+            public string Show()
+            {
+                return Hidden;
+            }
+        }
+
+        [TestMethod]
+        public void TestAnEntityThatIsAValueType_PutsTheMappingBackOnTheValuesPath()
+        {
+            var mapper = DelimitedTypeMapper.Define( () => new Boxed() );
+            mapper.Property( x => x.Id );
+            mapper.Property( x => x.Name );
+
+            var writer = new StringWriter();
+            mapper.Write( writer, [new Boxed { Id = 1, Name = "Bob" }], new DelimitedOptions { RecordSeparator = "\r\n" } );
+
+            Assert.AreEqual( "1,Bob\r\n", writer.ToString() );
+        }
+
+        [TestMethod]
+        public void TestANestedEntity_PutsTheMappingBackOnTheValuesPath()
+        {
+            var mapper = DelimitedTypeMapper.Define<Outer>();
+            mapper.Property( x => x.Id );
+            var inner = DelimitedTypeMapper.Define<Person>();
+            inner.Property( x => x.Id );
+            inner.Property( x => x.Name );
+            mapper.ComplexProperty( x => x.Inner!, inner );
+
+            var writer = new StringWriter();
+            mapper.Write( writer, [new Outer { Id = 1, Inner = new Person { Id = 2, Name = "Bob" } }],
+                new DelimitedOptions { RecordSeparator = "\r\n" } );
+
+            StringAssert.StartsWith( writer.ToString(), "1," );
+        }
+
+        public struct Boxed
+        {
+            public int Id { get; set; }
+
+            public string Name { get; set; }
+        }
+
+        public sealed class Outer
+        {
+            public int Id { get; set; }
+
+            public Person? Inner { get; set; }
+        }
+
+        [TestMethod]
+        public void TestAnOnFormattingHook_AlsoPutsTheMappingBackOnTheValuesPath()
+        {
+            var mapper = DelimitedTypeMapper.Define<Person>();
+            mapper.Property( x => x.Id );
+            // Declared in terms of object, so the column can no longer be formatted from its own type.
+            mapper.Property( x => x.Amount ).OnFormatting( ( _, value ) => value );
+
+            var writer = new StringWriter();
+            mapper.Write( writer, [new Person { Id = 1, Amount = 2.5m }], new DelimitedOptions { RecordSeparator = "\r\n" } );
+
+            Assert.AreEqual( "1,2.5\r\n", writer.ToString() );
+        }
+
         private static string Write( IDelimitedTypeMapper<Person> mapper )
         {
             var writer = new StringWriter();
