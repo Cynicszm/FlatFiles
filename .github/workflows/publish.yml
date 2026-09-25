@@ -87,6 +87,41 @@ jobs:
               throw "The release is tagged $tagged but the project packs $packed. Update the version in FlatFiles.csproj, or retag."
           }
 
+      - name: Check the assembly says the same version as the package
+        # 8.2.0 shipped reporting 8.1.0.0, because Version was moved for the release and AssemblyVersion and
+        # FileVersion were not. The package version was right, the tag was right, and the check above passed;
+        # what nobody looked at was the assembly a consumer actually loads. A published assembly cannot be
+        # corrected, so this asks the built file rather than the project that claims to describe it.
+        shell: pwsh
+        run: |
+          $package = Get-ChildItem artifacts -Filter *.nupkg | Select-Object -First 1
+          if ($null -eq $package) { throw 'Pack produced no package.' }
+          $packed = $package.BaseName -replace '^.*?\.(\d+\.\d+\.\d+.*)$', '$1'
+          # A name the pattern does not match leaves the whole basename behind, which would then fail the
+          # comparison for the wrong reason and say something that sends a reader the wrong way.
+          if ($packed -notmatch '^\d+\.\d+\.\d+') { throw "No version could be read from the package name $($package.Name)." }
+
+          $dll = Get-ChildItem FlatFiles/bin/Release -Recurse -Filter FlatFiles.dll | Select-Object -First 1
+          if ($null -eq $dll) { throw 'The build produced no FlatFiles.dll to check.' }
+
+          $assembly = [System.Reflection.AssemblyName]::GetAssemblyName($dll.FullName).Version
+          $file = (Get-Item $dll.FullName).VersionInfo.FileVersion
+
+          # The package version may carry a suffix the assembly cannot, so only the three numbers are compared.
+          $expected = ($packed -split '-')[0]
+          $reported = "$($assembly.Major).$($assembly.Minor).$($assembly.Build)"
+          $onFile = ($file -split '\.')[0..2] -join '.'
+
+          Write-Host "package $packed, assembly $assembly, file $file"
+          if ($reported -ne $expected)
+          {
+              throw "The package is $expected but the assembly reports $reported. Move AssemblyVersion in FlatFiles.csproj; a published assembly that misreports itself cannot be corrected."
+          }
+          if ($onFile -ne $expected)
+          {
+              throw "The package is $expected but the file version is $file. Move FileVersion in FlatFiles.csproj."
+          }
+
       - name: Upload the package
         uses: actions/upload-artifact@v7
         with:
