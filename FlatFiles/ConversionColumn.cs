@@ -17,6 +17,14 @@ namespace FlatFiles
         public override Type ColumnType => typeof( TDestination );
 
         /// <inheritdoc />
+        /// <remarks>
+        ///     Parsing and formatting are the wrapped column's, given this column's context, so whether a provider
+        ///     has to reach it is the wrapped column's answer. One from outside the library cannot be asked, and is
+        ///     assumed to want it.
+        /// </remarks>
+        internal override bool UsesFormatProvider => columnDefinition is not ColumnDefinition inner || inner.UsesFormatProvider;
+
+        /// <inheritdoc />
         public override object? Parse( IColumnContext? context, string value )
         {
             var sourceValue = columnDefinition.Parse( context, value );

@@ -1,6 +1,6 @@
 ﻿namespace FlatFiles
 {
-    internal sealed class DelimitedExecutionContext(DelimitedSchema schema, DelimitedOptions options) : IDelimitedExecutionContext
+    internal sealed class DelimitedExecutionContext(DelimitedSchema schema, DelimitedOptions options) : ExecutionContextBase, IDelimitedExecutionContext
     {
         public DelimitedSchema Schema { get; } = schema;
 

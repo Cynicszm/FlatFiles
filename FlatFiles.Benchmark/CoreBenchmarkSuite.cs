@@ -321,6 +321,19 @@ namespace FlatFiles.Benchmark
         }
 
         [Benchmark]
+        public string RunFlatFiles_Schema_FormatProvider_Write()
+        {
+            var writer = new StringWriter();
+            var options = new DelimitedOptions { IsFirstRecordSchema = true, FormatProvider = CultureInfo.InvariantCulture };
+            var csvWriter = new DelimitedWriter( writer, GetSchema(), options );
+            foreach (var values in valueSample)
+            {
+                csvWriter.Write( values );
+            }
+            return writer.ToString();
+        }
+
+        [Benchmark]
         public string RunFlatFiles_FixedLength_Schema_Write()
         {
             var writer = new StringWriter();
@@ -401,6 +414,18 @@ namespace FlatFiles.Benchmark
 
             var reader = new StringReader( data );
             _ = mapper.Read( reader, new DelimitedOptions { IsFirstRecordSchema = true } ).ToArray();
+        }
+
+        [Benchmark]
+        public void RunFlatFiles_Schema_FormatProvider_Read()
+        {
+            var reader = new StringReader( data );
+            var options = new DelimitedOptions { IsFirstRecordSchema = true, FormatProvider = CultureInfo.InvariantCulture };
+            var csvReader = new DelimitedReader( reader, GetSchema(), options );
+            while (csvReader.Read())
+            {
+                GC.KeepAlive( csvReader.GetValues() );
+            }
         }
 
         [Benchmark]

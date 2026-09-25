@@ -172,26 +172,14 @@ namespace FlatFiles
                 }
                 return;
             }
-            if (definition.IsColumnContextRequired || options.FormatProvider is not null)
-            {
-                var columnContext = NewColumnContext( context, columnIndex, destinationIndex );
-                try
-                {
-                    setter.Set( columnContext, entity, rawValue );
-                }
-                catch (Exception exception)
-                {
-                    // A handler's substitution arrives as an object, which is the one value on this path that boxes.
-                    setter.SetObject( entity, RecoverParse( columnContext, rawValue.ToString(), exception ) );
-                }
-                return;
-            }
+            var columnContext = ColumnContextFor( context, definition, options, columnIndex, destinationIndex );
             try
             {
-                setter.Set( null, entity, rawValue );
+                setter.Set( columnContext, entity, rawValue );
             }
             catch (Exception exception)
             {
+                // A handler's substitution arrives as an object, which is the one value on this path that boxes.
                 setter.SetObject( entity, RecoverParse( NewColumnContext( context, columnIndex, destinationIndex ), rawValue.ToString(), exception ) );
             }
         }
@@ -211,28 +199,14 @@ namespace FlatFiles
                     throw new ColumnProcessingException( definition, destinationIndex, rawValue.ToString(), exception );
                 }
             }
-            if (definition.IsColumnContextRequired || options.FormatProvider is not null)
-            {
-                // The options' format provider reaches a column only through the context, so its presence keeps it.
-                var columnContext = NewColumnContext( context, columnIndex, destinationIndex );
-                try
-                {
-                    return definition.Parse( columnContext, rawValue );
-                }
-                catch (Exception exception)
-                {
-                    // The value is only copied here, where the error carries it to the handler.
-                    return RecoverParse( columnContext, rawValue.ToString(), exception );
-                }
-            }
-            // Nothing on this column can look at its context, so none is built unless the parse fails and the error
-            // has to be reported with one.
+            var columnContext = ColumnContextFor( context, definition, options, columnIndex, destinationIndex );
             try
             {
-                return definition.Parse( null, rawValue );
+                return definition.Parse( columnContext, rawValue );
             }
             catch (Exception exception)
             {
+                // The value is only copied here, where the error carries it to the handler.
                 return RecoverParse( NewColumnContext( context, columnIndex, destinationIndex ), rawValue.ToString(), exception );
             }
         }
@@ -245,16 +219,10 @@ namespace FlatFiles
             {
                 return ParseWithoutContext( definition, destinationIndex, rawValue );
             }
-            if (definition.IsColumnContextRequired || options.FormatProvider is not null)
-            {
-                // The options' format provider reaches a column only through the context, so its presence keeps it.
-                return ParseWithContext( NewColumnContext( context, columnIndex, destinationIndex ), rawValue );
-            }
-            // Nothing on this column can look at its context, so none is built unless the parse fails and the error
-            // has to be reported with one.
+            var columnContext = ColumnContextFor( context, definition, options, columnIndex, destinationIndex );
             try
             {
-                return definition.Parse( null, rawValue );
+                return definition.Parse( columnContext, rawValue );
             }
             catch (Exception exception)
             {
@@ -378,8 +346,9 @@ namespace FlatFiles
             var definition = ColumnDefinitions[columnIndex];
             // As when parsing: no context unless the column asks for one, or something fails and the error needs
             // one to describe itself.
-            var needsContext = !options.IsColumnContextDisabled && ( definition.IsColumnContextRequired || options.FormatProvider is not null );
-            var columnContext = needsContext ? NewColumnContext( context, columnIndex, valueIndex ) : null;
+            var columnContext = options.IsColumnContextDisabled
+                ? null
+                : ColumnContextFor( context, definition, options, columnIndex, valueIndex );
             var start = destination.Length;
             try
             {
@@ -393,7 +362,7 @@ namespace FlatFiles
                 {
                     throw new ColumnProcessingException( definition, valueIndex, getter.Read( entity ), exception );
                 }
-                RecoverFormat( columnContext ?? NewColumnContext( context, columnIndex, valueIndex ), getter.Read( entity ), destination, exception );
+                RecoverFormat( NewColumnContext( context, columnIndex, valueIndex ), getter.Read( entity ), destination, exception );
             }
         }
 
@@ -406,22 +375,42 @@ namespace FlatFiles
                 FormatWithoutContext( definition, valueIndex, value, destination );
                 return;
             }
-            if (!definition.IsColumnContextRequired && options.FormatProvider is null)
+            var columnContext = ColumnContextFor( context, definition, options, columnIndex, valueIndex );
+            var start = destination.Length;
+            try
             {
-                // As when parsing: no context unless the column fails and the error needs one.
-                var start = destination.Length;
-                try
-                {
-                    definition.Format( null, value, destination );
-                }
-                catch (Exception exception)
-                {
-                    destination.Truncate( start );
-                    RecoverFormat( NewColumnContext( context, columnIndex, valueIndex ), value, destination, exception );
-                }
-                return;
+                definition.Format( columnContext, value, destination );
             }
-            FormatWithContext( NewColumnContext( context, columnIndex, valueIndex ), value, destination );
+            catch (Exception exception)
+            {
+                destination.Truncate( start );
+                RecoverFormat( NewColumnContext( context, columnIndex, valueIndex ), value, destination, exception );
+            }
+        }
+
+        /// <summary>
+        ///     The context to parse or format a column's value with, or null where nothing can look at one.
+        /// </summary>
+        /// <remarks>
+        ///     A column that requires a context can have it seen and kept by user code - a hook, a metadata column,
+        ///     one declared outside the library - so it is given a new one every time. A context built only so the
+        ///     column can ask what format provider to use is seen by nothing but that lookup, so it is built once
+        ///     per column and pointed at each record in turn. Every recovery is given a new one regardless, because
+        ///     it reaches a handler that may keep it.
+        /// </remarks>
+        private static IColumnContext? ColumnContextFor( IRecoverableRecordContext context, IColumnDefinition definition, IOptions options, int physicalIndex, int logicalIndex )
+        {
+            if (definition.IsColumnContextRequired)
+            {
+                return NewColumnContext( context, physicalIndex, logicalIndex );
+            }
+            if (options.FormatProvider is null || definition is ColumnDefinition { UsesFormatProvider: false })
+            {
+                return null;
+            }
+            return context.ExecutionContext is ExecutionContextBase holder && context.ExecutionContext.Schema is { } schema
+                ? holder.GetColumnContext( context, schema.ColumnDefinitions.Count, physicalIndex, logicalIndex )
+                : NewColumnContext( context, physicalIndex, logicalIndex );
         }
 
         private void FormatWithContext( IColumnContext columnContext, object? value, RecordBuffer destination )

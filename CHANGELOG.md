@@ -1,5 +1,174 @@
-﻿## 8.5.0 (planned)
-**Not released, and not started.** What is written here is the order the remaining work will be done in, kept with the releases so that the reasoning sits beside what it produced. Nothing below breaks anything, so none of it is waiting for a major version.
+﻿## 8.5.0 (unreleased)
+**Not released.** Being built. What is written up here has landed on master; what is under **Next** has not. Nothing in this release breaks anything.
+
+**Setting a format provider used to cost an allocation per column per record, and now costs nothing.** A column reaches the options' provider only through a column context, so one was built for every column of every record wherever the options carried one - 40 bytes apiece, on reading and writing alike. Most columns never ask: text, a boolean, a byte array. On the widest sample that was 15 KB a record spent so that a handful of date columns could ask a question the others never ask.
+
+Three changes, each measured on its own:
+
+- **A column that never consults a provider is no longer given a context.** Six of the library's columns ask - the four date and time ones and `NumberColumn`, which covers eleven numeric columns - and they say so. A conversion column defers to the column it wraps, and anything implementing `IColumnDefinition` from outside the library is assumed to want one, as it already was for every other purpose.
+- **A context built only so a column can ask is built once per column**, not once per value, and pointed at each record in turn. Nothing else ever sees it: it goes to a library column with no hook attached, which reads the provider off and lets go. Everything that reaches user code - a hook, a metadata or complex column, a column declared elsewhere, and **every error recovery** - is still given a context of its own, because a handler may keep hold of one.
+- **An execution context is cached per schema rather than one at a time.** The cache held a single entry and its own comment admitted the gap: a schema selector "misses only when consecutive records take different schemas", which for a file of fourteen record layouts is nearly every record. So the context, its private options clone and now its column contexts were being rebuilt per record. The single entry is still the fast path and still a reference comparison; the rest sit in a map beside it, one per layout, which a selector or injector bounds.
+
+The third of those improves reading a file of several layouts even where no provider is set at all: `read-typed` on the fourteen-layout sample goes from 3,574 bytes a record to 3,494, and `read-mapper` on the shortest from 805 to 778.
+
+**What writing now costs**, against the figures 8.4.0 recorded:
+
+| Sample | `write-text` | `write-typed` | `write-mapper` |
+| --- | ---: | ---: | ---: |
+| S1/S1, 379 columns | 15,405 -> **245** | 15,405 -> **245** | 15,408 -> **248** |
+| S1/S2, 344,352 records | 2,410 -> **90** | 2,410 -> **90** | 2,411 -> **91** |
+| S1/S3, every field quoted | 8,074 -> **233** | 8,074 -> **234** | 8,076 -> **236** |
+| S2/S1, fourteen layouts | 3,867 -> **367** | 3,867 -> **367** | 4,088 -> **508** |
+| S2/S2, 235 columns | 13,136 -> **3,689** | 13,138 -> **3,696** | 13,458 -> **3,957** |
+| S2/S3, shortest record | 1,668 -> **423** | 1,668 -> **423** | 1,842 -> **570** |
+
+Giving a column its own type is now free on the way out: `write-typed` costs what `write-text` costs on every sample. Time fell with it - writing the 235-column sample went from 67 ms to 42, and the fourteen-layout one from 272 ms to 160.
+
+**A correction to what 8.4.0's entry says.** That entry reported that "the delimited writer allocates about twice what the delimited reader does", and it is wrong. The writing scenarios set a format provider for the sake of a reproducible hash and the reading ones did not, so the two were not asked the same question, and the difference between them was the per-column context described above rather than anything about writing. Measured like for like, a delimited write of the widest sample allocates **245 bytes a record against that read's 5,685**: writing was already the cheaper direction by a wide margin, and is now cheaper still. The figures in that entry are what was measured; the conclusion drawn from them was not sound, and the 8.4.0 entry is left as it was released rather than rewritten after the fact.
+
+The baseline moves, so the full table is here - six samples, seven scenarios apiece, from the runs the baseline was taken from. The delimited reading figures are unchanged to the byte, which is the check that the change is confined to what it claims.
+
+**Delimited, read**
+
+| Sample | Columns | Records | Scenario | Mean Total Time | Range | MB/s | Bytes/record | Peak heap | Peak working set |
+| --- | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| S1/S1 | 379 | 37,031 | `read-parse` | 1.01 s | 966 ms - 1.05 s | 36.2 | 5,685 | 13.5 MB | 50.2 MB |
+| S1/S1 | 379 | 37,031 | `read-typed` | 1.32 s | 1.26 s - 1.41 s | 27.9 | 5,629 | 13.5 MB | 51.5 MB |
+| S1/S1 | 379 | 37,031 | `read-values` | 1.32 s | 1.27 s - 1.37 s | 27.9 | 8,685 | 13.5 MB | 51.4 MB |
+| | | | | | | | | | |
+| S1/S2 | 58 | 344,352 | `read-parse` | 1.65 s | 1.62 s - 1.69 s | 61.6 | 1,414 | 13.5 MB | 50.1 MB |
+| S1/S2 | 58 | 344,352 | `read-typed` | 2.16 s | 2.08 s - 2.27 s | 47.1 | 1,338 | 13.4 MB | 51.3 MB |
+| S1/S2 | 58 | 344,352 | `read-values` | 2.25 s | 2.21 s - 2.32 s | 45.2 | 1,826 | 13.5 MB | 51.1 MB |
+| | | | | | | | | | |
+| S1/S3 | 196 | 39,337 | `read-parse` | 647 ms | 634 ms - 660 ms | 69.1 | 3,528 | 13.3 MB | 50.2 MB |
+| S1/S3 | 196 | 39,337 | `read-typed` | 893 ms | 878 ms - 928 ms | 50.1 | 2,988 | 13.5 MB | 52.2 MB |
+| S1/S3 | 196 | 39,337 | `read-values` | 971 ms | 932 ms - 1.02 s | 46.0 | 4,580 | 13.5 MB | 52.1 MB |
+
+**Fixed-length, read**
+
+| Sample | Columns | Records | Scenario | Mean Total Time | Range | MB/s | Bytes/record | Peak heap | Peak working set |
+| --- | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| S2/S1 | 172 | 22,481 | `read-parse` | 156 ms | 151 ms - 159 ms | 103.4 | 3,655 | 13.1 MB | 50.9 MB |
+| S2/S1 | 172 | 22,481 | `read-typed` | 266 ms | 240 ms - 321 ms | 60.7 | 3,494 | 13.6 MB | 52.8 MB |
+| S2/S1 | 172 | 22,481 | `read-values` | 218 ms | 209 ms - 233 ms | 73.9 | 4,202 | 13.8 MB | 52.8 MB |
+| | | | | | | | | | |
+| S2/S2 | 235 | 1,790 | `read-parse` | 64 ms | 61 ms - 66 ms | 93.8 | 12,011 | 12.2 MB | 49.8 MB |
+| S2/S2 | 235 | 1,790 | `read-typed` | 90 ms | 87 ms - 91 ms | 66.6 | 11,189 | 12.1 MB | 51.7 MB |
+| S2/S2 | 235 | 1,790 | `read-values` | 89 ms | 85 ms - 95 ms | 66.8 | 13,092 | 12.8 MB | 51.8 MB |
+| | | | | | | | | | |
+| S2/S3 | 34 | 18,047 | `read-parse` | 75 ms | 70 ms - 80 ms | 58.2 | 1,831 | 12.6 MB | 50.2 MB |
+| S2/S3 | 34 | 18,047 | `read-typed` | 127 ms | 119 ms - 136 ms | 34.3 | 1,597 | 13.4 MB | 52.1 MB |
+| S2/S3 | 34 | 18,047 | `read-values` | 132 ms | 122 ms - 138 ms | 32.9 | 1,865 | 12.7 MB | 52.0 MB |
+
+**Delimited, written**
+
+| Sample | Columns | Records | Scenario | Mean Total Time | Range | MB/s | Bytes/record | Peak heap | Peak working set |
+| --- | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| S1/S1 | 379 | 37,031 | `write-text` | 1.01 s | 943 ms - 1.12 s | 35.7 | 245 | 314.4 MB | 370.4 MB |
+| S1/S1 | 379 | 37,031 | `write-typed` | 1.83 s | 1.30 s - 3.32 s | 20.5 | 245 | 314.0 MB | 358.3 MB |
+| | | | | | | | | | |
+| S1/S2 | 58 | 344,352 | `write-text` | 1.47 s | 1.40 s - 1.53 s | 63.8 | 90 | 624.2 MB | 693.1 MB |
+| S1/S2 | 58 | 344,352 | `write-typed` | 1.96 s | 1.91 s - 2.05 s | 51.7 | 90 | 599.2 MB | 666.8 MB |
+| | | | | | | | | | |
+| S1/S3 | 196 | 39,337 | `write-text` | 583 ms | 560 ms - 643 ms | 76.7 | 233 | 199.3 MB | 249.0 MB |
+| S1/S3 | 196 | 39,337 | `write-typed` | 847 ms | 796 ms - 943 ms | 53.9 | 234 | 179.1 MB | 225.9 MB |
+
+**Fixed-length, written**
+
+| Sample | Columns | Records | Scenario | Mean Total Time | Range | MB/s | Bytes/record | Peak heap | Peak working set |
+| --- | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| S2/S1 | 172 | 22,481 | `write-text` | 160 ms | 144 ms - 204 ms | 98.8 | 367 | 55.0 MB | 100.8 MB |
+| S2/S1 | 172 | 22,481 | `write-typed` | 213 ms | 179 ms - 272 ms | 74.3 | 367 | 49.9 MB | 93.1 MB |
+| | | | | | | | | | |
+| S2/S2 | 235 | 1,790 | `write-text` | 42 ms | 39 ms - 45 ms | 142.3 | 3,689 | 18.2 MB | 65.1 MB |
+| S2/S2 | 235 | 1,790 | `write-typed` | 65 ms | 63 ms - 70 ms | 91.7 | 3,696 | 18.9 MB | 65.7 MB |
+| | | | | | | | | | |
+| S2/S3 | 34 | 18,047 | `write-text` | 50 ms | 47 ms - 53 ms | 87.2 | 423 | 35.0 MB | 72.8 MB |
+| S2/S3 | 34 | 18,047 | `write-typed` | 74 ms | 68 ms - 78 ms | 59.0 | 423 | 29.8 MB | 73.4 MB |
+
+**Delimited, read through a type mapper**
+
+| Sample | Columns | Records | Mean Total Time | Range | MB/s | Bytes/record | Peak heap | Peak working set |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| S1/S1 | 379 | 37,031 | 859 ms | 817 ms - 891 ms | 42.8 | 221 | 9.0 MB | 48.1 MB |
+| S1/S2 | 58 | 344,352 | 1.40 s | 1.37 s - 1.42 s | 72.7 | 196 | 13.4 MB | 53.5 MB |
+| S1/S3 | 196 | 39,337 | 587 ms | 556 ms - 620 ms | 76.2 | 200 | 8.7 MB | 47.8 MB |
+
+**Fixed-length, read through a type mapper**
+
+| Sample | Columns | Records | Mean Total Time | Range | MB/s | Bytes/record | Peak heap | Peak working set |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| S2/S1 | 172 | 22,481 | 209 ms | 199 ms - 227 ms | 77.2 | 1,804 | 13.9 MB | 57.3 MB |
+| S2/S2 | 235 | 1,790 | 141 ms | 128 ms - 155 ms | 42.5 | 8,087 | 13.0 MB | 54.6 MB |
+| S2/S3 | 34 | 18,047 | 154 ms | 146 ms - 169 ms | 28.2 | 777 | 12.1 MB | 54.2 MB |
+
+**Delimited, written through a type mapper**
+
+| Sample | Columns | Records | Mean Total Time | Range | MB/s | Bytes/record | Peak heap | Peak working set |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| S1/S1 | 379 | 37,031 | 828 ms | 812 ms - 843 ms | 17.1 | 248 | 13.1 MB | 58.1 MB |
+| S1/S2 | 58 | 344,352 | 1.28 s | 1.27 s - 1.29 s | 24.2 | 91 | 60.8 MB | 111.4 MB |
+| S1/S3 | 196 | 39,337 | 512 ms | 486 ms - 535 ms | 45.3 | 236 | 11.9 MB | 59.2 MB |
+
+**Fixed-length, written through a type mapper**
+
+| Sample | Columns | Records | Mean Total Time | Range | MB/s | Bytes/record | Peak heap | Peak working set |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| S2/S1 | 172 | 22,481 | 191 ms | 182 ms - 214 ms | 82.8 | 508 | 13.4 MB | 68.1 MB |
+| S2/S2 | 235 | 1,790 | 63 ms | 60 ms - 69 ms | 94.5 | 3,957 | 9.3 MB | 60.4 MB |
+| S2/S3 | 34 | 18,047 | 83 ms | 74 ms - 95 ms | 52.2 | 570 | 16.0 MB | 62.3 MB |
+
+Each row is one sample handled 5 times, each in a process of its own that starts, reads or writes the
+file once and exits - which is how the library is mostly used - and the figures are the mean of those 5.
+Everything a job pays for is inside them: the runtime compiling the parse or format path on first use, the
+schema being built, the file being opened. The three reading scenarios are cumulative:
+`read-parse` reads every column as text and asks for no value, `read-typed` gives each single-typed column
+its own type, and `read-values` is `read-typed` with `GetValues` called on every record. The difference
+between two of them is the cost of the step between.
+
+`write-text` and `write-typed` are the same pair the other way round: the records read out of the sample
+and written back, as text and with each single-typed column given its own type. The records are read into
+memory first and that is **not** measured, so what these rows report is the write. It is also why their
+peak figures are large: the whole sample is being held, which on the widest of them is several hundred
+megabytes that the writer has nothing to do with.
+
+The mapped scenarios have tables of their own because they are not a further step but a different path:
+the file read onto entities, or written from them, through a type mapper - the only scenarios that build
+an entity or use the accessors a mapper makes per column. They map the first column of each kind the
+profile knows about and ignore the rest, which costs the reader the column but not the parse, so their
+figures are far below the others and mean something different. Read each set against itself and against
+the same set in an earlier release.
+
+| Column | What it measures |
+| --- | --- |
+| Columns | Columns in the schema; for a fixed-length sample, in its widest record layout. |
+| Records | Records the reader yielded. Gated exactly. No sample is built to have a record refused, so any refusal fails the check whatever else agrees. |
+| Mean Total Time | Mean wall clock of 5 cold runs: opening the file, building the schema, constructing the reader or writer, taking or writing every record, and disposing, in a process that has done nothing else. Nothing is amortised over work a real caller never performs. **Reported, never gated.** |
+| Range | The quickest and slowest of those 5 loads, so the spread behind the mean is visible rather than implied. |
+| MB/s | File size divided by Mean Total Time, so it carries the same caveats. |
+| Bytes/record | Mean bytes allocated across a load or a write, divided by records. Deterministic for given bytes on a given runtime, and repeats to within 0.1% here. **Gated at 2%.** |
+| Peak heap | The largest the managed heap reached in any of the 5 loads, sampled every 5 ms. Reported. |
+| Peak working set | The largest peak working set any of those processes reached. Each does one load and exits, so the figure is a whole job's footprint, most of it runtime start-up rather than the read. Reported. |
+
+
+Each process runs with tiered compilation off, so every method is compiled optimised the first time it is
+called. The run is still cold - it pays for compiling the path it takes - but what it allocates no longer
+depends on how far the runtime got before promoting anything, which on the sample of twenty-six record
+layouts moved a writing figure by a fifth from one process to the next. Both delimited samples measure
+identically either way.
+
+Averaging 5 whole processes takes most of the machine noise out, but a cold start is noisy by nature and
+the range shows what is left. `FlatFiles.Benchmark` is the project that measures a warm steady state, with
+statistics rather than a mean; these figures are the other question - what one job costs end to end - and
+show the shape of the work rather than a number to compare release to release, which is why neither Mean
+Total Time nor MB/s is gated.
+
+Whether `write-text` wrote the file it read: S1/S1 `write-text` differs; S1/S2 `write-text` differs; S1/S3 `write-text` differs; S2/S1 `write-text` differs; S2/S2 `write-text` same; S2/S3 `write-text` same. A sample it cannot
+reproduce is not a fault - a string column trims, so a field of spaces comes back empty; some
+fixed-length layouts have windows that stop short of the record, so its tail is never read; and a
+ragged final column's padding is not part of its value. What each write produced is pinned by hash in
+the baseline either way, so a change in the bytes written fails the check whatever this says.
+
 
 ### Next
 
@@ -15,7 +184,7 @@ In the order they will be built. None of these breaks anything, so none of them 
 
   What is wanted is one way of saying it on both readers: refuse a short record or pad it, refuse a long one or discard the surplus, with the current behaviour as the default so nothing changes for anyone who does not ask. Whatever is chosen has to be visible - a record silently read one column out of step is the worst of the available outcomes, and is what happens now.
 
-- **The delimited writing path allocates about twice what the delimited reading path does.** Now that both directions are measured, the widest sample reads at 5,685 bytes a record and writes at 15,405, and the ratio holds across all three delimited samples - while the fixed-length writer costs about what the fixed-length reader costs, and on the shortest record rather less. So this is one writer rather than writing, and it is where the room is.
+- **A fixed-length write of a wide record still allocates about 15 bytes a column.** With the format provider's cost gone, the 235-column sample writes at 3,689 bytes a record against 423 for the 34-column one, so what is left scales with the columns rather than the records. Padding a value to its window is the obvious place to look. It is the largest figure left in the table and nothing else in it is close.
 - **A delimited selector should be able to match on the record's text.** `DelimitedTypeMapperSelector` and `DelimitedSchemaSelector` are given each record's values to choose a schema by, so the reader has to parse a record into an array of values before it can decide what the record is - which is the one thing that stops a selected delimited mapping being read straight onto an entity, as a fixed-length one now is. A predicate over the record's text, beside the one over its values, would leave the choice to the caller: match on text and keep the faster path, or match on values and pay for them.
 
 **Considered and already covered.** Seven more ideas came out of the same review and turned out to need no work. They are recorded so that nobody spends an afternoon rediscovering it.

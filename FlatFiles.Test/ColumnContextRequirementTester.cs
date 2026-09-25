@@ -224,5 +224,83 @@ namespace FlatFiles.Test
 
             public int LogicalIndex => 0;
         }
+
+        [TestMethod]
+        public void TestReadWrite_OptionsFormatProvider_ColumnThatNeverAsks_IsUnaffected()
+        {
+            // A string column never asks what provider to use, so it is no longer given a context where the
+            // options carry one. Nothing it does may change for that.
+            var schema = new DelimitedSchema();
+            schema.AddColumn( new StringColumn( "a" ) );
+            var options = new DelimitedOptions { Separator = ";", RecordSeparator = "\n", FormatProvider = CultureInfo.GetCultureInfo( "de-DE" ) };
+
+            var reader = new DelimitedReader( new StringReader( "1.234,5\n" ), schema, options );
+            Assert.IsTrue( reader.Read() );
+            Assert.AreEqual( "1.234,5", reader.GetValues()[0] );
+
+            var stringWriter = new StringWriter();
+            new DelimitedWriter( stringWriter, schema, options ).Write( ["1.234,5"] );
+            Assert.AreEqual( "1.234,5\n", stringWriter.ToString() );
+        }
+
+        [TestMethod]
+        public void TestReadWrite_OptionsFormatProvider_StillReachesTheColumnAConversionWraps()
+        {
+            // The conversion hands its own context to the column it wraps, so whether one has to be built is the
+            // wrapped column's answer rather than the conversion's. A double read as German text says so.
+            var schema = new DelimitedSchema();
+            schema.AddColumn( TimeSpanColumn.FromHours( new DoubleColumn( "a" ) ) );
+            var options = new DelimitedOptions { Separator = ";", RecordSeparator = "\n", FormatProvider = CultureInfo.GetCultureInfo( "de-DE" ) };
+
+            var reader = new DelimitedReader( new StringReader( "1,5\n" ), schema, options );
+            Assert.IsTrue( reader.Read() );
+            Assert.AreEqual( TimeSpan.FromHours( 1.5 ), reader.GetValues()[0] );
+
+            var stringWriter = new StringWriter();
+            new DelimitedWriter( stringWriter, schema, options ).Write( [TimeSpan.FromHours( 1.5 )] );
+            Assert.AreEqual( "1,5\n", stringWriter.ToString() );
+        }
+
+        [TestMethod]
+        public void TestWrite_OptionsFormatProvider_CostsNothingForColumnsThatNeverAsk()
+        {
+            // Setting a culture used to cost a column context for every column of every record, whatever the
+            // columns were: 40 bytes apiece, so 800 a record here. Only a column that consults a provider is
+            // given one now, and none of these does.
+            const int Columns = 20;
+            const int Records = 2000;
+            const int BytesPerRecordCeiling = 400;
+
+            var schema = new DelimitedSchema();
+            for (var index = 0; index != Columns; ++index)
+            {
+                schema.AddColumn( new StringColumn( "c" + index.ToString( CultureInfo.InvariantCulture ) ) );
+            }
+            var options = new DelimitedOptions { RecordSeparator = "\n", FormatProvider = CultureInfo.InvariantCulture };
+            var values = new object?[Columns];
+            Array.Fill( values, "value" );
+
+            Write( schema, options, values, Records );
+
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+            var before = GC.GetTotalAllocatedBytes( true );
+            Write( schema, options, values, Records );
+            var allocated = GC.GetTotalAllocatedBytes( true ) - before;
+
+            var perRecord = allocated / Records;
+            Assert.IsLessThan( BytesPerRecordCeiling, perRecord,
+                $"A write of {Columns} string columns allocated {perRecord} bytes a record with a format provider set, which is what a column context apiece costs." );
+        }
+
+        private static void Write( DelimitedSchema schema, DelimitedOptions options, object?[] values, int records )
+        {
+            var writer = new DelimitedWriter( TextWriter.Null, schema, options );
+            for (var record = 0; record != records; ++record)
+            {
+                writer.Write( values );
+            }
+        }
     }
 }
