@@ -1,0 +1,25 @@
+﻿<Project>
+
+  <!--
+    The source generator in this package writes accessor registrations for every entity it finds at a
+    Define<T>() or DefineDynamic( typeof( T ) ) call site. Set this to false to have it write nothing:
+
+      <PropertyGroup>
+        <FlatFilesGenerateAccessors>false</FlatFilesGenerateAccessors>
+      </PropertyGroup>
+
+    Nothing breaks when it is off. A mapping builds its own accessors at run time, exactly as it did before the
+    generator existed - which costs a boxed value per member on a runtime that cannot generate code, and nothing
+    at all on one that can.
+
+    ExcludeAssets="analyzers" on the package reference does not turn it off, which is why this exists.
+  -->
+  <PropertyGroup>
+    <FlatFilesGenerateAccessors Condition="'$(FlatFilesGenerateAccessors)' == ''">true</FlatFilesGenerateAccessors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <CompilerVisibleProperty Include="FlatFilesGenerateAccessors" />
+  </ItemGroup>
+
+</Project>

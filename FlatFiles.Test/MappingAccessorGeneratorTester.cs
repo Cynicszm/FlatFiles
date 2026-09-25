@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using FlatFiles.Generator;
 using FlatFiles.TypeMapping;
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -310,6 +312,18 @@ namespace FlatFiles.Test
         /// </summary>
         private static List<string> Run( string source )
         {
+            return Run( source, null );
+        }
+
+        /// <summary>
+        ///     The same, with the project having something to say about whether it wants anything written.
+        /// </summary>
+        /// <param name="source">The consumer's source.</param>
+        /// <param name="generateAccessors">
+        ///     What <c>FlatFilesGenerateAccessors</c> is set to, or null for a project that has not set it.
+        /// </param>
+        private static List<string> Run( string source, string? generateAccessors )
+        {
             var compilation = CSharpCompilation.Create( "Consumer",
                 [CSharpSyntaxTree.ParseText( source, path: "Consumer.cs" )],
                 References(),
@@ -318,7 +332,9 @@ namespace FlatFiles.Test
             var errors = compilation.GetDiagnostics().Where( x => x.Severity == DiagnosticSeverity.Error ).ToList();
             Assert.IsEmpty( errors, $"The source under test does not compile: {string.Join( "; ", errors.Select( x => x.GetMessage() ) )}" );
 
-            var driver = CSharpGeneratorDriver.Create( new MappingAccessorGenerator() );
+            var driver = CSharpGeneratorDriver.Create(
+                [new MappingAccessorGenerator().AsSourceGenerator()],
+                optionsProvider: new ProjectOptions( generateAccessors ) );
             var result = driver.RunGenerators( compilation ).GetRunResult();
 
             Reported = [.. result.Diagnostics];
@@ -338,6 +354,84 @@ namespace FlatFiles.Test
             List<MetadataReference> references = [.. assemblies.Select( x => (MetadataReference) MetadataReference.CreateFromFile( x.Location ) )];
             references.Add( MetadataReference.CreateFromFile( typeof( IDelimitedTypeMapper<> ).Assembly.Location ) );
             return references;
+        }
+
+        [TestMethod]
+        public void TestGenerateAccessorsFalse_WritesNothing()
+        {
+            var written = Run( Mapping, "false" );
+
+            Assert.IsEmpty( written, "A project that asked for nothing to be written should have nothing written for it." );
+        }
+
+        [TestMethod]
+        public void TestGenerateAccessorsTrue_WritesAsUsual()
+        {
+            var written = Run( Mapping, "true" );
+
+            Assert.IsNotEmpty( written, "Asking for what the package does by default should get it." );
+            Assert.Contains( "AddSetter", string.Join( "", written ) );
+        }
+
+        [TestMethod]
+        public void TestGenerateAccessorsUnset_WritesAsUsual()
+        {
+            var written = Run( Mapping, null );
+
+            Assert.IsNotEmpty( written, "A project that has said nothing gets what the package is for." );
+        }
+
+        [TestMethod]
+        public void TestGenerateAccessorsNotABoolean_WritesAsUsual()
+        {
+            // Better to carry on than to silently write nothing because somebody typed the value wrong.
+            var written = Run( Mapping, "no thanks" );
+
+            Assert.IsNotEmpty( written, "A value that is not a boolean should not be read as a refusal." );
+        }
+
+        /// <summary>
+        ///     A mapping of one entity, which the generator writes both directions for.
+        /// </summary>
+        private const string Mapping = """
+            using FlatFiles.TypeMapping;
+            public class Customer { public int Id { get; set; } }
+            public static class Program
+            {
+                public static void Main() => DelimitedTypeMapper.Define<Customer>();
+            }
+            """;
+
+        /// <summary>
+        ///     What the project told the compiler, for the tests that are about being told.
+        /// </summary>
+        private sealed class ProjectOptions( string? generateAccessors ) : AnalyzerConfigOptionsProvider
+        {
+            public override AnalyzerConfigOptions GlobalOptions { get; } = new Global( generateAccessors );
+
+            public override AnalyzerConfigOptions GetOptions( SyntaxTree tree )
+            {
+                return GlobalOptions;
+            }
+
+            public override AnalyzerConfigOptions GetOptions( AdditionalText textFile )
+            {
+                return GlobalOptions;
+            }
+
+            private sealed class Global( string? generateAccessors ) : AnalyzerConfigOptions
+            {
+                public override bool TryGetValue( string key, [NotNullWhen( true )] out string? value )
+                {
+                    if (key == "build_property.FlatFilesGenerateAccessors" && generateAccessors is not null)
+                    {
+                        value = generateAccessors;
+                        return true;
+                    }
+                    value = null;
+                    return false;
+                }
+            }
         }
     }
 }
