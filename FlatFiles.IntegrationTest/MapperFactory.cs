@@ -56,33 +56,59 @@ namespace FlatFiles.IntegrationTest
             var selector = new FixedLengthTypeMapperSelector();
             foreach (var type in profile.RecordTypes)
             {
-                var mapper = FixedLengthTypeMapper.Define<MappedRecord>();
-                var wanted = new Wanted();
-                foreach (var column in type.Columns)
-                {
-                    var window = new Window( column.Window );
-                    switch (wanted.Take( column ))
-                    {
-                        case Kind.Text:
-                            mapper.Property( x => x.Text, window );
-                            break;
-                        case Kind.Whole:
-                            mapper.Property( x => x.Whole, window );
-                            break;
-                        case Kind.Amount:
-                            mapper.Property( x => x.Amount, window );
-                            break;
-                        case Kind.Moment:
-                            mapper.Property( x => x.Moment, window ).InputFormat( SchemaFactory.DateFormatFor( column.ModeWidth ) );
-                            break;
-                        default:
-                            mapper.Ignored( window );
-                            break;
-                    }
-                }
-                selector.When( SchemaFactory.Predicate( type ) ).Use( mapper );
+                selector.When( SchemaFactory.Predicate( type ) ).Use( CreateLayout( type ) );
             }
             return selector;
+        }
+
+        /// <summary>
+        ///     The same mappers behind an injector rather than a selector, for writing a file of several layouts.
+        /// </summary>
+        /// <param name="profile">The file being written.</param>
+        /// <param name="layout">
+        ///     Which layout the record about to be written belongs to. A selector reads the record's text and
+        ///     decides; an injector is given the entity, and every layout here maps onto the same type, so the
+        ///     entity cannot say which one it came from. It was settled when the records were read, and this
+        ///     hands the answer back in the order they are written.
+        /// </param>
+        public static FixedLengthTypeMapperInjector CreateInjector( FileProfile profile, Func<int> layout )
+        {
+            var injector = new FixedLengthTypeMapperInjector();
+            for (var index = 0; index != profile.RecordTypes.Count; ++index)
+            {
+                var wanted = index;
+                injector.When<MappedRecord>( _ => layout() == wanted ).Use( CreateLayout( profile.RecordTypes[index] ) );
+            }
+            return injector;
+        }
+
+        private static IFixedLengthTypeMapper<MappedRecord> CreateLayout( RecordTypeProfile type )
+        {
+            var mapper = FixedLengthTypeMapper.Define<MappedRecord>();
+            var wanted = new Wanted();
+            foreach (var column in type.Columns)
+            {
+                var window = new Window( column.Window );
+                switch (wanted.Take( column ))
+                {
+                    case Kind.Text:
+                        mapper.Property( x => x.Text, window );
+                        break;
+                    case Kind.Whole:
+                        mapper.Property( x => x.Whole, window );
+                        break;
+                    case Kind.Amount:
+                        mapper.Property( x => x.Amount, window );
+                        break;
+                    case Kind.Moment:
+                        mapper.Property( x => x.Moment, window ).InputFormat( SchemaFactory.DateFormatFor( column.ModeWidth ) );
+                        break;
+                    default:
+                        mapper.Ignored( window );
+                        break;
+                }
+            }
+            return mapper;
         }
 
         /// <summary>

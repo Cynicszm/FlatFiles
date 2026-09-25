@@ -10,7 +10,13 @@ namespace FlatFiles.IntegrationTest
 {
     internal static class Program
     {
-        private static readonly string[] Scenarios = ["parse", "typed", "values", "mapper"];
+        // Reading and writing, each named for the direction it measures, so that a table of them says which
+        // way round it is without the reader having to know the vocabulary.
+        private static readonly string[] Scenarios =
+        [
+            IntegrationRun.Parse, IntegrationRun.Typed, IntegrationRun.Values, IntegrationRun.Mapped,
+            WriteRun.Text, WriteRun.Typed, WriteRun.Mapped
+        ];
 
         /// <summary>
         ///     How many times each measurement is taken. Each one is a process of its own doing a single cold
@@ -209,7 +215,9 @@ namespace FlatFiles.IntegrationTest
                 result.PeakWorkingSetBytes.ToString( CultureInfo.InvariantCulture ),
                 result.Reads.ToString( CultureInfo.InvariantCulture ),
                 result.FastestRead.TotalMilliseconds.ToString( "F1", CultureInfo.InvariantCulture ),
-                result.SlowestRead.TotalMilliseconds.ToString( "F1", CultureInfo.InvariantCulture ) ) );
+                result.SlowestRead.TotalMilliseconds.ToString( "F1", CultureInfo.InvariantCulture ),
+                result.Verified,
+                result.Written ) );
             return 0;
         }
 
@@ -269,15 +277,17 @@ namespace FlatFiles.IntegrationTest
                     Bytes = new FileInfo( PathFor( x ) ).Length,
                     Sha256 = FileStore.Hash( PathFor( x ) )
                 } )],
-                Note = "Taken by the baseline command. The record count is exact and allocation is gated on the "
-                     + "tolerance below; how long a read takes is not gated. No sample is meant to have a record "
-                     + "refused, so any refusal fails the check whatever these figures say.",
+                Note = "Taken by the baseline command. The record count is exact, allocation is gated on the "
+                     + "tolerance below, and what a write scenario produced is gated by hash; how long a read or "
+                     + "a write takes is not gated. No sample is meant to have a record refused, so any refusal "
+                     + "fails the check whatever these figures say.",
                 Measurements = [.. results.Select( x => new Measurement
                 {
                     Profile = x.Profile,
                     Scenario = x.Scenario,
                     Records = x.Records,
-                    BytesPerRecord = Math.Round( x.BytesPerRecord, 1 )
+                    BytesPerRecord = Math.Round( x.BytesPerRecord, 1 ),
+                    Written = x.Written
                 } )]
             };
             // Written beside the executable, and into the project so it can be committed.
@@ -360,25 +370,31 @@ namespace FlatFiles.IntegrationTest
         }
 
         /// <summary>
-        ///     The same figures as Markdown, for the changelog entry a release carries: a table per format for the
-        ///     scenarios that read through a schema, and a second pair for the one that reads onto entities.
-        ///     Separate tables because `mapper` is not a further step than `values` and its figures are not
-        ///     comparable with theirs - a row of it among them invites a comparison that means nothing.
+        ///     The same figures as Markdown, for the changelog entry a release carries: a table per format and
+        ///     direction for the scenarios that go through a schema, and a second set for the ones that go
+        ///     through a type mapper. Separate tables because a mapped run is not a further step than the others
+        ///     and its figures are not comparable with theirs - a row of it among them invites a comparison that
+        ///     means nothing - and separate again by direction, because reading a file and writing one are
+        ///     different questions and a table that answers both at once answers neither clearly.
         /// </summary>
         private static void ReportAsMarkdown( List<FileProfile> profiles, List<RunResult> results )
         {
-            var throughSchema = results.FindAll( x => x.Scenario != MappedScenario );
-            var ontoEntities = results.FindAll( x => x.Scenario == MappedScenario );
+            var readSchema = results.FindAll( x => !WriteRun.IsWrite( x.Scenario ) && x.Scenario != IntegrationRun.Mapped );
+            var readMapped = results.FindAll( x => x.Scenario == IntegrationRun.Mapped );
+            var writeSchema = results.FindAll( x => WriteRun.IsWrite( x.Scenario ) && x.Scenario != WriteRun.Mapped );
+            var writeMapped = results.FindAll( x => x.Scenario == WriteRun.Mapped );
 
-            WriteMarkdownTable( "Delimited", profiles, throughSchema, fixedLength: false, withScenario: true );
-            WriteMarkdownTable( "Fixed-length", profiles, throughSchema, fixedLength: true, withScenario: true );
-            // One scenario, so a column repeating its name on every row says nothing the heading has not.
-            WriteMarkdownTable( "Delimited, through a type mapper", profiles, ontoEntities, fixedLength: false, withScenario: false );
-            WriteMarkdownTable( "Fixed-length, through a type mapper", profiles, ontoEntities, fixedLength: true, withScenario: false );
+            WriteMarkdownTable( "Delimited, read", profiles, readSchema, fixedLength: false, withScenario: true );
+            WriteMarkdownTable( "Fixed-length, read", profiles, readSchema, fixedLength: true, withScenario: true );
+            WriteMarkdownTable( "Delimited, written", profiles, writeSchema, fixedLength: false, withScenario: true );
+            WriteMarkdownTable( "Fixed-length, written", profiles, writeSchema, fixedLength: true, withScenario: true );
+            // One scenario apiece, so a column repeating its name on every row says nothing the heading has not.
+            WriteMarkdownTable( "Delimited, read through a type mapper", profiles, readMapped, fixedLength: false, withScenario: false );
+            WriteMarkdownTable( "Fixed-length, read through a type mapper", profiles, readMapped, fixedLength: true, withScenario: false );
+            WriteMarkdownTable( "Delimited, written through a type mapper", profiles, writeMapped, fixedLength: false, withScenario: false );
+            WriteMarkdownTable( "Fixed-length, written through a type mapper", profiles, writeMapped, fixedLength: true, withScenario: false );
             WriteMarkdownNotes( results );
         }
-
-        private const string MappedScenario = "mapper";
 
         private static void WriteMarkdownTable( string heading, List<FileProfile> profiles, List<RunResult> results, bool fixedLength, bool withScenario )
         {
@@ -432,36 +448,62 @@ namespace FlatFiles.IntegrationTest
         private static void WriteMarkdownNotes( List<RunResult> results )
         {
             Console.WriteLine();
-            Console.WriteLine( "Each row is one sample loaded {0} times, each in a process of its own that starts, reads the file once and", Runs );
-            Console.WriteLine( "exits - which is how the library is mostly used - and the figures are the mean of those {0}. Everything a", Runs );
-            Console.WriteLine( "job pays for is inside them: the runtime compiling the parse path on first use, the schema being built," );
-            Console.WriteLine( "the file being opened. The first three scenarios are cumulative:" );
-            Console.WriteLine( "`parse` reads every column as text and asks for no value, `typed` gives each single-typed column its" );
-            Console.WriteLine( "own type, and `values` is `typed` with `GetValues` called on every record. The difference between two" );
-            Console.WriteLine( "of them is the cost of the step between." );
+            Console.WriteLine( "Each row is one sample handled {0} times, each in a process of its own that starts, reads or writes the", Runs );
+            Console.WriteLine( "file once and exits - which is how the library is mostly used - and the figures are the mean of those {0}.", Runs );
+            Console.WriteLine( "Everything a job pays for is inside them: the runtime compiling the parse or format path on first use, the" );
+            Console.WriteLine( "schema being built, the file being opened. The three reading scenarios are cumulative:" );
+            Console.WriteLine( "`read-parse` reads every column as text and asks for no value, `read-typed` gives each single-typed column" );
+            Console.WriteLine( "its own type, and `read-values` is `read-typed` with `GetValues` called on every record. The difference" );
+            Console.WriteLine( "between two of them is the cost of the step between." );
             Console.WriteLine();
-            Console.WriteLine( "`mapper` has tables of its own because it is not a fourth step but a different path: the file read onto" );
-            Console.WriteLine( "entities through a type mapper, which is the only scenario that builds an entity or uses the setters a" );
-            Console.WriteLine( "mapper makes per column. It maps the first column of each kind the profile knows about and ignores the" );
-            Console.WriteLine( "rest, which costs the reader the column but not the parse, so its figures are far below the others and" );
-            Console.WriteLine( "mean something different. Read each set against itself and against the same set in an earlier release." );
+            Console.WriteLine( "`write-text` and `write-typed` are the same pair the other way round: the records read out of the sample" );
+            Console.WriteLine( "and written back, as text and with each single-typed column given its own type. The records are read into" );
+            Console.WriteLine( "memory first and that is **not** measured, so what these rows report is the write. It is also why their" );
+            Console.WriteLine( "peak figures are large: the whole sample is being held, which on the widest of them is several hundred" );
+            Console.WriteLine( "megabytes that the writer has nothing to do with." );
+            Console.WriteLine();
+            Console.WriteLine( "The mapped scenarios have tables of their own because they are not a further step but a different path:" );
+            Console.WriteLine( "the file read onto entities, or written from them, through a type mapper - the only scenarios that build" );
+            Console.WriteLine( "an entity or use the accessors a mapper makes per column. They map the first column of each kind the" );
+            Console.WriteLine( "profile knows about and ignore the rest, which costs the reader the column but not the parse, so their" );
+            Console.WriteLine( "figures are far below the others and mean something different. Read each set against itself and against" );
+            Console.WriteLine( "the same set in an earlier release." );
             Console.WriteLine();
             Console.WriteLine( "| Column | What it measures |" );
             Console.WriteLine( "| --- | --- |" );
             Console.WriteLine( "| Columns | Columns in the schema; for a fixed-length sample, in its widest record layout. |" );
             Console.WriteLine( "| Records | Records the reader yielded. Gated exactly. No sample is built to have a record refused, so any refusal fails the check whatever else agrees. |" );
-            Console.WriteLine( "| Mean Total Time | Mean wall clock of {0} cold loads: opening the file, building the schema, constructing the reader, reading every record, and disposing, in a process that has done nothing else. Nothing is amortised over reads a real caller never performs. **Reported, never gated.** |", Runs );
+            Console.WriteLine( "| Mean Total Time | Mean wall clock of {0} cold runs: opening the file, building the schema, constructing the reader or writer, taking or writing every record, and disposing, in a process that has done nothing else. Nothing is amortised over work a real caller never performs. **Reported, never gated.** |", Runs );
             Console.WriteLine( "| Range | The quickest and slowest of those {0} loads, so the spread behind the mean is visible rather than implied. |", Runs );
             Console.WriteLine( "| MB/s | File size divided by Mean Total Time, so it carries the same caveats. |" );
-            Console.WriteLine( "| Bytes/record | Mean bytes allocated across a load, divided by records read. Deterministic for given bytes on a given runtime, and repeats to within 0.1% here. **Gated at 2%.** |" );
+            Console.WriteLine( "| Bytes/record | Mean bytes allocated across a load or a write, divided by records. Deterministic for given bytes on a given runtime, and repeats to within 0.1% here. **Gated at 2%.** |" );
             Console.WriteLine( "| Peak heap | The largest the managed heap reached in any of the {0} loads, sampled every 5 ms. Reported. |", Runs );
             Console.WriteLine( "| Peak working set | The largest peak working set any of those processes reached. Each does one load and exits, so the figure is a whole job's footprint, most of it runtime start-up rather than the read. Reported. |" );
+            Console.WriteLine();
+            Console.WriteLine();
+            Console.WriteLine( "Each process runs with tiered compilation off, so every method is compiled optimised the first time it is" );
+            Console.WriteLine( "called. The run is still cold - it pays for compiling the path it takes - but what it allocates no longer" );
+            Console.WriteLine( "depends on how far the runtime got before promoting anything, which on the sample of twenty-six record" );
+            Console.WriteLine( "layouts moved a writing figure by a fifth from one process to the next. Both delimited samples measure" );
+            Console.WriteLine( "identically either way." );
             Console.WriteLine();
             Console.WriteLine( "Averaging {0} whole processes takes most of the machine noise out, but a cold start is noisy by nature and", Runs );
             Console.WriteLine( "the range shows what is left. `FlatFiles.Benchmark` is the project that measures a warm steady state, with" );
             Console.WriteLine( "statistics rather than a mean; these figures are the other question - what one job costs end to end - and" );
             Console.WriteLine( "show the shape of the work rather than a number to compare release to release, which is why neither Mean" );
             Console.WriteLine( "Total Time nor MB/s is gated." );
+
+            List<string> wrote = [.. results.Where( x => x.Verified.Length != 0 && x.Verified != "not compared" )
+                .Select( x => string.Format( CultureInfo.CurrentCulture, "{0} `{1}` {2}", Shorthand( x.Profile ), x.Scenario, x.Verified ) )];
+            if (wrote.Count != 0)
+            {
+                Console.WriteLine();
+                Console.WriteLine( "Whether `write-text` wrote the file it read: " + string.Join( "; ", wrote ) + ". A sample it cannot" );
+                Console.WriteLine( "reproduce is not a fault - a string column trims, so a field of spaces comes back empty; some" );
+                Console.WriteLine( "fixed-length layouts have windows that stop short of the record, so its tail is never read; and a" );
+                Console.WriteLine( "ragged final column's padding is not part of its value. What each write produced is pinned by hash in" );
+                Console.WriteLine( "the baseline either way, so a change in the bytes written fails the check whatever this says." );
+            }
 
             List<string> refused = [.. results.Where( x => x.SkippedRecords != 0 )
                 .Select( x => string.Format( CultureInfo.CurrentCulture, "{0} `{1}` refused {2:N0}", Shorthand( x.Profile ), x.Scenario, x.SkippedRecords ) )];
@@ -494,6 +536,12 @@ namespace FlatFiles.IntegrationTest
                 peakManaged = Math.Max( peakManaged, run.PeakManagedBytes );
                 peakWorkingSet = Math.Max( peakWorkingSet, run.PeakWorkingSetBytes );
             }
+            // One run writing a file that is not the one it came from is the whole answer, however the other
+            // four came out.
+            var verified = runs.Exists( x => x.Verified == "differs" ) ? "differs" : first.Verified;
+            // The same records written the same way twice produce the same bytes, so a run that disagrees with
+            // its fellows is worth carrying forward as a disagreement rather than being averaged away.
+            var written = runs.TrueForAll( x => x.Written == first.Written ) ? first.Written : "unstable";
             return new RunResult
             {
                 Profile = first.Profile,
@@ -507,7 +555,9 @@ namespace FlatFiles.IntegrationTest
                 SlowestRead = TimeSpan.FromTicks( slowest ),
                 AllocatedBytes = allocated / runs.Count,
                 PeakManagedBytes = peakManaged,
-                PeakWorkingSetBytes = peakWorkingSet
+                PeakWorkingSetBytes = peakWorkingSet,
+                Verified = verified,
+                Written = written
             };
         }
 
@@ -519,6 +569,15 @@ namespace FlatFiles.IntegrationTest
                 RedirectStandardOutput = true,
                 UseShellExecute = false
             };
+            // Every method is compiled optimised on its first call rather than starting as a tier-0 stub and
+            // being promoted later. The run stays cold - the process still pays for compiling the path it
+            // takes - but what it allocates stops depending on how far the runtime got before it promoted
+            // anything. Tier-0 code on the formatting path allocates about twice what optimised code does, and
+            // the sample of twenty-six record layouts warms each of them separately, so its writing scenarios
+            // measured anywhere between 6,355 and 7,752 bytes a record from one process to the next - a figure
+            // no gate can live with. With this set they repeat to two bytes. It changes almost nothing else:
+            // both delimited samples measure identically either way and the fixed-length reads move under 1%.
+            start.Environment["DOTNET_TieredCompilation"] = "0";
             if (!Environment.ProcessPath!.EndsWith( ".exe", StringComparison.OrdinalIgnoreCase ))
             {
                 start.ArgumentList.Add( Environment.GetCommandLineArgs()[0] );
@@ -531,7 +590,7 @@ namespace FlatFiles.IntegrationTest
             var output = process.StandardOutput.ReadToEnd().Trim();
             process.WaitForExit();
             var parts = output.Split( '|' );
-            if (process.ExitCode != 0 || parts.Length != 12)
+            if (process.ExitCode != 0 || parts.Length != 14)
             {
                 Console.Error.WriteLine( "{0} {1} did not measure: {2}", name, scenario, output );
                 return null;
@@ -549,7 +608,9 @@ namespace FlatFiles.IntegrationTest
                 PeakWorkingSetBytes = long.Parse( parts[8], CultureInfo.InvariantCulture ),
                 Reads = int.Parse( parts[9], CultureInfo.InvariantCulture ),
                 FastestRead = TimeSpan.FromMilliseconds( double.Parse( parts[10], CultureInfo.InvariantCulture ) ),
-                SlowestRead = TimeSpan.FromMilliseconds( double.Parse( parts[11], CultureInfo.InvariantCulture ) )
+                SlowestRead = TimeSpan.FromMilliseconds( double.Parse( parts[11], CultureInfo.InvariantCulture ) ),
+                Verified = parts[12],
+                Written = parts[13]
             };
         }
 
@@ -573,8 +634,8 @@ namespace FlatFiles.IntegrationTest
             Console.WriteLine( new string( '=', 118 ) );
             Console.WriteLine( "MEASUREMENTS" );
             Console.WriteLine( new string( '=', 118 ) );
-            Console.WriteLine( "{0,-14}{1,-8}{2,11}{3,9}{4,16}{5,20}{6,11}{7,12}{8,12}{9,12}",
-                "Profile", "Scenario", "Records", "Refused", "Mean total time", "Range", "MB/s", "Bytes/rec", "Peak heap", "Peak WS" );
+            Console.WriteLine( "{0,-14}{1,-13}{2,11}{3,9}{4,16}{5,20}{6,11}{7,12}{8,12}{9,12}   {10}",
+                "Profile", "Scenario", "Records", "Refused", "Mean total time", "Range", "MB/s", "Bytes/rec", "Peak heap", "Peak WS", "Output" );
             var profileName = string.Empty;
             foreach (var result in results)
             {
@@ -582,23 +643,31 @@ namespace FlatFiles.IntegrationTest
                 {
                     profileName = result.Profile;
                 }
-                Console.WriteLine( "{0,-14}{1,-8}{2,11:N0}{3,9:N0}{4,16}{5,20}{6,11:N1}{7,12:N0}{8,12}{9,12}",
+                Console.WriteLine( "{0,-14}{1,-13}{2,11:N0}{3,9:N0}{4,16}{5,20}{6,11:N1}{7,12:N0}{8,12}{9,12}   {10}",
                     result.Profile, result.Scenario, result.Records, result.SkippedRecords,
                     Duration( result.Elapsed ), Spread( result ), result.MegabytesPerSecond, result.BytesPerRecord,
-                    Megabytes( result.PeakManagedBytes ), Megabytes( result.PeakWorkingSetBytes ) );
+                    Megabytes( result.PeakManagedBytes ), Megabytes( result.PeakWorkingSetBytes ),
+                    result.Verified );
             }
             Console.WriteLine();
-            Console.WriteLine( "parse  - every column read as text, no value asked for" );
-            Console.WriteLine( "typed  - each single-typed column given its own type, no value asked for" );
-            Console.WriteLine( "values - typed, and GetValues called for every record" );
-            Console.WriteLine( "mapper - read onto entities through a type mapper, which is a different path entirely" );
+            Console.WriteLine( "read-parse   - every column read as text, no value asked for" );
+            Console.WriteLine( "read-typed   - each single-typed column given its own type, no value asked for" );
+            Console.WriteLine( "read-values  - read-typed, and GetValues called for every record" );
+            Console.WriteLine( "read-mapper  - read onto entities through a type mapper, which is a different path entirely" );
+            Console.WriteLine( "write-text   - every value written back as text, through a schema of string columns" );
+            Console.WriteLine( "write-typed  - the same records written with each single-typed column given its own type" );
+            Console.WriteLine( "write-mapper - entities written through a type mapper, the only scenario that reads a member" );
             Console.WriteLine();
-            Console.WriteLine( "Mean total time is over {0} cold loads, each a process that starts, reads the file once and exits,", Runs );
-            Console.WriteLine( "with the quickest and slowest beside it. That is how the library is mostly used, so nothing here is" );
-            Console.WriteLine( "amortised over reads a real caller never performs." );
-            Console.WriteLine( "Bytes/rec is what the read allocated, per record, and is the figure the release gate compares." );
-            Console.WriteLine( "Peak heap is the largest the managed heap reached while reading; peak WS is the process working" );
-            Console.WriteLine( "set, which is why each row gets its own process." );
+            Console.WriteLine( "Mean total time is over {0} cold loads, each a process that starts, reads or writes the file once", Runs );
+            Console.WriteLine( "and exits, with the quickest and slowest beside it. That is how the library is mostly used, so" );
+            Console.WriteLine( "nothing here is amortised over work a real caller never performs." );
+            Console.WriteLine( "Bytes/rec is what the read or the write allocated, per record, and is the figure the release gate" );
+            Console.WriteLine( "compares. A write scenario reads its records into memory first and that is not measured, so its" );
+            Console.WriteLine( "peak figures are mostly the records it is holding rather than anything the writer does." );
+            Console.WriteLine( "Output says whether what a write scenario wrote is the file it was read from. The gate pins those" );
+            Console.WriteLine( "bytes by hash either way, so a writer that starts writing something else fails whatever it says." );
+            Console.WriteLine( "Peak heap is the largest the managed heap reached; peak WS is the process working set, which is" );
+            Console.WriteLine( "why each row gets its own process." );
         }
 
         /// <summary>

@@ -42,6 +42,18 @@ namespace FlatFiles.IntegrationTest
 
         public long PeakWorkingSetBytes { get; set; }
 
+        /// <summary>
+        ///     Whether what a write scenario wrote is the file it was read from: <c>same</c>, <c>differs</c>, or
+        ///     <c>not compared</c> where the scenario is not one that can reproduce it. Empty for a read.
+        /// </summary>
+        public string Verified { get; set; } = string.Empty;
+
+        /// <summary>
+        ///     What a write scenario wrote, by hash. Gated: the bytes the library writes are not allowed to move
+        ///     without somebody saying so. Empty for a read.
+        /// </summary>
+        public string Written { get; set; } = string.Empty;
+
         public double BytesPerRecord => Records == 0 ? 0 : (double) AllocatedBytes / Records;
 
         public double RecordsPerSecond => Elapsed.TotalSeconds <= 0 ? 0 : Records / Elapsed.TotalSeconds;
@@ -50,7 +62,7 @@ namespace FlatFiles.IntegrationTest
     }
 
     /// <summary>
-    ///     Reads one generated file from end to end and reports what it cost.
+    ///     Reads one generated file from end to end, or writes one back, and reports what it cost.
     /// </summary>
     /// <remarks>
     ///     Four scenarios. The first three are each a step further than the last: <c>parse</c> reads every record
@@ -67,6 +79,13 @@ namespace FlatFiles.IntegrationTest
     /// </remarks>
     internal static class IntegrationRun
     {
+        public const string Parse = "read-parse";
+
+        public const string Typed = "read-typed";
+
+        public const string Values = "read-values";
+
+        public const string Mapped = "read-mapper";
 
         private static DelimitedReader Delimited( FileProfile profile, TextReader text, bool typed )
         {
@@ -101,6 +120,10 @@ namespace FlatFiles.IntegrationTest
         /// </remarks>
         public static RunResult Execute( FileProfile profile, string path, string scenario )
         {
+            if (WriteRun.IsWrite( scenario ))
+            {
+                return ExecuteWrite( profile, path, scenario );
+            }
             var size = new FileInfo( path ).Length;
             var records = 0L;
             var skipped = 0L;
@@ -131,20 +154,70 @@ namespace FlatFiles.IntegrationTest
         }
 
         /// <summary>
+        ///     Writes the file once and reports what that cost.
+        /// </summary>
+        /// <remarks>
+        ///     The records are read into memory first and that is not measured, because what is being measured
+        ///     is the write. Holding a whole sample costs several hundred megabytes on the larger ones, so the
+        ///     peak figures a write scenario reports are mostly the records rather than the writer - allocation,
+        ///     which is what the check gates on, is counted from the moment the write begins and is clean.
+        ///     <para>
+        ///         What was written is compared against the file it came from where the scenario is one that can
+        ///         reproduce it, and deleted either way: a hundred megabytes of output is worth keeping only for
+        ///         as long as it takes to ask whether it is right.
+        ///     </para>
+        /// </remarks>
+        private static RunResult ExecuteWrite( FileProfile profile, string path, string scenario )
+        {
+            var source = WriteRun.Load( profile, path, scenario );
+            var destination = WriteRun.DestinationFor( path );
+
+            using var watcher = new PeakMemoryWatcher();
+            var before = GC.GetTotalAllocatedBytes( true );
+            var watch = Stopwatch.StartNew();
+            WriteRun.Write( profile, destination, scenario, source );
+            watch.Stop();
+            var allocated = GC.GetTotalAllocatedBytes( true ) - before;
+            watcher.Dispose();
+
+            var size = new FileInfo( destination ).Length;
+            (var written, var verified) = WriteRun.Compare( path, destination, scenario );
+            File.Delete( destination );
+
+            return new RunResult
+            {
+                Profile = profile.Name,
+                Scenario = scenario,
+                Reads = 1,
+                Records = source.Records,
+                SkippedRecords = 0,
+                FileSize = size,
+                Elapsed = watch.Elapsed,
+                FastestRead = watch.Elapsed,
+                SlowestRead = watch.Elapsed,
+                AllocatedBytes = allocated,
+                PeakManagedBytes = watcher.Peak,
+                PeakWorkingSetBytes = Process.GetCurrentProcess().PeakWorkingSet64,
+                Verified = verified,
+                Written = written
+            };
+        }
+
+        /// <summary>
         ///     One complete read: open the file, build the schema, construct the reader, take every record, and
         ///     let go of all of it. Everything the figures cover happens in here.
         /// </summary>
         private static void ReadOnce( FileProfile profile, string path, string scenario, ref long records, ref long skipped )
         {
-            var typed = scenario is "typed" or "values";
-            var wantsValues = scenario == "values";
+            var typed = scenario is Typed or Values;
+            var wantsValues = scenario == Values;
             var taken = 0L;
             var refused = 0L;
 
             using (var stream = new FileStream( path, FileMode.Open, FileAccess.Read, FileShare.Read, 1 << 20 ))
             using (var text = new StreamReader( stream ))
             {
-                if (scenario == "mapper")
+                if (scenario == Mapped)
                 {
                     (records, skipped) = ReadMapped( profile, text );
                     return;

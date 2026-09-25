@@ -4,6 +4,6 @@
     {
         int LogicalCount { get; }
 
-        void Serialize(IRecordContext context, object? value, object?[] values);
+        void Serialise(IRecordContext context, object? value, object?[] values);
     }
 }

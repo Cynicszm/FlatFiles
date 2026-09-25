@@ -41,14 +41,14 @@ namespace FlatFiles.TypeMapping
             var build = Builder( supplied, constructorMapping );
 
             var memberMappings = GetReaderMemberMappings( mappings, constructorMapping );
-            var deserializer = generator.GetReader<TEntity>( memberMappings );
+            var deserialiser = generator.GetReader<TEntity>( memberMappings );
             var nestedMappers = GetNestedMappers( mappings );
             if (nestedMappers.Length != 0)
             {
                 cachedReader = ( recordContext, values ) =>
                 {
                     var entity = build( values );
-                    deserializer( recordContext, entity, values );
+                    deserialiser( recordContext, entity, values );
                     foreach (var nestedMapper in nestedMappers)
                     {
                         var nestedReader = nestedMapper.GetReader();
@@ -63,7 +63,7 @@ namespace FlatFiles.TypeMapping
                 cachedReader = ( recordContext, values ) =>
                 {
                     var entity = build( values );
-                    deserializer( recordContext, entity, values );
+                    deserialiser( recordContext, entity, values );
                     return entity;
                 };
             }
@@ -340,13 +340,13 @@ namespace FlatFiles.TypeMapping
             }
             var mappings = lookup.GetMappings();
             var memberMappings = GetWriterMemberMappings( mappings );
-            var serializer = generator.GetWriter<TEntity>( memberMappings );
+            var serialiser = generator.GetWriter<TEntity>( memberMappings );
             var nestedMappers = GetNestedMappers( mappings );
             if (nestedMappers.Length != 0)
             {
                 cachedWriter = ( metadata, entity, values ) =>
                 {
-                    serializer( metadata, entity, values );
+                    serialiser( metadata, entity, values );
                     foreach (var nestedMapper in nestedMappers)
                     {
                         var nested = nestedMapper.Member!.GetValue( entity! );
@@ -357,7 +357,7 @@ namespace FlatFiles.TypeMapping
             }
             else
             {
-                cachedWriter = serializer;
+                cachedWriter = serialiser;
             }
             return cachedWriter;
         }

@@ -63,14 +63,14 @@ namespace FlatFiles.TypeMapping
             foreach (var matcher in matchers)
             {
                 var typedReader = new Lazy<Func<IRecordContext, object?[], object?>>( GetReader( matcher.TypeMapper ) );
-                selector.When( matcher.Predicate ).Use( matcher.TypeMapper.GetSchema() ).OnMatch( () => multiReader.Deserializer = typedReader.Value );
+                selector.When( matcher.Predicate ).Use( matcher.TypeMapper.GetSchema() ).OnMatch( () => multiReader.Deserialiser = typedReader.Value );
             }
             if (defaultMapper is null)
             {
                 return multiReader;
             }
             var typeReader = new Lazy<Func<IRecordContext, object?[], object?>>( GetReader( defaultMapper ) );
-            selector.WithDefault( defaultMapper.GetSchema() ).OnMatch( () => multiReader.Deserializer = typeReader.Value );
+            selector.WithDefault( defaultMapper.GetSchema() ).OnMatch( () => multiReader.Deserialiser = typeReader.Value );
             return multiReader;
         }
 

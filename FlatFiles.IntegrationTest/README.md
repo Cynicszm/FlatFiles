@@ -1,9 +1,9 @@
 ﻿# FlatFiles.IntegrationTest
 
-Reads the six integration test files end to end and reports what each one costs: time, bytes allocated
-per record, and peak memory. The files are committed, compressed, and generated only when somebody asks, from a
-profile that describes their shape - how many columns, how wide each runs, how often it is empty, and
-what its values parse as.
+Reads the six integration test files end to end, writes them back, and reports what each of those costs:
+time, bytes allocated per record, and peak memory. The files are committed, compressed, and generated only
+when somebody asks, from a profile that describes their shape - how many columns, how wide each runs, how
+often it is empty, and what its values parse as.
 
 The benchmark project measures small reads precisely. This one reads whole files, shaped after the ones
 that cause trouble in practice - hundreds of columns, hundreds of thousands to millions of records,
@@ -18,8 +18,8 @@ adding one is a matter of writing the profile rather than of finding a file.
 
     dotnet run --project FlatFiles.IntegrationTest -c Release
 
-That measures every scenario: six samples, four scenarios each, five processes apiece, so a hundred
-and twenty cold loads and a couple of minutes.
+That measures every scenario: six samples, seven scenarios each, five processes apiece, so two hundred
+and ten cold runs.
 
     dotnet run --project FlatFiles.IntegrationTest -c Release -- run Set1Sample2
     dotnet run --project FlatFiles.IntegrationTest -c Release -- check
@@ -73,33 +73,73 @@ library from a single-schema read, and one the type mapper's newer shortcuts do 
 
 ## The scenarios
 
-The first three are each a step further than the last, so the difference between two of them is the
-cost of the step. The fourth is a different path through the library rather than a further step.
+Seven, named for the direction they measure. The three reading ones are each a step further than the
+last, so the difference between two of them is the cost of the step; the mapped ones are a different
+path through the library rather than a further step.
 
-Every sample is loaded five times, each in a process that starts, reads the file once and exits, and
-the figures are the mean of those five with the quickest and slowest beside them. That is how the
-library is mostly used - a job starts, loads a file as fast as it can, and finishes - so everything a
-job pays for is inside the measurement: the runtime compiling the parse path on first use, the schema
-being built, the file being opened. Nothing is amortised over reads a real caller never performs.
+Every sample is handled five times, each in a process that starts, reads or writes the file once and
+exits, and the figures are the mean of those five with the quickest and slowest beside them. That is how
+the library is mostly used - a job starts, loads a file as fast as it can, and finishes - so everything a
+job pays for is inside the measurement: the runtime compiling the parse or format path on first use, the
+schema being built, the file being opened. Nothing is amortised over work a real caller never performs.
+
+Each of those processes runs with **tiered compilation off**, so every method is compiled optimised the
+first time it is called. The run is still cold - it pays for compiling the path it takes, and nothing is
+amortised - but what it allocates no longer depends on how far the runtime got before it promoted anything.
+Tier-0 code on the formatting path allocates about twice what optimised code does, and `Set2Sample1` warms
+twenty-six record layouts separately, so its writing scenarios measured anywhere between 6,355 and 7,752
+bytes a record from one process to the next before this was set. They now repeat to two bytes. It changes
+almost nothing else: both delimited samples measure identically either way, and the fixed-length reads move
+by under 1%.
 
 Measuring a warm steady state instead would flatter the library and answer a question few callers ask.
 `FlatFiles.Benchmark` is the project that measures that, properly, with statistics.
 
-- **`parse`** - every column read as `StringColumn`, no value asked for. The floor: find the records,
-  find the fields, make a string of each.
-- **`typed`** - each single-typed column given its own type. The difference from `parse` is what
-  parsing a value into a `DateTime`, `decimal` or `int` costs over copying it out as text.
-- **`values`** - `typed`, with `GetValues` called on every record. The difference is what a caller
-  that keeps the values pays, which is an array per record and a copy into it.
-- **`mapper`** - the same file read onto entities through a type mapper. Not a step further than
-  `values` and not comparable with it: a different path, measured because nothing else here goes
+- **`read-parse`** - every column read as `StringColumn`, no value asked for. The floor: find the
+  records, find the fields, make a string of each.
+- **`read-typed`** - each single-typed column given its own type. The difference from `read-parse` is
+  what parsing a value into a `DateTime`, `decimal` or `int` costs over copying it out as text.
+- **`read-values`** - `read-typed`, with `GetValues` called on every record. The difference is what a
+  caller that keeps the values pays, which is an array per record and a copy into it.
+- **`read-mapper`** - the same file read onto entities through a type mapper. Not a step further than
+  `read-values` and not comparable with it: a different path, measured because nothing else here goes
   anywhere near it.
+- **`write-text`** - every value written back through a schema of string columns. The floor for
+  writing, and the one scenario that can be held against the file it came from.
+- **`write-typed`** - the same records written with each single-typed column given its own type, so the
+  difference from `write-text` is what formatting a value costs over copying it.
+- **`write-mapper`** - entities written through a type mapper. The only scenario that reads a member off
+  an entity, and the only one the getters a mapper builds per column can be seen in.
 
 A column the profile shows as mixed stays text in every scenario. Typing it would mean records failing
 on values the file it was modelled on was perfectly happy with, and the run would be measuring error
 recovery rather than parsing.
 
-### Why `mapper` is here
+### What the writing scenarios measure
+
+The records are read out of the sample **before** the measurement starts, so what these rows report is
+the write and nothing else. Holding a whole sample costs several hundred megabytes on the wider ones,
+which is why a write scenario's peak figures are large and mean little: they are mostly the records
+being held rather than anything the writer does. Allocation, which is what the gate compares, is counted
+from the moment the write begins.
+
+A fixed-length sample of several layouts is written through a `FixedLengthSchemaInjector`, one schema per
+layout, which is what a caller with such a file writes. A selector reads a record's text to choose; an
+injector is given the values, and every layout here maps onto the same shape, so which layout a record
+belongs to is settled when it is read and handed back in the order the records are written.
+
+**Whether a write reproduces the file it read** is reported, not gated. `write-text` does on two of the
+six samples and cannot on the rest, for reasons that are properties of the samples rather than faults: a
+string column trims, so a field of spaces comes back empty; some fixed-length layouts have windows that
+stop short of the record, so its tail is never read at all; and a ragged final column's padding is not
+part of its value. `write-typed` writes a value it parsed rather than the characters the sample spelled
+it with, and `write-mapper` maps four members and ignores every other column, so neither is meant to
+reproduce anything. What each of them wrote is pinned by hash in the baseline instead, which is the
+stronger check: the bytes the library writes cannot move without somebody saying so, whether or not they
+ever matched the sample. The write scenarios format with the invariant culture so that hash means the
+same thing on another machine.
+
+### Why the mapped scenarios are here
 
 The first three scenarios read through a schema. That path never builds an entity, never asks the code
 generator for anything and never uses the setters a mapper makes per column, so no figure taken from it
@@ -133,8 +173,9 @@ samples here uses one.
 `check` measures everything and compares it against `Baseline.json`, which is committed beside this
 file. It runs in one place: the publish workflow, before a release is packed, and a release fails if
 anything moved. It is deliberately not on the pull request build - what it guards is a release going
-out with something changed, and the run costs about twenty seconds and 210 MB of unpacked disk on
-whatever performs it. Three figures, gated differently on purpose:
+out with something changed, and the run costs about eight minutes, 210 MB of unpacked disk and a peak of
+some 700 MB of memory on whatever performs it. The memory is the writing scenarios holding a whole
+sample; nothing the library does needs it. Gated differently on purpose:
 
 | Figure | Gate | Why |
 | --- | --- | --- |
@@ -142,6 +183,7 @@ whatever performs it. Three figures, gated differently on purpose:
 | Records read | exact | A change here is a change in what the library does with a real-shaped file, whether or not anybody meant it. A record refused is a record not yielded, so this catches one without needing a count of its own. |
 | Records refused | must be none | No sample is built to have a record refused. One that does means something changed, so it fails whatever the other figures say. |
 | Bytes allocated per record | 2% | Deterministic to the byte for a given file and runtime. Repeated runs here agree to within 0.1%, so 2% absorbs a runtime's housekeeping and nothing else. |
+| What a write produced | exact, by SHA-256 | The same records written the same way produce the same bytes. This pins them, so a writer that quietly starts writing something else fails even where every figure beside it holds. |
 | Time, peak memory | not gated | Reported as the mean of five cold loads with the range beside it. Even averaged, the same unchanged code moves more than a gate could live with; peak memory is a whole job's footprint, most of it runtime start-up. Gating either would fail releases at random. |
 
 When a change is intended, `baseline` rewrites the file and the change is described in the changelog
@@ -150,14 +192,14 @@ like any other. A baseline that moves without an entry beside it is the thing th
 The samples themselves are gated the same way and for the same reason. Until a new baseline is taken,
 a regenerated sample fails the check rather than quietly shifting every figure under it.
 
-A release that takes a new baseline carries the whole table in its changelog entry - six samples, four
+A release that takes a new baseline carries the whole table in its changelog entry - six samples, seven
 scenarios apiece - so what a version cost is recorded where it shipped rather than only in a baseline
-the next release overwrites. `baseline` prints it: four tables and the notes saying what each column
+the next release overwrites. `baseline` prints it: eight tables and the notes saying what each column
 measures, from the very runs it took the baseline from, so the entry and the gate hold the same
-figures. Two tables cover the scenarios that read through a schema, one per format, and two more cover
-`mapper`, because it is a different path and a row of it among the others invites a comparison that
-means nothing. `run --markdown` prints the same block from fresh runs, which is useful for looking but is
-not what the baseline recorded.
+figures. Four tables cover the scenarios that go through a schema - one per format and direction - and
+four more cover the mapped ones, because those are a different path and a row of one among the others
+invites a comparison that means nothing. `run --markdown` prints the same block from fresh runs, which is
+useful for looking but is not what the baseline recorded.
 
 A release that leaves the baseline alone says the figures are unchanged and names the release that
 last recorded them, rather than reprinting a table whose ungated columns would differ anyway.

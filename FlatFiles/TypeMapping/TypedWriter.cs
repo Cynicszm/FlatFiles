@@ -6,7 +6,7 @@ namespace FlatFiles.TypeMapping
 {
     internal sealed class TypedWriter<TEntity>( IWriterWithMetadata writer, IMapper<TEntity> mapper ) : ITypedWriter<TEntity>
     {
-        private readonly Action<IRecordContext, TEntity, object[]> serializer = mapper.GetWriter();
+        private readonly Action<IRecordContext, TEntity, object[]> serialiser = mapper.GetWriter();
         private readonly int logicalCount = mapper.LogicalCount;
 
         // Non-null where every column and member this mapping covers can be written without boxing a value.
@@ -62,7 +62,7 @@ namespace FlatFiles.TypeMapping
                 writer.WriteFromEntity( entity, getters );
                 return;
             }
-            var values = Serialize( entity );
+            var values = Serialise( entity );
             writer.Write( values );
         }
 
@@ -79,7 +79,7 @@ namespace FlatFiles.TypeMapping
                 await writer.WriteFromEntityAsync( entity, getters, cancellationToken ).ConfigureAwait( false );
                 return;
             }
-            var values = Serialize( entity );
+            var values = Serialise( entity );
             await writer.WriteAsync( values, cancellationToken ).ConfigureAwait( false );
         }
 
@@ -89,13 +89,13 @@ namespace FlatFiles.TypeMapping
         ///     values - which is what a <c>RecordParsed</c> handler does on the reading side, and why that one
         ///     needs an array of its own.
         /// </summary>
-        private object[] Serialize( TEntity entity )
+        private object[] Serialise( TEntity entity )
         {
             // Cleared rather than assumed: a mapping need not write every slot, and a value left behind by the
             // record before would be written as though it belonged to this one.
             Array.Clear( values, 0, values.Length );
             var recordContext = writer.GetMetadata();
-            serializer( recordContext, entity, values );
+            serialiser( recordContext, entity, values );
             return values;
         }
 

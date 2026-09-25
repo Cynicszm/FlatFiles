@@ -49,7 +49,7 @@ namespace FlatFiles.TypeMapping
 
         public void Write( object entity )
         {
-            var values = Serialize( entity );
+            var values = Serialise( entity );
             writer.Write( values );
         }
 
@@ -61,7 +61,7 @@ namespace FlatFiles.TypeMapping
         public async Task WriteAsync( object entity, CancellationToken cancellationToken )
         {
             cancellationToken.ThrowIfCancellationRequested();
-            var values = Serialize( entity );
+            var values = Serialise( entity );
             await writer.WriteAsync( values, cancellationToken ).ConfigureAwait( false );
         }
 
@@ -70,7 +70,7 @@ namespace FlatFiles.TypeMapping
         ///     a schema of a different width - which is the one thing this writer has to allow for that the
         ///     single-schema one does not.
         /// </summary>
-        private object?[] Serialize( object entity )
+        private object?[] Serialise( object entity )
         {
             var context = injector.SetMatcher( entity );
             if (values.Length != context.LogicalCount)
@@ -84,7 +84,7 @@ namespace FlatFiles.TypeMapping
                 Array.Clear( values, 0, values.Length );
             }
             var recordContext = writer.GetMetadata();
-            context.Serialize( recordContext, entity, values );
+            context.Serialise( recordContext, entity, values );
             return values;
         }
 

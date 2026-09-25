@@ -673,8 +673,8 @@ namespace FlatFiles.Test
         public void ShouldIgnoreRecordSeparatorsWithinQuotes()
         {
             const string source = @"'John','Smith','123 Playtown Place', 'Grangewood','CA' ,12345,'John likes to travel to far away places.
-His favorite travel spots are Tannis, Venice and Chicago.
-When he''s not traveling, he''s at home with his lovely wife, children and leather armchair.'
+His favourite travel spots are Tannis, Venice and Chicago.
+When he''s not travelling, he''s at home with his lovely wife, children and leather armchair.'
 Mary,Smith,'1821 Grover''s Village',West Chattingham,WA,43221,'Likes cats.'";
             var stringReader = new StringReader( source );
             var options = new DelimitedOptions
@@ -687,8 +687,8 @@ Mary,Smith,'1821 Grover''s Village',West Chattingham,WA,43221,'Likes cats.'";
             [
                 [
                     "John", "Smith", "123 Playtown Place", "Grangewood", "CA", "12345", @"John likes to travel to far away places.
-His favorite travel spots are Tannis, Venice and Chicago.
-When he's not traveling, he's at home with his lovely wife, children and leather armchair."
+His favourite travel spots are Tannis, Venice and Chicago.
+When he's not travelling, he's at home with his lovely wife, children and leather armchair."
                 ],
                 [ "Mary", "Smith", "1821 Grover's Village", "West Chattingham", "WA", "43221", "Likes cats." ]
             ];

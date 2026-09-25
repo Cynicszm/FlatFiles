@@ -55,7 +55,7 @@ namespace FlatFiles.IntegrationTest
             Console.WriteLine( new string( '=', 104 ) );
             Console.WriteLine( "AGAINST THE BASELINE" );
             Console.WriteLine( new string( '=', 104 ) );
-            Console.WriteLine( "{0,-14}{1,-8}{2,12}{3,14}{4,14}{5,10}   {6}",
+            Console.WriteLine( "{0,-14}{1,-13}{2,12}{3,14}{4,14}{5,10}   {6}",
                 "Profile", "Scenario", "Records", "Bytes/rec", "Baseline", "Change", "" );
 
             var passed = true;
@@ -67,7 +67,7 @@ namespace FlatFiles.IntegrationTest
                 if (expected is null)
                 {
                     passed = false;
-                    Console.WriteLine( "{0,-14}{1,-8}{2,12:N0}{3,14:N0}{4,14}{5,10}   {6}",
+                    Console.WriteLine( "{0,-14}{1,-13}{2,12:N0}{3,14:N0}{4,14}{5,10}   {6}",
                         result.Profile, result.Scenario, result.Records,
                         result.BytesPerRecord, "-", "-", "FAILED: not in the baseline" );
                     continue;
@@ -83,13 +83,21 @@ namespace FlatFiles.IntegrationTest
                 {
                     reasons.Add( string.Format( CultureInfo.CurrentCulture, "{0:N0} records were refused", result.SkippedRecords ) );
                 }
+                // What a write produced is pinned exactly. Allocation says what a write cost; this says what it
+                // was, and a writer that quietly starts writing something else is the failure worth catching.
+                if (expected.Written.Length != 0 && result.Written != expected.Written)
+                {
+                    reasons.Add( result.Written == "unstable"
+                        ? "the same records wrote different bytes from one run to the next"
+                        : "what it writes has changed" );
+                }
                 var change = expected.BytesPerRecord == 0 ? 0 : result.BytesPerRecord / expected.BytesPerRecord - 1;
                 if (Math.Abs( change ) > baseline.Tolerance.BytesPerRecord)
                 {
                     reasons.Add( string.Format( CultureInfo.CurrentCulture, "allocation moved {0:+0.0%;-0.0%}", change ) );
                 }
                 passed &= reasons.Count == 0;
-                Console.WriteLine( "{0,-14}{1,-8}{2,12:N0}{3,14:N0}{4,14:N0}{5,10}   {6}",
+                Console.WriteLine( "{0,-14}{1,-13}{2,12:N0}{3,14:N0}{4,14:N0}{5,10}   {6}",
                     result.Profile, result.Scenario, result.Records,
                     result.BytesPerRecord, expected.BytesPerRecord,
                     change.ToString( "+0.0%;-0.0%;0.0%", CultureInfo.CurrentCulture ),
@@ -103,7 +111,7 @@ namespace FlatFiles.IntegrationTest
                     continue;
                 }
                 passed = false;
-                Console.WriteLine( "{0,-14}{1,-8}{2,12}{3,14}{4,14:N0}{5,10}   {6}",
+                Console.WriteLine( "{0,-14}{1,-13}{2,12}{3,14}{4,14:N0}{5,10}   {6}",
                     expected.Profile, expected.Scenario, "-", "-", expected.BytesPerRecord, "-",
                     "FAILED: the baseline has this and the run did not produce it" );
             }
@@ -112,8 +120,9 @@ namespace FlatFiles.IntegrationTest
             Console.WriteLine( passed
                 ? "Every figure is where the baseline left it."
                 : "Something moved. Either the change was intended, in which case take a new baseline and say so in the changelog, or it was not." );
-            Console.WriteLine( "Allocation is gated at {0:P0}; how long a read takes is reported but never gated, because it is not stable enough to gate on.",
+            Console.WriteLine( "Allocation is gated at {0:P0} and what a write produced is gated to the byte; how long a read or a write takes is",
                 baseline.Tolerance.BytesPerRecord );
+            Console.WriteLine( "reported but never gated, because it is not stable enough to gate on." );
             return passed;
         }
     }

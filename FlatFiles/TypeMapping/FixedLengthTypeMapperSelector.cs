@@ -73,7 +73,7 @@ namespace FlatFiles.TypeMapping
                 var typedReader = new Lazy<Func<IRecordContext, object?[], object?>>( GetReader( mapper ) );
                 selector.When( matcher.Predicate ).Use( mapper.GetSchema() ).OnMatch( () =>
                 {
-                    multiReader.Deserializer = typedReader.Value;
+                    multiReader.Deserialiser = typedReader.Value;
                     multiReader.Assembler = assemblers?[mapper];
                 } );
             }
@@ -86,7 +86,7 @@ namespace FlatFiles.TypeMapping
             var typeReader = new Lazy<Func<IRecordContext, object?[], object?>>( GetReader( fallback ) );
             selector.WithDefault( fallback.GetSchema() ).OnMatch( () =>
             {
-                multiReader.Deserializer = typeReader.Value;
+                multiReader.Deserialiser = typeReader.Value;
                 multiReader.Assembler = assemblers?[fallback];
             } );
             Install( multiReader, assemblers );
