@@ -91,5 +91,13 @@ namespace FlatFiles
         /// <inheritdoc />
         /// <remarks>It asks, so a provider on the options has to reach it.</remarks>
         internal override bool UsesFormatProvider => true;
+
+        /// <inheritdoc />
+        /// <remarks>A number is parsed by its number styles rather than by a format, so only writing takes one.</remarks>
+        internal override bool TrySetOutputFormat( string format )
+        {
+            OutputFormat = format;
+            return true;
+        }
     }
 }

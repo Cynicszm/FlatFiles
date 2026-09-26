@@ -28,6 +28,53 @@ namespace FlatFiles.TypeMapping
         }
 
         /// <summary>
+        ///     Creates a configuration object from the attributes on the entity type, rather than from fluent calls.
+        /// </summary>
+        /// <typeparam name="TEntity">The type of the entity whose properties will be mapped.</typeparam>
+        /// <returns>The configuration object.</returns>
+        /// <remarks>
+        ///     Every member marked with <see cref="ColumnAttribute" /> is mapped, in the order those attributes give,
+        ///     with the column's type taken from the member's type and its width from <see cref="WindowAttribute" />.
+        ///     Both are required: a fixed-length record is its order, and a column that will not say how wide it is
+        ///     cannot be placed. A stretch of the record no member maps to is declared on the class itself with
+        ///     <see cref="IgnoredWindowAttribute" />.
+        ///     <para>
+        ///         What comes back is an ordinary mapper: carry on configuring it fluently for anything the
+        ///         attributes do not say, and a later call wins.
+        ///     </para>
+        /// </remarks>
+        public static IFixedLengthTypeMapper<TEntity> DefineFromAttributes<TEntity>()
+        {
+            var mapper = Define<TEntity>();
+            AttributeMapping.ApplyFixedLength( (IDynamicFixedLengthTypeConfiguration) mapper, typeof( TEntity ) );
+            return mapper;
+        }
+
+        /// <summary>
+        ///     Creates a configuration object from the attributes on the entity type, rather than from fluent calls.
+        /// </summary>
+        /// <typeparam name="TEntity">The type of the entity whose properties will be mapped.</typeparam>
+        /// <param name="factory">A method that generates an instance of the entity.</param>
+        /// <returns>The configuration object.</returns>
+        /// <remarks>
+        ///     Every member marked with <see cref="ColumnAttribute" /> is mapped, in the order those attributes give,
+        ///     with the column's type taken from the member's type and its width from <see cref="WindowAttribute" />.
+        ///     Both are required: a fixed-length record is its order, and a column that will not say how wide it is
+        ///     cannot be placed. A stretch of the record no member maps to is declared on the class itself with
+        ///     <see cref="IgnoredWindowAttribute" />.
+        ///     <para>
+        ///         What comes back is an ordinary mapper: carry on configuring it fluently for anything the
+        ///         attributes do not say, and a later call wins.
+        ///     </para>
+        /// </remarks>
+        public static IFixedLengthTypeMapper<TEntity> DefineFromAttributes<TEntity>( Func<TEntity> factory )
+        {
+            var mapper = Define( factory );
+            AttributeMapping.ApplyFixedLength( (IDynamicFixedLengthTypeConfiguration) mapper, typeof( TEntity ) );
+            return mapper;
+        }
+
+        /// <summary>
         ///     Creates a configuration object that can be used to map to and from an entity and a flat file record.
         /// </summary>
         /// <typeparam name="TEntity">The type of the entity whose properties will be mapped.</typeparam>

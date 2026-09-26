@@ -37,6 +37,25 @@ namespace FlatFiles.Test
         }
 
         [TestMethod]
+        public void TestDefineFromAttributes_IsFound()
+        {
+            // A new entry point the generator does not know is an entity that silently loses its accessors and
+            // boxes under AOT, which is the one way this feature could undo three releases of work.
+            var written = Run( """
+                using FlatFiles;
+                using FlatFiles.TypeMapping;
+                public class Customer { [Column( Order = 0 )] public int Id { get; set; } }
+                public static class Program
+                {
+                    public static void Main() => DelimitedTypeMapper.DefineFromAttributes<Customer>();
+                }
+                """ );
+
+            Assert.ContainsSingle( written );
+            StringAssert.Contains( written.Single(), "AddSetter<global::Customer, int>( \"Id\"" );
+        }
+
+        [TestMethod]
         public void TestFixedLengthDefine_IsFound()
         {
             var written = Run( """

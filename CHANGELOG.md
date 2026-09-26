@@ -1,11 +1,43 @@
-﻿## 8.6.0 (planned)
-**Not released, and not started.** What is written here is the order the remaining work will be done in, kept with the releases so that the reasoning sits beside what it produced. Nothing below breaks anything, so none of it is waiting for a major version.
+﻿## 8.6.0 (unreleased)
+**Not released.** Being built. What is written up here has landed on master; what is under **Next** has not. Nothing in this release breaks anything.
+
+**A mapping can be built from the attributes on the type.** The library had no attribute types at all: every mapping was written out in fluent calls, which is the right default for a file whose shape is not the class's business and the wrong one where a class exists to mirror a file.
+
+```csharp
+[IgnoredWindow( 2, 4 )]
+public class Transaction
+{
+    [Column( Order = 0 ), Window( 12 )]
+    public string Reference { get; set; }
+
+    [Column( Order = 1, Format = "0.00" ), Window( 10, Alignment = FixedAlignment.RightAligned, FillCharacter = '0' )]
+    public decimal Amount { get; set; }
+}
+
+var mapper = FixedLengthTypeMapper.DefineFromAttributes<Transaction>();
+```
+
+`DefineFromAttributes` is on both mappers. A member without `[Column]` is not mapped, and the column's type comes from the member's type, as it does for an auto-mapped file, so the attribute carries only what the member cannot say for itself: a name, an order and a format. A fixed-length mapping takes a `[Window]` as well, and `[IgnoredWindow]` on the class declares a stretch of the record no member maps to.
+
+**Order is explicit on purpose.** Reflection does not promise the order it reports members in. The generator could read declaration order out of the source and deliberately does not, because generation can be turned off as of 8.5.0 and a mapping that changed shape depending on whether the generator ran would make that switch unsafe. A member that gives an order is placed by it; one that does not keeps the order reflection gave it, after all of them.
+
+**Three decisions worth recording:**
+
+- **The members are mapped through the dynamic configuration's typed property methods, not through `CustomMapping`.** Auto-mapping uses `CustomMapping` with a compiled setter, which is why an auto-mapped read cannot use the typed accessors. An attribute-built mapping takes the same path as a hand-written one, so it keeps the accessors that make a mapped read and write cost the same under Native AOT as anywhere else.
+- **The generator was taught the new entry point in the same change**, in both places it needed teaching. It finds entities by the name of the call, so `DefineFromAttributes<T>()` would otherwise have been an entity it never saw - and an attribute-mapped type that silently lost its accessors and boxed every value under AOT would have undone 8.1.0 through 8.5.0 for exactly the callers most likely to adopt a new convenience. The cheap syntax filter needed the name and so did the symbol resolution; the first alone looked like it worked and wrote nothing. There is a test for it.
+- **A format is applied by the column rather than through the mapping interface.** There are twenty-seven of those and no shared base, so `TrySetInputFormat` and `TrySetOutputFormat` are internal virtuals on `ColumnDefinition`, answered by the six date and time columns and by `NumberColumn` for writing. That follows `UsesFormatProvider` from 8.5.0, and avoids the reflection over property names that 8.3.0 removed from `Mapper` for being something a trimmer may delete.
+
+**What it refuses rather than guesses:** a type with no `[Column]` members at all, two columns claiming the same order, a fixed-length member missing its order or its window, and a member of a type no column reads. Each throws a `FlatFileException` naming the type and the member.
+
+One behaviour found rather than chosen: an attribute-mapped enum writes its numeric value, because that is `EnumColumn`'s default formatter. The attributes do not set one, so a caller who wants the name sets it fluently as they would on any hand-written mapping. The test that expected otherwise was wrong and was changed; the library was not.
+
+The integration baseline does not move: nothing here changes what the existing mappings cost.
+
 
 ### Next
 
 In the order they will be built. None of these breaks anything, so none of them is waiting for a major version.
 
-- **Attribute-based mapping.** The library has no attribute types at all. Every mapping is written out in fluent calls, which is the right default for a file whose shape is not the class's business, and the wrong one for the common case where a class exists to mirror a file.
 - **Comment and blank-line skipping.** Both option classes can express it today only through a `RecordRead` handler on every reader. A comment prefix and a skip-blank-lines flag on the options would cover most of what those handlers are written for. Small, and the least glamorous thing on this list.
 - **UTF-8 `Stream` input.** Reading from a `Stream` without wrapping it in a `StreamReader`, with the encoding and any byte order mark handled by the reader. This was ranked first, and first for the wrong reason: the entry claimed it was the one change that would take allocation below CsvHelper. Measured, decoding 1.36 MB of UTF-8 costs 0.2 ms and about one byte a record, because `StreamReader` reuses its buffers, and reading the same file through a `StreamReader` rather than a `StringReader` allocates exactly the same 741 bytes a record. It is worth having as a convenience, and for files whose encoding has to be sniffed rather than assumed, but not as a performance change.
 - **Header-driven column matching against a supplied schema, and what to do with a record that does not fit it.** The header row is read and thrown away: never checked against the schema, never used to order it. A file whose columns have been reordered since the schema was written is read straight into the wrong properties, silently, because position is all the reader has. Matching the header by name, and saying what happens when it disagrees - reorder, refuse, or ignore - is the largest gap left against CsvHelper, which maps by name and is the one competitor this repository benchmarks against. Reading by position stays the default, since a file with no header has nothing else to go on.

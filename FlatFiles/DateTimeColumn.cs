@@ -84,5 +84,19 @@ namespace FlatFiles
         /// <inheritdoc />
         /// <remarks>It asks, so a provider on the options has to reach it.</remarks>
         internal override bool UsesFormatProvider => true;
+
+        /// <inheritdoc />
+        internal override bool TrySetInputFormat( string format )
+        {
+            InputFormat = format;
+            return true;
+        }
+
+        /// <inheritdoc />
+        internal override bool TrySetOutputFormat( string format )
+        {
+            OutputFormat = format;
+            return true;
+        }
     }
 }

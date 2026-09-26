@@ -22,6 +22,7 @@ If you are working with data classes, defining schemas is even easier. You can u
 * [Type Mappers](#type-mappers)
     * [Auto-mapping](#auto-mapping)
     * [Constructor mapping](#constructor-mapping)
+    * [Attribute mapping](#attribute-mapping)
 * [Schemas](#schemas)
     * [Column types](#column-types)
     * [Creating your own columns](#creating-your-own-columns)
@@ -138,6 +139,77 @@ The rules are worth knowing before you rely on them:
 * If nothing matches — a parameter named something no mapped member is called, or one whose type will not take what the member parses to — you get a `FlatFileException` naming the class, the constructors it tried and the members that were mapped.
 
 One thing to be aware of if you validate in a constructor: when it rejects a record, its own exception reaches you. It is not wrapped in a `RecordProcessingException`, so a [`RecordError`](#error-handling) handler will not skip the record for you. That matches how FlatFiles treats any failure while building an entity, including a `CustomMapping` reader that throws.
+
+### Attribute mapping
+Where a class exists to mirror a file, saying so beside the members is often plainer than writing the mapping out
+somewhere else. `DefineFromAttributes` builds the mapping from the attributes on the type:
+
+```csharp
+public class Customer
+{
+    [Column( "customer_id", Order = 0 )]
+    public int CustomerId { get; set; }
+
+    [Column( "name", Order = 1 )]
+    public string Name { get; set; }
+
+    [Column( "created", Order = 2, Format = "yyyyMMdd" )]
+    public DateTime Created { get; set; }
+}
+
+var mapper = DelimitedTypeMapper.DefineFromAttributes<Customer>();
+```
+
+A member without `[Column]` is not mapped. The column's type comes from the member's type, exactly as it does for
+an [auto-mapped](#auto-mapping) file, so the attribute carries only what the member cannot say for itself: a name,
+an order and a format.
+
+**Order is explicit on purpose.** Reflection does not promise the order it reports members in, so a member that
+gives an `Order` is placed by it and one that does not keeps the order reflection gave it, after all of them. The
+source generator could read declaration order from your source, and deliberately does not: [generation can be
+turned off](#turning-generation-off), and a mapping that changed shape depending on whether the generator ran
+would make that switch unsafe.
+
+**Fixed-length files are where this earns its keep**, because a width belongs beside the member it describes:
+
+```csharp
+[IgnoredWindow( 2, 4 )]                        // four characters of filler no member maps to
+public class Transaction
+{
+    [Column( Order = 0 ), Window( 12 )]
+    public string Reference { get; set; }
+
+    [Column( Order = 1, Format = "0.00" ), Window( 10, Alignment = FixedAlignment.RightAligned, FillCharacter = '0' )]
+    public decimal Amount { get; set; }
+
+    [Column( Order = 3, Format = "yyyyMMdd" ), Window( 8 )]
+    public DateTime Booked { get; set; }
+}
+
+var mapper = FixedLengthTypeMapper.DefineFromAttributes<Transaction>();
+```
+
+A fixed-length mapping requires both `Order` and `[Window]` on every member, because a fixed-length record *is* its
+order and a column that will not say how wide it is cannot be placed. A stretch of the record no member maps to is
+declared on the class with `[IgnoredWindow]`, which takes its own place in the order.
+
+**What comes back is an ordinary mapper.** Anything the attributes do not cover stays fluent, and a later call
+wins:
+
+```csharp
+var mapper = DelimitedTypeMapper.DefineFromAttributes<Customer>();
+mapper.Property( c => c.Name ).NullFormatter( NullFormatter.ForValue( "NULL" ) );
+```
+
+Three things worth knowing:
+
+* An attribute-mapped entity is found by the source generator, so it keeps the accessors that make a mapped read
+  and write cost the same [under Native AOT](#mapping-under-native-aot) as anywhere else.
+* An enum column writes its numeric value unless you give it a formatter, which the attributes do not. Set one
+  fluently if you want the name.
+* Anything the attributes cannot express refuses rather than guesses: a type with no `[Column]` members at all, two
+  columns claiming the same order, a fixed-length member missing its order or its window, or a member of a type no
+  column reads. Each throws a `FlatFileException` naming the type and the member.
 
 ## Schemas
 Under the hood, type mapping internally defines a schema, giving each column a name, order and type in the flat file. You can get access to the schema by calling `GetSchema` on the mapper.

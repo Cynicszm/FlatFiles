@@ -102,7 +102,7 @@ namespace FlatFiles.Generator
                 SimpleNameSyntax simple => simple.Identifier.ValueText,
                 _ => null
             };
-            return name is "Define" or "DefineDynamic";
+            return name is "Define" or "DefineDynamic" or "DefineFromAttributes";
         }
 
         /// <summary>
@@ -128,7 +128,7 @@ namespace FlatFiles.Generator
 
             var entity = method.Name switch
             {
-                "Define" when method.TypeArguments.Length == 1 => method.TypeArguments[0],
+                "Define" or "DefineFromAttributes" when method.TypeArguments.Length == 1 => method.TypeArguments[0],
                 "DefineDynamic" => NamedByTypeOf( invocation, syntax.SemanticModel ),
                 _ => null
             };
