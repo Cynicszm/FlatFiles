@@ -593,29 +593,43 @@ namespace FlatFiles
 
         private string? ReadNextRecord()
         {
-            // Everything the last record's context could report goes with the record the reader is leaving.
-            ++generation;
-            if (parser.IsEndOfStream())
+            while (true)
             {
-                endOfFile = true;
-                return null;
+                // Everything the last record's context could report goes with the record the reader is leaving.
+                ++generation;
+                if (parser.IsEndOfStream())
+                {
+                    endOfFile = true;
+                    return null;
+                }
+                var record = parser.ReadRecord();
+                ++physicalRecordNumber;
+                // Passed over before the record is partitioned into its windows, so a comment need not be as wide
+                // as a record and a blank line need not be padded to one.
+                if (!PassedOverRecord.Matches( options, record ))
+                {
+                    return record;
+                }
             }
-            var record = parser.ReadRecord();
-            ++physicalRecordNumber;
-            return record;
         }
 
         private async Task<string?> ReadNextRecordAsync( CancellationToken cancellationToken = default )
         {
-            ++generation;
-            if (await parser.IsEndOfStreamAsync( cancellationToken ).ConfigureAwait( false ))
+            while (true)
             {
-                endOfFile = true;
-                return null;
+                ++generation;
+                if (await parser.IsEndOfStreamAsync( cancellationToken ).ConfigureAwait( false ))
+                {
+                    endOfFile = true;
+                    return null;
+                }
+                var record = await parser.ReadRecordAsync( cancellationToken ).ConfigureAwait( false );
+                ++physicalRecordNumber;
+                if (!PassedOverRecord.Matches( options, record ))
+                {
+                    return record;
+                }
             }
-            var record = await parser.ReadRecordAsync( cancellationToken ).ConfigureAwait( false );
-            ++physicalRecordNumber;
-            return record;
         }
 
         private void ProcessError( RecordProcessingException exception )

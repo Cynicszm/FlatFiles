@@ -608,48 +608,66 @@ namespace FlatFiles
 
         private string? ReadNextRecord()
         {
-            // Everything the last record's context could report goes with the buffer the parser is about to reuse.
-            ++generation;
-            if (parser.IsEndOfStream())
+            while (true)
             {
-                endOfFile = true;
-                values = null;
-                return null;
-            }
-            try
-            {
-                var record = parser.ReadRecord();
-                ++physicalRecordNumber;
-                return record;
-            }
-            catch (DelimitedSyntaxException exception)
-            {
-                // If we cannot read the next record, we cannot process it or allow it to be ignored.
-                // We must treat it as a fatal error.
-                var currentContext = GetMetadata( null, null );
-                throw new RecordProcessingException( currentContext, Resources.InvalidRecordFormatNumber, exception );
+                // Everything the last record's context could report goes with the buffer the parser is about to reuse.
+                ++generation;
+                if (parser.IsEndOfStream())
+                {
+                    endOfFile = true;
+                    values = null;
+                    return null;
+                }
+                string record;
+                try
+                {
+                    record = parser.ReadRecord();
+                    ++physicalRecordNumber;
+                }
+                catch (DelimitedSyntaxException exception)
+                {
+                    // If we cannot read the next record, we cannot process it or allow it to be ignored.
+                    // We must treat it as a fatal error.
+                    var currentContext = GetMetadata( null, null );
+                    throw new RecordProcessingException( currentContext, Resources.InvalidRecordFormatNumber, exception );
+                }
+                // Asked of the values rather than the text, because this reader does not build the text unless
+                // PreserveRecordText asks for it. Passed over here rather than after parsing, so the record never
+                // reaches a schema selector, a handler or the header - and asking a handler to do this instead
+                // makes every record in the file copy its values out of the buffer.
+                if (!PassedOverRecord.Matches( parser.Options, parser.Values ))
+                {
+                    return record;
+                }
             }
         }
 
         private async Task<string?> ReadNextRecordAsync( CancellationToken cancellationToken = default )
         {
-            ++generation;
-            if (await parser.IsEndOfStreamAsync( cancellationToken ).ConfigureAwait( false ))
+            while (true)
             {
-                endOfFile = true;
-                values = null;
-                return null;
-            }
-            try
-            {
-                var record = await parser.ReadRecordAsync( cancellationToken ).ConfigureAwait( false );
-                ++physicalRecordNumber;
-                return record;
-            }
-            catch (DelimitedSyntaxException exception)
-            {
-                var currentContext = GetMetadata( null, null );
-                throw new RecordProcessingException( currentContext, Resources.InvalidRecordFormatNumber, exception );
+                ++generation;
+                if (await parser.IsEndOfStreamAsync( cancellationToken ).ConfigureAwait( false ))
+                {
+                    endOfFile = true;
+                    values = null;
+                    return null;
+                }
+                string record;
+                try
+                {
+                    record = await parser.ReadRecordAsync( cancellationToken ).ConfigureAwait( false );
+                    ++physicalRecordNumber;
+                }
+                catch (DelimitedSyntaxException exception)
+                {
+                    var currentContext = GetMetadata( null, null );
+                    throw new RecordProcessingException( currentContext, Resources.InvalidRecordFormatNumber, exception );
+                }
+                if (!PassedOverRecord.Matches( parser.Options, parser.Values ))
+                {
+                    return record;
+                }
             }
         }
 
