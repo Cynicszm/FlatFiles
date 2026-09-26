@@ -1,6 +1,23 @@
 ﻿## 8.6.0 (unreleased)
 **Not released.** Being built. What is written up here has landed on master; what is under **Next** has not. Nothing in this release breaks anything.
 
+**A reader can be given a stream rather than a `TextReader`.**
+
+```csharp
+using var stream = File.OpenRead( @"C:\path\to\file.csv" );
+var reader = new DelimitedReader( stream, schema );
+```
+
+The same overload is on `FixedLengthReader`, on `Read` and `GetReader` for both type mappers - as default implementations, so anything implementing those interfaces keeps compiling - and on `GetAutoMappedReader` and its asynchronous twin. Each takes an optional `Encoding`, and UTF-8 is used when none is given.
+
+**The reason to have it is the byte order mark**, which is honoured whatever encoding was asked for and always taken off the text. A mark left in becomes part of the first value - turning `Bob` into `\uFEFFBob`, or a header column into one that nothing matches - and it fails quietly, which is the worst way for it to fail. There are tests for it on a value, on a header, and through auto-mapping, and one that hands a UTF-16 stream to a reader told UTF-8 and gets UTF-16, because a file that says what it is should be read as what it says.
+
+The stream is left open. A reader does not own what it was handed, and none of these readers is disposable, so closing it stays the job of whoever opened it.
+
+**It is a convenience and not a saving, which is worth saying because this item was once ranked first for the opposite reason.** The claim was that it would take allocation below CsvHelper. Measured, decoding 1.36 MB of UTF-8 costs about a fifth of a millisecond and a byte a record, because a `StreamReader` reuses its buffers, and the same file read through one rather than through a `StringReader` allocates the same bytes a record either way. What it is worth having for is the file whose encoding has to be sniffed rather than assumed, and for not making every caller remember three arguments.
+
+Writing still takes a `TextWriter`.
+
 **Comments and blank lines can be passed over by an option.** Both option classes could express it only through a `RecordRead` handler on every reader, which is a lot of ceremony for something most files want:
 
 ```csharp
@@ -55,7 +72,6 @@ The integration baseline does not move: nothing here changes what the existing m
 
 In the order they will be built. None of these breaks anything, so none of them is waiting for a major version.
 
-- **UTF-8 `Stream` input.** Reading from a `Stream` without wrapping it in a `StreamReader`, with the encoding and any byte order mark handled by the reader. This was ranked first, and first for the wrong reason: the entry claimed it was the one change that would take allocation below CsvHelper. Measured, decoding 1.36 MB of UTF-8 costs 0.2 ms and about one byte a record, because `StreamReader` reuses its buffers, and reading the same file through a `StreamReader` rather than a `StringReader` allocates exactly the same 741 bytes a record. It is worth having as a convenience, and for files whose encoding has to be sniffed rather than assumed, but not as a performance change.
 - **Header-driven column matching against a supplied schema, and what to do with a record that does not fit it.** The header row is read and thrown away: never checked against the schema, never used to order it. A file whose columns have been reordered since the schema was written is read straight into the wrong properties, silently, because position is all the reader has. Matching the header by name, and saying what happens when it disagrees - reorder, refuse, or ignore - is the largest gap left against CsvHelper, which maps by name and is the one competitor this repository benchmarks against. Reading by position stays the default, since a file with no header has nothing else to go on.
 
   The same feature settles what a record of the wrong length means, because today the two ends disagree and neither is configurable. A delimited record with **too few** fields is refused; one with **too many** is accepted, the first however many the schema declares kept and the rest discarded. So a record carrying a separator inside an unquoted field is read with every later value one position to the left, and nothing says so - whether anything notices depends on whether a shifted value reaches a column that will not parse it, which is a matter of where the separator fell rather than of the record being wrong. The fixed-length reader already has `IsRaggedRight` and `IsLongRecordRejected` for the same question and answers it differently again.

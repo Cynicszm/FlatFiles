@@ -3,6 +3,7 @@ using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Text;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -150,6 +151,42 @@ namespace FlatFiles.TypeMapping
             var mapperType = typeof( DelimitedTypeMapper<> ).MakeGenericType( entityType );
             var mapper = Activator.CreateInstance( mapperType, factory )!;
             return (IDynamicDelimitedTypeMapper) mapper;
+        }
+
+        /// <summary>
+        ///     Gets a reader over a stream whose column types are deduced by matching the entity property names to
+        ///     the column names.
+        /// </summary>
+        /// <typeparam name="TEntity">The type of the entity to deduce the column types for.</typeparam>
+        /// <param name="stream">A stream over the delimited document.</param>
+        /// <param name="options">Options used to read the data.</param>
+        /// <param name="matcher">An object that can determine if a column should be mapped to a property.</param>
+        /// <param name="encoding">The encoding to read the stream as, or null for UTF-8.</param>
+        /// <returns>A reader object for iterating the parsed records.</returns>
+        /// <remarks>
+        ///     A byte order mark is honoured whatever encoding is asked for, and taken off the text rather than
+        ///     left to become part of the first column's name. The stream is left open.
+        /// </remarks>
+        public static ITypedReader<TEntity> GetAutoMappedReader<TEntity>( Stream stream, DelimitedOptions? options = null, IAutoMapMatcher? matcher = null, Encoding? encoding = null )
+            where TEntity : new()
+        {
+            return GetAutoMappedReader<TEntity>( StreamText.Over( stream, encoding ), options, matcher );
+        }
+
+        /// <summary>
+        ///     Gets a reader over a stream whose column types are deduced by matching the entity property names to
+        ///     the column names.
+        /// </summary>
+        /// <typeparam name="TEntity">The type of the entity to deduce the column types for.</typeparam>
+        /// <param name="stream">A stream over the delimited document.</param>
+        /// <param name="options">Options used to read the data.</param>
+        /// <param name="matcher">An object that can determine if a column should be mapped to a property.</param>
+        /// <param name="encoding">The encoding to read the stream as, or null for UTF-8.</param>
+        /// <returns>A reader object for iterating the parsed records.</returns>
+        public static Task<ITypedReader<TEntity>> GetAutoMappedReaderAsync<TEntity>( Stream stream, DelimitedOptions? options = null, IAutoMapMatcher? matcher = null, Encoding? encoding = null )
+            where TEntity : new()
+        {
+            return GetAutoMappedReaderAsync<TEntity>( StreamText.Over( stream, encoding ), options, matcher );
         }
 
         /// <summary>
