@@ -37,6 +37,7 @@ If you are working with data classes, defining schemas is even easier. You can u
     * [Writing metadata](#writing-metadata)
     * [Creating your own metadata columns](#creating-your-own-metadata-columns)
 * [Skipping Records](#skipping-records)
+    * [Comments and blank lines](#comments-and-blank-lines)
 * [Error Handling](#error-handling)
 * [Files Containing Multiple Schemas](#files-containing-multiple-schemas)
 * [Custom Mapping](#custom-mapping)
@@ -509,6 +510,35 @@ reader.RecordPartitioned += (sender, e) =>
     e.IsSkipped = e.Values[2] == "ERROR";
 };
 ```
+
+### Comments and blank lines
+Two of the things those handlers most often get written for are on the options instead, where they cost nothing:
+
+```csharp
+var options = new DelimitedOptions
+{
+    CommentPrefix = "#",
+    IsBlankRecordSkipped = true
+};
+```
+
+Both are on `FixedLengthOptions` too, and both are answered from the record before anything is parsed. A record
+passed over this way is not a record: it never reaches a schema selector, a `RecordRead` handler, or the header, so
+a file whose header sits under a banner of comments is read as though the banner were not there.
+
+That is the reason to prefer them over a handler rather than a matter of taste. Attaching a `RecordRead` handler to
+a `DelimitedReader` makes **every record in the file** copy its values out of the parser's buffer, whether the
+handler looks at them or not, because the handler is given an array it is allowed to write into. The options look
+at the record where it lies.
+
+Three details worth knowing:
+
+* `CommentPrefix` is matched ordinally against the start of the record, before any trimming a column would do, so
+  `  # indented` is not a comment.
+* `IsBlankRecordSkipped` is off by default, because a blank line in a delimited file is a record of one empty value
+  and some files mean it.
+* A record passed over still counts towards the **physical** record number, which is where a record sits in the
+  file. An error that reports one is only useful if it agrees with what a text editor shows.
 
 ## Error Handling
 The reader and writer classes support two events for handling errors: `RecordError` and `ColumnError`. The `ColumnError` event is raised whenever an error occurs while reading/writing a column; for example, when a value can't be parsed. In that case, an instance of `ColumnErrorEventArgs` will be sent to the listener(s), which provides access to the context (`ColumnContext`), the value that caused the error (`ColumnValue`) and the exception that was thrown (`Exception`).

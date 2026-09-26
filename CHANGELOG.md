@@ -1,6 +1,23 @@
 ﻿## 8.6.0 (unreleased)
 **Not released.** Being built. What is written up here has landed on master; what is under **Next** has not. Nothing in this release breaks anything.
 
+**Comments and blank lines can be passed over by an option.** Both option classes could express it only through a `RecordRead` handler on every reader, which is a lot of ceremony for something most files want:
+
+```csharp
+var options = new DelimitedOptions { CommentPrefix = "#", IsBlankRecordSkipped = true };
+```
+
+Both are on `FixedLengthOptions` too, and both are answered before anything is parsed, so a record passed over is not a record: it never reaches a schema selector, a handler, or the header. A file whose header sits under a banner of comments is read as though the banner were not there.
+
+**The reason to prefer them over a handler is not taste.** Attaching a `RecordRead` handler to a delimited reader makes **every record in the file** copy its values out of the parser's buffer, whether the handler looks at them or not, because the handler is given an array it may write into. The options look at the record where it lies.
+
+Two things worth recording, because both were found by the tests rather than by reasoning:
+
+- **The two readers have different things to hand, so they are asked different questions.** A fixed-length reader has the record's text. A delimited one does not: it only builds that string where `PreserveRecordText` asks for it, and otherwise leaves it empty. Testing the text on both would have made the comment prefix never match on a delimited file - and made `IsBlankRecordSkipped` skip every record in it, since every record's text is empty. The delimited reader is asked about the values it has already split instead, where a comment carries the prefix on its first value whether or not it holds a separator.
+- **A record passed over still counts physically.** The physical record number is where a record sits in the file, and an error that reports one is only useful if it agrees with what a text editor shows. The logical number, which counts the records a caller is given, does not move.
+
+`CommentPrefix` is matched ordinally against the start of the record before any trimming a column would do, so an indented comment is a record. `IsBlankRecordSkipped` is off by default, because a blank line in a delimited file is a record of one empty value and some files mean it. Both reach `IOptions` with default implementations, so anything implementing that interface keeps compiling and keeps its behaviour.
+
 **A mapping can be built from the attributes on the type.** The library had no attribute types at all: every mapping was written out in fluent calls, which is the right default for a file whose shape is not the class's business and the wrong one where a class exists to mirror a file.
 
 ```csharp
@@ -38,7 +55,6 @@ The integration baseline does not move: nothing here changes what the existing m
 
 In the order they will be built. None of these breaks anything, so none of them is waiting for a major version.
 
-- **Comment and blank-line skipping.** Both option classes can express it today only through a `RecordRead` handler on every reader. A comment prefix and a skip-blank-lines flag on the options would cover most of what those handlers are written for. Small, and the least glamorous thing on this list.
 - **UTF-8 `Stream` input.** Reading from a `Stream` without wrapping it in a `StreamReader`, with the encoding and any byte order mark handled by the reader. This was ranked first, and first for the wrong reason: the entry claimed it was the one change that would take allocation below CsvHelper. Measured, decoding 1.36 MB of UTF-8 costs 0.2 ms and about one byte a record, because `StreamReader` reuses its buffers, and reading the same file through a `StreamReader` rather than a `StringReader` allocates exactly the same 741 bytes a record. It is worth having as a convenience, and for files whose encoding has to be sniffed rather than assumed, but not as a performance change.
 - **Header-driven column matching against a supplied schema, and what to do with a record that does not fit it.** The header row is read and thrown away: never checked against the schema, never used to order it. A file whose columns have been reordered since the schema was written is read straight into the wrong properties, silently, because position is all the reader has. Matching the header by name, and saying what happens when it disagrees - reorder, refuse, or ignore - is the largest gap left against CsvHelper, which maps by name and is the one competitor this repository benchmarks against. Reading by position stays the default, since a file with no header has nothing else to go on.
 

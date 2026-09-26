@@ -133,6 +133,28 @@ namespace FlatFiles
         public IFormatProvider? FormatProvider { get; set; }
 
         /// <summary>
+        ///     Gets or sets the text a record must start with to be passed over as a comment. Null, the default,
+        ///     reads every record.
+        /// </summary>
+        /// <remarks>
+        ///     A comment is not a record: it is passed over before anything is parsed, so it never reaches a schema
+        ///     selector, a record handler or the header. A file whose header sits under a banner of comments is read
+        ///     as though the banner were not there. The comparison is ordinal, and the prefix is matched against the
+        ///     record's text before any trimming.
+        /// </remarks>
+        public string? CommentPrefix { get; set; }
+
+        /// <summary>
+        ///     Gets or sets whether a record that is empty, or holds nothing but whitespace, is passed over.
+        /// </summary>
+        /// <remarks>
+        ///     Off by default, because a blank line in a delimited file is a record of one empty value and some
+        ///     files mean it. As with a comment, a blank record passed over is not parsed and never reaches a
+        ///     handler.
+        /// </remarks>
+        public bool IsBlankRecordSkipped { get; set; }
+
+        /// <summary>
         ///     Duplicates the options.
         /// </summary>
         /// <returns>The new options.</returns>
