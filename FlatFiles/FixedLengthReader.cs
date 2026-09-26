@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using FlatFiles.Properties;
@@ -60,6 +61,45 @@ namespace FlatFiles
         /// <exception cref="ArgumentNullException">The schema selector is null.</exception>
         public FixedLengthReader( TextReader reader, FixedLengthSchemaSelector schemaSelector, FixedLengthOptions? options = null )
             : this( reader, null, options, false )
+        {
+            this.schemaSelector = schemaSelector ?? throw new ArgumentNullException( nameof( schemaSelector ) );
+        }
+
+        /// <summary>
+        ///     Initialises a new FixedLengthReader over a stream, with the given schema.
+        /// </summary>
+        /// <param name="stream">A stream over the fixed-length document.</param>
+        /// <param name="encoding">The encoding to read the stream as, or null for UTF-8.</param>
+        /// <remarks>
+        ///     A byte order mark is honoured whatever encoding is asked for, and taken off the text rather than
+        ///     left to become part of the first value. The stream is left open: a reader does not own what it was
+        ///     handed.
+        /// </remarks>
+        /// <param name="schema">The schema of the fixed-length document.</param>
+        /// <param name="options">The options controlling how the fixed-length document is read.</param>
+        /// <exception cref="ArgumentNullException">The stream is null.</exception>
+        /// <exception cref="ArgumentNullException">The schema is null.</exception>
+        public FixedLengthReader( Stream stream, FixedLengthSchema schema, FixedLengthOptions? options = null, Encoding? encoding = null )
+            : this( StreamText.Over( stream, encoding ), schema, options, true )
+        {
+        }
+
+        /// <summary>
+        ///     Initialises a new FixedLengthReader over a stream, choosing the schema per record.
+        /// </summary>
+        /// <param name="stream">A stream over the fixed-length document.</param>
+        /// <param name="encoding">The encoding to read the stream as, or null for UTF-8.</param>
+        /// <remarks>
+        ///     A byte order mark is honoured whatever encoding is asked for, and taken off the text rather than
+        ///     left to become part of the first value. The stream is left open: a reader does not own what it was
+        ///     handed.
+        /// </remarks>
+        /// <param name="schemaSelector">The schema selector configured to determine the schema dynamically.</param>
+        /// <param name="options">The options controlling how the fixed-length document is read.</param>
+        /// <exception cref="ArgumentNullException">The stream is null.</exception>
+        /// <exception cref="ArgumentNullException">The schema selector is null.</exception>
+        public FixedLengthReader( Stream stream, FixedLengthSchemaSelector schemaSelector, FixedLengthOptions? options = null, Encoding? encoding = null )
+            : this( StreamText.Over( stream, encoding ), null, options, false )
         {
             this.schemaSelector = schemaSelector ?? throw new ArgumentNullException( nameof( schemaSelector ) );
         }

@@ -334,7 +334,7 @@ var reader = new FixedLengthReader(new StreamReader(path), schema, options);
 ```
 
 ## Character Encoding
-FlatFiles reads from a `TextReader` and writes to a `TextWriter`, so it never sees bytes. The character encoding is decided by the `StreamReader` or `StreamWriter` you open, before any FlatFiles class is involved, and the same schema and options work with any encoding.
+FlatFiles works in characters rather than bytes. You can hand a reader a `TextReader` you opened, in which case the character encoding is decided by the `StreamReader` you open, before any FlatFiles class is involved, and the same schema and options work with any encoding.
 
 ```csharp
 using (var reader = new StreamReader(File.OpenRead(@"C:\path\to\file.csv"), Encoding.UTF8))
@@ -343,6 +343,33 @@ using (var reader = new StreamReader(File.OpenRead(@"C:\path\to\file.csv"), Enco
     // ...
 }
 ```
+
+**Reading can take the stream instead**, in which case FlatFiles opens the reader for you:
+
+```csharp
+using (var stream = File.OpenRead(@"C:\path\to\file.csv"))
+{
+    var csvReader = new DelimitedReader(stream, schema);
+    // ...
+}
+```
+
+The same overload is on `FixedLengthReader`, on `Read` and `GetReader` for both type mappers, and on
+`GetAutoMappedReader`. Each takes an optional `Encoding`, and UTF-8 is used when none is given.
+
+Three things it decides for you, which are the reasons it exists:
+
+* **A byte order mark is always honoured and always taken off**, whatever encoding you asked for. A file that says
+  what it is is read as what it says, and a mark left in the text becomes part of the first value - turning `Bob`
+  into `\uFEFFBob`, or a header column into one that nothing matches. That is a quiet failure and it is the main
+  thing this saves you from.
+* **The stream is left open.** A reader does not own what it was handed, and none of these readers is disposable, so
+  closing the stream stays the job of whoever opened it.
+* **It is a convenience, not a saving.** Decoding a megabyte and a third of UTF-8 costs about a fifth of a
+  millisecond and a byte a record, because a `StreamReader` reuses its buffers; the same file read through one
+  rather than through a `StringReader` allocates the same bytes a record either way.
+
+Writing still takes a `TextWriter`, so the encoding there is yours to choose as below.
 
 **UTF-8** is the default for both `StreamReader` and `StreamWriter`. A `StreamReader` also detects a byte order mark by default and consumes it, so a file that begins with `EF BB BF` reads the same as one that does not. Keep that detection on: if you construct a reader with `detectEncodingFromByteOrderMarks: false`, the mark is read as text and becomes part of the first column's name (`"\uFEFFId"` rather than `"Id"`), and that column is never matched. To write a file with a mark, pass `new UTF8Encoding(true)` to the writer; `Encoding.UTF8` writes one too, and `new UTF8Encoding(false)` writes none.
 

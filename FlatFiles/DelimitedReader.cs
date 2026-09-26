@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using FlatFiles.Properties;
@@ -63,6 +64,62 @@ namespace FlatFiles
         /// <exception cref="ArgumentNullException">The schema selector is null.</exception>
         public DelimitedReader( TextReader reader, DelimitedSchemaSelector schemaSelector, DelimitedOptions? options = null )
             : this( reader, null, options, false )
+        {
+            this.schemaSelector = schemaSelector ?? throw new ArgumentNullException( nameof( schemaSelector ) );
+        }
+
+        /// <summary>
+        ///     Initialises a new DelimitedReader over a stream, with no schema.
+        /// </summary>
+        /// <param name="stream">A stream over the delimited document.</param>
+        /// <param name="encoding">The encoding to read the stream as, or null for UTF-8.</param>
+        /// <remarks>
+        ///     A byte order mark is honoured whatever encoding is asked for, and taken off the text rather than
+        ///     left to become part of the first value. The stream is left open: a reader does not own what it was
+        ///     handed.
+        /// </remarks>
+        /// <param name="options">The options controlling how the delimited document is read.</param>
+        /// <exception cref="ArgumentNullException">The stream is null.</exception>
+        public DelimitedReader( Stream stream, DelimitedOptions? options = null, Encoding? encoding = null )
+            : this( StreamText.Over( stream, encoding ), null, options, false )
+        {
+        }
+
+        /// <summary>
+        ///     Initialises a new DelimitedReader over a stream, with the given schema.
+        /// </summary>
+        /// <param name="stream">A stream over the delimited document.</param>
+        /// <param name="encoding">The encoding to read the stream as, or null for UTF-8.</param>
+        /// <remarks>
+        ///     A byte order mark is honoured whatever encoding is asked for, and taken off the text rather than
+        ///     left to become part of the first value. The stream is left open: a reader does not own what it was
+        ///     handed.
+        /// </remarks>
+        /// <param name="schema">The schema of the delimited document.</param>
+        /// <param name="options">The options controlling how the delimited document is read.</param>
+        /// <exception cref="ArgumentNullException">The stream is null.</exception>
+        /// <exception cref="ArgumentNullException">The schema is null.</exception>
+        public DelimitedReader( Stream stream, DelimitedSchema schema, DelimitedOptions? options = null, Encoding? encoding = null )
+            : this( StreamText.Over( stream, encoding ), schema, options, true )
+        {
+        }
+
+        /// <summary>
+        ///     Initialises a new DelimitedReader over a stream, choosing the schema per record.
+        /// </summary>
+        /// <param name="stream">A stream over the delimited document.</param>
+        /// <param name="encoding">The encoding to read the stream as, or null for UTF-8.</param>
+        /// <remarks>
+        ///     A byte order mark is honoured whatever encoding is asked for, and taken off the text rather than
+        ///     left to become part of the first value. The stream is left open: a reader does not own what it was
+        ///     handed.
+        /// </remarks>
+        /// <param name="schemaSelector">The schema selector configured to determine the schema dynamically.</param>
+        /// <param name="options">The options controlling how the delimited document is read.</param>
+        /// <exception cref="ArgumentNullException">The stream is null.</exception>
+        /// <exception cref="ArgumentNullException">The schema selector is null.</exception>
+        public DelimitedReader( Stream stream, DelimitedSchemaSelector schemaSelector, DelimitedOptions? options = null, Encoding? encoding = null )
+            : this( StreamText.Over( stream, encoding ), null, options, false )
         {
             this.schemaSelector = schemaSelector ?? throw new ArgumentNullException( nameof( schemaSelector ) );
         }
