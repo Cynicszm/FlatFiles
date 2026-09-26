@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -215,5 +215,20 @@
   </data>
   <data name="MetadataExpectingContext" xml:space="preserve">
     <value>The schema was configured with a metadata column but column-level context has been disabled.</value>
+  </data>
+  <data name="AttributeMappingNoColumns" xml:space="preserve">
+    <value>The type '{0}' has no members marked with ColumnAttribute, so there is nothing to map.</value>
+  </data>
+  <data name="AttributeMappingDuplicateOrder" xml:space="preserve">
+    <value>The type '{0}' gives order {1} to more than one column, so the order of its record is ambiguous.</value>
+  </data>
+  <data name="AttributeMappingMissingWindow" xml:space="preserve">
+    <value>'{0}.{1}' is mapped for a fixed-length file but has no WindowAttribute, and a fixed-length column must say how wide it is.</value>
+  </data>
+  <data name="AttributeMappingMissingOrder" xml:space="preserve">
+    <value>'{0}.{1}' is mapped for a fixed-length file but has no order, and a fixed-length record is its order.</value>
+  </data>
+  <data name="AttributeMappingUnsupportedType" xml:space="preserve">
+    <value>'{0}.{1}' is of type '{2}', which no column reads. Map it with a fluent CustomMapping instead of an attribute.</value>
   </data>
 </root>

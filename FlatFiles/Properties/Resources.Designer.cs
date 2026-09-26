@@ -213,6 +213,51 @@ namespace FlatFiles.Properties {
                 return ResourceManager.GetString("MetadataExpectingContext", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The type '{0}' has no members marked with ColumnAttribute, so there is nothing to map..
+        /// </summary>
+        internal static string AttributeMappingNoColumns {
+            get {
+                return ResourceManager.GetString("AttributeMappingNoColumns", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The type '{0}' gives order {1} to more than one column, so the order of its record is ambiguous..
+        /// </summary>
+        internal static string AttributeMappingDuplicateOrder {
+            get {
+                return ResourceManager.GetString("AttributeMappingDuplicateOrder", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to '{0}.{1}' is mapped for a fixed-length file but has no WindowAttribute, and a fixed-length column must say how wide it is..
+        /// </summary>
+        internal static string AttributeMappingMissingWindow {
+            get {
+                return ResourceManager.GetString("AttributeMappingMissingWindow", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to '{0}.{1}' is mapped for a fixed-length file but has no order, and a fixed-length record is its order..
+        /// </summary>
+        internal static string AttributeMappingMissingOrder {
+            get {
+                return ResourceManager.GetString("AttributeMappingMissingOrder", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to '{0}.{1}' is of type '{2}', which no column reads. Map it with a fluent CustomMapping instead of an attribute..
+        /// </summary>
+        internal static string AttributeMappingUnsupportedType {
+            get {
+                return ResourceManager.GetString("AttributeMappingUnsupportedType", resourceCulture);
+            }
+        }
         
         /// <summary>
         ///   Looks up a localized string similar to No schema was found for the given record..

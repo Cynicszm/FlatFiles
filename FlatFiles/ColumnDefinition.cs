@@ -209,6 +209,29 @@ namespace FlatFiles
         }
 
         /// <summary>
+        ///     Sets the format this column parses by, and answers whether it has one.
+        /// </summary>
+        /// <param name="format">The format to parse by.</param>
+        /// <remarks>
+        ///     Asked by a mapping built from attributes, where the format arrives as text rather than through the
+        ///     mapping interface that knows which column it belongs to. Answered by the column that has one, rather
+        ///     than found by reflection over a property name, which a trimmer is free to remove.
+        /// </remarks>
+        internal virtual bool TrySetInputFormat( string format )
+        {
+            return false;
+        }
+
+        /// <summary>
+        ///     Sets the format this column writes by, and answers whether it has one.
+        /// </summary>
+        /// <param name="format">The format to write by.</param>
+        internal virtual bool TrySetOutputFormat( string format )
+        {
+            return false;
+        }
+
+        /// <summary>
         ///     Whether this column ever asks what format provider to use. False for a column that parses and formats
         ///     without one - text, a boolean, a byte array - which is most of them.
         /// </summary>

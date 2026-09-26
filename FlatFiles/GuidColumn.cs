@@ -70,5 +70,19 @@ namespace FlatFiles
         {
             WriteFormatted( destination, value, OutputFormat, null );
         }
+
+        /// <inheritdoc />
+        internal override bool TrySetInputFormat( string format )
+        {
+            InputFormat = format;
+            return true;
+        }
+
+        /// <inheritdoc />
+        internal override bool TrySetOutputFormat( string format )
+        {
+            OutputFormat = format;
+            return true;
+        }
     }
 }

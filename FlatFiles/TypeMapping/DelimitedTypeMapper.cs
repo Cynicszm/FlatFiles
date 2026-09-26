@@ -76,6 +76,41 @@ namespace FlatFiles.TypeMapping
         }
 
         /// <summary>
+        ///     Creates a configuration object from the attributes on the entity type, rather than from fluent calls.
+        /// </summary>
+        /// <typeparam name="TEntity">The type of the entity whose properties will be mapped.</typeparam>
+        /// <returns>The configuration object.</returns>
+        /// <remarks>
+        ///     Every member marked with <see cref="ColumnAttribute" /> is mapped, in the order those attributes give,
+        ///     with the column's type taken from the member's type. What comes back is an ordinary mapper: carry on
+        ///     configuring it fluently for anything the attributes do not say, and a later call wins.
+        /// </remarks>
+        public static IDelimitedTypeMapper<TEntity> DefineFromAttributes<TEntity>()
+        {
+            var mapper = Define<TEntity>();
+            AttributeMapping.ApplyDelimited( (IDynamicDelimitedTypeConfiguration) mapper, typeof( TEntity ) );
+            return mapper;
+        }
+
+        /// <summary>
+        ///     Creates a configuration object from the attributes on the entity type, rather than from fluent calls.
+        /// </summary>
+        /// <typeparam name="TEntity">The type of the entity whose properties will be mapped.</typeparam>
+        /// <param name="factory">A method that generates an instance of the entity.</param>
+        /// <returns>The configuration object.</returns>
+        /// <remarks>
+        ///     Every member marked with <see cref="ColumnAttribute" /> is mapped, in the order those attributes give,
+        ///     with the column's type taken from the member's type. What comes back is an ordinary mapper: carry on
+        ///     configuring it fluently for anything the attributes do not say, and a later call wins.
+        /// </remarks>
+        public static IDelimitedTypeMapper<TEntity> DefineFromAttributes<TEntity>( Func<TEntity> factory )
+        {
+            var mapper = Define( factory );
+            AttributeMapping.ApplyDelimited( (IDynamicDelimitedTypeConfiguration) mapper, typeof( TEntity ) );
+            return mapper;
+        }
+
+        /// <summary>
         ///     Creates a configuration object that can be used to map to and from an entity and a flat file record.
         /// </summary>
         /// <typeparam name="TEntity">The type of the entity whose properties will be mapped.</typeparam>
