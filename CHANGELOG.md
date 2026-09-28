@@ -1,5 +1,5 @@
-﻿## 9.0.0 (unreleased)
-**Not released.** Being built. What is written up here has landed on master. This release breaks one thing, which is the whole of what it is for.
+﻿## 9.0.0 (2026-09-28)
+**Summary** - One removal, and nothing else at all. `FixedLengthOptions.IsLongRecordRejected` is gone; `LongRecordHandling` replaced it in 8.7.0, says the same thing, and was always the same setting rather than a second one. **Nothing about reading or writing a file changes.** The major version is for the member that was removed, not for anything the library now does differently, and upgrading is a find and replace of one identifier in code that turned the option on - code that never did has nothing to do.
 
 **`FixedLengthOptions.IsLongRecordRejected` is gone.** `LongRecordHandling` replaced it in 8.7.0, saying the same thing in the words both readers use, and the old property carried an `[Obsolete]` naming this release throughout 8.7.0 - so anyone compiling against it has had a cycle's notice and a message pointing at its replacement.
 
