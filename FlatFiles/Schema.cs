@@ -41,7 +41,8 @@ namespace FlatFiles
         }
 
         /// <summary>
-        ///     Parses the given values assuming that they are in the same order as the column definitions.
+        ///     Parses the given values, which are in the same order as the column definitions unless the reader
+        ///     matched the columns to a header, in which case each column is told where its value sits.
         /// </summary>
         /// <param name="context">The metadata for the current record being processed.</param>
         /// <param name="values">The values to parse.</param>
@@ -49,6 +50,7 @@ namespace FlatFiles
         /// <returns>The parsed objects.</returns>
         internal object?[] ParseValues( IRecoverableRecordContext context, string[] values, object?[] parsedValues )
         {
+            var sourceMap = SourceMapOf( context );
             for (int columnIndex = 0, sourceIndex = 0, destinationIndex = 0, columnCount = ColumnDefinitions.Count;
                 columnIndex != columnCount;
                 ++columnIndex)
@@ -60,29 +62,25 @@ namespace FlatFiles
                     var metadata = ParseWithContext( columnContext, string.Empty );
                     parsedValues[destinationIndex] = metadata;
                     ++destinationIndex;
+                    continue;
                 }
-                else if (!definition.IsIgnored)
+                var source = sourceMap is null ? sourceIndex++ : sourceMap[columnIndex];
+                var rawValue = source < 0 ? string.Empty : values[source];
+                if (definition.IsIgnored)
                 {
-                    var rawValue = values[sourceIndex];
-                    var parsedValue = ParseValue( context, columnIndex, destinationIndex, rawValue );
-                    parsedValues[destinationIndex] = parsedValue;
-                    ++sourceIndex;
-                    ++destinationIndex;
-                }
-                else
-                {
-                    var rawValue = values[sourceIndex];
                     ParseValue( context, columnIndex, -1, rawValue );
-                    ++sourceIndex;
+                    continue;
                 }
+                parsedValues[destinationIndex] = ParseValue( context, columnIndex, destinationIndex, rawValue );
+                ++destinationIndex;
             }
             return parsedValues;
         }
 
         /// <summary>
-        ///     Parses the values sitting at the given positions within the record, assuming that they are in the same
-        ///     order as the column definitions. Nothing is copied out of the record for a column that can read its
-        ///     value from the characters themselves.
+        ///     Parses the values sitting at the given positions within the record, which are in the same order as
+        ///     the column definitions unless the reader matched the columns to a header. Nothing is copied out of
+        ///     the record for a column that can read its value from the characters themselves.
         /// </summary>
         /// <param name="context">The metadata for the current record being processed.</param>
         /// <param name="values">The raw values of the record, as ranges within the text they were read from.</param>
@@ -90,6 +88,7 @@ namespace FlatFiles
         /// <returns>The parsed objects.</returns>
         internal object?[] ParseValues( IRecoverableRecordContext context, RawRecord values, object?[] parsedValues )
         {
+            var sourceMap = SourceMapOf( context );
             for (int columnIndex = 0, sourceIndex = 0, destinationIndex = 0, columnCount = ColumnDefinitions.Count;
                 columnIndex != columnCount;
                 ++columnIndex)
@@ -101,27 +100,27 @@ namespace FlatFiles
                     var metadata = ParseWithContext( columnContext, string.Empty );
                     parsedValues[destinationIndex] = metadata;
                     ++destinationIndex;
+                    continue;
                 }
-                else if (!definition.IsIgnored)
+                var source = sourceMap is null ? sourceIndex++ : sourceMap[columnIndex];
+                var rawValue = source < 0 ? ReadOnlySpan<char>.Empty : values[source];
+                if (definition.IsIgnored)
                 {
-                    var parsedValue = ParseValue( context, columnIndex, destinationIndex, values[sourceIndex] );
-                    parsedValues[destinationIndex] = parsedValue;
-                    ++sourceIndex;
-                    ++destinationIndex;
+                    ParseValue( context, columnIndex, -1, rawValue );
+                    continue;
                 }
-                else
-                {
-                    ParseValue( context, columnIndex, -1, values[sourceIndex] );
-                    ++sourceIndex;
-                }
+                parsedValues[destinationIndex] = ParseValue( context, columnIndex, destinationIndex, rawValue );
+                ++destinationIndex;
             }
             return parsedValues;
         }
 
         /// <summary>
         ///     Parses the record straight onto an entity, one column at a time, so that no value is ever an
-        ///     <see cref="object" />. A type mapper supplies one setter per column, in the order the columns are
-        ///     read, and takes this path only when every column and member it maps allows it.
+        ///     <see cref="object" />. A type mapper supplies one setter per column, in the order the schema declares
+        ///     them, and takes this path only when every column and member it maps allows it. Where the record's
+        ///     values sit is a separate question, answered by the source map when the columns were matched to a
+        ///     header.
         /// </summary>
         /// <typeparam name="TEntity">The type being read into.</typeparam>
         /// <param name="context">The metadata for the current record being processed.</param>
@@ -130,6 +129,7 @@ namespace FlatFiles
         /// <param name="setters">One setter per column that yields a value, in order.</param>
         internal void ParseValues<TEntity>( IRecoverableRecordContext context, RawRecord values, TEntity entity, IColumnSetter<TEntity>[] setters )
         {
+            var sourceMap = SourceMapOf( context );
             for (int columnIndex = 0, sourceIndex = 0, destinationIndex = 0, columnCount = ColumnDefinitions.Count;
                 columnIndex != columnCount;
                 ++columnIndex)
@@ -143,15 +143,15 @@ namespace FlatFiles
                     ++destinationIndex;
                     continue;
                 }
+                var source = sourceMap is null ? sourceIndex++ : sourceMap[columnIndex];
+                var rawValue = source < 0 ? ReadOnlySpan<char>.Empty : values[source];
                 if (definition.IsIgnored)
                 {
                     // An ignored column still runs whatever is attached to it, and still discards the result.
-                    ParseValue( context, columnIndex, -1, values[sourceIndex] );
-                    ++sourceIndex;
+                    ParseValue( context, columnIndex, -1, rawValue );
                     continue;
                 }
-                ParseValueInto( context, columnIndex, destinationIndex, values[sourceIndex], entity, setters[destinationIndex] );
-                ++sourceIndex;
+                ParseValueInto( context, columnIndex, destinationIndex, rawValue, entity, setters[destinationIndex] );
                 ++destinationIndex;
             }
         }
@@ -182,6 +182,18 @@ namespace FlatFiles
                 // A handler's substitution arrives as an object, which is the one value on this path that boxes.
                 setter.SetObject( entity, RecoverParse( NewColumnContext( context, columnIndex, destinationIndex ), rawValue.ToString(), exception ) );
             }
+        }
+
+        /// <summary>
+        ///     Where each column's value sits in the record, for a reader that matched the columns to a header by
+        ///     name, or null where the values are in the order the columns are. Read once per record rather than
+        ///     once per column.
+        /// </summary>
+        /// <param name="context">The record being read.</param>
+        /// <returns>The map, or null.</returns>
+        private static int[]? SourceMapOf( IRecoverableRecordContext context )
+        {
+            return (context.ExecutionContext as ExecutionContextBase)?.SourceMap;
         }
 
         private object? ParseValue( IRecoverableRecordContext context, int columnIndex, int destinationIndex, ReadOnlySpan<char> rawValue )

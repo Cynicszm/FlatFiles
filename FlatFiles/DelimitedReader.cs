@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Text;
 using System.Threading;
@@ -15,6 +17,13 @@ namespace FlatFiles
         private readonly DelimitedRecordParser parser;
         private readonly DelimitedSchemaSelector? schemaSelector;
         private DelimitedSchema? schema;
+
+        /// <summary>
+        ///     How many values the header carried, once the columns have been matched to it, or -1 where they have
+        ///     not been. It is what a record's length is judged against from then on.
+        /// </summary>
+        private int matchedValueCount = -1;
+
         private IRecordContext? recordContext;
         private int physicalRecordNumber;
         private int logicalRecordNumber;
@@ -311,11 +320,17 @@ namespace FlatFiles
             }
             if (!parser.Options.IsFirstRecordSchema)
             {
+                CheckHeaderMatchingIsPossible();
                 return schema;
             }
             if (schemaSelector is not null || schema is not null)
             {
-                SkipInternal();
+                CheckHeaderMatchingIsPossible();
+                var read = SkipInternal();
+                if (read && schema is not null)
+                {
+                    MatchHeader( schema );
+                }
                 return schema;
             }
             var header = ReadNextRecord();
@@ -336,11 +351,17 @@ namespace FlatFiles
             }
             if (!parser.Options.IsFirstRecordSchema)
             {
+                CheckHeaderMatchingIsPossible();
                 return schema;
             }
             if (schemaSelector is not null || schema is not null)
             {
-                await SkipAsyncInternal( cancellationToken ).ConfigureAwait( false );
+                CheckHeaderMatchingIsPossible();
+                var read = await SkipAsyncInternal( cancellationToken ).ConfigureAwait( false );
+                if (read && schema is not null)
+                {
+                    MatchHeader( schema );
+                }
                 return schema;
             }
             var header = await ReadNextRecordAsync( cancellationToken ).ConfigureAwait( false );
@@ -351,6 +372,105 @@ namespace FlatFiles
             }
             schema = CreateSchemaFromHeader( parser.Values.Materialise() );
             return schema;
+        }
+
+        /// <summary>
+        ///     Refuses a reader asked to match columns to a header that has no header to match, or that chooses its
+        ///     schema per record. Both are configuration mistakes rather than anything about the file, so they are
+        ///     raised at the first read rather than being reported record by record.
+        /// </summary>
+        private void CheckHeaderMatchingIsPossible()
+        {
+            if (parser.Options.HeaderMatching == HeaderMatching.ByPosition)
+            {
+                return;
+            }
+            if (!parser.Options.IsFirstRecordSchema)
+            {
+                throw new InvalidOperationException( Resources.HeaderMatchingWithoutHeader );
+            }
+            if (schemaSelector is not null)
+            {
+                throw new InvalidOperationException( Resources.HeaderMatchingWithSelector );
+            }
+        }
+
+        /// <summary>
+        ///     Works out where in a record each column of the schema sits, from the header just read, and hands the
+        ///     answer to the execution context the records will be read through. Done once, so that reading a record
+        ///     costs one lookup per column rather than any matching.
+        /// </summary>
+        /// <param name="currentSchema">The schema the file is being read against.</param>
+        private void MatchHeader( DelimitedSchema currentSchema )
+        {
+            if (parser.Options.HeaderMatching == HeaderMatching.ByPosition)
+            {
+                return;
+            }
+            var headings = HeadingPositions( parser.Values );
+            var columnDefinitions = currentSchema.ColumnDefinitions;
+            var sourceMap = new int[columnDefinitions.Count];
+            for (var columnIndex = 0; columnIndex != sourceMap.Length; ++columnIndex)
+            {
+                sourceMap[columnIndex] = SourceOf( columnDefinitions[columnIndex], columnIndex, headings );
+            }
+            ExecutionContextFor( currentSchema ).SourceMap = sourceMap;
+            // With a header matched, the header says how wide a record should be rather than the schema does: a
+            // file may carry columns this schema does not declare, and every mapped position came from the header,
+            // so a record as wide as the header reaches all of them.
+            matchedValueCount = parser.Values.Count;
+        }
+
+        /// <summary>
+        ///     Where in the record the column's value sits, or -1 where nothing in the record feeds it.
+        /// </summary>
+        /// <param name="definition">The column being placed.</param>
+        /// <param name="columnIndex">Its position in the schema, for the message if it cannot be placed.</param>
+        /// <param name="headings">Where each heading sits, with -1 against a name the header carries twice.</param>
+        /// <returns>The position in the record, or -1.</returns>
+        private int SourceOf( IColumnDefinition definition, int columnIndex, Dictionary<string, int> headings )
+        {
+            if (definition is IMetadataColumn)
+            {
+                // Filled from the record's context rather than from the record, so it wants no heading and it is
+                // no matter that the header does not carry one.
+                return -1;
+            }
+            var columnName = definition.ColumnName;
+            if (string.IsNullOrEmpty( columnName ))
+            {
+                throw new FlatFileException( string.Format( CultureInfo.CurrentCulture, Resources.HeaderUnnamedColumn, columnIndex ) );
+            }
+            if (!headings.TryGetValue( columnName!, out var position ))
+            {
+                if (parser.Options.HeaderMatching == HeaderMatching.ByNameWhereFound)
+                {
+                    return -1;
+                }
+                throw new FlatFileException( string.Format( CultureInfo.CurrentCulture, Resources.HeaderMissingColumn, columnName ) );
+            }
+            if (position < 0)
+            {
+                throw new FlatFileException( string.Format( CultureInfo.CurrentCulture, Resources.HeaderAmbiguousColumn, columnName ) );
+            }
+            return position;
+        }
+
+        /// <summary>
+        ///     Where each heading of the header sits. A name the header carries more than once is held as -1: which
+        ///     of them a column means cannot be decided, but it is only an error if a column asks for that name.
+        /// </summary>
+        /// <param name="header">The header record.</param>
+        /// <returns>The position of each heading.</returns>
+        private Dictionary<string, int> HeadingPositions( RawRecord header )
+        {
+            var headings = new Dictionary<string, int>( header.Count, parser.Options.HeaderComparer );
+            for (var position = 0; position != header.Count; ++position)
+            {
+                var heading = header[position].ToString();
+                headings[heading] = headings.ContainsKey( heading ) ? -1 : position;
+            }
+            return headings;
         }
 
         private DelimitedSchema CreateSchemaFromHeader( string[] columnNames )
@@ -421,7 +541,7 @@ namespace FlatFiles
                 }
                 currentSchema = DelimitedSchema.BuildDynamicSchema( parser.Options, rawRecord.Count );
             }
-            var wanted = WantedValueCount( currentSchema );
+            var wanted = matchedValueCount < 0 ? WantedValueCount( currentSchema ) : matchedValueCount;
             if (rawRecord.Count < wanted && parser.Options.ShortRecordHandling == ShortRecordHandling.Pad)
             {
                 // Padded once the schema is known, since the schema is what says how long the record should be,
@@ -544,9 +664,15 @@ namespace FlatFiles
 
         private ExecutionContextCache<DelimitedSchema, DelimitedExecutionContext>? executionContexts;
 
+        private DelimitedExecutionContext ExecutionContextFor( DelimitedSchema currentSchema )
+        {
+            executionContexts ??= new ExecutionContextCache<DelimitedSchema, DelimitedExecutionContext>( s => new DelimitedExecutionContext( s!, parser.Options.Clone() ) );
+            return executionContexts.Get( currentSchema );
+        }
+
         private DelimitedRecordContext NewRecordContext( DelimitedSchema currentSchema, string record, string[]? currentValues )
         {
-            var executionContext = (executionContexts ??= new ExecutionContextCache<DelimitedSchema, DelimitedExecutionContext>( s => new DelimitedExecutionContext( s!, parser.Options.Clone() ) )).Get( currentSchema );
+            var executionContext = ExecutionContextFor( currentSchema );
             var currentContext = new DelimitedRecordContext( executionContext )
             {
                 PhysicalRecordNumber = physicalRecordNumber,

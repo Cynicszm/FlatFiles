@@ -180,6 +180,24 @@
   <data name="DelimitedRecordTooManyColumns" xml:space="preserve">
     <value>The record had more columns than the schema has columns to put them in. Record {0}.</value>
   </data>
+  <data name="InvalidHeaderMatching" xml:space="preserve">
+    <value>Encountered an invalid header matching option.</value>
+  </data>
+  <data name="HeaderMatchingWithoutHeader" xml:space="preserve">
+    <value>Matching columns to a header needs IsFirstRecordSchema set, since there is otherwise no header to match.</value>
+  </data>
+  <data name="HeaderMatchingWithSelector" xml:space="preserve">
+    <value>Matching columns to a header needs a schema rather than a schema selector, since a header describes the file and a selector chooses a schema for each record.</value>
+  </data>
+  <data name="HeaderMissingColumn" xml:space="preserve">
+    <value>The header does not carry a column the schema declares: {0}.</value>
+  </data>
+  <data name="HeaderAmbiguousColumn" xml:space="preserve">
+    <value>The header carries more than one column called {0}, so which one the schema means cannot be decided.</value>
+  </data>
+  <data name="HeaderUnnamedColumn" xml:space="preserve">
+    <value>The schema declares a column with no name at position {0}, which no header can match. A column held only to take up a position cannot be matched by name.</value>
+  </data>
   <data name="InvalidShortRecordHandling" xml:space="preserve">
     <value>Encountered an invalid handling for a short record.</value>
   </data>

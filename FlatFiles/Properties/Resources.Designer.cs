@@ -107,6 +107,60 @@ namespace FlatFiles.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Encountered an invalid header matching option..
+        /// </summary>
+        internal static string InvalidHeaderMatching {
+            get {
+                return ResourceManager.GetString("InvalidHeaderMatching", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Matching columns to a header needs IsFirstRecordSchema set, since there is otherwise no header to match..
+        /// </summary>
+        internal static string HeaderMatchingWithoutHeader {
+            get {
+                return ResourceManager.GetString("HeaderMatchingWithoutHeader", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Matching columns to a header needs a schema rather than a schema selector, since a header describes the file and a selector chooses a schema for each record..
+        /// </summary>
+        internal static string HeaderMatchingWithSelector {
+            get {
+                return ResourceManager.GetString("HeaderMatchingWithSelector", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The header does not carry a column the schema declares: {0}..
+        /// </summary>
+        internal static string HeaderMissingColumn {
+            get {
+                return ResourceManager.GetString("HeaderMissingColumn", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The header carries more than one column called {0}, so which one the schema means cannot be decided..
+        /// </summary>
+        internal static string HeaderAmbiguousColumn {
+            get {
+                return ResourceManager.GetString("HeaderAmbiguousColumn", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The schema declares a column with no name at position {0}, which no header can match. A column held only to take up a position cannot be matched by name..
+        /// </summary>
+        internal static string HeaderUnnamedColumn {
+            get {
+                return ResourceManager.GetString("HeaderUnnamedColumn", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Encountered an invalid handling for a short record..
         /// </summary>
         internal static string InvalidShortRecordHandling {
