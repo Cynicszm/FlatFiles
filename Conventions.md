@@ -242,8 +242,8 @@ a new baseline with the `baseline` command and describe it in the changelog, in 
 as the changelog entry and before the tag is cut.
 
 **A release that takes a new baseline carries the full table**, all six samples and all seven scenarios
-apiece, so that what a version cost is recorded where it was released rather than only in a baseline
-file the next release overwrites. The `baseline` command prints it - all eight tables and the notes
+apiece, with two more on the three delimited samples, so that what a version cost is recorded where it
+was released rather than only in a baseline file the next release overwrites. The `baseline` command prints it - all eight tables and the notes
 saying what each column measures - from the runs it took the baseline from, so the figures in the
 changelog and the figures the gate compares are the same measurements:
 

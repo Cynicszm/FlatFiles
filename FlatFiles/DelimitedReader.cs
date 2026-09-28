@@ -526,10 +526,10 @@ namespace FlatFiles
             // it can write into, where what it leaves behind is what gets parsed. Either way they are copied out of
             // the buffer before the record is parsed; otherwise the columns read them where they lie and the record
             // context copies them out only if something asks it for them, and only while this record is current.
-            var rawValues = schemaSelector is not null || RecordRead is not null
+            var rawValues = (schemaSelector is not null && schemaSelector.NeedsValues) || RecordRead is not null
                 ? rawRecord.Materialise()
                 : null;
-            var currentSchema = rawValues is null ? schema : GetSchema( record, rawValues );
+            var currentSchema = schemaSelector is null ? schema : GetSchema( record, parser.RecordText, rawValues );
             if (currentSchema is null)
             {
                 // A selector that matched nothing has already reported the record, and a handler that let reading
@@ -591,13 +591,13 @@ namespace FlatFiles
         }
 
 
-        private DelimitedSchema? GetSchema( string? record, string[] rawValues )
+        private DelimitedSchema? GetSchema( string record, ReadOnlySpan<char> recordText, string[]? rawValues )
         {
             if (schemaSelector is null)
             {
                 return schema;
             }
-            var currentSchema = schemaSelector.GetSchema( rawValues );
+            var currentSchema = schemaSelector.GetSchema( recordText, rawValues );
             if (currentSchema is not null)
             {
                 return currentSchema;

@@ -1,5 +1,185 @@
 ﻿## 8.7.0 (unreleased)
-**Not released.** Being built. What is written up here has landed on master; what is under **Next** has not. Nothing in this release breaks anything.
+**Not released.** Everything planned for it has landed on master and is written up here; nothing is left under **Next**. Nothing in this release breaks anything.
+
+**A delimited selector can choose a schema from the record's text rather than its values.**
+
+```csharp
+var selector = new DelimitedTypeMapperSelector();
+selector.WhenText( record => record.StartsWith( "PER" ) ).Use( personMapper );
+selector.WhenText( record => record.StartsWith( "ORD" ) ).Use( orderMapper );
+```
+
+A predicate registered with `When` is given the record's values, so the reader had to split every record and copy each value out of the buffer it was read in before it could decide what the record was - whether the predicate looked past the first value or not. That copying is the one thing that stopped a selected delimited mapping being read straight onto an entity, as a single mapping and a fixed-length selector already are.
+
+`WhenText` is on `DelimitedSchemaSelector` and `DelimitedTypeMapperSelector`, and **where every predicate on a selector reads the text, and every mapping behind it can be read without boxing, records now go straight onto their entities**. On a four-column file of two layouts that is 389 bytes a record through `When` against 173 through `WhenText`, measured with tiered compilation off. One predicate that asks for the values puts every record back on the values path, so it is all or nothing per selector - which is the choice the feature exists to give: match on text and keep the faster path, or match on values and pay for them. The two kinds can still be mixed on one selector where some layouts really can only be told apart by their values.
+
+**The predicate takes a `ReadOnlySpan<char>`, not a string**, through a `RecordTextPredicate` delegate rather than a `Func<string, bool>`. This is not symmetry for its own sake with the fixed-length selectors, which do take a string: a fixed-length reader must have the record's text in hand to partition the record at all, and a delimited one never builds it - `PreserveRecordText` exists precisely because it otherwise does not. Handing a text predicate a string would have meant building one per record, which is a strange price for a feature whose whole purpose is to stop allocating per record. The span is valid only for the length of the call.
+
+**The integration harness gained two scenarios to hold this still**, `read-select-values` and `read-select-text`, both `read-mapper` again through a delimited selector and differing only in which kind of predicate it was given. The harness had no delimited selector scenario at all, which is why nothing in it noticed a path this expensive: a selector was measured only on the fixed-length side, where every scenario already uses one. They are delimited only, for that reason, and the predicate does the least a predicate can in both, so the gap between the two rows is the path rather than the question.
+
+**What they show, on the three delimited samples, is 8,911 against 193 bytes a record, 2,107 against 192, and 5,305 against 174** - between eleven and forty-six times, widening with the number of columns, because what the values path costs is a string per column per record and an array to hold them. Reading is 12 to 15 per cent quicker with it. **A text predicate is now exactly level with a plain single mapping**: `read-select-text` matches `read-mapper` to the byte on all three samples and on peak heap, which is the thing worth checking, because it says a selector costs nothing over not having one rather than merely less than it did.
+
+**The baseline moves for this release**, and the full table is below. Only the six new rows are new measurements; everything else is where 8.5.0 left it, and was checked against that baseline immediately before the new one was taken.
+
+**Delimited, read**
+
+| Sample | Columns | Records | Scenario | Mean Total Time | Range | MB/s | Bytes/record | Peak heap | Peak working set |
+| --- | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| S1/S1 | 379 | 37,031 | `read-parse` | 1.03 s | 993 ms - 1.05 s | 35.7 | 5,657 | 12.5 MB | 47.7 MB |
+| S1/S1 | 379 | 37,031 | `read-typed` | 1.26 s | 1.25 s - 1.30 s | 29.1 | 5,601 | 12.5 MB | 48.9 MB |
+| S1/S1 | 379 | 37,031 | `read-values` | 1.32 s | 1.30 s - 1.35 s | 27.8 | 8,657 | 12.5 MB | 49.0 MB |
+| | | | | | | | | | |
+| S1/S2 | 58 | 344,352 | `read-parse` | 1.62 s | 1.61 s - 1.65 s | 62.6 | 1,411 | 12.5 MB | 47.6 MB |
+| S1/S2 | 58 | 344,352 | `read-typed` | 2.04 s | 1.99 s - 2.08 s | 49.7 | 1,335 | 12.5 MB | 48.8 MB |
+| S1/S2 | 58 | 344,352 | `read-values` | 2.08 s | 2.02 s - 2.14 s | 48.9 | 1,823 | 12.5 MB | 48.7 MB |
+| | | | | | | | | | |
+| S1/S3 | 196 | 39,337 | `read-parse` | 641 ms | 627 ms - 652 ms | 69.8 | 3,501 | 12.4 MB | 47.7 MB |
+| S1/S3 | 196 | 39,337 | `read-typed` | 902 ms | 896 ms - 909 ms | 49.6 | 2,961 | 12.5 MB | 49.7 MB |
+| S1/S3 | 196 | 39,337 | `read-values` | 910 ms | 904 ms - 919 ms | 49.2 | 4,553 | 12.4 MB | 49.7 MB |
+
+**Fixed-length, read**
+
+| Sample | Columns | Records | Scenario | Mean Total Time | Range | MB/s | Bytes/record | Peak heap | Peak working set |
+| --- | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| S2/S1 | 172 | 22,481 | `read-parse` | 165 ms | 160 ms - 170 ms | 97.4 | 3,609 | 12.5 MB | 48.4 MB |
+| S2/S1 | 172 | 22,481 | `read-typed` | 217 ms | 213 ms - 223 ms | 74.3 | 3,447 | 12.8 MB | 50.5 MB |
+| S2/S1 | 172 | 22,481 | `read-values` | 219 ms | 217 ms - 221 ms | 73.5 | 4,155 | 12.6 MB | 50.5 MB |
+| | | | | | | | | | |
+| S2/S2 | 235 | 1,790 | `read-parse` | 60 ms | 57 ms - 62 ms | 100.1 | 11,426 | 11.8 MB | 47.4 MB |
+| S2/S2 | 235 | 1,790 | `read-typed` | 87 ms | 83 ms - 89 ms | 69.1 | 10,605 | 11.0 MB | 49.3 MB |
+| S2/S2 | 235 | 1,790 | `read-values` | 89 ms | 87 ms - 90 ms | 67.5 | 12,508 | 11.2 MB | 49.2 MB |
+| | | | | | | | | | |
+| S2/S3 | 34 | 18,047 | `read-parse` | 68 ms | 66 ms - 72 ms | 63.5 | 1,773 | 12.2 MB | 47.6 MB |
+| S2/S3 | 34 | 18,047 | `read-typed` | 114 ms | 112 ms - 115 ms | 38.2 | 1,539 | 11.2 MB | 49.7 MB |
+| S2/S3 | 34 | 18,047 | `read-values` | 119 ms | 118 ms - 121 ms | 36.3 | 1,807 | 11.9 MB | 49.7 MB |
+
+**Delimited, written**
+
+| Sample | Columns | Records | Scenario | Mean Total Time | Range | MB/s | Bytes/record | Peak heap | Peak working set |
+| --- | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| S1/S1 | 379 | 37,031 | `write-text` | 1.01 s | 971 ms - 1.05 s | 35.8 | 75 | 309.4 MB | 353.4 MB |
+| S1/S1 | 379 | 37,031 | `write-typed` | 1.30 s | 1.27 s - 1.32 s | 29.1 | 76 | 308.0 MB | 353.1 MB |
+| | | | | | | | | | |
+| S1/S2 | 58 | 344,352 | `write-text` | 1.58 s | 1.57 s - 1.60 s | 59.3 | 72 | 619.1 MB | 684.7 MB |
+| S1/S2 | 58 | 344,352 | `write-typed` | 2.05 s | 2.02 s - 2.12 s | 49.3 | 72 | 594.3 MB | 657.1 MB |
+| | | | | | | | | | |
+| S1/S3 | 196 | 39,337 | `write-text` | 619 ms | 599 ms - 651 ms | 72.2 | 74 | 193.3 MB | 243.7 MB |
+| S1/S3 | 196 | 39,337 | `write-typed` | 918 ms | 849 ms - 1.09 s | 49.7 | 74 | 173.0 MB | 216.4 MB |
+
+**Fixed-length, written**
+
+| Sample | Columns | Records | Scenario | Mean Total Time | Range | MB/s | Bytes/record | Peak heap | Peak working set |
+| --- | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| S2/S1 | 172 | 22,481 | `write-text` | 174 ms | 169 ms - 178 ms | 91.3 | 87 | 49.1 MB | 95.5 MB |
+| S2/S1 | 172 | 22,481 | `write-typed` | 213 ms | 204 ms - 222 ms | 74.5 | 88 | 43.9 MB | 88.8 MB |
+| | | | | | | | | | |
+| S2/S2 | 235 | 1,790 | `write-text` | 48 ms | 47 ms - 50 ms | 124.8 | 179 | 12.2 MB | 62.8 MB |
+| S2/S2 | 235 | 1,790 | `write-typed` | 63 ms | 62 ms - 65 ms | 94.4 | 186 | 17.0 MB | 60.0 MB |
+| | | | | | | | | | |
+| S2/S3 | 34 | 18,047 | `write-text` | 51 ms | 50 ms - 53 ms | 84.3 | 75 | 29.1 MB | 71.3 MB |
+| S2/S3 | 34 | 18,047 | `write-typed` | 76 ms | 74 ms - 79 ms | 57.1 | 75 | 23.8 MB | 72.3 MB |
+
+**Delimited, read through a type mapper**
+
+| Sample | Columns | Records | Scenario | Mean Total Time | Range | MB/s | Bytes/record | Peak heap | Peak working set |
+| --- | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| S1/S1 | 379 | 37,031 | `read-mapper` | 815 ms | 795 ms - 848 ms | 45.1 | 193 | 8.0 MB | 45.7 MB |
+| S1/S1 | 379 | 37,031 | `read-select-values` | 983 ms | 954 ms - 1.04 s | 37.4 | 8,911 | 12.7 MB | 51.2 MB |
+| S1/S1 | 379 | 37,031 | `read-select-text` | 842 ms | 809 ms - 888 ms | 43.6 | 193 | 8.0 MB | 45.8 MB |
+| | | | | | | | | | |
+| S1/S2 | 58 | 344,352 | `read-mapper` | 1.34 s | 1.33 s - 1.36 s | 75.6 | 192 | 12.5 MB | 50.9 MB |
+| S1/S2 | 58 | 344,352 | `read-select-values` | 1.65 s | 1.63 s - 1.68 s | 61.5 | 2,107 | 12.6 MB | 50.9 MB |
+| S1/S2 | 58 | 344,352 | `read-select-text` | 1.40 s | 1.37 s - 1.44 s | 72.7 | 192 | 12.4 MB | 51.0 MB |
+| | | | | | | | | | |
+| S1/S3 | 196 | 39,337 | `read-mapper` | 549 ms | 538 ms - 557 ms | 81.4 | 174 | 7.7 MB | 45.4 MB |
+| S1/S3 | 196 | 39,337 | `read-select-values` | 629 ms | 618 ms - 639 ms | 71.0 | 5,305 | 12.6 MB | 51.1 MB |
+| S1/S3 | 196 | 39,337 | `read-select-text` | 555 ms | 544 ms - 570 ms | 80.5 | 174 | 7.7 MB | 45.5 MB |
+
+**Fixed-length, read through a type mapper**
+
+| Sample | Columns | Records | Mean Total Time | Range | MB/s | Bytes/record | Peak heap | Peak working set |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| S2/S1 | 172 | 22,481 | 210 ms | 204 ms - 213 ms | 76.9 | 1,757 | 12.1 MB | 54.7 MB |
+| | | | | | | | | | |
+| S2/S2 | 235 | 1,790 | 119 ms | 115 ms - 122 ms | 50.4 | 7,501 | 11.7 MB | 52.1 MB |
+| | | | | | | | | | |
+| S2/S3 | 34 | 18,047 | 128 ms | 123 ms - 132 ms | 33.9 | 719 | 11.1 MB | 51.7 MB |
+
+**Delimited, written through a type mapper**
+
+| Sample | Columns | Records | Mean Total Time | Range | MB/s | Bytes/record | Peak heap | Peak working set |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| S1/S1 | 379 | 37,031 | 839 ms | 825 ms - 860 ms | 16.9 | 78 | 12.7 MB | 52.6 MB |
+| S1/S2 | 58 | 344,352 | 1.31 s | 1.27 s - 1.35 s | 23.5 | 72 | 55.7 MB | 106.8 MB |
+| S1/S3 | 196 | 39,337 | 539 ms | 533 ms - 548 ms | 43.1 | 76 | 12.5 MB | 52.4 MB |
+
+**Fixed-length, written through a type mapper**
+
+| Sample | Columns | Records | Mean Total Time | Range | MB/s | Bytes/record | Peak heap | Peak working set |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| S2/S1 | 172 | 22,481 | 205 ms | 196 ms - 214 ms | 77.2 | 228 | 9.9 MB | 61.6 MB |
+| S2/S2 | 235 | 1,790 | 66 ms | 63 ms - 68 ms | 91.2 | 443 | 4.7 MB | 55.8 MB |
+| S2/S3 | 34 | 18,047 | 78 ms | 76 ms - 82 ms | 55.3 | 222 | 14.1 MB | 57.9 MB |
+
+Each row is one sample handled 5 times, each in a process of its own that starts, reads or writes the
+file once and exits - which is how the library is mostly used - and the figures are the mean of those 5.
+Everything a job pays for is inside them: the runtime compiling the parse or format path on first use, the
+schema being built, the file being opened. The three reading scenarios are cumulative:
+`read-parse` reads every column as text and asks for no value, `read-typed` gives each single-typed column
+its own type, and `read-values` is `read-typed` with `GetValues` called on every record. The difference
+between two of them is the cost of the step between.
+
+`read-select-values` and `read-select-text` are `read-mapper` again, through a delimited selector, and they
+differ only in which kind of predicate the selector was given. A predicate handed the record's values makes the
+reader split every record and copy each value out of its buffer before it can choose a mapping; one handed the
+record's text costs neither and lets each record go straight onto its entity. The predicate itself does the
+least a predicate can in both, so the gap between the two rows is the path rather than the question. They are
+delimited only: a fixed-length sample is read through a selector in every scenario it already has.
+
+`write-text` and `write-typed` are the same pair the other way round: the records read out of the sample
+and written back, as text and with each single-typed column given its own type. The records are read into
+memory first and that is **not** measured, so what these rows report is the write. It is also why their
+peak figures are large: the whole sample is being held, which on the widest of them is several hundred
+megabytes that the writer has nothing to do with.
+
+The mapped scenarios have tables of their own because they are not a further step but a different path:
+the file read onto entities, or written from them, through a type mapper - the only scenarios that build
+an entity or use the accessors a mapper makes per column. They map the first column of each kind the
+profile knows about and ignore the rest, which costs the reader the column but not the parse, so their
+figures are far below the others and mean something different. Read each set against itself and against
+the same set in an earlier release.
+
+| Column | What it measures |
+| --- | --- |
+| Columns | Columns in the schema; for a fixed-length sample, in its widest record layout. |
+| Records | Records the reader yielded. Gated exactly. No sample is built to have a record refused, so any refusal fails the check whatever else agrees. |
+| Mean Total Time | Mean wall clock of 5 cold runs: opening the file, building the schema, constructing the reader or writer, taking or writing every record, and disposing, in a process that has done nothing else. Nothing is amortised over work a real caller never performs. **Reported, never gated.** |
+| Range | The quickest and slowest of those 5 loads, so the spread behind the mean is visible rather than implied. |
+| MB/s | File size divided by Mean Total Time, so it carries the same caveats. |
+| Bytes/record | Mean bytes allocated across a load or a write, divided by records. Deterministic for given bytes on a given runtime, and repeats to within 0.1% here. **Gated at 2%.** |
+| Peak heap | The largest the managed heap reached in any of the 5 loads, sampled every 5 ms. Reported. |
+| Peak working set | The largest peak working set any of those processes reached. Each does one load and exits, so the figure is a whole job's footprint, most of it runtime start-up rather than the read. Reported. |
+
+
+Each process runs with tiered compilation off, so every method is compiled optimised the first time it is
+called. The run is still cold - it pays for compiling the path it takes - but what it allocates no longer
+depends on how far the runtime got before promoting anything, which on the sample of twenty-six record
+layouts moved a writing figure by a fifth from one process to the next. Both delimited samples measure
+identically either way.
+
+Averaging 5 whole processes takes most of the machine noise out, but a cold start is noisy by nature and
+the range shows what is left. `FlatFiles.Benchmark` is the project that measures a warm steady state, with
+statistics rather than a mean; these figures are the other question - what one job costs end to end - and
+show the shape of the work rather than a number to compare release to release, which is why neither Mean
+Total Time nor MB/s is gated.
+
+Whether `write-text` wrote the file it read: S1/S1 `write-text` differs; S1/S2 `write-text` differs; S1/S3 `write-text` differs; S2/S1 `write-text` differs; S2/S2 `write-text` same; S2/S3 `write-text` same. A sample it cannot
+reproduce is not a fault - a string column trims, so a field of spaces comes back empty; some
+fixed-length layouts have windows that stop short of the record, so its tail is never read; and a
+ragged final column's padding is not part of its value. What each write produced is pinned by hash in
+the baseline either way, so a change in the bytes written fails the check whatever this says.
+
+[exited with code 0]
 
 **A reader given a schema can match its columns to the file's header by name.**
 
@@ -61,9 +241,7 @@ Everything inside this library, and every test that exercised the old name, now 
 
 ### Next
 
-In the order they will be built. None of these breaks anything, so none of them is waiting for a major version.
-
-- **A delimited selector should be able to match on the record's text.** `DelimitedTypeMapperSelector` and `DelimitedSchemaSelector` are given each record's values to choose a schema by, so the reader has to parse a record into an array of values before it can decide what the record is - which is the one thing that stops a selected delimited mapping being read straight onto an entity, as a fixed-length one now is. A predicate over the record's text, beside the one over its values, would leave the choice to the caller: match on text and keep the faster path, or match on values and pay for them.
+Nothing outstanding. Everything the improvement review raised has been built or accounted for.
 
 **Considered and already covered.** Seven more ideas came out of the same review and turned out to need no work. They are recorded so that nobody spends an afternoon rediscovering it.
 

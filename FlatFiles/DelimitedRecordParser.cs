@@ -27,6 +27,7 @@ namespace FlatFiles
         private ValueRange[] valueRanges = new ValueRange[16];
         private int valueCount;
         private int pending;
+        private int recordLength;
         private readonly string separator;
         private readonly RecordSeparatorMatcher recordSeparator;
         private readonly string? postfix;
@@ -106,6 +107,17 @@ namespace FlatFiles
         public RawRecord Values => new( reader.Span, escaped.WrittenSpan, valueRanges.AsSpan( 0, valueCount ) );
 
         /// <summary>
+        ///     The characters of the record last read, where they lie in the buffer, without the separator that
+        ///     ended it. Valid until the next call on this parser.
+        /// </summary>
+        /// <remarks>
+        ///     This is not <see cref="DelimitedOptions.PreserveRecordText" />, which builds a string per record for
+        ///     anything that keeps hold of one. Nothing is copied here, which is the point: a predicate asked to
+        ///     recognise a record by a prefix or a character at a known position should cost nothing to answer.
+        /// </remarks>
+        public ReadOnlySpan<char> RecordText => reader.Span[..recordLength];
+
+        /// <summary>
         ///     Gives the record last read empty values until it has the given number, for a reader told to pad a
         ///     short record. Padding here rather than where the values are read keeps the parsing loops unaware of
         ///     it: by the time a schema sees the record it is the length the schema asked for.
@@ -168,6 +180,7 @@ namespace FlatFiles
                     case TokenEnd.Token:
                         continue;
                 }
+                recordLength = separatorStart;
                 record = preserveRecordText ? new string( text[..separatorStart] ) : string.Empty;
                 // The record stays in the buffer until the next call, because its values are ranges into it.
                 pending = position;

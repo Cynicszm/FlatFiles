@@ -42,6 +42,7 @@ If you are working with data classes, defining schemas is even easier. You can u
     * [Comments and blank lines](#comments-and-blank-lines)
 * [Error Handling](#error-handling)
 * [Files Containing Multiple Schemas](#files-containing-multiple-schemas)
+    * [Choosing by the record's text](#choosing-by-the-records-text)
 * [Custom Mapping](#custom-mapping)
 * [Runtime Mapping](#runtime-mapping)
 * [Disabling Optimisation](#disabling-optimisation)
@@ -728,6 +729,36 @@ while (reader.Read())
     processRecord(values);
 }
 ```
+
+### Choosing by the record's text
+
+A predicate registered with `When` is given the record's **values**, which means the delimited reader has to split
+every record and copy each value out of its buffer before it can decide what the record is - whether the predicate
+looks at more than the first value or not. `WhenText` is given the record's characters instead, and costs neither:
+
+```csharp
+var selector = new DelimitedTypeMapperSelector();
+selector.WhenText(record => record.StartsWith("PER")).Use(getPersonMapper());
+selector.WhenText(record => record.StartsWith("ORD")).Use(getOrderMapper());
+```
+
+The predicate is a `RecordTextPredicate`, which takes a `ReadOnlySpan<char>` rather than a string, so nothing is
+allocated to answer it. The span is only valid for the length of the call - do not keep hold of it.
+
+**Where every predicate on a selector reads the text, and every mapping behind it can be read without boxing, the
+reader takes each record straight onto its entity**, which is the path a single-mapping delimited read and a
+fixed-length selector already use. Across the three delimited samples the integration harness measures, that is
+8,911 bytes a record against 193, 2,107 against 192, and 5,305 against 174 - between eleven and forty-six times,
+widening with the number of columns, because what the values path costs is a string per column per record and an
+array to hold them. A text predicate reads exactly level with a plain single mapping. One predicate that wants
+the values puts every record back on the values path, so this is all or nothing per selector - which is the
+choice it is there to give you: match on text and keep the faster path, or match on values and pay for them.
+
+Both `DelimitedSchemaSelector` and `DelimitedTypeMapperSelector` have it, and the two kinds of predicate can be
+mixed on one selector where some layouts really can only be told apart by their values.
+
+The fixed-length selectors already take the record's text, because a fixed-length reader has to have it in hand
+to partition the record at all.
 
 If you want to *create* multi-schema files, there are "injector" equivalents for each "selector" class. For example:
 
