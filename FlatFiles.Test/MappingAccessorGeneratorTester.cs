@@ -297,6 +297,50 @@ namespace FlatFiles.Test
         }
 
         [TestMethod]
+        public void TestANullableReferenceMember_KeepsItsAnnotation()
+        {
+            // Registered as string rather than string?, the getter returns a possibly-null value as a
+            // non-nullable one and the consumer's build warns - once per such member, in code it cannot edit.
+            var written = Run( """
+                #nullable enable
+                using FlatFiles.TypeMapping;
+                public class Customer
+                {
+                    public string? Note { get; set; }
+
+                    public string Name { get; set; } = string.Empty;
+                }
+                public static class Program
+                {
+                    public static void Main() => DelimitedTypeMapper.Define<Customer>();
+                }
+                """ );
+
+            var source = written.Single();
+            StringAssert.Contains( source, "AddGetter<global::Customer, string?>( \"Note\"" );
+            StringAssert.Contains( source, "AddSetter<global::Customer, string?>( \"Note\"" );
+            StringAssert.Contains( source, "AddGetter<global::Customer, string>( \"Name\"" );
+        }
+
+        [TestMethod]
+        public void TestANullableValueMember_IsRegisteredThroughTheNullableAccessors()
+        {
+            var written = Run( """
+                #nullable enable
+                using FlatFiles.TypeMapping;
+                public class Customer { public int? Count { get; set; } }
+                public static class Program
+                {
+                    public static void Main() => DelimitedTypeMapper.Define<Customer>();
+                }
+                """ );
+
+            var source = written.Single();
+            StringAssert.Contains( source, "AddNullableGetter<global::Customer, int>( \"Count\"" );
+            StringAssert.Contains( source, "AddNullableSetter<global::Customer, int>( \"Count\"" );
+        }
+
+        [TestMethod]
         public void TestAnEntityInANamespace_IsNamedInFull()
         {
             var written = Run( """
@@ -346,7 +390,8 @@ namespace FlatFiles.Test
             var compilation = CSharpCompilation.Create( "Consumer",
                 [CSharpSyntaxTree.ParseText( source, path: "Consumer.cs" )],
                 References(),
-                new CSharpCompilationOptions( OutputKind.DynamicallyLinkedLibrary ) );
+                new CSharpCompilationOptions( OutputKind.DynamicallyLinkedLibrary,
+                    nullableContextOptions: NullableContextOptions.Enable ) );
 
             var errors = compilation.GetDiagnostics().Where( x => x.Severity == DiagnosticSeverity.Error ).ToList();
             Assert.IsEmpty( errors, $"The source under test does not compile: {string.Join( "; ", errors.Select( x => x.GetMessage() ) )}" );
@@ -358,7 +403,37 @@ namespace FlatFiles.Test
 
             Reported = [.. result.Diagnostics];
             Assert.IsEmpty( Reported.Where( x => x.Severity >= DiagnosticSeverity.Warning ), "The generator warned about something it should not have." );
+            AssertWhatItWroteCompilesCleanly( compilation, result );
             return [.. result.GeneratedTrees.Select( x => x.GetText().ToString() )];
+        }
+
+        /// <summary>
+        ///     Compiles the consumer together with what the generator wrote and insists the generated code itself
+        ///     is warning-free.
+        /// </summary>
+        /// <param name="compilation">The consumer's own compilation.</param>
+        /// <param name="result">What the generator produced.</param>
+        /// <remarks>
+        ///     Every test here used to stop at what the generator wrote, and nothing compiled it. That is how the
+        ///     generated code came to emit a warning per nullable reference member - it was written under
+        ///     <c>#nullable enable</c> but registered a <c>string?</c> member as <c>string</c> - without a single
+        ///     test noticing, until a consumer counted about nine and a half thousand of them. Warnings in
+        ///     generated code are the consumer's to live with and not to fix, so they are failures here.
+        /// </remarks>
+        private static void AssertWhatItWroteCompilesCleanly( CSharpCompilation compilation, GeneratorDriverRunResult result )
+        {
+            if (result.GeneratedTrees.Length == 0)
+            {
+                return;
+            }
+            var together = compilation.AddSyntaxTrees( result.GeneratedTrees );
+            var complaints = together.GetDiagnostics()
+                .Where( x => x.Severity >= DiagnosticSeverity.Warning )
+                .Where( x => x.Location.SourceTree is not null && result.GeneratedTrees.Contains( x.Location.SourceTree ) )
+                .ToList();
+
+            Assert.IsEmpty( complaints,
+                $"The generated code does not compile cleanly: {string.Join( "; ", complaints.Select( x => $"{x.Id} {x.GetMessage()}" ) )}" );
         }
 
         /// <summary>

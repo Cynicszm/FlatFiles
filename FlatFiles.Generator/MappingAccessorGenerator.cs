@@ -221,6 +221,18 @@ namespace FlatFiles.Generator
             return members.ToImmutable();
         }
 
+        /// <summary>
+        ///     How a member's type is written into the registration. The fully qualified format on its own leaves
+        ///     a reference type's nullable annotation off, so a <c>string?</c> member is registered as
+        ///     <c>string</c> - and the generated file says <c>#nullable enable</c>, so its getter then returns a
+        ///     possibly-null value as a non-nullable one and the consumer's build warns, once per such member.
+        ///     Nothing is wrong at run time, since the annotation is not part of the type the registry keys on.
+        /// </summary>
+        private static readonly SymbolDisplayFormat CarriedTypeFormat = SymbolDisplayFormat.FullyQualifiedFormat
+            .WithMiscellaneousOptions( SymbolDisplayMiscellaneousOptions.UseSpecialTypes
+                | SymbolDisplayMiscellaneousOptions.EscapeKeywordIdentifiers
+                | SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier );
+
         private static MappedMember Member( IPropertySymbol property )
         {
             var where = Position( property );
@@ -247,7 +259,7 @@ namespace FlatFiles.Generator
             };
 
             return MappedMember.Accessible( property.Name,
-                carried.ToDisplayString( SymbolDisplayFormat.FullyQualifiedFormat ),
+                carried.ToDisplayString( CarriedTypeFormat ),
                 underlying is not null,
                 setterRefusal is null,
                 getterRefusal is null,
