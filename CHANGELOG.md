@@ -9,8 +9,30 @@
 
 **Nothing else is waiting on a major version.** This entry exists to hold that one removal rather than to collect a list, and it should not become somewhere to put work that does not need to break anything - that belongs in the next minor. If nothing joins it, a release whose whole content is one deleted property is still worth cutting, because the obsolete member is a promise with a version number on it.
 
-## 8.7.0 (unreleased)
-**Not released.** Everything planned for it has landed on master and is written up here; nothing is left under **Next**. Nothing in this release breaks anything.
+### The 2026-09-17 review
+
+**It is exhausted.** Everything it raised has been built or accounted for, the last three items in 8.7.0. What follows is kept here because the newest planned heading is where this repository records what was decided and left, rather than only what was released.
+
+**Considered and already covered.** Seven ideas came out of that review and turned out to need no work. They are recorded so that nobody spends an afternoon rediscovering it.
+
+Already supported when the review looked:
+
+- multi-character separators - `DelimitedOptions.Separator` is a string, not a character;
+- quoting behaviour - `QuoteBehaviour` quotes only what needs it, or everything, or nothing;
+- whitespace preservation - `DelimitedOptions.PreserveWhiteSpace`, alongside `Trim` on the string and character array columns;
+- files holding more than one schema - the schema selectors and injectors, on both readers and writers;
+- `IDataReader` - `FlatFileDataReader`, with `DataTable` support beside it.
+
+Shipped since the review, by the releases named:
+
+- cancellation tokens on every asynchronous read and write - 7.2.0;
+- ragged-right fixed-length files - 7.3.0.
+
+Nothing that review raised was declined outright.
+
+
+## 8.7.0 (2026-09-28)
+**Summary** - Three things a file could say that the library could not hear, and one crash. A record that does not fit its schema now has an answer both readers give in the same words; a header can order the columns rather than being read and thrown away; and a delimited selector can choose a mapping from the record's text, which allocates between eleven and forty-six times less than choosing from its values. The crash is an entity that is a value type, which took the process down when written. Nothing here breaks anything, and the two defects fixed along the way - a short record with an ignored column, and that crash - were both failures no handler could catch.
 
 **A delimited selector can choose a schema from the record's text rather than its values.**
 
@@ -260,26 +282,6 @@ Everything inside this library, and every test that exercised the old name, now 
 **Where it was noticed, it also could not report.** A test that kills its host does not fail, it aborts the run, and the run prints the tests that finished first, so the summary reads as a pass unless the last line is read. It is why the suite was run with that test filtered out while the rest of this release was built, and why every figure quoted for 8.7.0 before this said so. They are all quoted unfiltered now.
 
 
-### Next
-
-Nothing outstanding. Everything the improvement review raised has been built or accounted for.
-
-**Considered and already covered.** Seven more ideas came out of the same review and turned out to need no work. They are recorded so that nobody spends an afternoon rediscovering it.
-
-Already supported when the review looked:
-
-- multi-character separators - `DelimitedOptions.Separator` is a string, not a character;
-- quoting behaviour - `QuoteBehaviour` quotes only what needs it, or everything, or nothing;
-- whitespace preservation - `DelimitedOptions.PreserveWhiteSpace`, alongside `Trim` on the string and character array columns;
-- files holding more than one schema - the schema selectors and injectors, on both readers and writers;
-- `IDataReader` - `FlatFileDataReader`, with `DataTable` support beside it.
-
-Shipped since the review, by the releases named:
-
-- cancellation tokens on every asynchronous read and write - 7.2.0;
-- ragged-right fixed-length files - 7.3.0.
-
-Nothing that review raised was declined outright.
 ## 8.6.0 (2026-09-26)
 **Summary** - Three ways of saying what a file looks like that the library did not have. A mapping can be built from attributes on the type rather than written out in fluent calls; comments and blank lines can be passed over by an option rather than by a handler on every reader; and a reader can be handed a stream rather than a `TextReader`, with the byte order mark taken off. Nothing here breaks anything, and nothing here changes what an existing mapping costs.
 
