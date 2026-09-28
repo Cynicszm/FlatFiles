@@ -92,7 +92,7 @@ namespace FlatFiles.Test
                 FillCharacter = '0',
                 HasRecordSeparator = false,
                 IsFirstRecordHeader = true,
-                IsLongRecordRejected = true,
+                LongRecordHandling = LongRecordHandling.Refuse,
                 IsRaggedRight = true,
                 Alignment = FixedAlignment.RightAligned,
                 TruncationPolicy = OverflowTruncationPolicy.TruncateTrailing,
@@ -104,7 +104,7 @@ namespace FlatFiles.Test
             Assert.AreEqual( '0', fixedCopy.FillCharacter );
             Assert.IsFalse( fixedCopy.HasRecordSeparator );
             Assert.IsTrue( fixedCopy.IsFirstRecordHeader );
-            Assert.IsTrue( fixedCopy.IsLongRecordRejected );
+            Assert.AreEqual( LongRecordHandling.Refuse, fixedCopy.LongRecordHandling );
             Assert.IsTrue( fixedCopy.IsRaggedRight );
             Assert.AreEqual( FixedAlignment.RightAligned, fixedCopy.Alignment );
             Assert.AreEqual( OverflowTruncationPolicy.TruncateTrailing, fixedCopy.TruncationPolicy );

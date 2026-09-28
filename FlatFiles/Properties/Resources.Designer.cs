@@ -98,6 +98,33 @@ namespace FlatFiles.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The record had more columns than the schema has columns to put them in. Record {0}..
+        /// </summary>
+        internal static string DelimitedRecordTooManyColumns {
+            get {
+                return ResourceManager.GetString("DelimitedRecordTooManyColumns", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Encountered an invalid handling for a short record..
+        /// </summary>
+        internal static string InvalidShortRecordHandling {
+            get {
+                return ResourceManager.GetString("InvalidShortRecordHandling", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Encountered an invalid handling for a long record..
+        /// </summary>
+        internal static string InvalidLongRecordHandling {
+            get {
+                return ResourceManager.GetString("InvalidLongRecordHandling", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to An attempt was made to add a column to a schema where the same name already exists..
         /// </summary>
         internal static string DuplicateColumnName {

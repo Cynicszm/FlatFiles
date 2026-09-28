@@ -37,5 +37,21 @@ namespace FlatFiles
         /// Defaulted so that an implementation written before this existed keeps compiling and keeps its behaviour.
         /// </remarks>
         bool IsBlankRecordSkipped => false;
+
+        /// <summary>
+        /// Gets what a reader does with a record that carries less than the schema asks for.
+        /// </summary>
+        /// <remarks>
+        /// Defaulted so that an implementation written before this existed keeps compiling and keeps its behaviour.
+        /// </remarks>
+        ShortRecordHandling ShortRecordHandling => ShortRecordHandling.Refuse;
+
+        /// <summary>
+        /// Gets what a reader does with a record that carries more than the schema asks for.
+        /// </summary>
+        /// <remarks>
+        /// Defaulted so that an implementation written before this existed keeps compiling and keeps its behaviour.
+        /// </remarks>
+        LongRecordHandling LongRecordHandling => LongRecordHandling.Discard;
     }
 }

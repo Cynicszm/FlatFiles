@@ -177,6 +177,15 @@
   <data name="DelimitedRecordWrongNumberOfColumns" xml:space="preserve">
     <value>The record did not have the number of columns specified in the schema. Record {0}.</value>
   </data>
+  <data name="DelimitedRecordTooManyColumns" xml:space="preserve">
+    <value>The record had more columns than the schema has columns to put them in. Record {0}.</value>
+  </data>
+  <data name="InvalidShortRecordHandling" xml:space="preserve">
+    <value>Encountered an invalid handling for a short record.</value>
+  </data>
+  <data name="InvalidLongRecordHandling" xml:space="preserve">
+    <value>Encountered an invalid handling for a long record.</value>
+  </data>
   <data name="UnmatchedQuote" xml:space="preserve">
     <value>A syntax error was encountered: Unmatched quote.</value>
   </data>

@@ -101,10 +101,10 @@ namespace FlatFiles.Test
         }
 
         [TestMethod]
-        public void TestRead_IsLongRecordRejected_HasNoEffectWhenRaggedRight()
+        public void TestRead_RefusingLongRecords_HasNoEffectWhenRaggedRight()
         {
             const string text = "A001Widget       42Note A and more\r\n";
-            var options = new FixedLengthOptions { IsRaggedRight = true, IsLongRecordRejected = true };
+            var options = new FixedLengthOptions { IsRaggedRight = true, LongRecordHandling = LongRecordHandling.Refuse };
             var reader = new FixedLengthReader( new StringReader( text ), Schema(), options );
 
             CollectionAssert.AreEqual( new object[] { "A001", "Widget", 42, "Note A and more" }, ReadAll( reader ).Single(),
