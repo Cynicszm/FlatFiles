@@ -369,11 +369,12 @@ happens to reach a column that will not parse it. `Refuse` reports the record in
 context a short record gets, so both can be handled the same way. It is not the default because a file whose
 records carry trailing content that was always ignored would otherwise stop reading.
 
-On `FixedLengthOptions`, `LongRecordHandling` is the same setting as `IsLongRecordRejected` spelled the way the
-delimited reader spells it; the two always agree, and setting either sets the other. `IsRaggedRight` answers both
-questions by itself and overrides both: no ragged-right record is too long, and one that ends early is read as
-far as it goes. Where the records are short but the last column still has the width the schema gives it, use
-`ShortRecordHandling.Pad` rather than `IsRaggedRight`.
+On `FixedLengthOptions`, `LongRecordHandling` replaces `IsLongRecordRejected`, which said the same thing and is
+now obsolete: the two always agree and setting either sets the other, so existing code keeps working, but it goes
+in 9.0.0 and new code should use `LongRecordHandling`. `IsRaggedRight` answers both questions by itself and
+overrides both: no ragged-right record is too long, and one that ends early is read as far as it goes. Where the
+records are short but the last column still has the width the schema gives it, use `ShortRecordHandling.Pad`
+rather than `IsRaggedRight`.
 
 ## Character Encoding
 FlatFiles works in characters rather than bytes. You can hand a reader a `TextReader` you opened, in which case the character encoding is decided by the `StreamReader` you open, before any FlatFiles class is involved, and the same schema and options work with any encoding.

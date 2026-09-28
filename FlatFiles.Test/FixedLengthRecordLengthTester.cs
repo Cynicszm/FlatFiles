@@ -56,7 +56,7 @@ namespace FlatFiles.Test
         [TestMethod]
         public void TestRead_LongRecordWhenRejected_ThrowsWithTheRecordContext()
         {
-            var reader = Reader( 4, new FixedLengthOptions { IsLongRecordRejected = true } );
+            var reader = Reader( 4, new FixedLengthOptions { LongRecordHandling = LongRecordHandling.Refuse } );
 
             var exception = Assert.ThrowsExactly<RecordProcessingException>( () => reader.Read() );
 
@@ -69,7 +69,7 @@ namespace FlatFiles.Test
         [TestMethod]
         public void TestRead_LongRecordWhenRejected_IsSkippedWhenTheErrorIsHandled()
         {
-            var reader = Reader( 4, new FixedLengthOptions { IsLongRecordRejected = true } );
+            var reader = Reader( 4, new FixedLengthOptions { LongRecordHandling = LongRecordHandling.Refuse } );
             List<int> rejected = [];
             reader.RecordError += ( _, e ) =>
             {
@@ -86,11 +86,11 @@ namespace FlatFiles.Test
         [TestMethod]
         public void TestRead_ShortRecord_IsRefusedWhetherOrNotLongRecordsAre()
         {
-            foreach (var rejectLong in new[] { false, true })
+            foreach (var handling in new[] { LongRecordHandling.Discard, LongRecordHandling.Refuse })
             {
-                var reader = Reader( 6, new FixedLengthOptions { IsLongRecordRejected = rejectLong } );
+                var reader = Reader( 6, new FixedLengthOptions { LongRecordHandling = handling } );
 
-                var exception = Assert.ThrowsExactly<RecordProcessingException>( () => reader.Read(), $"IsLongRecordRejected = {rejectLong}" );
+                var exception = Assert.ThrowsExactly<RecordProcessingException>( () => reader.Read(), $"LongRecordHandling = {handling}" );
 
                 Assert.AreEqual( 1, exception.RecordContext.PhysicalRecordNumber );
                 Assert.AreEqual( "A001Widget    00042", exception.RecordContext.Record );
@@ -100,7 +100,7 @@ namespace FlatFiles.Test
         [TestMethod]
         public void TestRead_RecordExactlyTheSchemaWidthWhenRejected_ReadsNormally()
         {
-            var reader = Reader( 5, new FixedLengthOptions { IsLongRecordRejected = true } );
+            var reader = Reader( 5, new FixedLengthOptions { LongRecordHandling = LongRecordHandling.Refuse } );
 
             CollectionAssert.AreEqual( new[] { 42, 7 }, Quantities( reader ) );
         }
@@ -109,7 +109,7 @@ namespace FlatFiles.Test
         public void TestRead_HeaderRecordLongerThanTheSchema_IsSkippedNotRejected()
         {
             const string text = "This header is much longer than the nineteen characters of a record\r\n" + Records;
-            var options = new FixedLengthOptions { IsLongRecordRejected = true, IsFirstRecordHeader = true };
+            var options = new FixedLengthOptions { LongRecordHandling = LongRecordHandling.Refuse, IsFirstRecordHeader = true };
             var reader = new FixedLengthReader( new StringReader( text ), Schema( 5 ), options );
 
             CollectionAssert.AreEqual( new[] { 42, 7 }, Quantities( reader ) );
@@ -118,7 +118,7 @@ namespace FlatFiles.Test
         [TestMethod]
         public async Task TestReadAsync_LongRecordWhenRejected_Throws()
         {
-            var reader = Reader( 4, new FixedLengthOptions { IsLongRecordRejected = true } );
+            var reader = Reader( 4, new FixedLengthOptions { LongRecordHandling = LongRecordHandling.Refuse } );
 
             var exception = await Assert.ThrowsExactlyAsync<RecordProcessingException>( async () => await reader.ReadAsync() );
 
@@ -132,7 +132,7 @@ namespace FlatFiles.Test
             mapper.Property( item => item.Id, new Window( 4 ) );
             mapper.Property( item => item.Name, new Window( 10 ) );
             mapper.Property( item => item.Quantity, new Window( 4 ) { Alignment = FixedAlignment.RightAligned } );
-            var options = new FixedLengthOptions { IsLongRecordRejected = true };
+            var options = new FixedLengthOptions { LongRecordHandling = LongRecordHandling.Refuse };
 
             Assert.ThrowsExactly<RecordProcessingException>( () => mapper.Read( new StringReader( Records ), options ).ToList() );
         }
@@ -140,9 +140,9 @@ namespace FlatFiles.Test
         [TestMethod]
         public void TestClone_CarriesTheOption()
         {
-            var options = new FixedLengthOptions { IsLongRecordRejected = true };
+            var options = new FixedLengthOptions { LongRecordHandling = LongRecordHandling.Refuse };
 
-            Assert.IsTrue( options.Clone().IsLongRecordRejected );
+            Assert.AreEqual( LongRecordHandling.Refuse, options.Clone().LongRecordHandling );
         }
 
         public sealed class Item

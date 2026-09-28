@@ -60,15 +60,16 @@ namespace FlatFiles
         ///     error, as a record shorter than it already is.
         /// </summary>
         /// <remarks>
-        ///     By default the characters after the last window are ignored, so a layout declared too narrow reads
-        ///     every later column from the wrong offset and reports nothing. Setting this to true raises a
-        ///     <see cref="RecordProcessingException" /> for the record instead, with the same record context a short
-        ///     record gets, so both can be handled in the same way. It defaults to false because a file whose records
-        ///     carry trailing content that was always ignored would otherwise stop reading. It has no effect when
-        ///     <see cref="IsRaggedRight" /> is set, because the last column then takes whatever follows the other
-        ///     windows and no record is too long.
+        ///     This is the same setting as <see cref="LongRecordHandling" />, which says the same thing in the words
+        ///     both readers now use, and the two always agree. It is kept only so that code written against it keeps
+        ///     working, and it goes in the next major version.
         /// </remarks>
-        public bool IsLongRecordRejected { get; set; }
+        [Obsolete( "Use LongRecordHandling instead. This property says the same thing and will be removed in 9.0.0.", false )]
+        public bool IsLongRecordRejected
+        {
+            get => LongRecordHandling == LongRecordHandling.Refuse;
+            set => LongRecordHandling = value ? LongRecordHandling.Refuse : LongRecordHandling.Discard;
+        }
 
         /// <summary>
         ///     Gets or sets what a record that ends before the last window does is treated as.
@@ -98,24 +99,26 @@ namespace FlatFiles
         ///     Gets or sets what a record carrying characters after its last window is treated as.
         /// </summary>
         /// <remarks>
-        ///     This is the same setting as <see cref="IsLongRecordRejected" />, spelled the way the delimited reader
-        ///     spells it so that both readers can be configured alike; the two always agree, and setting either sets
-        ///     the other. As with <see cref="IsLongRecordRejected" />, it has no effect when
-        ///     <see cref="IsRaggedRight" /> is set, because the last column then takes whatever follows the other
-        ///     windows and no record is too long.
+        ///     <see cref="FlatFiles.LongRecordHandling.Discard" /> by default, which is what this reader has always
+        ///     done: the characters after the last window are not read, so a layout declared too narrow reads every
+        ///     later column from the wrong offset and reports nothing. Setting it to
+        ///     <see cref="FlatFiles.LongRecordHandling.Refuse" /> raises a <see cref="RecordProcessingException" />
+        ///     for the record instead, with the same record context a short record gets, so both can be handled in
+        ///     the same way. It has no effect when <see cref="IsRaggedRight" /> is set, because the last column then
+        ///     takes whatever follows the other windows and no record is too long.
         /// </remarks>
         public LongRecordHandling LongRecordHandling
         {
-            get => IsLongRecordRejected ? LongRecordHandling.Refuse : LongRecordHandling.Discard;
+            get;
             set
             {
                 if (!Enum.IsDefined( value ))
                 {
                     throw new ArgumentException( Resources.InvalidLongRecordHandling, nameof( value ) );
                 }
-                IsLongRecordRejected = value == LongRecordHandling.Refuse;
+                field = value;
             }
-        }
+        } = LongRecordHandling.Discard;
 
         /// <summary>
         ///     Gets or sets whether the file is ragged right: every column but the last has a fixed width, and the last
@@ -128,7 +131,7 @@ namespace FlatFiles
         ///     declared width is not used. A record that ends earlier still is read as far as it
         ///     goes: a window the record ends inside takes the characters that are there, and a window the record never
         ///     reaches yields an empty value, which the column's null handling turns into null.
-        ///     <see cref="IsLongRecordRejected" /> has no effect. When writing, the last column is written as formatted,
+        ///     <see cref="LongRecordHandling" /> has no effect. When writing, the last column is written as formatted,
         ///     neither padded nor truncated to its window, so a file read ragged and written ragged keeps its shape.
         /// </remarks>
         public bool IsRaggedRight { get; set; }

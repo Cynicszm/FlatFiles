@@ -170,16 +170,27 @@ namespace FlatFiles.Test
         }
 
         [TestMethod]
-        public void TestFixedLength_TheTwoSpellingsOfTheLongRuleAgree()
+        public void TestFixedLength_TheObsoleteSpellingStillAgreesWithTheNewOne()
         {
+            // IsLongRecordRejected is kept until the next major version so that code written against it keeps
+            // working. It is the same setting, so reading or writing either has to be visible through the other.
+#pragma warning disable CS0618 // Type or member is obsolete
             var options = new FixedLengthOptions();
-            Assert.AreEqual( LongRecordHandling.Discard, options.LongRecordHandling );
+            Assert.IsFalse( options.IsLongRecordRejected );
 
             options.IsLongRecordRejected = true;
             Assert.AreEqual( LongRecordHandling.Refuse, options.LongRecordHandling );
 
             options.LongRecordHandling = LongRecordHandling.Discard;
             Assert.IsFalse( options.IsLongRecordRejected );
+#pragma warning restore CS0618
+        }
+
+        [TestMethod]
+        public void TestFixedLength_TheLongRuleDefaultsToDiscarding()
+        {
+            Assert.AreEqual( LongRecordHandling.Discard, new FixedLengthOptions().LongRecordHandling );
+            Assert.AreEqual( LongRecordHandling.Discard, new DelimitedOptions().LongRecordHandling );
         }
 
         [TestMethod]
