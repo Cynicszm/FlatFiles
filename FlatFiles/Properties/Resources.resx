@@ -180,6 +180,9 @@
   <data name="DelimitedRecordTooManyColumns" xml:space="preserve">
     <value>The record had more columns than the schema has columns to put them in. Record {0}.</value>
   </data>
+  <data name="SpanHookNotSupportedOnColumn" xml:space="preserve">
+    <value>This column cannot hold a span parsing hook. Every column in this library derives from ColumnDefinition, which can; a column implemented outside it has to hold its own.</value>
+  </data>
   <data name="SpanHookNotSupported" xml:space="preserve">
     <value>This property mapping does not support a span parsing hook. The mappings this library returns all do; an implementation written outside it has to provide its own.</value>
   </data>

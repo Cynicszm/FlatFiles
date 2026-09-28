@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -205,6 +206,70 @@ namespace FlatFiles.Test
                 () => mapping.OnParsingSpan( ( _, _, _ ) => SpanParsingHooks.Unchanged ) );
 
             StringAssert.Contains( exception.Message, "span parsing hook" );
+        }
+
+        [TestMethod]
+        public void TestTheHookIsReachableThroughTheColumnInterface()
+        {
+            // OnParsing has always been settable through IColumnDefinition; this sits beside it rather than
+            // making a caller cast to reach one hook but not the other.
+            IColumnDefinition column = new Int32Column( "Amount" );
+            column.OnParsingSpan = StripLeadingHash;
+
+            var schema = new DelimitedSchema();
+            schema.AddColumn( column );
+            var reader = new DelimitedReader( new StringReader( "#42\r\n" ), schema, Options() );
+
+            Assert.IsTrue( reader.Read() );
+            Assert.AreEqual( 42, reader.GetValues()[0] );
+            Assert.IsNotNull( column.OnParsingSpan );
+        }
+
+        [TestMethod]
+        public void TestAColumnWrittenBeforeTheHookExisted_SaysSoRatherThanIgnoringIt()
+        {
+            IColumnDefinition column = new ColumnFromBeforeTheHook();
+
+            Assert.IsNull( column.OnParsingSpan, "reading says there is no hook" );
+            var exception = Assert.ThrowsExactly<NotSupportedException>( () => column.OnParsingSpan = StripLeadingHash );
+            StringAssert.Contains( exception.Message, "span parsing hook" );
+        }
+
+        /// <summary>Stands in for a column implemented outside this library before the hook existed.</summary>
+        private sealed class ColumnFromBeforeTheHook : IColumnDefinition
+        {
+            public string? ColumnName => "Old";
+
+            public bool IsIgnored => false;
+
+            public bool IsNullable => true;
+
+            public bool IsComplex => false;
+
+            public Type ColumnType => typeof( string );
+
+            public IDefaultValue DefaultValue { get; set; } = FlatFiles.DefaultValue.Disabled();
+
+            public INullFormatter NullFormatter { get; set; } = FlatFiles.NullFormatter.Default;
+
+            public Func<IColumnContext?, string, string?>? OnParsing { get; set; }
+
+            public Func<IColumnContext?, object?, object?>? OnParsed { get; set; }
+
+            public Func<IColumnContext?, object?, object?>? OnFormatting { get; set; }
+
+            public Func<IColumnContext?, string, string?>? OnFormatted { get; set; }
+
+            public object? Parse( IColumnContext? context, string value ) => value;
+
+            public object? Parse( IColumnContext? context, ReadOnlySpan<char> value ) => value.ToString();
+
+            public string Format( IColumnContext? context, object? value ) => value?.ToString() ?? string.Empty;
+
+            public void Format( IColumnContext? context, object? value, IBufferWriter<char> destination ) =>
+                destination.Write( Format( context, value ).AsSpan() );
+
+            public bool IsColumnContextRequired => false;
         }
 
         /// <summary>Stands in for a mapping implemented outside this library before the hook existed.</summary>

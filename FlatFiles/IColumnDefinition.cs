@@ -55,6 +55,21 @@ namespace FlatFiles
         Func<IColumnContext?, string, string?>? OnParsing { get; set; }
 
         /// <summary>
+        ///     Gets or sets a hook that pre-processes input where it lies, rather than as a string.
+        /// </summary>
+        /// <remarks>
+        ///     Defaulted so that an implementation written before this existed keeps compiling. Reading it says
+        ///     there is no such hook; setting it says this column cannot hold one, rather than quietly dropping
+        ///     it. Every column in this library derives from <see cref="ColumnDefinition" />, which holds it
+        ///     properly.
+        /// </remarks>
+        SpanParsingHook? OnParsingSpan
+        {
+            get => null;
+            set => throw new NotSupportedException( Properties.Resources.SpanHookNotSupportedOnColumn );
+        }
+
+        /// <summary>
         ///     Gets or sets a function used to post-process input after parsing it.
         /// </summary>
         Func<IColumnContext?, object?, object?>? OnParsed { get; set; }

@@ -26,7 +26,7 @@ The custom column allocates less than the string hook and is no quicker, because
 
 **Where both hooks are set, `OnParsing` wins** and the span hook is not called: a column that has to build a string for one of them may as well hand it to both.
 
-**It is on the mapping interfaces as a default implementation that throws**, so an implementation written outside this library keeps compiling. Every mapping this library returns overrides it. It is deliberately **not** on `IColumnDefinition`: that interface cannot take a new settable property without either breaking every implementation or defaulting to one that silently drops what is set on it, and both are worse than leaving it on `ColumnDefinition`, which is what a custom column derives from and what `CustomMapping` is given.
+**It is a default implementation on the mapping interfaces and on `IColumnDefinition`**, so anything implementing them outside this library keeps compiling. On a column, reading it says there is no hook and setting it says the column cannot hold one, rather than quietly dropping it; every column here derives from `ColumnDefinition`, which holds it properly. It sits on `IColumnDefinition` because `OnParsing` already does: a caller holding one should not be able to set the old hook but have to cast for its replacement.
 
 `OnParsed`, `OnFormatting` and `OnFormatted` are unchanged. They deal in `object`, so a span does not help them; removing the boxing there would mean a generic hook on the typed column, which is a different change.
 

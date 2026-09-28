@@ -109,6 +109,15 @@ namespace FlatFiles.Properties {
         /// <summary>
         ///   Looks up a localized string similar to The parsing hook on column &apos;{0}&apos; asked for a longer buffer than the {1} characters it was then given, twice in a row..
         /// </summary>
+        internal static string SpanHookNotSupportedOnColumn {
+            get {
+                return ResourceManager.GetString("SpanHookNotSupportedOnColumn", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to This property mapping does not support a span parsing hook.
+        /// </summary>
         internal static string SpanHookNotSupported {
             get {
                 return ResourceManager.GetString("SpanHookNotSupported", resourceCulture);
