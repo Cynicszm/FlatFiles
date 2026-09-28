@@ -1,4 +1,15 @@
-﻿## 8.7.0 (unreleased)
+﻿## 9.0.0 (planned)
+**Not released, and not started.** What is written here is the work that has to wait for a major version, kept with the releases so that the reasoning sits beside what it produced. Everything below breaks something, which is what it is waiting for.
+
+- **`FixedLengthOptions.IsLongRecordRejected` goes.** `LongRecordHandling` replaced it in 8.7.0, saying the same thing in the words both readers use, and the old property has carried `[Obsolete]` since, with a message naming its replacement. The two are one setting rather than two - setting either sets the other - so removing it changes no behaviour at all, only the spellings available to say it in.
+
+  For a caller it is a find and replace of one identifier: `IsLongRecordRejected = true` becomes `LongRecordHandling = LongRecordHandling.Refuse`, and `false` becomes `LongRecordHandling.Discard`. The property has existed since 7.1.0 and defaults to false, so it is only in code that turned it on.
+
+  It waits for a major version because removing a public member is a binary break, and `Conventions.md` answers that with a major version rather than a suppression. Keeping it obsolete for a release first was the point: a warning at every call site is a cycle's notice, which deleting it in a minor would not have been.
+
+**Nothing else is waiting on a major version.** This entry exists to hold that one removal rather than to collect a list, and it should not become somewhere to put work that does not need to break anything - that belongs in the next minor. If nothing joins it, a release whose whole content is one deleted property is still worth cutting, because the obsolete member is a promise with a version number on it.
+
+## 8.7.0 (unreleased)
 **Not released.** Everything planned for it has landed on master and is written up here; nothing is left under **Next**. Nothing in this release breaks anything.
 
 **A delimited selector can choose a schema from the record's text rather than its values.**
