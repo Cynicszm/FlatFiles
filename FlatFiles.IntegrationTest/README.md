@@ -18,8 +18,8 @@ adding one is a matter of writing the profile rather than of finding a file.
 
     dotnet run --project FlatFiles.IntegrationTest -c Release
 
-That measures every scenario: six samples, seven scenarios each, five processes apiece, so two hundred
-and ten cold runs.
+That measures every scenario: six samples, seven scenarios each and two more on the three delimited
+ones, five processes apiece, so two hundred and forty cold runs.
 
     dotnet run --project FlatFiles.IntegrationTest -c Release -- run Set1Sample2
     dotnet run --project FlatFiles.IntegrationTest -c Release -- check
@@ -104,6 +104,16 @@ Measuring a warm steady state instead would flatter the library and answer a que
 - **`read-mapper`** - the same file read onto entities through a type mapper. Not a step further than
   `read-values` and not comparable with it: a different path, measured because nothing else here goes
   anywhere near it.
+- **`read-select-values`** - `read-mapper` again, but with the mapping chosen per record by a
+  `DelimitedTypeMapperSelector` whose predicate is given the record's **values**. Delimited only.
+- **`read-select-text`** - the same, with the predicate given the record's **text** instead. The
+  predicate does the least a predicate can in both, so the gap between these two rows is the path and
+  not the question: a predicate handed the values makes the reader split every record and copy each
+  value out of its buffer before it can choose, while one handed the text costs neither and lets each
+  record go straight onto its entity. They exist to hold that difference still, because it is the whole
+  of what `WhenText` is worth and nothing else here would notice it changing. Delimited only: a
+  fixed-length sample is read through a selector in every scenario it already has, since a file of
+  several layouts cannot be partitioned without choosing one first.
 - **`write-text`** - every value written back through a schema of string columns. The floor for
   writing, and the one scenario that can be held against the file it came from.
 - **`write-typed`** - the same records written with each single-typed column given its own type, so the
@@ -193,8 +203,8 @@ The samples themselves are gated the same way and for the same reason. Until a n
 a regenerated sample fails the check rather than quietly shifting every figure under it.
 
 A release that takes a new baseline carries the whole table in its changelog entry - six samples, seven
-scenarios apiece - so what a version cost is recorded where it shipped rather than only in a baseline
-the next release overwrites. `baseline` prints it: eight tables and the notes saying what each column
+scenarios apiece and two more on the delimited ones - so what a version cost is recorded where it
+shipped rather than only in a baseline the next release overwrites. `baseline` prints it: eight tables and the notes saying what each column
 measures, from the very runs it took the baseline from, so the entry and the gate hold the same
 figures. Four tables cover the scenarios that go through a schema - one per format and direction - and
 four more cover the mapped ones, because those are a different path and a row of one among the others

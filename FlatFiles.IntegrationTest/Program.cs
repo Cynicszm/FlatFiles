@@ -15,8 +15,27 @@ namespace FlatFiles.IntegrationTest
         private static readonly string[] Scenarios =
         [
             IntegrationRun.Parse, IntegrationRun.Typed, IntegrationRun.Values, IntegrationRun.Mapped,
+            IntegrationRun.SelectValues, IntegrationRun.SelectText,
             WriteRun.Text, WriteRun.Typed, WriteRun.Mapped
         ];
+
+        /// <summary>
+        ///     The scenarios that apply to one sample. The two delimited selector scenarios are left off a
+        ///     fixed-length sample, which is read through a selector in every scenario it already has.
+        /// </summary>
+        /// <param name="profile">The sample being measured.</param>
+        /// <returns>The scenarios to run against it.</returns>
+        private static IEnumerable<string> ScenariosFor( FileProfile profile )
+        {
+            foreach (var scenario in Scenarios)
+            {
+                if (profile.IsFixedLength && IntegrationRun.IsSelected( scenario ))
+                {
+                    continue;
+                }
+                yield return scenario;
+            }
+        }
 
         /// <summary>
         ///     How many times each measurement is taken. Each one is a process of its own doing a single cold
@@ -331,7 +350,7 @@ namespace FlatFiles.IntegrationTest
             List<RunResult> results = [];
             foreach (var profile in profiles)
             {
-                foreach (var scenario in Scenarios)
+                foreach (var scenario in ScenariosFor( profile ))
                 {
                     // Each run gets a process of its own: it keeps the read cold, which is the case worth
                     // measuring, and it keeps peak working set meaningful, since that figure only counts up.
@@ -372,15 +391,15 @@ namespace FlatFiles.IntegrationTest
         /// <summary>
         ///     The same figures as Markdown, for the changelog entry a release carries: a table per format and
         ///     direction for the scenarios that go through a schema, and a second set for the ones that go
-        ///     through a type mapper. Separate tables because a mapped run is not a further step than the others
+        ///     through a type mapper, the two delimited selector scenarios among them. Separate tables because a mapped run is not a further step than the others
         ///     and its figures are not comparable with theirs - a row of it among them invites a comparison that
         ///     means nothing - and separate again by direction, because reading a file and writing one are
         ///     different questions and a table that answers both at once answers neither clearly.
         /// </summary>
         private static void ReportAsMarkdown( List<FileProfile> profiles, List<RunResult> results )
         {
-            var readSchema = results.FindAll( x => !WriteRun.IsWrite( x.Scenario ) && x.Scenario != IntegrationRun.Mapped );
-            var readMapped = results.FindAll( x => x.Scenario == IntegrationRun.Mapped );
+            var readSchema = results.FindAll( x => !WriteRun.IsWrite( x.Scenario ) && x.Scenario != IntegrationRun.Mapped && !IntegrationRun.IsSelected( x.Scenario ) );
+            var readMapped = results.FindAll( x => x.Scenario == IntegrationRun.Mapped || IntegrationRun.IsSelected( x.Scenario ) );
             var writeSchema = results.FindAll( x => WriteRun.IsWrite( x.Scenario ) && x.Scenario != WriteRun.Mapped );
             var writeMapped = results.FindAll( x => x.Scenario == WriteRun.Mapped );
 
@@ -388,8 +407,10 @@ namespace FlatFiles.IntegrationTest
             WriteMarkdownTable( "Fixed-length, read", profiles, readSchema, fixedLength: true, withScenario: true );
             WriteMarkdownTable( "Delimited, written", profiles, writeSchema, fixedLength: false, withScenario: true );
             WriteMarkdownTable( "Fixed-length, written", profiles, writeSchema, fixedLength: true, withScenario: true );
-            // One scenario apiece, so a column repeating its name on every row says nothing the heading has not.
-            WriteMarkdownTable( "Delimited, read through a type mapper", profiles, readMapped, fixedLength: false, withScenario: false );
+            // A delimited sample is read through a mapper three ways - straight, and through a selector given
+            // each kind of predicate - so those rows say which. A fixed-length one has the single scenario, and a
+            // column repeating its name on every row would say nothing the heading has not.
+            WriteMarkdownTable( "Delimited, read through a type mapper", profiles, readMapped, fixedLength: false, withScenario: true );
             WriteMarkdownTable( "Fixed-length, read through a type mapper", profiles, readMapped, fixedLength: true, withScenario: false );
             WriteMarkdownTable( "Delimited, written through a type mapper", profiles, writeMapped, fixedLength: false, withScenario: false );
             WriteMarkdownTable( "Fixed-length, written through a type mapper", profiles, writeMapped, fixedLength: true, withScenario: false );
@@ -455,6 +476,13 @@ namespace FlatFiles.IntegrationTest
             Console.WriteLine( "`read-parse` reads every column as text and asks for no value, `read-typed` gives each single-typed column" );
             Console.WriteLine( "its own type, and `read-values` is `read-typed` with `GetValues` called on every record. The difference" );
             Console.WriteLine( "between two of them is the cost of the step between." );
+            Console.WriteLine();
+            Console.WriteLine( "`read-select-values` and `read-select-text` are `read-mapper` again, through a delimited selector, and they" );
+            Console.WriteLine( "differ only in which kind of predicate the selector was given. A predicate handed the record's values makes the" );
+            Console.WriteLine( "reader split every record and copy each value out of its buffer before it can choose a mapping; one handed the" );
+            Console.WriteLine( "record's text costs neither and lets each record go straight onto its entity. The predicate itself does the" );
+            Console.WriteLine( "least a predicate can in both, so the gap between the two rows is the path rather than the question. They are" );
+            Console.WriteLine( "delimited only: a fixed-length sample is read through a selector in every scenario it already has." );
             Console.WriteLine();
             Console.WriteLine( "`write-text` and `write-typed` are the same pair the other way round: the records read out of the sample" );
             Console.WriteLine( "and written back, as text and with each single-typed column given its own type. The records are read into" );
@@ -654,6 +682,8 @@ namespace FlatFiles.IntegrationTest
             Console.WriteLine( "read-typed   - each single-typed column given its own type, no value asked for" );
             Console.WriteLine( "read-values  - read-typed, and GetValues called for every record" );
             Console.WriteLine( "read-mapper  - read onto entities through a type mapper, which is a different path entirely" );
+            Console.WriteLine( "read-select-values  - read-mapper through a delimited selector given the record's values (delimited only)" );
+            Console.WriteLine( "read-select-text    - the same selector given the record's text instead (delimited only)" );
             Console.WriteLine( "write-text   - every value written back as text, through a schema of string columns" );
             Console.WriteLine( "write-typed  - the same records written with each single-typed column given its own type" );
             Console.WriteLine( "write-mapper - entities written through a type mapper, the only scenario that reads a member" );

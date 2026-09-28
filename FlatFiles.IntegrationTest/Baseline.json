@@ -47,7 +47,7 @@
       "Profile": "Set1Sample1",
       "Scenario": "read-typed",
       "Records": 37031,
-      "BytesPerRecord": 5600.7,
+      "BytesPerRecord": 5600.6,
       "Written": ""
     },
     {
@@ -62,6 +62,20 @@
       "Scenario": "read-mapper",
       "Records": 37031,
       "BytesPerRecord": 192.5,
+      "Written": ""
+    },
+    {
+      "Profile": "Set1Sample1",
+      "Scenario": "read-select-values",
+      "Records": 37031,
+      "BytesPerRecord": 8911,
+      "Written": ""
+    },
+    {
+      "Profile": "Set1Sample1",
+      "Scenario": "read-select-text",
+      "Records": 37031,
+      "BytesPerRecord": 192.6,
       "Written": ""
     },
     {
@@ -115,6 +129,20 @@
     },
     {
       "Profile": "Set1Sample2",
+      "Scenario": "read-select-values",
+      "Records": 344352,
+      "BytesPerRecord": 2106.7,
+      "Written": ""
+    },
+    {
+      "Profile": "Set1Sample2",
+      "Scenario": "read-select-text",
+      "Records": 344352,
+      "BytesPerRecord": 192.5,
+      "Written": ""
+    },
+    {
+      "Profile": "Set1Sample2",
       "Scenario": "write-text",
       "Records": 344352,
       "BytesPerRecord": 72.1,
@@ -145,21 +173,35 @@
       "Profile": "Set1Sample3",
       "Scenario": "read-typed",
       "Records": 39337,
-      "BytesPerRecord": 2961.2,
+      "BytesPerRecord": 2961.3,
       "Written": ""
     },
     {
       "Profile": "Set1Sample3",
       "Scenario": "read-values",
       "Records": 39337,
-      "BytesPerRecord": 4553.2,
+      "BytesPerRecord": 4553.4,
       "Written": ""
     },
     {
       "Profile": "Set1Sample3",
       "Scenario": "read-mapper",
       "Records": 39337,
-      "BytesPerRecord": 173.7,
+      "BytesPerRecord": 173.9,
+      "Written": ""
+    },
+    {
+      "Profile": "Set1Sample3",
+      "Scenario": "read-select-values",
+      "Records": 39337,
+      "BytesPerRecord": 5304.6,
+      "Written": ""
+    },
+    {
+      "Profile": "Set1Sample3",
+      "Scenario": "read-select-text",
+      "Records": 39337,
+      "BytesPerRecord": 173.8,
       "Written": ""
     },
     {
@@ -187,42 +229,42 @@
       "Profile": "Set2Sample1",
       "Scenario": "read-parse",
       "Records": 22481,
-      "BytesPerRecord": 3608.8,
+      "BytesPerRecord": 3608.5,
       "Written": ""
     },
     {
       "Profile": "Set2Sample1",
       "Scenario": "read-typed",
       "Records": 22481,
-      "BytesPerRecord": 3447.3,
+      "BytesPerRecord": 3447,
       "Written": ""
     },
     {
       "Profile": "Set2Sample1",
       "Scenario": "read-values",
       "Records": 22481,
-      "BytesPerRecord": 4155.4,
+      "BytesPerRecord": 4155.3,
       "Written": ""
     },
     {
       "Profile": "Set2Sample1",
       "Scenario": "read-mapper",
       "Records": 22481,
-      "BytesPerRecord": 1757.2,
+      "BytesPerRecord": 1757.4,
       "Written": ""
     },
     {
       "Profile": "Set2Sample1",
       "Scenario": "write-text",
       "Records": 22481,
-      "BytesPerRecord": 87.1,
+      "BytesPerRecord": 87.2,
       "Written": "d59db1db8f887ef3493df35b59a51ce908f6d9c06146f4286400ac6acd6a9ab4"
     },
     {
       "Profile": "Set2Sample1",
       "Scenario": "write-typed",
       "Records": 22481,
-      "BytesPerRecord": 88,
+      "BytesPerRecord": 88.1,
       "Written": "533b55523a77b35bab0a7701a5425bde43246fa7e54656a998c5bdcafc05bfc8"
     },
     {
@@ -236,49 +278,49 @@
       "Profile": "Set2Sample2",
       "Scenario": "read-parse",
       "Records": 1790,
-      "BytesPerRecord": 11429.2,
+      "BytesPerRecord": 11426.5,
       "Written": ""
     },
     {
       "Profile": "Set2Sample2",
       "Scenario": "read-typed",
       "Records": 1790,
-      "BytesPerRecord": 10604.9,
+      "BytesPerRecord": 10605,
       "Written": ""
     },
     {
       "Profile": "Set2Sample2",
       "Scenario": "read-values",
       "Records": 1790,
-      "BytesPerRecord": 12506.9,
+      "BytesPerRecord": 12508.5,
       "Written": ""
     },
     {
       "Profile": "Set2Sample2",
       "Scenario": "read-mapper",
       "Records": 1790,
-      "BytesPerRecord": 7505.1,
+      "BytesPerRecord": 7501,
       "Written": ""
     },
     {
       "Profile": "Set2Sample2",
       "Scenario": "write-text",
       "Records": 1790,
-      "BytesPerRecord": 178.9,
+      "BytesPerRecord": 179,
       "Written": "1967588b4d6f46fab40908c07680d8f7e4fa8eb46e3f9f8287306bfb94770810"
     },
     {
       "Profile": "Set2Sample2",
       "Scenario": "write-typed",
       "Records": 1790,
-      "BytesPerRecord": 185.7,
+      "BytesPerRecord": 185.8,
       "Written": "083683d4c57abc95e2242aa93f3d088d14edef2973bc08c2a57afd55fdcb3944"
     },
     {
       "Profile": "Set2Sample2",
       "Scenario": "write-mapper",
       "Records": 1790,
-      "BytesPerRecord": 443.1,
+      "BytesPerRecord": 443.3,
       "Written": "669baf3098cb8afa4fed072fa08f1677de613728a835406b14d6b856dd8e280a"
     },
     {
@@ -292,7 +334,7 @@
       "Profile": "Set2Sample3",
       "Scenario": "read-typed",
       "Records": 18047,
-      "BytesPerRecord": 1539.1,
+      "BytesPerRecord": 1539.2,
       "Written": ""
     },
     {
@@ -306,14 +348,14 @@
       "Profile": "Set2Sample3",
       "Scenario": "read-mapper",
       "Records": 18047,
-      "BytesPerRecord": 719.5,
+      "BytesPerRecord": 719.4,
       "Written": ""
     },
     {
       "Profile": "Set2Sample3",
       "Scenario": "write-text",
       "Records": 18047,
-      "BytesPerRecord": 74.8,
+      "BytesPerRecord": 74.6,
       "Written": "cc5d0fd5704899c59f7b520ed98f0f61b6620d627a89491f75922d4c209609ec"
     },
     {

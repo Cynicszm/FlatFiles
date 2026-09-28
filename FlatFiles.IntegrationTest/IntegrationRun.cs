@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using FlatFiles.TypeMapping;
 
 namespace FlatFiles.IntegrationTest
 {
@@ -86,6 +87,22 @@ namespace FlatFiles.IntegrationTest
         public const string Values = "read-values";
 
         public const string Mapped = "read-mapper";
+
+        public const string SelectValues = "read-select-values";
+
+        public const string SelectText = "read-select-text";
+
+        /// <summary>
+        ///     Whether the scenario chooses a mapping per record through a delimited selector. These two only
+        ///     apply to a delimited sample: a fixed-length one is read through a selector in every scenario,
+        ///     because a file of several layouts cannot be partitioned without choosing one first.
+        /// </summary>
+        /// <param name="scenario">The scenario being run.</param>
+        /// <returns>True if the scenario reads through a delimited selector.</returns>
+        public static bool IsSelected( string scenario )
+        {
+            return scenario is SelectValues or SelectText;
+        }
 
         private static DelimitedReader Delimited( FileProfile profile, TextReader text, bool typed )
         {
@@ -225,6 +242,11 @@ namespace FlatFiles.IntegrationTest
                     (records, skipped) = ReadMapped( profile, text );
                     return;
                 }
+                if (IsSelected( scenario ))
+                {
+                    (records, skipped) = ReadSelected( profile, text, scenario == SelectText );
+                    return;
+                }
                 IReader reader = profile.IsFixedLength ? FixedLength( profile, text, typed ) : Delimited( profile, text, typed );
                 // A record the schema cannot take - one carrying a separator inside a field, or one no layout
                 // recognises - is counted and skipped, which is what a caller does with a file this size.
@@ -244,6 +266,56 @@ namespace FlatFiles.IntegrationTest
             }
             records = taken;
             skipped = refused;
+        }
+
+        /// <summary>
+        ///     One complete read onto entities through a delimited selector, choosing the mapping by the record's
+        ///     values or by its text.
+        /// </summary>
+        /// <remarks>
+        ///     The two differ only in which kind of predicate the selector was given, and the predicate itself is
+        ///     the least a predicate can do in both, so what separates them is the path the reader takes rather
+        ///     than anything the predicate costs. A predicate given the values makes the reader split every record
+        ///     and copy each value out of the buffer it was read in before it can choose; one given the text costs
+        ///     neither, and lets the reader take each record straight onto its entity.
+        ///     <para>
+        ///         The samples have one layout apiece, so both predicates match every record. That is not what a
+        ///         selector is for, and it is not what is being measured: these exist to hold the two paths still,
+        ///         because the difference between them is the whole of what the feature is worth and nothing else
+        ///         here would notice it changing.
+        ///     </para>
+        /// </remarks>
+        private static (long Taken, long Refused) ReadSelected( FileProfile profile, TextReader text, bool byText )
+        {
+            var options = new DelimitedOptions
+            {
+                Separator = profile.Separator,
+                RecordSeparator = profile.RecordSeparator,
+                IsFirstRecordSchema = true
+            };
+            var selector = new DelimitedTypeMapperSelector();
+            var mapper = MapperFactory.Create( profile );
+            if (byText)
+            {
+                selector.WhenText( record => !record.IsEmpty ).Use( mapper );
+            }
+            else
+            {
+                selector.When( values => values.Length != 0 ).Use( mapper );
+            }
+            var reader = selector.GetReader( text, options );
+            var taken = 0L;
+            var refused = 0L;
+            reader.RecordError += ( _, e ) =>
+            {
+                ++refused;
+                e.IsHandled = true;
+            };
+            while (reader.Read())
+            {
+                ++taken;
+            }
+            return (taken, refused);
         }
 
         /// <summary>
