@@ -1,15 +1,38 @@
-﻿## 8.7.0 (planned)
-**Not released, and not started.** What is written here is the order the remaining work will be done in, kept with the releases so that the reasoning sits beside what it produced. Nothing below breaks anything, so none of it is waiting for a major version.
+﻿## 8.7.0 (unreleased)
+**Not released.** Being built. What is written up here has landed on master; what is under **Next** has not. Nothing in this release breaks anything.
+
+**Both readers can be told what a record that does not fit its schema means, in the same two words.**
+
+```csharp
+var options = new DelimitedOptions
+{
+    ShortRecordHandling = ShortRecordHandling.Pad,
+    LongRecordHandling = LongRecordHandling.Refuse
+};
+```
+
+A delimited record is short when it has fewer values than the schema has columns to fill and long when it has more; a fixed-length one is short when it ends before the last window does and long when characters follow that window. Both settings are on both option classes, and both default to what each reader already did, so nothing changes for anyone who does not ask: a short record is refused, and what a long one carries beyond the schema is not read.
+
+**The setting worth knowing about is `LongRecordHandling` on a delimited file**, because until now there was no way to say it and discarding is silent. A record carrying a separator inside an unquoted value has one value too many, so every value after that point is read one column to the left - and whether anything notices depends on whether a shifted value happens to reach a column that will not parse it, which is a matter of where the separator fell rather than of the record being wrong. `Refuse` reports the record instead, as a `RecordProcessingException` with the same record context a short record gets, so a `RecordError` handler can treat both alike. It is not the default because a file whose records carry trailing content that was always ignored would otherwise stop reading.
+
+**A short delimited record read against a schema with an ignored column used to throw `IndexOutOfRangeException`.** The check asked whether the record had as many values as the schema had columns that yield one, but an ignored column takes a value and throws it away, so the number demanded was short by however many ignored columns there were and the parsing loop then walked off the end of the record. It was the one record error that arrived as something other than a `FlatFileException`, which meant no handler could catch it and no `RecordError` could skip it. It is now refused like any other short record. Nothing that read before reads differently: a record that got through the old check and survived the loop already had the values the new one asks for.
+
+**`FixedLengthOptions.LongRecordHandling` is the same setting as `IsLongRecordRejected`**, spelled the way the delimited reader spells it so that both readers can be configured alike. They always agree and setting either sets the other, so existing code and existing tests keep working untouched. `IsRaggedRight` still answers both questions by itself and still overrides both.
+
+**`ShortRecordHandling.Pad` is not `IsRaggedRight`**, and the difference is why it is worth having on a fixed-length file that already had one way to read short records. Both read a window the record ends inside as the characters that are there and a window it never reaches as empty, which the column's null handling turns into null. Ragged right goes further and lets the last column run to the end of the record, whatever its declared width. `Pad` leaves the last column the width the schema gives it, which is what a file of short records with a fixed final column needs.
+
+**Padding is done where the record is partitioned**, before anything sees it, so the values a `RecordRead` handler is given and the values the schema goes on to parse are the same ones. Nothing is allocated for it on a file that is not padded, and the default path costs the same two comparisons it always did.
+
+`IOptions` carries both settings as default implementations, so anything implementing it outside this library keeps compiling and keeps its behaviour.
+
 
 ### Next
 
 In the order they will be built. None of these breaks anything, so none of them is waiting for a major version.
 
-- **Header-driven column matching against a supplied schema, and what to do with a record that does not fit it.** The header row is read and thrown away: never checked against the schema, never used to order it. A file whose columns have been reordered since the schema was written is read straight into the wrong properties, silently, because position is all the reader has. Matching the header by name, and saying what happens when it disagrees - reorder, refuse, or ignore - is the largest gap left against CsvHelper, which maps by name and is the one competitor this repository benchmarks against. Reading by position stays the default, since a file with no header has nothing else to go on.
+- **Header-driven column matching against a supplied schema.** The header row is read and thrown away: never checked against the schema, never used to order it. A file whose columns have been reordered since the schema was written is read straight into the wrong properties, silently, because position is all the reader has. Matching the header by name, and saying what happens when it disagrees - reorder, refuse, or ignore - is the largest gap left against CsvHelper, which maps by name and is the one competitor this repository benchmarks against. Reading by position stays the default, since a file with no header has nothing else to go on.
 
-  The same feature settles what a record of the wrong length means, because today the two ends disagree and neither is configurable. A delimited record with **too few** fields is refused; one with **too many** is accepted, the first however many the schema declares kept and the rest discarded. So a record carrying a separator inside an unquoted field is read with every later value one position to the left, and nothing says so - whether anything notices depends on whether a shifted value reaches a column that will not parse it, which is a matter of where the separator fell rather than of the record being wrong. The fixed-length reader already has `IsRaggedRight` and `IsLongRecordRejected` for the same question and answers it differently again.
-
-  What is wanted is one way of saying it on both readers: refuse a short record or pad it, refuse a long one or discard the surplus, with the current behaviour as the default so nothing changes for anyone who does not ask. Whatever is chosen has to be visible - a record silently read one column out of step is the worst of the available outcomes, and is what happens now.
+  Auto-mapping already matches header names to members, but it builds the schema from the header, so every column arrives as a bare `StringColumn`. Today you get a schema you control **or** a column order you do not control, never both, and this is the request to have both. It is a delimited feature: a fixed-length header cannot be partitioned without the widths in the file's order, which is the thing the header would be telling you, so the most that end could do is check the names it already expects.
 
 - **A delimited selector should be able to match on the record's text.** `DelimitedTypeMapperSelector` and `DelimitedSchemaSelector` are given each record's values to choose a schema by, so the reader has to parse a record into an array of values before it can decide what the record is - which is the one thing that stops a selected delimited mapping being read straight onto an entity, as a fixed-length one now is. A predicate over the record's text, beside the one over its values, would leave the choice to the caller: match on text and keep the faster path, or match on values and pay for them.
 

@@ -71,6 +71,53 @@ namespace FlatFiles
         public bool IsLongRecordRejected { get; set; }
 
         /// <summary>
+        ///     Gets or sets what a record that ends before the last window does is treated as.
+        /// </summary>
+        /// <remarks>
+        ///     <see cref="FlatFiles.ShortRecordHandling.Refuse" /> by default, which is what this reader has always
+        ///     done. Setting it to <see cref="FlatFiles.ShortRecordHandling.Pad" /> reads a window the record ends
+        ///     inside as the characters that are there and a window it never reaches as empty.
+        ///     <see cref="IsRaggedRight" /> pads as well, and goes further: it also lets the last column run to the
+        ///     end of the record however long it is. Use this where the records are short but the last column still
+        ///     has the width the schema gives it.
+        /// </remarks>
+        public ShortRecordHandling ShortRecordHandling
+        {
+            get;
+            set
+            {
+                if (!Enum.IsDefined( value ))
+                {
+                    throw new ArgumentException( Resources.InvalidShortRecordHandling, nameof( value ) );
+                }
+                field = value;
+            }
+        } = ShortRecordHandling.Refuse;
+
+        /// <summary>
+        ///     Gets or sets what a record carrying characters after its last window is treated as.
+        /// </summary>
+        /// <remarks>
+        ///     This is the same setting as <see cref="IsLongRecordRejected" />, spelled the way the delimited reader
+        ///     spells it so that both readers can be configured alike; the two always agree, and setting either sets
+        ///     the other. As with <see cref="IsLongRecordRejected" />, it has no effect when
+        ///     <see cref="IsRaggedRight" /> is set, because the last column then takes whatever follows the other
+        ///     windows and no record is too long.
+        /// </remarks>
+        public LongRecordHandling LongRecordHandling
+        {
+            get => IsLongRecordRejected ? LongRecordHandling.Refuse : LongRecordHandling.Discard;
+            set
+            {
+                if (!Enum.IsDefined( value ))
+                {
+                    throw new ArgumentException( Resources.InvalidLongRecordHandling, nameof( value ) );
+                }
+                IsLongRecordRejected = value == LongRecordHandling.Refuse;
+            }
+        }
+
+        /// <summary>
         ///     Gets or sets whether the file is ragged right: every column but the last has a fixed width, and the last
         ///     runs from its offset to the end of the record, so records differ in length.
         /// </summary>

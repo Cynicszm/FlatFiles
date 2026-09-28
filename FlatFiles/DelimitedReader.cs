@@ -421,15 +421,27 @@ namespace FlatFiles
                 }
                 currentSchema = DelimitedSchema.BuildDynamicSchema( parser.Options, rawRecord.Count );
             }
+            var wanted = WantedValueCount( currentSchema );
+            if (rawRecord.Count < wanted && parser.Options.ShortRecordHandling == ShortRecordHandling.Pad)
+            {
+                // Padded once the schema is known, since the schema is what says how long the record should be,
+                // and before the record context is built, so that what a handler is given and what the schema
+                // goes on to parse are the same values. A selector has already chosen by this point, on the
+                // values the record actually carried.
+                parser.PadTo( wanted );
+                rawRecord = parser.Values;
+                rawValues = Pad( rawValues, wanted );
+            }
             var currentContext = NewRecordContext( currentSchema, record, rawValues );
             recordContext = currentContext;
             if (rawValues is not null && IsSkipped( currentContext, rawValues ))
             {
                 return null;
             }
-            if (HasWrongNumberOfColumns( currentSchema, rawRecord.Count ))
+            var lengthError = LengthError( parser.Options, rawRecord.Count, wanted );
+            if (lengthError is not null)
             {
-                ProcessError( new RecordProcessingException( currentContext, Resources.DelimitedRecordWrongNumberOfColumns ) );
+                ProcessError( new RecordProcessingException( currentContext, lengthError ) );
                 return null;
             }
             recordSchema = currentSchema;
@@ -551,10 +563,61 @@ namespace FlatFiles
             return currentContext;
         }
 
-        private static bool HasWrongNumberOfColumns( DelimitedSchema currentSchema, int valueCount )
+        /// <summary>
+        ///     How many values the record has to carry for the schema to read it. Every column takes one except a
+        ///     metadata column, which is filled from the record's context rather than from the record; an ignored
+        ///     column takes one and throws it away.
+        /// </summary>
+        /// <param name="currentSchema">The schema the record is being read against.</param>
+        /// <returns>The number of values wanted.</returns>
+        private static int WantedValueCount( DelimitedSchema currentSchema )
         {
             var columnDefinitions = currentSchema.ColumnDefinitions;
-            return valueCount + columnDefinitions.MetadataCount < columnDefinitions.PhysicalCount;
+            return columnDefinitions.Count - columnDefinitions.MetadataCount;
+        }
+
+        /// <summary>
+        ///     What is wrong with the length of the record, or null if nothing is. A record too short to fill the
+        ///     schema is always refused; one carrying more than the schema asks for is refused only where the
+        ///     options say so, and otherwise has its surplus discarded.
+        /// </summary>
+        /// <param name="options">The options the reader was given.</param>
+        /// <param name="valueCount">How many values the record carries.</param>
+        /// <param name="wanted">How many the schema wants.</param>
+        /// <returns>The error to report the record with, or null to read it.</returns>
+        private static string? LengthError( DelimitedOptions options, int valueCount, int wanted )
+        {
+            if (valueCount < wanted)
+            {
+                return Resources.DelimitedRecordWrongNumberOfColumns;
+            }
+            if (valueCount > wanted && options.LongRecordHandling == LongRecordHandling.Refuse)
+            {
+                return Resources.DelimitedRecordTooManyColumns;
+            }
+            return null;
+        }
+
+        /// <summary>
+        ///     Gives an array of values that was copied out before the record was padded the same empty values the
+        ///     record itself was given.
+        /// </summary>
+        /// <param name="rawValues">The values copied out of the record, or null if none were.</param>
+        /// <param name="wanted">The number of values the record should have.</param>
+        /// <returns>The padded values.</returns>
+        private static string[]? Pad( string[]? rawValues, int wanted )
+        {
+            if (rawValues is null)
+            {
+                return null;
+            }
+            var padded = new string[wanted];
+            rawValues.CopyTo( padded, 0 );
+            for (var index = rawValues.Length; index != wanted; ++index)
+            {
+                padded[index] = string.Empty;
+            }
+            return padded;
         }
 
         private bool Assemble( DelimitedRecordContext currentContext, DelimitedSchema schema, RawRecord rawRecord )

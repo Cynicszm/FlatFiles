@@ -556,9 +556,14 @@ namespace FlatFiles
         /// </summary>
         private bool PartitionRecord( FixedLengthSchema currentSchema, string record )
         {
-            var lengthError = options.IsRaggedRight ? null
-                : record.Length < currentSchema.TotalWidth ? Resources.FixedLengthRecordTooShort
-                : options.IsLongRecordRejected && record.Length > currentSchema.TotalWidth ? Resources.FixedLengthRecordTooLong
+            // A ragged-right file answers both questions by itself: the last column runs to the end of the record,
+            // so no record is too long, and one that ends earlier is read as far as it goes.
+            var isPadded = options.IsRaggedRight || options.ShortRecordHandling == ShortRecordHandling.Pad;
+            var isLongRefused = !options.IsRaggedRight && options.LongRecordHandling == LongRecordHandling.Refuse;
+            var isShort = record.Length < currentSchema.TotalWidth;
+            var isLong = record.Length > currentSchema.TotalWidth;
+            var lengthError = isShort && !isPadded ? Resources.FixedLengthRecordTooShort
+                : isLong && isLongRefused ? Resources.FixedLengthRecordTooLong
                 : null;
             if (lengthError is not null)
             {

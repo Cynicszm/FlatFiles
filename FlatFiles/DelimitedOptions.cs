@@ -132,6 +132,53 @@ namespace FlatFiles
         public bool IsBlankRecordSkipped { get; set; }
 
         /// <summary>
+        ///     Gets or sets what a record carrying fewer values than the schema has columns to fill is treated as.
+        /// </summary>
+        /// <remarks>
+        ///     <see cref="FlatFiles.ShortRecordHandling.Refuse" /> by default, which is what this reader has always
+        ///     done. Setting it to <see cref="FlatFiles.ShortRecordHandling.Pad" /> reads the columns the record does
+        ///     not reach as empty, which suits a file whose trailing columns are simply left off when they have no
+        ///     value.
+        /// </remarks>
+        public ShortRecordHandling ShortRecordHandling
+        {
+            get;
+            set
+            {
+                if (!Enum.IsDefined( value ))
+                {
+                    throw new ArgumentException( Resources.InvalidShortRecordHandling, nameof( value ) );
+                }
+                field = value;
+            }
+        } = ShortRecordHandling.Refuse;
+
+        /// <summary>
+        ///     Gets or sets what a record carrying more values than the schema has columns to put them in is treated
+        ///     as.
+        /// </summary>
+        /// <remarks>
+        ///     <see cref="FlatFiles.LongRecordHandling.Discard" /> by default, which is what this reader has always
+        ///     done: the first however many values the schema declares are kept and the rest are dropped, so a record
+        ///     carrying a separator inside an unquoted value is read with every later value one column to the left
+        ///     and nothing says so. Setting it to <see cref="FlatFiles.LongRecordHandling.Refuse" /> reports the
+        ///     record instead. It defaults to discarding because a file whose records carry trailing content that was
+        ///     always ignored would otherwise stop reading.
+        /// </remarks>
+        public LongRecordHandling LongRecordHandling
+        {
+            get;
+            set
+            {
+                if (!Enum.IsDefined( value ))
+                {
+                    throw new ArgumentException( Resources.InvalidLongRecordHandling, nameof( value ) );
+                }
+                field = value;
+            }
+        } = LongRecordHandling.Discard;
+
+        /// <summary>
         ///     Duplicates the options.
         /// </summary>
         /// <returns>The new options.</returns>

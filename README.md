@@ -28,6 +28,7 @@ If you are working with data classes, defining schemas is even easier. You can u
     * [Creating your own columns](#creating-your-own-columns)
 * [Delimited Files](#delimited-files)
 * [Fixed Length Files](#fixed-length-files)
+* [Records that do not fit the schema](#records-that-do-not-fit-the-schema)
 * [Character Encoding](#character-encoding)
 * [Handling Nulls](#handling-nulls)
     * [Default Values](#default-values)
@@ -315,6 +316,10 @@ When working directly with the `DelimitedReader` class, the `IsFirstRecordSchema
 
 When working directly with the `DelimitedWriter` class, setting `IsFirstRecordSchema` to `true` option causes a header to be written to the file upon writing the first record.
 
+A record with more or fewer values than the schema declares is governed by `ShortRecordHandling` and
+`LongRecordHandling`, described under [Records that do not fit the schema](#records-that-do-not-fit-the-schema)
+below. The second of those is worth reading before you rely on the default.
+
 ## Fixed Length Files
 If you have a file with fixed length columns, you will want to use the `FixedLengthTypeMapper` class. Internally, the mapper uses the `FixedLengthReader` and `FixedLengthWriter` classes, both of which work in terms of raw `object` arrays. In effect, all the mapper does is map the values in the array to the properties in your data objects. These classes read data from a `TextReader`, such as `StreamReader` or `StringReader`, and write data to a `TextWriter`, such as `StreamWriter` or `StringWriter`. Internally, the mapper will build a `FixedLengthSchema` based on the property/column configuration; this is where you customise the schema to match your file format. For more global settings, there is also a `FixedLengthOptions` object that allows you to customise the read/write behaviour to suit your needs.
 
@@ -326,12 +331,49 @@ By default, FlatFiles assumes there is a separator string/character between each
 
 If the `FixedLengthOptions`'s `IsFirstRecordHeader` property is set to `true`, the first record in the file will be skipped when reading. Unlike the `DelimitedReader`, you must *always provide a schema for fixed-length files*, since the width of the columns cannot be determined from the file format. When writing, a header will be written to the file upon writing the first record.
 
-By default a record shorter than the total width of the schema's windows raises a `RecordProcessingException`, and a longer one is read from its declared offsets with the surplus ignored. Two options change that. `IsLongRecordRejected` raises the same exception for a record longer than the schema, so a layout declared too narrow is reported rather than silently misread. `IsRaggedRight` reads a ragged-right file, where every column but the last has a fixed width and the last runs from its offset to the end of the line, however long or short: the last column takes whatever follows the other windows, a record that ends before the last column is read as far as it goes, with a window it ends inside taking the characters that are there and a window it never reaches parsing as null. `IsLongRecordRejected` has no effect alongside it, since no ragged-right record is too long. When writing with `IsRaggedRight`, the last column is written as formatted, neither padded nor truncated to its window, so a file read ragged and written ragged keeps its shape.
+`IsRaggedRight` reads a ragged-right file, where every column but the last has a fixed width and the last runs from its offset to the end of the line, however long or short: the last column takes whatever follows the other windows, a record that ends before the last column is read as far as it goes, with a window it ends inside taking the characters that are there and a window it never reaches parsing as null. When writing with `IsRaggedRight`, the last column is written as formatted, neither padded nor truncated to its window, so a file read ragged and written ragged keeps its shape.
 
 ```csharp
 var options = new FixedLengthOptions { IsRaggedRight = true };
 var reader = new FixedLengthReader(new StreamReader(path), schema, options);
 ```
+
+Anything else about a record that does not fit its schema is said with `ShortRecordHandling` and
+`LongRecordHandling`, described under [Records that do not fit the schema](#records-that-do-not-fit-the-schema)
+below, which the delimited reader has too.
+
+## Records that do not fit the schema
+Both readers can be told what a record carrying more or less than the schema asks for means, in the same two
+words. A delimited record is short when it has fewer values than the schema has columns to fill and long when it
+has more; a fixed-length one is short when it ends before the last window does and long when characters follow
+that window.
+
+```csharp
+var options = new DelimitedOptions
+{
+    ShortRecordHandling = ShortRecordHandling.Pad,
+    LongRecordHandling = LongRecordHandling.Refuse
+};
+```
+
+`ShortRecordHandling` is `Refuse` by default: the record is reported as a `RecordProcessingException` and not
+returned, so a `RecordError` handler can skip it and carry on. `Pad` reads the columns the record does not reach
+as empty, which their null handling turns into null - which suits a file whose trailing columns are simply left
+off when they have no value.
+
+`LongRecordHandling` is `Discard` by default, which is what both readers have always done: what the record
+carries beyond the schema is not read. **This is the setting worth knowing about**, because discarding is
+silent. A delimited record carrying a separator inside an unquoted value has one value too many, so every value
+after that point is read one column to the left, and whether anything notices depends on whether a shifted value
+happens to reach a column that will not parse it. `Refuse` reports the record instead, with the same record
+context a short record gets, so both can be handled the same way. It is not the default because a file whose
+records carry trailing content that was always ignored would otherwise stop reading.
+
+On `FixedLengthOptions`, `LongRecordHandling` is the same setting as `IsLongRecordRejected` spelled the way the
+delimited reader spells it; the two always agree, and setting either sets the other. `IsRaggedRight` answers both
+questions by itself and overrides both: no ragged-right record is too long, and one that ends early is read as
+far as it goes. Where the records are short but the last column still has the width the schema gives it, use
+`ShortRecordHandling.Pad` rather than `IsRaggedRight`.
 
 ## Character Encoding
 FlatFiles works in characters rather than bytes. You can hand a reader a `TextReader` you opened, in which case the character encoding is decided by the `StreamReader` you open, before any FlatFiles class is involved, and the same schema and options work with any encoding.

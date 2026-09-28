@@ -105,6 +105,26 @@ namespace FlatFiles
         /// </summary>
         public RawRecord Values => new( reader.Span, escaped.WrittenSpan, valueRanges.AsSpan( 0, valueCount ) );
 
+        /// <summary>
+        ///     Gives the record last read empty values until it has the given number, for a reader told to pad a
+        ///     short record. Padding here rather than where the values are read keeps the parsing loops unaware of
+        ///     it: by the time a schema sees the record it is the length the schema asked for.
+        /// </summary>
+        /// <param name="count">The number of values the record should have.</param>
+        public void PadTo( int count )
+        {
+            if (count > valueRanges.Length)
+            {
+                Array.Resize( ref valueRanges, count );
+            }
+            while (valueCount != count)
+            {
+                // An empty slice of the record, which every column reads as an empty value.
+                valueRanges[valueCount] = new ValueRange( 0, 0 );
+                ++valueCount;
+            }
+        }
+
         public string ReadRecord()
         {
             Release();
