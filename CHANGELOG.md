@@ -7,28 +7,7 @@
 
   It waits for a major version because removing a public member is a binary break, and `Conventions.md` answers that with a major version rather than a suppression. Keeping it obsolete for a release first was the point: a warning at every call site is a cycle's notice, which deleting it in a minor would not have been.
 
-**Nothing else is waiting on a major version.** This entry exists to hold that one removal rather than to collect a list, and it should not become somewhere to put work that does not need to break anything - that belongs in the next minor. If nothing joins it, a release whose whole content is one deleted property is still worth cutting, because the obsolete member is a promise with a version number on it.
-
-### The 2026-09-17 review
-
-**It is exhausted.** Everything it raised has been built or accounted for, the last three items in 8.7.0. What follows is kept here because the newest planned heading is where this repository records what was decided and left, rather than only what was released.
-
-**Considered and already covered.** Seven ideas came out of that review and turned out to need no work. They are recorded so that nobody spends an afternoon rediscovering it.
-
-Already supported when the review looked:
-
-- multi-character separators - `DelimitedOptions.Separator` is a string, not a character;
-- quoting behaviour - `QuoteBehaviour` quotes only what needs it, or everything, or nothing;
-- whitespace preservation - `DelimitedOptions.PreserveWhiteSpace`, alongside `Trim` on the string and character array columns;
-- files holding more than one schema - the schema selectors and injectors, on both readers and writers;
-- `IDataReader` - `FlatFileDataReader`, with `DataTable` support beside it.
-
-Shipped since the review, by the releases named:
-
-- cancellation tokens on every asynchronous read and write - 7.2.0;
-- ragged-right fixed-length files - 7.3.0.
-
-Nothing that review raised was declined outright.
+**Every planned feature has been built, and this removal is all that is outstanding** - outstanding only because it is the one thing that breaks something. This entry should not become somewhere to put work that does not need to break anything; that belongs in the next minor, under a planned heading of its own. A release whose whole content is one deleted property is still worth cutting, because the obsolete member is a promise with a version number on it.
 
 
 ## 8.7.0 (2026-09-28)
