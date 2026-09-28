@@ -56,22 +56,6 @@ namespace FlatFiles
         bool IOptions.IsFirstRecordSchema => IsFirstRecordHeader;
 
         /// <summary>
-        ///     Gets or sets whether a record longer than the total width of the schema's windows is treated as an
-        ///     error, as a record shorter than it already is.
-        /// </summary>
-        /// <remarks>
-        ///     This is the same setting as <see cref="LongRecordHandling" />, which says the same thing in the words
-        ///     both readers now use, and the two always agree. It is kept only so that code written against it keeps
-        ///     working, and it goes in the next major version.
-        /// </remarks>
-        [Obsolete( "Use LongRecordHandling instead. This property says the same thing and will be removed in 9.0.0.", false )]
-        public bool IsLongRecordRejected
-        {
-            get => LongRecordHandling == LongRecordHandling.Refuse;
-            set => LongRecordHandling = value ? LongRecordHandling.Refuse : LongRecordHandling.Discard;
-        }
-
-        /// <summary>
         ///     Gets or sets what a record that ends before the last window does is treated as.
         /// </summary>
         /// <remarks>
