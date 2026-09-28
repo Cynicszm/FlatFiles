@@ -235,7 +235,7 @@ namespace FlatFiles.TypeMapping
                 var mapping = mappings[index];
                 if (mapping.Member is not null)
                 {
-                    EmitMemberWrite( methodGenerator, mapping.Member, mapping.LogicalIndex );
+                    EmitMemberWrite( methodGenerator, mapping.Member, mapping.LogicalIndex, entityType );
                 }
                 else if (mapping.Writer is not null)
                 {
@@ -250,11 +250,33 @@ namespace FlatFiles.TypeMapping
             return writeMethodInfo.CreateDelegate<Action<IRecordContext, TEntity, object?[]>>( instance );
         }
 
-        private static void EmitMemberWrite( ILGenerator generator, IMemberAccessor member, int logicalIndex )
+        /// <summary>
+        ///     Emits the load of one member of the entity into its slot of the values array.
+        /// </summary>
+        /// <param name="generator">The method being built.</param>
+        /// <param name="member">The member to read off the entity.</param>
+        /// <param name="logicalIndex">The slot of the values array the member belongs in.</param>
+        /// <param name="entityType">The type being written, which decides how the entity is loaded.</param>
+        /// <remarks>
+        ///     An entity that is a value type is loaded by address rather than by value, and its properties are
+        ///     called rather than called virtually. A value type on the stack is not an object reference, so
+        ///     <see cref="OpCodes.Callvirt" /> against one is not valid IL: it builds, and the runtime fails when
+        ///     it comes to compile the method, with an execution engine error that names no member and takes the
+        ///     process with it. A value type is also sealed, so there is nothing for the virtual call to resolve.
+        /// </remarks>
+        private static void EmitMemberWrite( ILGenerator generator, IMemberAccessor member, int logicalIndex, Type entityType )
         {
+            var isValueType = entityType.GetTypeInfo().IsValueType;
             generator.Emit( OpCodes.Ldarg_3 );
             generator.Emit( OpCodes.Ldc_I4, logicalIndex );
-            generator.Emit( OpCodes.Ldarg_2 );
+            if (isValueType)
+            {
+                generator.Emit( OpCodes.Ldarga_S, (byte) 2 );
+            }
+            else
+            {
+                generator.Emit( OpCodes.Ldarg_2 );
+            }
 
             switch (member.MemberInfo)
             {
@@ -273,7 +295,7 @@ namespace FlatFiles.TypeMapping
                         var message = string.Format( CultureInfo.CurrentCulture, Resources.WriteOnlyProperty, propertyInfo.Name );
                         throw new FlatFileException( message );
                     }
-                    generator.Emit( OpCodes.Callvirt, getter );
+                    generator.Emit( isValueType ? OpCodes.Call : OpCodes.Callvirt, getter );
                     var propertyType = propertyInfo.PropertyType;
                     if (!propertyType.GetTypeInfo().IsClass)
                     {

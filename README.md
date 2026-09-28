@@ -142,6 +142,12 @@ The rules are worth knowing before you rely on them:
 * A member the constructor takes is not assigned again afterwards. One it does not take is assigned as usual, so you can mix a constructor with settable properties.
 * If nothing matches — a parameter named something no mapped member is called, or one whose type will not take what the member parses to — you get a `FlatFileException` naming the class, the constructors it tried and the members that were mapped.
 
+**If your entity is a `struct` or a `record struct`**, it can be written whichever way it is built, but it can only
+be *read* where its constructor takes every mapped member — which is what a `readonly record struct` does, and what
+the rules above already arrange. A value type is handed to the deserialiser by value, so anything assigned to it
+after it is built is assigned to a copy and lost. FlatFiles raises a `FlatFileException` naming the type rather
+than handing you empty entities.
+
 One thing to be aware of if you validate in a constructor: when it rejects a record, its own exception reaches you. It is not wrapped in a `RecordProcessingException`, so a [`RecordError`](#error-handling) handler will not skip the record for you. That matches how FlatFiles treats any failure while building an entity, including a `CustomMapping` reader that throws.
 
 ### Attribute mapping

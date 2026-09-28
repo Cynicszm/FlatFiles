@@ -1,7 +1,9 @@
 ﻿using System;
 using FlatFiles.CodeGeneration;
+using System.Globalization;
 using System.Linq;
 using System.Reflection;
+using FlatFiles.Properties;
 
 namespace FlatFiles.TypeMapping
 {
@@ -41,8 +43,9 @@ namespace FlatFiles.TypeMapping
             var build = Builder( supplied, constructorMapping );
 
             var memberMappings = GetReaderMemberMappings( mappings, constructorMapping );
-            var deserialiser = generator.GetReader<TEntity>( memberMappings );
             var nestedMappers = GetNestedMappers( mappings );
+            RefuseAValueTypeThatHasToBeFilled( memberMappings, nestedMappers );
+            var deserialiser = generator.GetReader<TEntity>( memberMappings );
             if (nestedMappers.Length != 0)
             {
                 cachedReader = ( recordContext, values ) =>
@@ -68,6 +71,38 @@ namespace FlatFiles.TypeMapping
                 };
             }
             return cachedReader;
+        }
+
+        /// <summary>
+        ///     Refuses to build a reader that would have to set something on a value-type entity after building
+        ///     it, because it cannot work: the entity is handed to the deserialiser by value, so everything set on
+        ///     it is set on a copy that is then thrown away.
+        /// </summary>
+        /// <param name="memberMappings">The members the deserialiser would set.</param>
+        /// <param name="nestedMappers">The nested mappings whose results would be set on the entity.</param>
+        /// <remarks>
+        ///     A value type whose every mapped member comes from its constructor is fine and is not refused: the
+        ///     entity is built complete and nothing is set afterwards, which is what a <c>readonly record
+        ///     struct</c> does. Writing a value type is fine either way, since writing only reads members off it.
+        ///     <para>
+        ///         This is raised where the reader is built rather than per record, and it replaces what used to
+        ///         happen, which was that the emitted deserialiser called a property on a value on the stack -
+        ///         not valid IL - and the runtime took the process down with an execution engine error naming no
+        ///         member.
+        ///     </para>
+        /// </remarks>
+        private static void RefuseAValueTypeThatHasToBeFilled( IMemberMapping[] memberMappings, IMapper[] nestedMappers )
+        {
+            if (!typeof( TEntity ).GetTypeInfo().IsValueType)
+            {
+                return;
+            }
+            if (memberMappings.Length == 0 && nestedMappers.Length == 0)
+            {
+                return;
+            }
+            var message = string.Format( CultureInfo.CurrentCulture, Resources.ValueTypeEntityCannotBeFilled, typeof( TEntity ).FullName );
+            throw new FlatFileException( message );
         }
 
         /// <summary>
