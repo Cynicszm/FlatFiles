@@ -1,6 +1,16 @@
 ﻿## 9.1.0 (unreleased)
 **Not released.** Being built. What is written up here has landed on master. Nothing in this release breaks anything.
 
+**A hooked column no longer costs the rest of the mapping its fast path.** A column carrying `OnParsing`, `OnParsed`, `OnFormatting` or `OnFormatted` has to see its values as strings or objects, so it cannot have a typed accessor. Until now the mapping needed one for every column or none, so **a single hook on a single column put every other column back to being parsed into an array of objects** - on a wide mapping, most of what a record cost.
+
+Each such column now falls back on its own. It is read through the ordinary object path exactly as it was, hooks included and in the same order; every column beside it keeps the accessor it had.
+
+On a ten-column delimited read, one hooked column: **443 bytes a record before, 228 after**. Two hooked: 515 against 323. Five: 731 against 611. With every column hooked there is nothing to save and nothing is lost - 1,090 against 1,091.
+
+**The fallback assigns through a delegate rather than by reflection**, which is the difference between this being worth doing and not. A first attempt used the member accessor, whose `SetValue` is `PropertyInfo.SetValue`; that allocated less but made a heavily hooked mapping slower than the array it replaced, because the array path assigns through generated code. The member's own setter is turned into a delegate once, as the typed accessors do, so the only cost over one of those is the box the column's value arrives in.
+
+Where dynamic code is unavailable and nothing has registered the member, the old answer stands and the mapping keeps using the array, since there is no delegate to be had and reflection would be the worse trade.
+
 **A parsing hook can now read a value where it lies rather than as a string.**
 
 ```csharp
@@ -10,7 +20,7 @@ mapper.Property( x => x.Amount, new Window( 9 ) )
 
 `OnParsingSpan` sits beside `OnParsing` on every property mapping and on `ColumnDefinition`. It is handed the value where it sits in the record and a buffer to write its answer into, and returns how many characters it wrote - or `SpanParsingHooks.Unchanged` to have the value parsed exactly as it lies, which copies nothing at all.
 
-**The reason to have it is not only that it allocates nothing.** `OnParsing` deals in strings, so a column carrying one cannot be read straight onto an entity: the mapping falls back to parsing every record into an array of objects. One hook on one column does that to the whole mapping. A hook of the new shape does not, so the mapping keeps the path that 8.1.0 through 8.5.0 were spent building.
+**The reason to have it is not only that it allocates nothing.** `OnParsing` deals in strings, so a column carrying one cannot be read straight onto an entity: its value is parsed into an object first. That used to cost the whole mapping, and as of the change above it costs only that column - this hook costs it nothing at all, since the column keeps a typed setter and the value never becomes an object on the way.
 
 **Measured, that turns out to matter more than the strings.** On a fixed-length read of 20,000 records with ten packed decimal columns, tiered compilation off, checksummed so that the arms are known to produce the same values:
 

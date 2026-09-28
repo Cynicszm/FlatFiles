@@ -209,9 +209,23 @@ namespace FlatFiles.TypeMapping
                 return null;
             }
             var columnType = GetTypedColumnType( definition );
-            if (columnType is null || !definition.SupportsTypedParse)
+            if (columnType is null)
             {
                 return null;
+            }
+            if (!definition.SupportsTypedParse)
+            {
+                // This column has to see its values as strings or objects - a parsing hook, or a Parse of its
+                // own. It pays for that; the rest of the mapping does not have to pay with it. Where the member
+                // cannot be assigned through a delegate the old answer stands, since a reflective set per value
+                // would cost the mapping more than the array it is replacing.
+                if (!DynamicCode.IsSupported)
+                {
+                    return null;
+                }
+                var boxedAssigner = assign.CreateDelegate( typeof( Action<,> ).MakeGenericType( typeof( TEntity ), property.PropertyType ) );
+                var boxedType = typeof( BoxingColumnSetter<,> ).MakeGenericType( typeof( TEntity ), property.PropertyType );
+                return (IColumnSetter<TEntity>) Activator.CreateInstance( boxedType, definition, boxedAssigner, mapping.Member )!;
             }
             var valueType = columnType.GetGenericArguments()[0];
             var memberType = property.PropertyType;
@@ -326,9 +340,20 @@ namespace FlatFiles.TypeMapping
                 return null;
             }
             var columnType = GetTypedColumnType( definition );
-            if (columnType is null || !definition.SupportsTypedFormat)
+            if (columnType is null)
             {
                 return null;
+            }
+            if (!definition.SupportsTypedFormat)
+            {
+                // As above, on the writing side.
+                if (!DynamicCode.IsSupported)
+                {
+                    return null;
+                }
+                var boxedReader = read.CreateDelegate( typeof( Func<,> ).MakeGenericType( typeof( TEntity ), property.PropertyType ) );
+                var boxedType = typeof( BoxingColumnGetter<,> ).MakeGenericType( typeof( TEntity ), property.PropertyType );
+                return (IColumnGetter<TEntity>) Activator.CreateInstance( boxedType, definition, boxedReader )!;
             }
             var valueType = columnType.GetGenericArguments()[0];
             var memberType = property.PropertyType;

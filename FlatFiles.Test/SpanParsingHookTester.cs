@@ -157,16 +157,22 @@ namespace FlatFiles.Test
         [TestMethod]
         public void TestTheMappingCanStillBeReadStraightOntoAnEntity()
         {
-            // The whole point of the hook. A string hook takes the mapping off that path, because it deals in
-            // strings; this one does not.
+            // The point of the hook: its column keeps a typed setter, where a string hook leaves that column
+            // reading its value as an object. Both mappings keep their setters - a hooked column no longer takes
+            // the rest of the mapping with it - so what separates them is which setter the column gets.
             var withSpanHook = DelimitedTypeMapper.Define<Entity>();
             withSpanHook.Property( x => x.Amount ).OnParsingSpan( StripLeadingHash );
 
             var withStringHook = DelimitedTypeMapper.Define<Entity>();
             withStringHook.Property( x => x.Amount ).OnParsing( ( _, value ) => value.TrimStart( '#' ) );
 
-            Assert.IsNotNull( Setters( withSpanHook ), "a span hook should leave the setters available" );
-            Assert.IsNull( Setters( withStringHook ), "a string hook takes them away, as it always has" );
+            var spanSetters = Setters( withSpanHook );
+            var stringSetters = Setters( withStringHook );
+
+            Assert.IsNotNull( spanSetters );
+            Assert.IsNotNull( stringSetters );
+            Assert.IsInstanceOfType<ColumnSetter<Entity, int>>( spanSetters[0], "a span hook keeps its column typed" );
+            Assert.IsInstanceOfType<BoxingColumnSetter<Entity, int>>( stringSetters[0], "a string hook costs its column, and only its column" );
         }
 
         [TestMethod]
