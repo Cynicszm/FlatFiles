@@ -191,8 +191,6 @@ fixed-length layouts have windows that stop short of the record, so its tail is 
 ragged final column's padding is not part of its value. What each write produced is pinned by hash in
 the baseline either way, so a change in the bytes written fails the check whatever this says.
 
-[exited with code 0]
-
 **A reader given a schema can match its columns to the file's header by name.**
 
 ```csharp
