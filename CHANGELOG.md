@@ -28,6 +28,18 @@ The custom column allocates less than the string hook and is no quicker, because
 
 **It is a default implementation on the mapping interfaces and on `IColumnDefinition`**, so anything implementing them outside this library keeps compiling. On a column, reading it says there is no hook and setting it says the column cannot hold one, rather than quietly dropping it; every column here derives from `ColumnDefinition`, which holds it properly. It sits on `IColumnDefinition` because `OnParsing` already does: a caller holding one should not be able to set the old hook but have to cast for its replacement.
 
+**The source generator no longer warns in your build.** It writes its registrations under `#nullable enable`, but wrote a member's type without a reference type's nullable annotation - so a `string?` property was registered as `string`, and the getter it wrote returned a possibly-null value as a non-nullable one:
+
+```csharp
+// before
+AddGetter<global::Consumer.Row, string>( "Name", static entity => entity.Name );
+// CS8603: Possible null reference return.
+```
+
+One warning per nullable reference member per entity, in generated code a caller cannot edit and can only silence by turning the generator off. A consumer of this package counted about nine and a half thousand of them. Nothing was wrong at run time - the annotation is not part of the type the registry keys on - so the accessors worked and nothing failed; it was noise, and enough of it to bury real warnings.
+
+**Nothing in the test suite had ever compiled what the generator wrote**, which is how it shipped. Every test ran the generator and made assertions about the text it produced. The harness now compiles the consumer together with the generated trees and fails on any warning in them, which is what caught this and is what would catch the next one.
+
 `OnParsed`, `OnFormatting` and `OnFormatted` are unchanged. They deal in `object`, so a span does not help them; removing the boxing there would mean a generic hook on the typed column, which is a different change.
 
 ## 9.0.0 (2026-09-28)
