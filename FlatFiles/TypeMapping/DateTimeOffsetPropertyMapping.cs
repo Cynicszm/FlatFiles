@@ -52,6 +52,12 @@ namespace FlatFiles.TypeMapping
             return this;
         }
 
+        public IDateTimeOffsetPropertyMapping OnParsingSpan(SpanParsingHook? handler)
+        {
+            column.OnParsingSpan = handler;
+            return this;
+        }
+
         public IDateTimeOffsetPropertyMapping OnParsed(Func<IColumnContext?, object?, object?>? handler)
         {
             column.OnParsed = handler;

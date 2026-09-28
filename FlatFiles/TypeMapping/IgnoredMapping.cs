@@ -22,6 +22,12 @@ namespace FlatFiles.TypeMapping
             return this;
         }
 
+        public IIgnoredMapping OnParsingSpan(SpanParsingHook? handler)
+        {
+            column.OnParsingSpan = handler;
+            return this;
+        }
+
         public IIgnoredMapping OnParsed(Func<IColumnContext?, object?, object?>? handler)
         {
             column.OnParsed = handler;

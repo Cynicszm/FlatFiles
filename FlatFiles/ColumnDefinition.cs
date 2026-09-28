@@ -69,7 +69,8 @@ namespace FlatFiles
         ///     parsing or formatting, so it is always given one.
         /// </remarks>
         public virtual bool IsColumnContextRequired =>
-            OnParsing is not null || OnParsed is not null || OnFormatting is not null || OnFormatted is not null
+            OnParsing is not null || OnParsingSpan is not null || OnParsed is not null || OnFormatting is not null
+            || OnFormatted is not null
             || NullFormatter is not FlatFiles.NullFormatter
             || DefaultValue is not DefaultValue { UsesColumnContext: false }
             || IsComplex
@@ -108,6 +109,18 @@ namespace FlatFiles
         ///     Gets or sets a function used to pre-process input before trying to parse it.
         /// </summary>
         public Func<IColumnContext?, string, string?>? OnParsing { get; set; }
+
+        /// <summary>
+        ///     Gets or sets a hook that transforms a value before it is parsed, reading it where it lies and
+        ///     writing its answer into a buffer the reader owns.
+        /// </summary>
+        /// <remarks>
+        ///     The counterpart of <see cref="OnParsing" /> that costs nothing to use, and unlike that one it does
+        ///     not stop a column being read straight onto an entity. Where both are set, <see cref="OnParsing" />
+        ///     wins and this is not called, because a column that has to produce a string for one hook may as well
+        ///     give it to both. See <see cref="SpanParsingHook" />.
+        /// </remarks>
+        public SpanParsingHook? OnParsingSpan { get; set; }
 
         /// <summary>
         ///     Gets or sets a function used to post-process input after parsing it.
@@ -334,6 +347,21 @@ namespace FlatFiles
             {
                 value = OnParsing( context, value ) ?? string.Empty;
             }
+            else if (OnParsingSpan is not null)
+            {
+                // The span hook answers the same question, and a caller holding a string should get the same
+                // value from it as a reader holding the record would.
+                var replaced = Replaced( context, value.AsSpan(), out var rented );
+                try
+                {
+                    var hooked = ParseValue( context, replaced );
+                    return OnParsed is null ? hooked : OnParsed( context, hooked );
+                }
+                finally
+                {
+                    Release( rented );
+                }
+            }
             var result = ParseValue( context, value );
             if (OnParsed is not null)
             {
@@ -367,6 +395,19 @@ namespace FlatFiles
                 // The hook is handed the whole value as a string, and a derived column that replaced the string
                 // overload has to keep seeing every value through it.
                 return Parse( context, value.ToString() );
+            }
+            if (OnParsingSpan is not null)
+            {
+                var replaced = Replaced( context, value, out var rented );
+                try
+                {
+                    var hooked = ParseValue( context, replaced );
+                    return OnParsed is null ? hooked : OnParsed( context, hooked );
+                }
+                finally
+                {
+                    Release( rented );
+                }
             }
             var result = ParseValue( context, value );
             if (OnParsed is not null)
@@ -469,9 +510,81 @@ namespace FlatFiles
                 parsed = (T) substitute;
                 return true;
             }
+            if (OnParsingSpan is not null)
+            {
+                var replaced = Replaced( context, value, out var rented );
+                try
+                {
+                    parsed = OnParse( context, IsTrimmed ? replaced.Trim() : replaced );
+                    return true;
+                }
+                finally
+                {
+                    Release( rented );
+                }
+            }
             parsed = OnParse( context, IsTrimmed ? value.Trim() : value );
             return true;
         }
+
+        /// <summary>
+        ///     Runs <see cref="ColumnDefinition.OnParsingSpan" /> and gives back the value to parse: the one that was passed in
+        ///     where the hook asked for nothing, and otherwise what it wrote.
+        /// </summary>
+        /// <param name="context">Holds information about the column being processed.</param>
+        /// <param name="value">The value as it lies in the record.</param>
+        /// <param name="rented">The array the answer was written to, which the caller returns, or null.</param>
+        /// <returns>The value to parse, valid until <paramref name="rented" /> is released.</returns>
+        /// <remarks>
+        ///     The first attempt writes into an array rented at the length a value of this size could plausibly
+        ///     need. A hook wanting more says so by returning the negation of the length it needs, and is asked
+        ///     again with an array at least that long. Nothing is allocated either way: the pool is where these
+        ///     come from and the caller returns them.
+        /// </remarks>
+        private ReadOnlySpan<char> Replaced( IColumnContext? context, ReadOnlySpan<char> value, out char[]? rented )
+        {
+            var hook = OnParsingSpan!;
+            rented = ArrayPool<char>.Shared.Rent( value.Length + SpareRoom );
+            var written = hook( context, value, rented );
+            if (written < SpanParsingHooks.Unchanged)
+            {
+                var wanted = -written;
+                ArrayPool<char>.Shared.Return( rented );
+                rented = ArrayPool<char>.Shared.Rent( wanted );
+                written = hook( context, value, rented.AsSpan( 0, wanted ) );
+                if (written < SpanParsingHooks.Unchanged)
+                {
+                    var message = string.Format( CultureInfo.CurrentCulture, Resources.SpanParsingHookAskedTwice, ColumnName, wanted );
+                    Release( rented );
+                    rented = null;
+                    throw new FlatFileException( message );
+                }
+            }
+            if (written == SpanParsingHooks.Unchanged)
+            {
+                Release( rented );
+                rented = null;
+                return value;
+            }
+            return rented.AsSpan( 0, written );
+        }
+
+        /// <summary>Returns a rented array, if one was taken.</summary>
+        /// <param name="rented">The array, or null.</param>
+        private static void Release( char[]? rented )
+        {
+            if (rented is not null)
+            {
+                ArrayPool<char>.Shared.Return( rented );
+            }
+        }
+
+        /// <summary>
+        ///     How much longer than the value a replacement is assumed to be before the hook has to ask for more.
+        ///     A hook that rewrites a value usually returns something close to its own length - a sign, a decimal
+        ///     point, a stripped symbol - so asking twice should be rare.
+        /// </summary>
+        private const int SpareRoom = 16;
 
         /// <summary>
         ///     Whether the runtime type replaced <see cref="Parse(IColumnContext?, ReadOnlySpan{char})" />.

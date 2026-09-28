@@ -52,6 +52,12 @@ namespace FlatFiles.TypeMapping
             return this;
         }
 
+        public ITimeOnlyPropertyMapping OnParsingSpan( SpanParsingHook? handler )
+        {
+            column.OnParsingSpan = handler;
+            return this;
+        }
+
         public ITimeOnlyPropertyMapping OnParsed( Func<IColumnContext?, object?, object?>? handler )
         {
             column.OnParsed = handler;

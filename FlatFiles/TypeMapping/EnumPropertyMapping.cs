@@ -47,6 +47,12 @@ namespace FlatFiles.TypeMapping
             return this;
         }
 
+        public IEnumPropertyMapping<TEnum> OnParsingSpan(SpanParsingHook? handler)
+        {
+            column.OnParsingSpan = handler;
+            return this;
+        }
+
         public IEnumPropertyMapping<TEnum> OnParsed(Func<IColumnContext?, object?, object?>? handler)
         {
             column.OnParsed = handler;

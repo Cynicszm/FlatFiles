@@ -46,6 +46,12 @@ namespace FlatFiles.TypeMapping
             return this;
         }
 
+        public IBooleanPropertyMapping OnParsingSpan(SpanParsingHook? handler)
+        {
+            column.OnParsingSpan = handler;
+            return this;
+        }
+
         public IBooleanPropertyMapping OnParsed(Func<IColumnContext?, object?, object?>? handler)
         {
             column.OnParsed = handler;

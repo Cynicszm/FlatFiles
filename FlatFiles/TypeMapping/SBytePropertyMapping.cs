@@ -53,6 +53,12 @@ namespace FlatFiles.TypeMapping
             return this;
         }
 
+        public ISBytePropertyMapping OnParsingSpan(SpanParsingHook? handler)
+        {
+            column.OnParsingSpan = handler;
+            return this;
+        }
+
         public ISBytePropertyMapping OnParsed(Func<IColumnContext?, object?, object?>? handler)
         {
             column.OnParsed = handler;

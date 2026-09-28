@@ -15,6 +15,8 @@ namespace FlatFiles.TypeMapping
         private IDefaultValue defaultValue = FlatFiles.DefaultValue.Disabled();
         private bool isNullable = true;
         private Func<IColumnContext?, string, string?>? onParsing;
+
+        private SpanParsingHook? onParsingSpan;
         private Func<IColumnContext?, object?, object?>? onParsed;
         private Func<IColumnContext?, object?, object?>? onFormatting;
         private Func<IColumnContext?, string, string?>? onFormatted;
@@ -31,6 +33,7 @@ namespace FlatFiles.TypeMapping
                     DefaultValue = defaultValue,
                     IsNullable = isNullable,
                     OnParsing = onParsing,
+                    OnParsingSpan = onParsingSpan,
                     OnParsed = onParsed,
                     OnFormatting = onFormatting,
                     OnFormatted = onFormatted
@@ -89,6 +92,12 @@ namespace FlatFiles.TypeMapping
         public IFixedLengthComplexPropertyMapping OnParsing( Func<IColumnContext?, string, string?>? handler )
         {
             onParsing = handler;
+            return this;
+        }
+
+        public IFixedLengthComplexPropertyMapping OnParsingSpan( SpanParsingHook? handler )
+        {
+            onParsingSpan = handler;
             return this;
         }
 

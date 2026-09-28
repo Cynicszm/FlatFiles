@@ -1,4 +1,5 @@
 ﻿using System;
+using FlatFiles.Properties;
 
 namespace FlatFiles.TypeMapping
 {
@@ -57,6 +58,20 @@ namespace FlatFiles.TypeMapping
         /// <param name="handler">A function to call before the textual value is parsed.</param>
         /// <returns>The property mapping for further configuration.</returns>
         IGuidPropertyMapping OnParsing(Func<IColumnContext?, string, string?>? handler);
+
+        /// <summary>
+        /// Sets a hook that transforms a value before it is parsed, reading it where it lies rather
+        /// than as a string. Unlike <see cref="OnParsing"/> it does not stop the column being read
+        /// straight onto an entity.
+        /// </summary>
+        /// <param name="handler">The hook, or null to remove one.</param>
+        /// <returns>The property mapping for further configuration.</returns>
+        /// <remarks>
+        /// Defaulted so that an implementation written before this existed keeps compiling. The
+        /// mappings this library returns all override it.
+        /// </remarks>
+        IGuidPropertyMapping OnParsingSpan(SpanParsingHook? handler) =>
+            throw new NotSupportedException(Resources.SpanHookNotSupported);
 
         /// <summary>
         /// Sets the function to run after the input is parsed.

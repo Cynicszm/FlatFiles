@@ -1,0 +1,259 @@
+﻿using System;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+using FlatFiles.TypeMapping;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+
+namespace FlatFiles.Test
+{
+    /// <summary>
+    ///     Tests the parsing hook that reads a value where it lies: that it transforms what the column parses,
+    ///     that it can ask for a longer buffer, and that - unlike the string hook it sits beside - it leaves the
+    ///     mapping able to read a record straight onto an entity.
+    /// </summary>
+    [TestClass]
+    public class SpanParsingHookTester
+    {
+        [TestMethod]
+        public void TestDelimited_TheHookTransformsTheValue()
+        {
+            var schema = new DelimitedSchema();
+            schema.AddColumn( new Int32Column( "Amount" ) { OnParsingSpan = StripLeadingHash } );
+            var reader = new DelimitedReader( new StringReader( "#42\r\n" ), schema, Options() );
+
+            Assert.IsTrue( reader.Read() );
+            Assert.AreEqual( 42, reader.GetValues()[0] );
+        }
+
+        [TestMethod]
+        public void TestFixedLength_TheHookTransformsTheValue()
+        {
+            var schema = new FixedLengthSchema();
+            schema.AddColumn( new Int32Column( "Amount" ) { OnParsingSpan = StripLeadingHash }, new Window( 3 ) );
+            var options = new FixedLengthOptions { RecordSeparator = "\r\n" };
+            var reader = new FixedLengthReader( new StringReader( "#42\r\n" ), schema, options );
+
+            Assert.IsTrue( reader.Read() );
+            Assert.AreEqual( 42, reader.GetValues()[0] );
+        }
+
+        [TestMethod]
+        public void TestUnchanged_ParsesTheValueWhereItLies()
+        {
+            var schema = new DelimitedSchema();
+            schema.AddColumn( new Int32Column( "Amount" ) { OnParsingSpan = ( _, _, _ ) => SpanParsingHooks.Unchanged } );
+            var reader = new DelimitedReader( new StringReader( "42\r\n" ), schema, Options() );
+
+            Assert.IsTrue( reader.Read() );
+            Assert.AreEqual( 42, reader.GetValues()[0] );
+        }
+
+        [TestMethod]
+        public void TestAHookWantingALongerBuffer_IsAskedAgainWithOne()
+        {
+            var asked = 0;
+            var lengths = new System.Collections.Generic.List<int>();
+            var schema = new DelimitedSchema();
+            schema.AddColumn( new StringColumn( "Padded" )
+            {
+                Trim = false,
+                OnParsingSpan = ( _, value, destination ) =>
+                {
+                    ++asked;
+                    lengths.Add( destination.Length );
+                    // Wants far more room than a value of this size would be given to begin with.
+                    const int wanted = 5000;
+                    if (destination.Length < wanted)
+                    {
+                        return SpanParsingHooks.NeedsLength( wanted );
+                    }
+                    destination[..wanted].Fill( 'x' );
+                    return wanted;
+                }
+            } );
+            var reader = new DelimitedReader( new StringReader( "a\r\n" ), schema, Options() );
+
+            Assert.IsTrue( reader.Read() );
+            Assert.AreEqual( 5000, ( (string) reader.GetValues()[0]! ).Length );
+            Assert.AreEqual( 2, asked, "the hook should be asked once, then again with the room it wanted" );
+            Assert.IsTrue( lengths[1] >= 5000, $"the second buffer was {lengths[1]}" );
+        }
+
+        [TestMethod]
+        public void TestAHookThatKeepsAskingForMore_IsReported()
+        {
+            var schema = new DelimitedSchema();
+            schema.AddColumn( new StringColumn( "Greedy" )
+            {
+                OnParsingSpan = ( _, _, _ ) => SpanParsingHooks.NeedsLength( 32 )
+            } );
+            var reader = new DelimitedReader( new StringReader( "a\r\n" ), schema, Options() );
+
+            var exception = Assert.ThrowsExactly<RecordProcessingException>( () => reader.Read() );
+
+            StringAssert.Contains( exception.InnerException!.Message, "Greedy" );
+        }
+
+        [TestMethod]
+        public void TestNeedsLength_RefusesANonsenseLength()
+        {
+            Assert.ThrowsExactly<ArgumentOutOfRangeException>( () => SpanParsingHooks.NeedsLength( 0 ) );
+            Assert.ThrowsExactly<ArgumentOutOfRangeException>( () => SpanParsingHooks.NeedsLength( -1 ) );
+        }
+
+        [TestMethod]
+        public void TestTheStringHookWins_WhereBothAreSet()
+        {
+            // A column that has to build a string for one hook may as well give it to both, so the older hook
+            // takes the value and the span hook is not called.
+            var called = false;
+            var schema = new DelimitedSchema();
+            schema.AddColumn( new Int32Column( "Amount" )
+            {
+                OnParsing = ( _, value ) => value.Replace( "#", string.Empty, StringComparison.Ordinal ),
+                OnParsingSpan = ( _, _, _ ) =>
+                {
+                    called = true;
+                    return SpanParsingHooks.Unchanged;
+                }
+            } );
+            var reader = new DelimitedReader( new StringReader( "#42\r\n" ), schema, Options() );
+
+            Assert.IsTrue( reader.Read() );
+            Assert.AreEqual( 42, reader.GetValues()[0] );
+            Assert.IsFalse( called, "the span hook should not be called when the string hook is set" );
+        }
+
+        [TestMethod]
+        public void TestTheStringOverload_RunsTheHookToo()
+        {
+            // A caller holding a string should get the same value a reader holding the record would.
+            var column = new Int32Column( "Amount" ) { OnParsingSpan = StripLeadingHash };
+
+            Assert.AreEqual( 42, column.Parse( null, "#42" ) );
+        }
+
+        [TestMethod]
+        public void TestNullHandlingAndTrimmingStillApplyAfterTheHook()
+        {
+            var schema = new DelimitedSchema();
+            schema.AddColumn( new Int32Column( "Amount" )
+            {
+                // Hands back spaces, which the column trims, leaving nothing, which reads as null.
+                OnParsingSpan = ( _, _, destination ) =>
+                {
+                    destination[..3].Fill( ' ' );
+                    return 3;
+                }
+            } );
+            var reader = new DelimitedReader( new StringReader( "42\r\n" ), schema, Options() );
+
+            Assert.IsTrue( reader.Read() );
+            Assert.IsNull( reader.GetValues()[0] );
+        }
+
+        [TestMethod]
+        public void TestTheMappingCanStillBeReadStraightOntoAnEntity()
+        {
+            // The whole point of the hook. A string hook takes the mapping off that path, because it deals in
+            // strings; this one does not.
+            var withSpanHook = DelimitedTypeMapper.Define<Entity>();
+            withSpanHook.Property( x => x.Amount ).OnParsingSpan( StripLeadingHash );
+
+            var withStringHook = DelimitedTypeMapper.Define<Entity>();
+            withStringHook.Property( x => x.Amount ).OnParsing( ( _, value ) => value.TrimStart( '#' ) );
+
+            Assert.IsNotNull( Setters( withSpanHook ), "a span hook should leave the setters available" );
+            Assert.IsNull( Setters( withStringHook ), "a string hook takes them away, as it always has" );
+        }
+
+        [TestMethod]
+        public void TestAMapperReadsThroughTheHook()
+        {
+            var mapper = DelimitedTypeMapper.Define<Entity>();
+            mapper.Property( x => x.Amount ).OnParsingSpan( StripLeadingHash );
+
+            var entities = mapper.Read( new StringReader( "#42\r\n#7\r\n" ), Options() ).ToList();
+
+            CollectionAssert.AreEqual( new[] { 42, 7 }, entities.Select( x => x.Amount ).ToArray() );
+        }
+
+        [TestMethod]
+        public void TestTheHookReachesAComplexColumn()
+        {
+            var inner = DelimitedTypeMapper.Define<Entity>();
+            inner.Property( x => x.Amount ).OnParsingSpan( StripLeadingHash );
+            var outer = DelimitedTypeMapper.Define<Outer>();
+            outer.Property( x => x.Name );
+            outer.ComplexProperty( x => x.Inner!, inner ).OnParsingSpan( ( _, _, _ ) => SpanParsingHooks.Unchanged );
+
+            var results = outer.Read( new StringReader( "Bob,\"#42\"\r\n" ), Options() ).ToList();
+
+            Assert.ContainsSingle( results );
+            Assert.AreEqual( 42, results[0].Inner!.Amount );
+        }
+
+        [TestMethod]
+        public void TestAMappingWrittenBeforeTheHookExisted_SaysSoRatherThanIgnoringIt()
+        {
+            // The method is a default on the mapping interfaces so that an implementation written outside this
+            // library keeps compiling. Silently dropping a hook someone set would be worse than saying so.
+            IIgnoredMapping mapping = new MappingFromBeforeTheHook();
+
+            var exception = Assert.ThrowsExactly<NotSupportedException>(
+                () => mapping.OnParsingSpan( ( _, _, _ ) => SpanParsingHooks.Unchanged ) );
+
+            StringAssert.Contains( exception.Message, "span parsing hook" );
+        }
+
+        /// <summary>Stands in for a mapping implemented outside this library before the hook existed.</summary>
+        private sealed class MappingFromBeforeTheHook : IIgnoredMapping
+        {
+            public IIgnoredMapping ColumnName( string name ) => this;
+
+            public IIgnoredMapping NullFormatter( INullFormatter formatter ) => this;
+
+            public IIgnoredMapping OnParsing( Func<IColumnContext?, string, string?>? handler ) => this;
+
+            public IIgnoredMapping OnParsed( Func<IColumnContext?, object?, object?>? handler ) => this;
+
+            public IIgnoredMapping OnFormatting( Func<IColumnContext?, object?, object?>? handler ) => this;
+
+            public IIgnoredMapping OnFormatted( Func<IColumnContext?, string?, string?>? handler ) => this;
+        }
+
+        private static IColumnSetter<Entity>[]? Setters( IDelimitedTypeMapper<Entity> mapper )
+        {
+            return ( (IMapperSource<Entity>) mapper ).GetMapper().GetColumnSetters();
+        }
+
+        private static int StripLeadingHash( IColumnContext? context, ReadOnlySpan<char> value, Span<char> destination )
+        {
+            var trimmed = value.TrimStart( '#' );
+            if (trimmed.Length == value.Length)
+            {
+                return SpanParsingHooks.Unchanged;
+            }
+            trimmed.CopyTo( destination );
+            return trimmed.Length;
+        }
+
+        private static DelimitedOptions Options()
+        {
+            return new DelimitedOptions { RecordSeparator = "\r\n" };
+        }
+
+        public class Entity
+        {
+            public int Amount { get; set; }
+        }
+
+        public class Outer
+        {
+            public string Name { get; set; } = string.Empty;
+
+            public Entity? Inner { get; set; }
+        }
+    }
+}

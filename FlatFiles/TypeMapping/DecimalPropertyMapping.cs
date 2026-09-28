@@ -53,6 +53,12 @@ namespace FlatFiles.TypeMapping
             return this;
         }
 
+        public IDecimalPropertyMapping OnParsingSpan(SpanParsingHook? handler)
+        {
+            column.OnParsingSpan = handler;
+            return this;
+        }
+
         public IDecimalPropertyMapping OnParsed(Func<IColumnContext?, object?, object?>? handler)
         {
             column.OnParsed = handler;

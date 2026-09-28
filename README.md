@@ -281,6 +281,19 @@ The numeric columns share `FormatProvider`, `NumberStyles` and `OutputFormat`. A
 
 Every column also carries the settings that belong to all of them: `ColumnName`, `IsNullable`, `DefaultValue` and `NullFormatter`, covered under [Handling Nulls](#handling-nulls), and the `OnParsing`, `OnParsed`, `OnFormatting` and `OnFormatted` hooks for stepping in either side of a value being converted.
 
+**If you reach for `OnParsing`, reach for `OnParsingSpan` instead.** It answers the same question -- change this value before the column parses it -- but it is handed the value where it sits in the record along with a buffer to write its answer into, rather than being handed a string and asked to return another:
+
+```csharp
+mapper.Property(x => x.Amount, new Window(9))
+    .OnParsingSpan((context, value, destination) => Unpack(value, destination));
+```
+
+Return how many characters you wrote, or `SpanParsingHooks.Unchanged` to have the value parsed exactly as it lies, which copies nothing at all. If the buffer is too small, return `SpanParsingHooks.NeedsLength(n)` and you will be called again with one at least that long; the buffer comes from the array pool either way, so neither attempt allocates. Neither span outlives the call, so do not keep hold of them.
+
+The reason to prefer it is not only that it allocates nothing. **`OnParsing` deals in strings, so a column carrying one cannot be read straight onto an entity** -- the mapping falls back to parsing every record into an array of objects, and one hook on one column does that to the whole mapping. `OnParsingSpan` does not. On a fixed-length read of twenty thousand records with ten packed decimal columns that was 860 bytes a record against 3,891, and roughly twice as quick.
+
+Where both are set, `OnParsing` wins and the span hook is not called: a column that has to build a string for one of them may as well hand it to both.
+
 `TimeSpanColumn` also has static methods for files that store a duration as a plain number: `TimeSpanColumn.FromSeconds(new DoubleColumn("elapsed"))` and its `FromDays`, `FromHours`, `FromMinutes`, `FromMilliseconds` and `FromTicks` counterparts wrap a numeric column and convert what it reads.
 
 Four columns do not map to a value of their own:
