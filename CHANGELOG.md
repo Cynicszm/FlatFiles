@@ -1,6 +1,37 @@
 ﻿## 8.7.0 (unreleased)
 **Not released.** Being built. What is written up here has landed on master; what is under **Next** has not. Nothing in this release breaks anything.
 
+**A reader given a schema can match its columns to the file's header by name.**
+
+```csharp
+var options = new DelimitedOptions
+{
+    IsFirstRecordSchema = true,
+    HeaderMatching = HeaderMatching.ByName
+};
+```
+
+Until now the header was read and thrown away whenever a schema was supplied: never checked against it, never used to order it. A file whose columns had been reordered since the schema was written was read straight into the wrong columns, silently, because position was all the reader had. This was the largest gap left against CsvHelper, which maps by name, and the only item on the list that described a wrong answer rather than a missing convenience.
+
+`ByName` wants every column the schema declares to appear in the header and does not read a heading the schema does not declare; `ByNameWhereFound` is the same except that a column the header does not carry is read as empty. `ByPosition` is the default and is what the reader has always done, because a file with no header has nothing else to go on. Names are compared with `HeaderComparer`, `StringComparer.OrdinalIgnoreCase` by default - the comparison the schema itself uses to look a column up by name.
+
+**The source is permuted, never the destination**, and that is what makes the feature small enough to be worth having. The values are taken from different places in the record and handed back in the order the schema declares them, so the setter array a type mapper builds, the accessors the generator writes, `GetValues()`, `GetOrdinal`, metadata columns and `RecordNumberColumn`'s offsets all mean exactly what they meant before. The alternative - reordering the schema's own columns to match the file - would have mutated an object callers share between readers, writers and files, so the second file would have been read in the first file's order.
+
+**Where the order lives is the other half of that.** It is held on the execution context, which already belongs to one reader and one schema, rather than on the schema, which does not belong to anyone. Nothing is allocated for it on a file that does not ask, and the cost when it does is one lookup per column, decided once from the header rather than per record.
+
+**The header says how wide a record should be**, not the schema. A file carrying columns the schema does not declare is a normal file to read by name, not a file of long records, so `ShortRecordHandling` and `LongRecordHandling` are judged against the header from the moment the columns are matched to it.
+
+Four disagreements between a schema and a header are each given an answer rather than left to chance, and all of them are raised when the header is read rather than record by record, because they are the same for every record in the file:
+
+- a column the header does not carry is an error under `ByName` and empty under `ByNameWhereFound`;
+- a heading the schema does not declare is not read;
+- a name the header carries twice is an error, but only if a column asks for that name - a file may repeat a heading the schema never wants;
+- an `IgnoredColumn` with no name is an error, because it exists only to hold a position and positions stop mattering here. One with a name is matched like any other column and still yields nothing.
+
+Asking for it without `IsFirstRecordSchema`, or alongside a `DelimitedSchemaSelector`, is refused as a configuration mistake: there is no header in the first case, and in the second a header describes a file while a selector chooses a schema for each record.
+
+**It is a delimited feature and cannot be a fixed-length one.** Partitioning a fixed-length header needs the widths in the order the file has them, which is the thing the header would be telling you. The most that end could do is check the names it already expects, which is a guard rather than a mapping and is not this.
+
 **Both readers can be told what a record that does not fit its schema means, in the same two words.**
 
 ```csharp
@@ -31,10 +62,6 @@ Everything inside this library, and every test that exercised the old name, now 
 ### Next
 
 In the order they will be built. None of these breaks anything, so none of them is waiting for a major version.
-
-- **Header-driven column matching against a supplied schema.** The header row is read and thrown away: never checked against the schema, never used to order it. A file whose columns have been reordered since the schema was written is read straight into the wrong properties, silently, because position is all the reader has. Matching the header by name, and saying what happens when it disagrees - reorder, refuse, or ignore - is the largest gap left against CsvHelper, which maps by name and is the one competitor this repository benchmarks against. Reading by position stays the default, since a file with no header has nothing else to go on.
-
-  Auto-mapping already matches header names to members, but it builds the schema from the header, so every column arrives as a bare `StringColumn`. Today you get a schema you control **or** a column order you do not control, never both, and this is the request to have both. It is a delimited feature: a fixed-length header cannot be partitioned without the widths in the file's order, which is the thing the header would be telling you, so the most that end could do is check the names it already expects.
 
 - **A delimited selector should be able to match on the record's text.** `DelimitedTypeMapperSelector` and `DelimitedSchemaSelector` are given each record's values to choose a schema by, so the reader has to parse a record into an array of values before it can decide what the record is - which is the one thing that stops a selected delimited mapping being read straight onto an entity, as a fixed-length one now is. A predicate over the record's text, beside the one over its values, would leave the choice to the caller: match on text and keep the faster path, or match on values and pay for them.
 

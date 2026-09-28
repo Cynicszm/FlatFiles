@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using FlatFiles.Properties;
 
 namespace FlatFiles
@@ -177,6 +178,48 @@ namespace FlatFiles
                 field = value;
             }
         } = LongRecordHandling.Discard;
+
+        /// <summary>
+        ///     Gets or sets how a reader given both a schema and a header decides which column each value belongs to.
+        /// </summary>
+        /// <remarks>
+        ///     <see cref="FlatFiles.HeaderMatching.ByPosition" /> by default, which is what this reader has always
+        ///     done: the header is read and discarded, and a file whose columns were reordered since the schema was
+        ///     written is read straight into the wrong columns without saying so. The other two take each value from
+        ///     under the header of the same name. It needs <see cref="IsFirstRecordSchema" /> set, since there is
+        ///     otherwise no header to match, and a schema rather than a selector, since a header describes the file
+        ///     and a selector chooses per record. Names are compared with <see cref="HeaderComparer" />.
+        /// </remarks>
+        public HeaderMatching HeaderMatching
+        {
+            get;
+            set
+            {
+                if (!Enum.IsDefined( value ))
+                {
+                    throw new ArgumentException( Resources.InvalidHeaderMatching, nameof( value ) );
+                }
+                field = value;
+            }
+        } = HeaderMatching.ByPosition;
+
+        /// <summary>
+        ///     Gets or sets how a column's name is compared with a header's when <see cref="HeaderMatching" /> asks
+        ///     for them to be matched.
+        /// </summary>
+        /// <remarks>
+        ///     <see cref="StringComparer.OrdinalIgnoreCase" /> by default, which is what the schema itself uses to
+        ///     look a column up by name.
+        /// </remarks>
+        public IEqualityComparer<string> HeaderComparer
+        {
+            get;
+            set
+            {
+                ArgumentNullException.ThrowIfNull( value );
+                field = value;
+            }
+        } = StringComparer.OrdinalIgnoreCase;
 
         /// <summary>
         ///     Duplicates the options.

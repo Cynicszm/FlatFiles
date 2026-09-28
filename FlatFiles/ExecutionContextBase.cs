@@ -21,6 +21,18 @@
         private ColumnContext?[]? columnContexts;
 
         /// <summary>
+        ///     Where in the record each column's value sits, one entry per column of the schema, or null when the
+        ///     values are simply in the order the columns are. A metadata column, which takes nothing from the
+        ///     record, and a column the header did not carry both hold -1.
+        /// </summary>
+        /// <remarks>
+        ///     Built once, from the header, by a reader asked to match columns by name. It lives here rather than on
+        ///     the schema because a schema is shared between readers, writers and files, and the order one file
+        ///     happens to be in is not a property of the schema.
+        /// </remarks>
+        public int[]? SourceMap { get; set; }
+
+        /// <summary>
         ///     Gets the context for the given column, pointed at the record being processed.
         /// </summary>
         /// <param name="recordContext">The record being read or written.</param>

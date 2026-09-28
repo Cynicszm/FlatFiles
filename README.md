@@ -28,6 +28,7 @@ If you are working with data classes, defining schemas is even easier. You can u
     * [Creating your own columns](#creating-your-own-columns)
 * [Delimited Files](#delimited-files)
 * [Fixed Length Files](#fixed-length-files)
+* [Matching columns to the header](#matching-columns-to-the-header)
 * [Records that do not fit the schema](#records-that-do-not-fit-the-schema)
 * [Character Encoding](#character-encoding)
 * [Handling Nulls](#handling-nulls)
@@ -318,7 +319,9 @@ When working directly with the `DelimitedWriter` class, setting `IsFirstRecordSc
 
 A record with more or fewer values than the schema declares is governed by `ShortRecordHandling` and
 `LongRecordHandling`, described under [Records that do not fit the schema](#records-that-do-not-fit-the-schema)
-below. The second of those is worth reading before you rely on the default.
+below. The second of those is worth reading before you rely on the default. If you provide a schema and the file
+has a header, see also [Matching columns to the header](#matching-columns-to-the-header), which decides whether
+that header is checked against your schema or thrown away.
 
 ## Fixed Length Files
 If you have a file with fixed length columns, you will want to use the `FixedLengthTypeMapper` class. Internally, the mapper uses the `FixedLengthReader` and `FixedLengthWriter` classes, both of which work in terms of raw `object` arrays. In effect, all the mapper does is map the values in the array to the properties in your data objects. These classes read data from a `TextReader`, such as `StreamReader` or `StringReader`, and write data to a `TextWriter`, such as `StreamWriter` or `StringWriter`. Internally, the mapper will build a `FixedLengthSchema` based on the property/column configuration; this is where you customise the schema to match your file format. For more global settings, there is also a `FixedLengthOptions` object that allows you to customise the read/write behaviour to suit your needs.
@@ -341,6 +344,48 @@ var reader = new FixedLengthReader(new StreamReader(path), schema, options);
 Anything else about a record that does not fit its schema is said with `ShortRecordHandling` and
 `LongRecordHandling`, described under [Records that do not fit the schema](#records-that-do-not-fit-the-schema)
 below, which the delimited reader has too.
+
+## Matching columns to the header
+When you give a reader a schema and the file has a header, the header is read and discarded: each value belongs
+to the column in the same position. That is still the default, because a file with no header has nothing else to
+go on - but it means a file whose columns were reordered since the schema was written is read straight into the
+wrong columns, and nothing says so. `HeaderMatching` takes each value from under the heading of the same name
+instead.
+
+```csharp
+var options = new DelimitedOptions
+{
+    IsFirstRecordSchema = true,
+    HeaderMatching = HeaderMatching.ByName
+};
+```
+
+`ByName` requires every column the schema declares to appear in the header, and does not read a heading the
+schema does not declare. `ByNameWhereFound` is the same except that a column the header does not carry is read
+as empty rather than treated as an error. Both need `IsFirstRecordSchema` set, since there is otherwise no
+header to match.
+
+**What you get back does not move.** The values are taken from different places in the record, but they are
+handed to you in the order the schema declares them, so `GetValues()`, `GetOrdinal` and a type mapper's
+properties all mean what they meant before. Only where a value is read from changes.
+
+A few things worth knowing:
+
+* Names are compared with `HeaderComparer`, which is `StringComparer.OrdinalIgnoreCase` by default - the same
+  comparison the schema itself uses to look a column up by name. Set it to `StringComparer.Ordinal` if the file's
+  capitalisation is meaningful.
+* **The header says how wide a record should be**, not the schema, so a file carrying columns your schema does
+  not declare is not a file of long records. `ShortRecordHandling` and `LongRecordHandling` still apply, judged
+  against the header.
+* A metadata column such as `RecordNumberColumn` takes nothing from the record, so it needs no heading.
+* An `IgnoredColumn` with a name is matched like any other column and still yields nothing. One **without** a
+  name is refused, because it exists only to hold a position and positions stop mattering here.
+* A name the header carries twice is refused only if a column actually asks for it.
+* It needs a schema rather than a `DelimitedSchemaSelector`: a header describes the file, while a selector
+  chooses a schema for each record. The two together are refused.
+
+This is a delimited feature. A fixed-length header cannot be partitioned without knowing the widths in the order
+the file has them, which is the thing the header would be telling you.
 
 ## Records that do not fit the schema
 Both readers can be told what a record carrying more or less than the schema asks for means, in the same two
