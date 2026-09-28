@@ -64,7 +64,9 @@ Everything inside this library, and every test that exercised the old name, now 
 
 **A value type whose every mapped member comes from its constructor still reads**, and is not refused: the entity is built complete and nothing is set afterwards. A `readonly record struct` maps and reads as it did, through the constructor mapping added in 7.5.0. Writing a value type works either way, since writing only reads members off it.
 
-**This had gone unnoticed because the one test that covered it could not report.** A test that kills its host does not fail, it aborts the run - and the run prints the tests that finished first, so the summary reads as a pass unless the last line is read. It is why the suite has been run with that test filtered out while the rest of this release was built, and why every figure quoted for 8.7.0 before this said so. They are all quoted unfiltered now.
+**It had gone unnoticed because it only happens in a Debug build.** The same test passes in Release on the same runtime, which is where it has always been run on the way in, so nothing before this release had cause to notice. It is not that Release takes another path: `Mapper` never builds column getters for a value type, which is what the test's name refers to, so the emitted serialiser runs in both. The runtime simply rejects the IL under one and tolerates it under the other. That is the reason to fix it rather than leave it - the IL is invalid either way, what the optimising JIT does with it is not a contract, and a Debug build is what anyone working on this runs all day.
+
+**Where it was noticed, it also could not report.** A test that kills its host does not fail, it aborts the run, and the run prints the tests that finished first, so the summary reads as a pass unless the last line is read. It is why the suite was run with that test filtered out while the rest of this release was built, and why every figure quoted for 8.7.0 before this said so. They are all quoted unfiltered now.
 
 
 ### Next
