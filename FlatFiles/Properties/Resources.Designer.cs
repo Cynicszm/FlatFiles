@@ -107,6 +107,33 @@ namespace FlatFiles.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The parsing hook on column &apos;{0}&apos; asked for a longer buffer than the {1} characters it was then given, twice in a row..
+        /// </summary>
+        internal static string SpanHookNotSupportedOnColumn {
+            get {
+                return ResourceManager.GetString("SpanHookNotSupportedOnColumn", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to This property mapping does not support a span parsing hook.
+        /// </summary>
+        internal static string SpanHookNotSupported {
+            get {
+                return ResourceManager.GetString("SpanHookNotSupported", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The parsing hook asked for a longer buffer twice.
+        /// </summary>
+        internal static string SpanParsingHookAskedTwice {
+            get {
+                return ResourceManager.GetString("SpanParsingHookAskedTwice", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The entity type &apos;{0}&apos; is a value type, so a reader is handed a copy of it and anything set on that copy is lost..
         /// </summary>
         internal static string ValueTypeEntityCannotBeFilled {

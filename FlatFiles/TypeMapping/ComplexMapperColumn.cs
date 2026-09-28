@@ -37,6 +37,12 @@ namespace FlatFiles.TypeMapping
             set => column.OnParsing = value;
         }
 
+        public SpanParsingHook? OnParsingSpan
+        {
+            get => column.OnParsingSpan;
+            set => column.OnParsingSpan = value;
+        }
+
         public Func<IColumnContext?, object?, object?>? OnParsed
         {
             get => column.OnParsed;

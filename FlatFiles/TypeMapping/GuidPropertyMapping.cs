@@ -46,6 +46,12 @@ namespace FlatFiles.TypeMapping
             return this;
         }
 
+        public IGuidPropertyMapping OnParsingSpan(SpanParsingHook? handler)
+        {
+            column.OnParsingSpan = handler;
+            return this;
+        }
+
         public IGuidPropertyMapping OnParsed(Func<IColumnContext?, object?, object?>? handler)
         {
             column.OnParsed = handler;

@@ -180,6 +180,15 @@
   <data name="DelimitedRecordTooManyColumns" xml:space="preserve">
     <value>The record had more columns than the schema has columns to put them in. Record {0}.</value>
   </data>
+  <data name="SpanHookNotSupportedOnColumn" xml:space="preserve">
+    <value>This column cannot hold a span parsing hook. Every column in this library derives from ColumnDefinition, which can; a column implemented outside it has to hold its own.</value>
+  </data>
+  <data name="SpanHookNotSupported" xml:space="preserve">
+    <value>This property mapping does not support a span parsing hook. The mappings this library returns all do; an implementation written outside it has to provide its own.</value>
+  </data>
+  <data name="SpanParsingHookAskedTwice" xml:space="preserve">
+    <value>The parsing hook on column '{0}' asked for a longer buffer than the {1} characters it was then given, twice in a row. A hook must write its answer, or say it wants the value unchanged, when it is given the length it asked for.</value>
+  </data>
   <data name="ValueTypeEntityCannotBeFilled" xml:space="preserve">
     <value>The entity type '{0}' is a value type, so a reader is handed a copy of it and anything set on that copy is lost. A value type can be read only where every mapped member comes from its constructor, as it does for a readonly record struct. Writing a value type works either way.</value>
   </data>

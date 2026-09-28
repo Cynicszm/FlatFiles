@@ -34,6 +34,12 @@ namespace FlatFiles.TypeMapping
             return this;
         }
 
+        public ICharArrayPropertyMapping OnParsingSpan(SpanParsingHook? handler)
+        {
+            column.OnParsingSpan = handler;
+            return this;
+        }
+
         public ICharArrayPropertyMapping OnParsed(Func<IColumnContext?, object?, object?>? handler)
         {
             column.OnParsed = handler;

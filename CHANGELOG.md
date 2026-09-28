@@ -1,4 +1,36 @@
-﻿## 9.0.0 (2026-09-28)
+﻿## 9.1.0 (unreleased)
+**Not released.** Being built. What is written up here has landed on master. Nothing in this release breaks anything.
+
+**A parsing hook can now read a value where it lies rather than as a string.**
+
+```csharp
+mapper.Property( x => x.Amount, new Window( 9 ) )
+    .OnParsingSpan( ( context, value, destination ) => Unpack( value, destination ) );
+```
+
+`OnParsingSpan` sits beside `OnParsing` on every property mapping and on `ColumnDefinition`. It is handed the value where it sits in the record and a buffer to write its answer into, and returns how many characters it wrote - or `SpanParsingHooks.Unchanged` to have the value parsed exactly as it lies, which copies nothing at all.
+
+**The reason to have it is not only that it allocates nothing.** `OnParsing` deals in strings, so a column carrying one cannot be read straight onto an entity: the mapping falls back to parsing every record into an array of objects. One hook on one column does that to the whole mapping. A hook of the new shape does not, so the mapping keeps the path that 8.1.0 through 8.5.0 were spent building.
+
+**Measured, that turns out to matter more than the strings.** On a fixed-length read of 20,000 records with ten packed decimal columns, tiered compilation off, checksummed so that the arms are known to produce the same values:
+
+| | bytes/record | time |
+| --- | ---: | ---: |
+| `OnParsing`, cutting the field up and building a string to return | 3,891 | 84 ms |
+| a custom column parsing the span itself, through `CustomMapping` | 1,653 | 96 ms |
+| `OnParsingSpan` | **860** | **44 ms** |
+
+The custom column allocates less than the string hook and is no quicker, because `CustomMapping` takes its values as objects, so every value is boxed and every record carries an array. The span hook avoids both. **It is the cheapest of the three despite still writing text the column then parses**, which is the opposite of what the shape of the problem suggests.
+
+**A hook that needs more room than it was given says so** by returning `SpanParsingHooks.NeedsLength( n )`, and is called again with a buffer at least that long. The buffer is rented from the array pool and returned, so neither attempt allocates. A hook that asks a second time after being given what it asked for is reported against its column rather than looping.
+
+**Where both hooks are set, `OnParsing` wins** and the span hook is not called: a column that has to build a string for one of them may as well hand it to both.
+
+**It is a default implementation on the mapping interfaces and on `IColumnDefinition`**, so anything implementing them outside this library keeps compiling. On a column, reading it says there is no hook and setting it says the column cannot hold one, rather than quietly dropping it; every column here derives from `ColumnDefinition`, which holds it properly. It sits on `IColumnDefinition` because `OnParsing` already does: a caller holding one should not be able to set the old hook but have to cast for its replacement.
+
+`OnParsed`, `OnFormatting` and `OnFormatted` are unchanged. They deal in `object`, so a span does not help them; removing the boxing there would mean a generic hook on the typed column, which is a different change.
+
+## 9.0.0 (2026-09-28)
 **Summary** - One removal, and nothing else at all. `FixedLengthOptions.IsLongRecordRejected` is gone; `LongRecordHandling` replaced it in 8.7.0, says the same thing, and was always the same setting rather than a second one. **Nothing about reading or writing a file changes.** The major version is for the member that was removed, not for anything the library now does differently, and upgrading is a find and replace of one identifier in code that turned the option on - code that never did has nothing to do.
 
 **`FixedLengthOptions.IsLongRecordRejected` is gone.** `LongRecordHandling` replaced it in 8.7.0, saying the same thing in the words both readers use, and the old property carried an `[Obsolete]` naming this release throughout 8.7.0 - so anyone compiling against it has had a cycle's notice and a message pointing at its replacement.

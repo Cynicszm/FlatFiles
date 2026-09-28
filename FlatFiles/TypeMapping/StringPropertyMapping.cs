@@ -40,6 +40,12 @@ namespace FlatFiles.TypeMapping
             return this;
         }
 
+        public IStringPropertyMapping OnParsingSpan(SpanParsingHook? handler)
+        {
+            column.OnParsingSpan = handler;
+            return this;
+        }
+
         public IStringPropertyMapping OnParsed(Func<IColumnContext?, object?, object?>? handler)
         {
             column.OnParsed = handler;
