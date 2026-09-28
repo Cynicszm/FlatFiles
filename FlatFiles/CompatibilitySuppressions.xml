@@ -1,7 +1,24 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <!-- https://learn.microsoft.com/dotnet/fundamentals/package-validation/diagnostic-ids -->
-<!-- Empty: every break the last entries declared shipped in the release the baseline now names. A new entry is a
-     break declared in the changelog and accepted there; a break that is not described there does not belong here.
+<!-- Two entries, both the same removal: FixedLengthOptions.IsLongRecordRejected, which LongRecordHandling
+     replaced in 8.7.0 and which carried an [Obsolete] naming 9.0.0 through that release. A property is two
+     members to ApiCompat, so it declares its getter and its setter separately. The removal is described in the
+     9.0.0 changelog entry; a break that is not described there does not belong here.
      Regenerate with dotnet pack -p:ApiCompatGenerateSuppressionFile=true and read every entry before committing.
-     See Conventions.md. -->
-<Suppressions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" />
+     This file is emptied again when the baseline moves to the release that shipped the break. See Conventions.md. -->
+<Suppressions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:FlatFiles.FixedLengthOptions.get_IsLongRecordRejected</Target>
+    <Left>lib/net10.0/FlatFiles.dll</Left>
+    <Right>lib/net10.0/FlatFiles.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:FlatFiles.FixedLengthOptions.set_IsLongRecordRejected(System.Boolean)</Target>
+    <Left>lib/net10.0/FlatFiles.dll</Left>
+    <Right>lib/net10.0/FlatFiles.dll</Right>
+    <IsBaselineSuppression>true</IsBaselineSuppression>
+  </Suppression>
+</Suppressions>

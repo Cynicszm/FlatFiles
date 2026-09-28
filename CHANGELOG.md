@@ -1,14 +1,23 @@
-﻿## 9.0.0 (planned)
-**Not released, and not started.** What is written here is the work that has to wait for a major version, kept with the releases so that the reasoning sits beside what it produced. Everything below breaks something, which is what it is waiting for.
+﻿## 9.0.0 (unreleased)
+**Not released.** Being built. What is written up here has landed on master. This release breaks one thing, which is the whole of what it is for.
 
-- **`FixedLengthOptions.IsLongRecordRejected` goes.** `LongRecordHandling` replaced it in 8.7.0, saying the same thing in the words both readers use, and the old property has carried `[Obsolete]` since, with a message naming its replacement. The two are one setting rather than two - setting either sets the other - so removing it changes no behaviour at all, only the spellings available to say it in.
+**`FixedLengthOptions.IsLongRecordRejected` is gone.** `LongRecordHandling` replaced it in 8.7.0, saying the same thing in the words both readers use, and the old property carried an `[Obsolete]` naming this release throughout 8.7.0 - so anyone compiling against it has had a cycle's notice and a message pointing at its replacement.
 
-  For a caller it is a find and replace of one identifier: `IsLongRecordRejected = true` becomes `LongRecordHandling = LongRecordHandling.Refuse`, and `false` becomes `LongRecordHandling.Discard`. The property has existed since 7.1.0 and defaults to false, so it is only in code that turned it on.
+```csharp
+// before
+var options = new FixedLengthOptions { IsLongRecordRejected = true };
 
-  It waits for a major version because removing a public member is a binary break, and `Conventions.md` answers that with a major version rather than a suppression. Keeping it obsolete for a release first was the point: a warning at every call site is a cycle's notice, which deleting it in a minor would not have been.
+// after
+var options = new FixedLengthOptions { LongRecordHandling = LongRecordHandling.Refuse };
+```
 
-**Every planned feature has been built, and this removal is all that is outstanding** - outstanding only because it is the one thing that breaks something. This entry should not become somewhere to put work that does not need to break anything; that belongs in the next minor, under a planned heading of its own. A release whose whole content is one deleted property is still worth cutting, because the obsolete member is a promise with a version number on it.
+**Nothing about reading or writing changes.** The two were one setting rather than two - setting either set the other - so a file read one way is read the same way still. What goes is a spelling, not a behaviour. `false` was the default and becomes `LongRecordHandling.Discard`, which is also the default, so only code that turned it on has anything to change.
 
+**The break is declared in `CompatibilitySuppressions.xml`**, which carries two entries for it: package validation counts a property as its getter and its setter, so a removed property is two `CP0002` diagnostics rather than one. They are the only entries in the file, and it is emptied again when the baseline moves to this release. The file had been empty since 8.0.0, whose entries described breaks that had shipped by then.
+
+**Why a major version for one property.** `Conventions.md` answers a removed public member with a major version rather than a suppression in a minor, and the point of keeping it obsolete for a release first was to make the notice real: a warning at every call site through 8.7.0, then the removal. A release whose whole content is one deleted property is still worth cutting, because the obsolete member was a promise with a version number on it.
+
+**Nothing else is in this release**, and nothing else is waiting on a major version. Work that does not need to break anything belongs in a minor, under a planned heading of its own.
 
 ## 8.7.0 (2026-09-28)
 **Summary** - Three things a file could say that the library could not hear, and one crash. A record that does not fit its schema now has an answer both readers give in the same words; a header can order the columns rather than being read and thrown away; and a delimited selector can choose a mapping from the record's text, which allocates between eleven and forty-six times less than choosing from its values. The crash is an entity that is a value type, which took the process down when written. Nothing here breaks anything, and the two defects fixed along the way - a short record with an ignored column, and that crash - were both failures no handler could catch.
