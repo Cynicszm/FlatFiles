@@ -107,6 +107,15 @@ namespace FlatFiles.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The entity type &apos;{0}&apos; is a value type, so a reader is handed a copy of it and anything set on that copy is lost..
+        /// </summary>
+        internal static string ValueTypeEntityCannotBeFilled {
+            get {
+                return ResourceManager.GetString("ValueTypeEntityCannotBeFilled", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Encountered an invalid header matching option..
         /// </summary>
         internal static string InvalidHeaderMatching {
