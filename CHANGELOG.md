@@ -1,5 +1,5 @@
-﻿## 9.1.0 (unreleased)
-**Not released.** Being built. What is written up here has landed on master. Nothing in this release breaks anything.
+﻿## 9.1.0 (2026-09-28)
+**Summary** - Three changes about what a hook costs. A hook no longer takes the whole mapping off the path that reads a record straight onto an entity - it costs its own column and nothing else. A parsing hook can now read its value where it lies rather than as a string, which costs that column nothing either. And the source generator stopped writing code that warns in your build, about nine and a half thousand times in one consumer. Nothing here breaks anything, and nothing here changes what any mapping produces.
 
 **A hooked column no longer costs the rest of the mapping its fast path.** A column carrying `OnParsing`, `OnParsed`, `OnFormatting` or `OnFormatted` has to see its values as strings or objects, so it cannot have a typed accessor. Until now the mapping needed one for every column or none, so **a single hook on a single column put every other column back to being parsed into an array of objects** - on a wide mapping, most of what a record cost.
 
@@ -51,6 +51,8 @@ One warning per nullable reference member per entity, in generated code a caller
 **Nothing in the test suite had ever compiled what the generator wrote**, which is how it shipped. Every test ran the generator and made assertions about the text it produced. The harness now compiles the consumer together with the generated trees and fails on any warning in them, which is what caught this and is what would catch the next one.
 
 `OnParsed`, `OnFormatting` and `OnFormatted` are unchanged. They deal in `object`, so a span does not help them; removing the boxing there would mean a generic hook on the typed column, which is a different change.
+
+**The integration baseline does not move.** Every figure is where 8.7.0 left it, which is the release that last recorded the table: the samples' own mappings carry no hooks, so no column falls back and no mapped read or write changes the path it takes. Movement here would have meant this release had caught a column it should not have.
 
 ## 9.0.0 (2026-09-28)
 **Summary** - One removal, and nothing else at all. `FixedLengthOptions.IsLongRecordRejected` is gone; `LongRecordHandling` replaced it in 8.7.0, says the same thing, and was always the same setting rather than a second one. **Nothing about reading or writing a file changes.** The major version is for the member that was removed, not for anything the library now does differently, and upgrading is a find and replace of one identifier in code that turned the option on - code that never did has nothing to do.
