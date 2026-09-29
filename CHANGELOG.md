@@ -1,5 +1,5 @@
-﻿## 9.1.1 (unreleased)
-**Not released.** Being built. What is written up here has landed on master. Nothing in this release breaks anything.
+﻿## 9.1.1 (2026-09-29)
+**Summary** - One fix. A span parsing hook on a mapped property was skipped for a blank value and had no way to answer null, because the path that reads a record straight onto an entity ran the hook and the null check in the opposite order to the path that parses into objects. The two now agree. Nothing else changes, and nothing here breaks anything.
 
 **A span parsing hook was skipped for a blank value, and could not answer null.** On a mapped property - the path that reads a record straight onto an entity - `ParseTyped` asked whether the value read as null *before* the hook had seen it, and then parsed whatever the hook wrote *without* asking the same question of that. The object path does both the other way round, which is the right way round, so the two disagreed:
 
@@ -20,6 +20,8 @@ A blank value never reached that hook, so the property read as null rather than 
 **The two paths are now tested against each other** rather than each against its own expectation, which is what would have caught this: the same value read through a mapped property and through a schema has to give the same answer.
 
 Nothing else changes. A hook returning `SpanParsingHooks.Unchanged` still leaves the value to be judged as it lies, blank included, and a column that cannot hold null still takes its default value.
+
+**The integration baseline does not move.** Every figure is where 8.7.0 left it, which is the release that last recorded the table. No sample carries a hook, so the order this fix corrects is one none of them takes.
 
 ## 9.1.0 (2026-09-28)
 **Summary** - Three changes about what a hook costs. A hook no longer takes the whole mapping off the path that reads a record straight onto an entity - it costs its own column and nothing else. A parsing hook can now read its value where it lies rather than as a string, which costs that column nothing either. And the source generator stopped writing code that warns in your build, about nine and a half thousand times in one consumer. Nothing here breaks anything, and nothing here changes what any mapping produces.
