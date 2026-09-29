@@ -23,6 +23,14 @@ They now meet in one method that answers all of it, and a second that decides wh
 
 Nothing here changes what any of them answers.
 
+**The record paths and the format paths are now compared with each other too.** The parse paths drifted because each was tested on its own and nothing read the same value down more than one of them. That is not peculiar to a column: a schema walks its columns in three places when reading and two when writing, and a column has three ways to format a value as well as three to parse one. Each of those had tests. None of them compared.
+
+What makes it worth testing rather than reasoning about is that nobody chooses the path. A handler attached to the record being read copies every value out as a string and moves the whole file onto a different loop; a type mapper takes a third; an injector that picks the schema per record moves writing off the entity. Somebody adding a handler that only counts records changes the code that decides what every value in their file means.
+
+Two tests now read one file every way a reader can read it, write one set of records both ways a writer can write them, and drive one value through all three ways a column can format it - and insist the answers match. Both were checked by breaking the library underneath them.
+
+Nothing in the library changed for this. The paths agree today; these are what say so tomorrow.
+
 ## 9.1.1 (2026-09-29)
 **Summary** - One fix. A span parsing hook on a mapped property was skipped for a blank value and had no way to answer null, because the path that reads a record straight onto an entity ran the hook and the null check in the opposite order to the path that parses into objects. The two now agree. Nothing else changes, and nothing here breaks anything.
 
