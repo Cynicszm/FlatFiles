@@ -89,6 +89,49 @@ jobs:
               throw "The release is tagged $tagged but the project packs $packed. Update the version in FlatFiles.csproj, or retag."
           }
 
+      - name: Check the release notes describe this release
+        if: github.event_name == 'release'
+        # PackageReleaseNotes is what nuget.org shows beside the package, and nothing made anyone touch it:
+        # 8.2.0 through 9.1.1 all shipped notes describing 8.1.0, because the release pull request moved the
+        # version and left the notes where they were. Naming the version in them is a rule a machine can check,
+        # and it cannot be satisfied by notes left over from last time.
+        shell: pwsh
+        run: |
+          $package = Get-ChildItem artifacts -Filter *.nupkg | Select-Object -First 1
+          if ($null -eq $package) { throw 'Pack produced no package.' }
+
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $archive = [System.IO.Compression.ZipFile]::OpenRead($package.FullName)
+          try
+          {
+              $entry = $archive.Entries | Where-Object { $_.FullName -like '*.nuspec' } | Select-Object -First 1
+              if ($null -eq $entry) { throw "No nuspec inside $($package.Name)." }
+              $stream = New-Object System.IO.StreamReader($entry.Open())
+              try { $nuspec = [xml]$stream.ReadToEnd() } finally { $stream.Dispose() }
+          }
+          finally
+          {
+              $archive.Dispose()
+          }
+
+          $notes = $nuspec.package.metadata.releaseNotes
+          $tagged = '${{ github.event.release.tag_name }}' -replace '^v', ''
+
+          if ([string]::IsNullOrWhiteSpace($notes))
+          {
+              throw "The package carries no release notes. Set PackageReleaseNotes in FlatFiles.csproj to describe $tagged."
+          }
+          # They have to *begin* with the version, not merely contain it. Notes often name earlier releases in
+          # passing - "anyone who compiled against 9.1.0 has to rebuild" - so a check for the version anywhere
+          # would let last release's notes through whenever they happened to mention this one.
+          if (-not $notes.TrimStart().StartsWith("$tagged ", [System.StringComparison]::Ordinal))
+          {
+              $opening = $notes.Substring(0, [Math]::Min(120, $notes.Length))
+              throw "The release notes must begin with '$tagged ' and then say what it contains. They begin: $opening"
+          }
+
+          Write-Host "release notes open with $tagged"
+
       - name: Check the assembly says the same version as the package
         # 8.2.0 shipped reporting 8.1.0.0, because Version was moved for the release and AssemblyVersion and
         # FileVersion were not. The package version was right, the tag was right, and the check above passed;

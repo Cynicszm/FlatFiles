@@ -1,6 +1,10 @@
 ﻿## 9.1.2 (unreleased)
 **Not released.** Being built. What is written up here has landed on master.
 
+**The package's release notes had described 8.1.0 since before 8.2.0 shipped.** `PackageReleaseNotes` is what nuget.org shows beside the package, and nothing made anyone touch it: the release pull request moved the version and left the notes where they were, ten releases running. Anyone who read the package page was told about work from a year of releases ago.
+
+`publish.yml` now refuses a release whose notes do not begin with the version being tagged. Checking that the version appears *anywhere* in them would not have caught this, because notes name earlier releases in passing - this entry does it twice - so the rule is about the opening, which last release's text cannot satisfy.
+
 **`SpanParsingHooks.Unchanged` is now `int.MinValue` rather than `-1`.** A hook returns the number of characters it wrote, `Unchanged` to have the value parsed as it lies, or `SpanParsingHooks.NeedsLength( n )` to ask for a longer buffer - which is the negation of the length. So `NeedsLength( 1 )` returned `-1`, the same value as `Unchanged`: a hook asking for a single character would have been read as wanting the value left alone, the original parsed, and the hook never called again. Its answer would have been dropped without a word.
 
 It could not happen in practice, because a reader offers room for the value plus sixteen characters, so nothing ever needed to ask for one. It was still a trap in a public API that nothing prevented a caller falling into. `Unchanged` is now a value no length can produce, and the reader tells a request from it by asking whether it is negative and not `Unchanged`, rather than by comparing magnitudes.
