@@ -31,6 +31,16 @@ Two tests now read one file every way a reader can read it, write one set of rec
 
 Nothing in the library changed for this. The paths agree today; these are what say so tomorrow.
 
+**One custom mapping no longer takes every column beside it through the array of values.** A mapping needs a setter for every column or it uses none of them, and none was built for a custom mapping, so one of them put every other column back through the array of parsed values and boxed each one. A column whose value comes from the context - a record number, say - can only be declared as a custom mapping, so asking for one was enough to do that to a whole mapping. This is the shape 9.0.0's boxing accessors were built to end; they covered a column carrying a hook and a column with a `Parse` of its own, and did not cover this.
+
+The column itself still boxes, because a custom reader takes an object and a custom writer returns one. What changes is that nothing else pays with it. Reading ten thousand records of thirteen columns, one custom mapping among them cost 1.06 MB over the same mapping declared as properties and now costs 0.61 MB; asking for the record number cost 1.69 MB and now costs 0.62 MB; writing cost 1.51 MB and now costs 0.61 MB. What remains is about sixty bytes a record - one box and one column context - which is that column's own cost. A mapping whose columns are *all* custom is unchanged, there being nothing beside them to save.
+
+Only a writer that returns a value can be reached this way. One handed the whole array of values writes into it wherever it likes, so there is nothing to ask it for without an array to give it, and a mapping declared that way writes as it always did.
+
+**What a custom reader or writer sees is unchanged**, which is most of what this took. Each is handed a column context of its own, per record, however the column was parsed or formatted - so parsing and formatting are left to the same methods that fill and read the array rather than written a second time beside them. A column fed by the context is still written from the context, and its custom writer is still asked for a value that is thrown away: the answer was always discarded, but the call always happened, and a writer that counts or logs must not stop being called.
+
+No public API changes.
+
 ## 9.1.1 (2026-09-29)
 **Summary** - One fix. A span parsing hook on a mapped property was skipped for a blank value and had no way to answer null, because the path that reads a record straight onto an entity ran the hook and the null check in the opposite order to the path that parses into objects. The two now agree. Nothing else changes, and nothing here breaks anything.
 
