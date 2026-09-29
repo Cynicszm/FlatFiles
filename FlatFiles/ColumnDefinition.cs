@@ -494,6 +494,34 @@ namespace FlatFiles
         /// <returns>False when the value reads as null, in which case the caller decides what null means.</returns>
         internal bool ParseTyped( IColumnContext? context, ReadOnlySpan<char> value, out T parsed )
         {
+            if (OnParsingSpan is null)
+            {
+                return ParseTypedValue( context, value, out parsed );
+            }
+            // The hook first, then everything else applied to what it answered - the order the object path uses.
+            // The other way round, a blank value never reaches the hook at all, and whatever the hook wrote is
+            // parsed without anyone asking whether it reads as null.
+            var replaced = Replaced( context, value, out var rented );
+            try
+            {
+                return ParseTypedValue( context, replaced, out parsed );
+            }
+            finally
+            {
+                Release( rented );
+            }
+        }
+
+        /// <summary>
+        ///     Everything the typed path does to a value once any hook has had it: the null formatter, a default
+        ///     value where the column cannot hold null, and the trim.
+        /// </summary>
+        /// <param name="context">Holds information about the column currently being processed.</param>
+        /// <param name="value">The value, as the hook left it.</param>
+        /// <param name="parsed">The parsed value, or the type's default when the value reads as null.</param>
+        /// <returns>False when the value reads as null, in which case the caller decides what null means.</returns>
+        private bool ParseTypedValue( IColumnContext? context, ReadOnlySpan<char> value, out T parsed )
+        {
             if (NullFormatter.IsNullValue( context, value ))
             {
                 if (IsNullable)
@@ -509,19 +537,6 @@ namespace FlatFiles
                 }
                 parsed = (T) substitute;
                 return true;
-            }
-            if (OnParsingSpan is not null)
-            {
-                var replaced = Replaced( context, value, out var rented );
-                try
-                {
-                    parsed = OnParse( context, IsTrimmed ? replaced.Trim() : replaced );
-                    return true;
-                }
-                finally
-                {
-                    Release( rented );
-                }
             }
             parsed = OnParse( context, IsTrimmed ? value.Trim() : value );
             return true;
