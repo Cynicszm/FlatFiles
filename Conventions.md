@@ -272,6 +272,16 @@ only `Version`. Nothing broke - the strong-name identity simply stayed where 8.1
 package version and Source Link were right - but the assembly misreports itself, and that is permanent
 for a release once it is published. Check all three before tagging.
 
+**`PackageReleaseNotes` is what nuget.org shows beside the package, and it is set in the same pull request
+as `Version`.** It begins with the version being released and then says what that release contains, in a
+sentence or two - not the changelog entry, which is far too long for the space, but the shape of it.
+
+`publish.yml` refuses a release whose notes do not open with the version being tagged. That rule exists
+because nothing made anyone touch them: 8.2.0 through 9.1.1 all shipped notes describing 8.1.0, which was the
+last release anyone edited them for. Checking that the version appears *anywhere* in the notes would not have
+caught it, since notes routinely name earlier releases in passing - "anyone who compiled against 9.1.0 has to
+rebuild" - so the rule is about the opening, which last release's text cannot satisfy.
+
 ## Documentation
 
 `README.md` is the library's documentation, and its **Table of Contents is part of it**: every `##` and

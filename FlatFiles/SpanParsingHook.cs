@@ -40,7 +40,12 @@ namespace FlatFiles
         /// <summary>
         ///     Returned by a hook that wants the value parsed exactly as it lies, having written nothing.
         /// </summary>
-        public const int Unchanged = -1;
+        /// <remarks>
+        ///     Deliberately a value that no request for a length can produce. A request is the negation of the
+        ///     length wanted, so the largest one is -1; were this that, a hook asking for a single character would
+        ///     be read as wanting the value left alone, and its answer would be dropped without a word.
+        /// </remarks>
+        public const int Unchanged = int.MinValue;
 
         /// <summary>
         ///     Returned by a hook that needs a longer buffer than it was given.
@@ -48,10 +53,22 @@ namespace FlatFiles
         /// <param name="length">The number of characters the hook needs.</param>
         /// <returns>The value to return from the hook.</returns>
         /// <exception cref="ArgumentOutOfRangeException">The length is not positive.</exception>
+        /// <remarks>
+        ///     Every length this accepts encodes as something distinct from <see cref="Unchanged" />, one included.
+        /// </remarks>
         public static int NeedsLength( int length )
         {
             ArgumentOutOfRangeException.ThrowIfNegativeOrZero( length );
             return -length;
         }
+
+        /// <summary>
+        ///     The fewest characters a hook is ever offered, whatever the length of the value.
+        /// </summary>
+        /// <remarks>
+        ///     A reader offers room for the value plus this much, so a hook writing a sign, a decimal point or a
+        ///     stripped symbol usually has somewhere to put it without asking for more.
+        /// </remarks>
+        public const int MinimumOffered = 16;
     }
 }
