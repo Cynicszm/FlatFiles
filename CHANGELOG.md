@@ -1,5 +1,5 @@
-﻿## 9.1.2 (unreleased)
-**Not released.** Being built. What is written up here has landed on master.
+﻿## 9.1.2 (2026-09-29)
+**Summary** - One change callers have to rebuild for, and three about paths that had drifted apart or were never compared. `SpanParsingHooks.Unchanged` is now a value no length a hook asks for can be mistaken for, which means anyone who compiled against 9.1.0 or 9.1.1 must rebuild. The three ways of asking a column to parse a value share one implementation of what a value means, and the record and format paths are now compared with each other as well. One custom mapping no longer takes every column beside it through the array of values. And the package stopped shipping release notes describing 8.1.0, which it had done for ten releases. No signature changes.
 
 **The package's release notes had described 8.1.0 since before 8.2.0 shipped.** `PackageReleaseNotes` is what nuget.org shows beside the package, and nothing made anyone touch it: the release pull request moved the version and left the notes where they were, ten releases running. Anyone who read the package page was told about work from a year of releases ago.
 
