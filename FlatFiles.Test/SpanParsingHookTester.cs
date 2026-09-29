@@ -104,6 +104,79 @@ namespace FlatFiles.Test
         }
 
         [TestMethod]
+        public void TestAskingForOneCharacter_IsNotMistakenForUnchanged()
+        {
+            // A request is the negation of the length, so asking for one is -1. Were Unchanged that value, a
+            // reader would read this as "leave the value alone", parse the original and never call the hook
+            // again - losing its answer without a word. Unchanged is int.MinValue so that cannot happen.
+            Assert.AreNotEqual( SpanParsingHooks.Unchanged, SpanParsingHooks.NeedsLength( 1 ) );
+            Assert.AreEqual( int.MinValue, SpanParsingHooks.Unchanged );
+        }
+
+        [TestMethod]
+        public void TestAHookAskingForOneCharacter_IsAskedAgain()
+        {
+            // The property that matters is behavioural, not arithmetic: a hook asking for room gets it.
+            var asked = 0;
+            var schema = new DelimitedSchema();
+            schema.AddColumn( new StringColumn( "Tiny" )
+            {
+                Trim = false,
+                OnParsingSpan = ( _, _, destination ) =>
+                {
+                    ++asked;
+                    if (asked == 1)
+                    {
+                        return SpanParsingHooks.NeedsLength( 1 );
+                    }
+                    destination[0] = 'x';
+                    return 1;
+                }
+            } );
+            var reader = new DelimitedReader( new StringReader( "a" ), schema, Options() );
+
+            Assert.IsTrue( reader.Read() );
+            Assert.AreEqual( "x", reader.GetValues()[0] );
+            Assert.AreEqual( 2, asked, "the hook should be asked again rather than ignored" );
+        }
+
+        [TestMethod]
+        public void TestEveryValidRequestIsTellableFromUnchanged()
+        {
+            // The property the refusal exists to give: no length a hook may ask for encodes as Unchanged.
+            foreach (var length in new[] { 2, 3, 16, 17, 1024, int.MaxValue })
+            {
+                Assert.AreNotEqual( SpanParsingHooks.Unchanged, SpanParsingHooks.NeedsLength( length ),
+                    $"a request for {length} cannot be told from Unchanged" );
+            }
+        }
+
+        [TestMethod]
+        public void TestAHookIsNeverOfferedLessThanItIsPromised()
+        {
+            // NeedsLength refuses one on the grounds that a hook always has room for it. That is only true if
+            // the reader really does offer at least this much, so the claim is checked rather than asserted.
+            var offered = int.MaxValue;
+            var schema = new DelimitedSchema();
+            schema.AddColumn( new StringColumn( "Tiny" )
+            {
+                OnParsingSpan = ( _, _, destination ) =>
+                {
+                    offered = Math.Min( offered, destination.Length );
+                    return SpanParsingHooks.Unchanged;
+                }
+            } );
+            var reader = new DelimitedReader( new StringReader( ",,a" ), schema, Options() );
+
+            while (reader.Read())
+            {
+            }
+
+            Assert.IsTrue( offered >= SpanParsingHooks.MinimumOffered,
+                $"the shortest buffer offered was {offered}, and the API promises {SpanParsingHooks.MinimumOffered}" );
+        }
+
+        [TestMethod]
         public void TestTheStringHookWins_WhereBothAreSet()
         {
             // A column that has to build a string for one hook may as well give it to both, so the older hook

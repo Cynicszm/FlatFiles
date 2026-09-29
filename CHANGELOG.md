@@ -1,4 +1,25 @@
-﻿## 9.1.1 (2026-09-29)
+﻿## 9.1.2 (unreleased)
+**Not released.** Being built. What is written up here has landed on master.
+
+**`SpanParsingHooks.Unchanged` is now `int.MinValue` rather than `-1`.** A hook returns the number of characters it wrote, `Unchanged` to have the value parsed as it lies, or `SpanParsingHooks.NeedsLength( n )` to ask for a longer buffer - which is the negation of the length. So `NeedsLength( 1 )` returned `-1`, the same value as `Unchanged`: a hook asking for a single character would have been read as wanting the value left alone, the original parsed, and the hook never called again. Its answer would have been dropped without a word.
+
+It could not happen in practice, because a reader offers room for the value plus sixteen characters, so nothing ever needed to ask for one. It was still a trap in a public API that nothing prevented a caller falling into. `Unchanged` is now a value no length can produce, and the reader tells a request from it by asking whether it is negative and not `Unchanged`, rather than by comparing magnitudes.
+
+**Anyone who compiled against 9.1.0 or 9.1.1 has to rebuild.** `Unchanged` is a `const`, so its value is copied into the calling assembly: code built against the old one carries `-1`, which now reads as a request for a single character. It fails loudly rather than quietly - the reader offers the character, the hook says the same thing again, and the second refusal raises - but it fails. **Package validation does not catch this**, since it compares signatures rather than the values of constants, so it is said here instead.
+
+Nothing in the library used the old value: the span hook shipped two days before this and nothing that consumes the package had taken it up.
+
+`SpanParsingHooks.MinimumOffered` is new, and is the sixteen characters above. It was a number written twice, once in the reader and once in prose.
+
+**The three ways of asking a column to parse a value now share one implementation of what a value means.** A column can be asked through the string overload, the span overload, or the typed parse a mapped property uses. Each decided for itself what a blank value meant, when a hook ran, and what a default was for - and the library shipped two defects from the three drifting apart: a span hook applied after the null check on one path and before it on another, and a mapped property that skipped the hook for a blank value and could not answer null.
+
+They now meet in one method that answers all of it, and a second that decides what a value reading as null becomes. The string overload keeps its own route to the string `OnParse`, for two reasons worth writing down: it is what a derived column overriding it is reached through, so it cannot route back; and most columns override only the string `OnParse`, whose span counterpart calls it through `ToString`, so going by way of the span would build a string per value for exactly the callers that already had one.
+
+**What holds them together is a test that drives the same value through all three and insists they agree**, across every combination of nullable, default value, trimming and hook - one hundred and forty-four of them. That is what was missing: each path had tests, and none compared them.
+
+Nothing here changes what any of them answers.
+
+## 9.1.1 (2026-09-29)
 **Summary** - One fix. A span parsing hook on a mapped property was skipped for a blank value and had no way to answer null, because the path that reads a record straight onto an entity ran the hook and the null check in the opposite order to the path that parses into objects. The two now agree. Nothing else changes, and nothing here breaks anything.
 
 **A span parsing hook was skipped for a blank value, and could not answer null.** On a mapped property - the path that reads a record straight onto an entity - `ParseTyped` asked whether the value read as null *before* the hook had seen it, and then parsed whatever the hook wrote *without* asking the same question of that. The object path does both the other way round, which is the right way round, so the two disagreed:

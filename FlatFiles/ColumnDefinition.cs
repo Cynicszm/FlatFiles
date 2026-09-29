@@ -341,43 +341,70 @@ namespace FlatFiles
         /// <param name="context">Holds information about the column current being processed.</param>
         /// <param name="value">The value to parse.</param>
         /// <returns>The parsed value.</returns>
+        /// <remarks>
+        ///     This overload stays its own implementation rather than handing the characters to the span one, for
+        ///     two reasons. It is what <see cref="OverridesStringParse" /> routes to, so it cannot route back. And
+        ///     most columns override only the string <c>OnParse</c>, whose span counterpart calls it through
+        ///     <c>ToString</c> - so going by way of the span would build a string per value for exactly the
+        ///     callers that already had one.
+        ///     <para>
+        ///         What it must not do is decide anything for itself. Every question about nullness, defaults and
+        ///         trimming is asked of the same two methods the span overload asks, because the two answering
+        ///         differently is a defect this column has shipped twice.
+        ///     </para>
+        /// </remarks>
         public override object? Parse( IColumnContext? context, string value )
         {
+            if (value is null)
+            {
+                return Parsed( context, NullValue( context, out var missing ), missing );
+            }
             if (OnParsing is not null)
             {
-                value = OnParsing( context, value ) ?? string.Empty;
+                // The string hook wins over the span one: a column that has to build a string for it may as well
+                // give it to both.
+                var replaced = OnParsing( context, value ) ?? string.Empty;
+                return Parsed( context, ParseReplaced( context, replaced, out var hooked ), hooked );
             }
-            else if (OnParsingSpan is not null)
+            if (OnParsingSpan is not null)
             {
-                // The span hook answers the same question, and a caller holding a string should get the same
-                // value from it as a reader holding the record would.
-                var replaced = Replaced( context, value.AsSpan(), out var rented );
-                try
-                {
-                    var hooked = ParseValue( context, replaced );
-                    return OnParsed is null ? hooked : OnParsed( context, hooked );
-                }
-                finally
-                {
-                    Release( rented );
-                }
+                // A caller holding a string should get what a reader holding the record would.
+                return Parsed( context, ParseTyped( context, value.AsSpan(), out var spanHooked ), spanHooked );
             }
-            var result = ParseValue( context, value );
-            if (OnParsed is not null)
-            {
-                result = OnParsed( context, result );
-            }
-            return result;
+            return Parsed( context, ParseReplaced( context, value, out var parsed ), parsed );
         }
 
-        private object? ParseValue( IColumnContext? context, string? value )
+        /// <summary>
+        ///     What every parse does once a value has been turned into the column's own type: box it, or box
+        ///     nothing where it read as null, and offer it to <see cref="ColumnDefinition.OnParsed" />.
+        /// </summary>
+        /// <param name="context">Holds information about the column currently being processed.</param>
+        /// <param name="hasValue">False where the value read as null.</param>
+        /// <param name="parsed">The parsed value, where there is one.</param>
+        /// <returns>The value as an object.</returns>
+        private object? Parsed( IColumnContext? context, bool hasValue, T parsed )
         {
-            if (value is null || NullFormatter.IsNullValue( context, value ))
+            object? result = hasValue ? parsed : null;
+            return OnParsed is null ? result : OnParsed( context, result );
+        }
+
+        /// <summary>
+        ///     The string counterpart of <see cref="ParseReplaced(IColumnContext?, ReadOnlySpan{char}, out T)" />,
+        ///     which exists only so that a column overriding the string <c>OnParse</c> is reached without the
+        ///     value being copied. It asks the same questions in the same order.
+        /// </summary>
+        /// <param name="context">Holds information about the column currently being processed.</param>
+        /// <param name="value">The value, as any hook left it.</param>
+        /// <param name="parsed">The parsed value, or the type's default where the value read as null.</param>
+        /// <returns>False where the value read as null.</returns>
+        private bool ParseReplaced( IColumnContext? context, string value, out T parsed )
+        {
+            if (NullFormatter.IsNullValue( context, value ))
             {
-                return IsNullable ? null : DefaultValue.GetDefaultValue( context ); // Should we check for the expected type?
+                return NullValue( context, out parsed );
             }
-            var trimmed = IsTrimmed ? TrimValue( value ) : value;
-            return OnParse( context, trimmed );
+            parsed = OnParse( context, IsTrimmed ? TrimValue( value ) : value );
+            return true;
         }
 
         /// <summary>
@@ -396,34 +423,7 @@ namespace FlatFiles
                 // overload has to keep seeing every value through it.
                 return Parse( context, value.ToString() );
             }
-            if (OnParsingSpan is not null)
-            {
-                var replaced = Replaced( context, value, out var rented );
-                try
-                {
-                    var hooked = ParseValue( context, replaced );
-                    return OnParsed is null ? hooked : OnParsed( context, hooked );
-                }
-                finally
-                {
-                    Release( rented );
-                }
-            }
-            var result = ParseValue( context, value );
-            if (OnParsed is not null)
-            {
-                result = OnParsed( context, result );
-            }
-            return result;
-        }
-
-        private object? ParseValue( IColumnContext? context, ReadOnlySpan<char> value )
-        {
-            if (NullFormatter.IsNullValue( context, value ))
-            {
-                return IsNullable ? null : DefaultValue.GetDefaultValue( context );
-            }
-            return OnParse( context, IsTrimmed ? value.Trim() : value );
+            return Parsed( context, ParseTyped( context, value, out var parsed ), parsed );
         }
 
         /// <inheritdoc />
@@ -496,7 +496,7 @@ namespace FlatFiles
         {
             if (OnParsingSpan is null)
             {
-                return ParseTypedValue( context, value, out parsed );
+                return ParseReplaced( context, value, out parsed );
             }
             // The hook first, then everything else applied to what it answered - the order the object path uses.
             // The other way round, a blank value never reaches the hook at all, and whatever the hook wrote is
@@ -504,7 +504,7 @@ namespace FlatFiles
             var replaced = Replaced( context, value, out var rented );
             try
             {
-                return ParseTypedValue( context, replaced, out parsed );
+                return ParseReplaced( context, replaced, out parsed );
             }
             finally
             {
@@ -513,32 +513,44 @@ namespace FlatFiles
         }
 
         /// <summary>
-        ///     Everything the typed path does to a value once any hook has had it: the null formatter, a default
-        ///     value where the column cannot hold null, and the trim.
+        ///     Everything a parse does to a value once any hook has had it: the null formatter, a default value
+        ///     where the column cannot hold null, and the trim. Every overload arrives here.
         /// </summary>
         /// <param name="context">Holds information about the column currently being processed.</param>
         /// <param name="value">The value, as the hook left it.</param>
         /// <param name="parsed">The parsed value, or the type's default when the value reads as null.</param>
         /// <returns>False when the value reads as null, in which case the caller decides what null means.</returns>
-        private bool ParseTypedValue( IColumnContext? context, ReadOnlySpan<char> value, out T parsed )
+        private bool ParseReplaced( IColumnContext? context, ReadOnlySpan<char> value, out T parsed )
         {
             if (NullFormatter.IsNullValue( context, value ))
             {
-                if (IsNullable)
-                {
-                    parsed = default!;
-                    return false;
-                }
-                var substitute = DefaultValue.GetDefaultValue( context );
-                if (substitute is null)
-                {
-                    parsed = default!;
-                    return false;
-                }
-                parsed = (T) substitute;
-                return true;
+                return NullValue( context, out parsed );
             }
             parsed = OnParse( context, IsTrimmed ? value.Trim() : value );
+            return true;
+        }
+
+        /// <summary>
+        ///     What a value that reads as null becomes: nothing where the column can hold null, and otherwise the
+        ///     default value, which may itself be nothing.
+        /// </summary>
+        /// <param name="context">Holds information about the column currently being processed.</param>
+        /// <param name="parsed">The default value, where there is one.</param>
+        /// <returns>False where the answer is null.</returns>
+        private bool NullValue( IColumnContext? context, out T parsed )
+        {
+            if (IsNullable)
+            {
+                parsed = default!;
+                return false;
+            }
+            var substitute = DefaultValue.GetDefaultValue( context );
+            if (substitute is null)
+            {
+                parsed = default!;
+                return false;
+            }
+            parsed = (T) substitute;
             return true;
         }
 
@@ -561,13 +573,13 @@ namespace FlatFiles
             var hook = OnParsingSpan!;
             rented = ArrayPool<char>.Shared.Rent( value.Length + SpareRoom );
             var written = hook( context, value, rented );
-            if (written < SpanParsingHooks.Unchanged)
+            if (IsRequest( written ))
             {
                 var wanted = -written;
                 ArrayPool<char>.Shared.Return( rented );
                 rented = ArrayPool<char>.Shared.Rent( wanted );
                 written = hook( context, value, rented.AsSpan( 0, wanted ) );
-                if (written < SpanParsingHooks.Unchanged)
+                if (IsRequest( written ))
                 {
                     var message = string.Format( CultureInfo.CurrentCulture, Resources.SpanParsingHookAskedTwice, ColumnName, wanted );
                     Release( rented );
@@ -582,6 +594,21 @@ namespace FlatFiles
                 return value;
             }
             return rented.AsSpan( 0, written );
+        }
+
+        /// <summary>
+        ///     Whether what a hook returned is asking for a longer buffer, rather than a length it wrote or a
+        ///     wish to be left alone.
+        /// </summary>
+        /// <param name="written">What the hook returned.</param>
+        /// <returns>True where it is asking for room.</returns>
+        /// <remarks>
+        ///     Anything negative other than <see cref="SpanParsingHooks.Unchanged" />, which is
+        ///     <see cref="int.MinValue" /> so that no length a hook can ask for is mistaken for it.
+        /// </remarks>
+        private static bool IsRequest( int written )
+        {
+            return written < 0 && written != SpanParsingHooks.Unchanged;
         }
 
         /// <summary>Returns a rented array, if one was taken.</summary>
@@ -599,7 +626,7 @@ namespace FlatFiles
         ///     A hook that rewrites a value usually returns something close to its own length - a sign, a decimal
         ///     point, a stripped symbol - so asking twice should be rare.
         /// </summary>
-        private const int SpareRoom = 16;
+        private const int SpareRoom = SpanParsingHooks.MinimumOffered;
 
         /// <summary>
         ///     Whether the runtime type replaced <see cref="Parse(IColumnContext?, ReadOnlySpan{char})" />.
