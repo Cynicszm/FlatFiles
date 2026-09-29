@@ -134,9 +134,10 @@ namespace FlatFiles.TypeMapping
         private Func<TEntity>? cachedFactory;
 
         /// <summary>
-        ///     Builds one setter per column, or answers null where anything about the mapping means a value has to
-        ///     travel as an object: a custom reader, a nested entity, a field rather than a property, a property
-        ///     without a setter, a column whose type does not match the member's, or a column carrying a hook.
+        ///     Builds one setter per column, or answers null where anything about the mapping means the whole of
+        ///     it has to go through the array of parsed values: a nested entity, a field rather than a property, a
+        ///     property without a setter, or a column whose type does not match the member's. A custom reader or a
+        ///     column carrying a hook is paid for by that column alone.
         /// </summary>
         public IColumnSetter<TEntity>[]? GetColumnSetters()
         {
@@ -188,7 +189,15 @@ namespace FlatFiles.TypeMapping
 
         private static IColumnSetter<TEntity>? BuildColumnSetter( IMemberMapping mapping )
         {
-            if (mapping.Reader is not null || mapping.Member is null)
+            if (mapping.Reader is not null)
+            {
+                // A custom mapping has a reader rather than a member, and the reader takes its value as an
+                // object, so this column cannot avoid boxing. It used to answer null here, which took every
+                // other column in the mapping through the array of values with it - and a column fed by the
+                // context can only be mapped this way, so asking for the record number did exactly that.
+                return new CustomColumnSetter<TEntity>( mapping.ColumnDefinition, mapping.Reader );
+            }
+            if (mapping.Member is null)
             {
                 return null;
             }
@@ -273,7 +282,8 @@ namespace FlatFiles.TypeMapping
 
         /// <summary>
         ///     One getter per column, for writing a record from an entity without any value becoming an
-        ///     <see cref="object" />, or null where this mapping cannot be written that way.
+        ///     <see cref="object" />, or null where this mapping cannot be written that way. A custom writer that
+        ///     returns a value, or a column carrying a formatting hook, is paid for by that column alone.
         /// </summary>
         /// <returns>The getters, or null to write through the array of values as before.</returns>
         public IColumnGetter<TEntity>[]? GetColumnGetters()
@@ -319,8 +329,16 @@ namespace FlatFiles.TypeMapping
 
         private static IColumnGetter<TEntity>? BuildColumnGetter( IMemberMapping mapping )
         {
+            if (mapping.ValueWriter is not null)
+            {
+                // A custom mapping declared with a writer that returns a value. It boxes, as the reading side
+                // does, but it no longer takes every other column in the mapping through the array with it.
+                return new CustomColumnGetter<TEntity>( mapping.ColumnDefinition, mapping.ValueWriter );
+            }
             if (mapping.Writer is not null || mapping.Member is null)
             {
+                // A writer handed the whole array of values writes into it wherever it likes, so there is
+                // nothing to ask it for without an array, and this mapping writes as it always did.
                 return null;
             }
             if (mapping.Member.MemberInfo is not PropertyInfo property)

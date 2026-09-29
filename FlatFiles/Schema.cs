@@ -139,7 +139,7 @@ namespace FlatFiles
                 {
                     // Nothing in the record feeds this column, so it takes a destination but no source.
                     var columnContext = NewColumnContext( context, columnIndex, destinationIndex );
-                    setters[destinationIndex].SetObject( entity, ParseWithContext( columnContext, string.Empty ) );
+                    setters[destinationIndex].SetObject( columnContext, entity, ParseWithContext( columnContext, string.Empty ) );
                     ++destinationIndex;
                     continue;
                 }
@@ -158,6 +158,16 @@ namespace FlatFiles
 
         private void ParseValueInto<TEntity>( IRecoverableRecordContext context, int columnIndex, int destinationIndex, ReadOnlySpan<char> rawValue, TEntity entity, IColumnSetter<TEntity> setter )
         {
+            if (setter.NeedsParsedValue)
+            {
+                // A custom reader takes its value as an object and a context of its own. Parsing is left to the
+                // method that fills the array of values, so this column is answered exactly as it was when a
+                // mapping carrying one had no setters at all - error recovery, the column context rules and what
+                // a disabled column context means to the column included - and only this column pays for it.
+                var parsed = ParseValue( context, columnIndex, destinationIndex, rawValue );
+                setter.SetObject( NewColumnContext( context, columnIndex, destinationIndex ), entity, parsed );
+                return;
+            }
             var options = context.ExecutionContext.Options;
             var definition = ColumnDefinitions[columnIndex];
             if (options.IsColumnContextDisabled)
@@ -180,7 +190,8 @@ namespace FlatFiles
             catch (Exception exception)
             {
                 // A handler's substitution arrives as an object, which is the one value on this path that boxes.
-                setter.SetObject( entity, RecoverParse( NewColumnContext( context, columnIndex, destinationIndex ), rawValue.ToString(), exception ) );
+                var recoveryContext = NewColumnContext( context, columnIndex, destinationIndex );
+                setter.SetObject( recoveryContext, entity, RecoverParse( recoveryContext, rawValue.ToString(), exception ) );
             }
         }
 
@@ -335,7 +346,15 @@ namespace FlatFiles
                 var start = destination.Length;
                 if (definition is IMetadataColumn)
                 {
-                    // Its value comes from the context rather than from the entity, as when parsing.
+                    // Its value comes from the context rather than from the entity, as when parsing - but a
+                    // custom writer is still asked for one and the answer still thrown away, because that is
+                    // what happened when this mapping filled an array of values, and a writer doing something
+                    // besides returning a value must not stop doing it on this path.
+                    var metadataGetter = getters[valueIndex];
+                    if (metadataGetter.NeedsColumnContext)
+                    {
+                        metadataGetter.ReadWith( NewColumnContext( context, columnIndex, valueIndex ), entity );
+                    }
                     FormatWithContext( NewColumnContext( context, columnIndex, valueIndex ), null, destination );
                     ++valueIndex;
                 }
@@ -354,6 +373,16 @@ namespace FlatFiles
 
         private void FormatMember<TEntity>( IRecoverableRecordContext context, int columnIndex, int valueIndex, TEntity entity, IColumnGetter<TEntity> getter, RecordBuffer destination )
         {
+            if (getter.NeedsColumnContext)
+            {
+                // A custom writer produces an object and takes a context of its own. Formatting is left to the
+                // method that writes from the array of values, so this column is written exactly as it was when
+                // a mapping carrying one had no getters at all - the column context rules and error recovery
+                // included - and only this column pays for it.
+                var value = getter.ReadWith( NewColumnContext( context, columnIndex, valueIndex ), entity );
+                FormatValue( context, columnIndex, valueIndex, value, destination );
+                return;
+            }
             var options = context.ExecutionContext.Options;
             var definition = ColumnDefinitions[columnIndex];
             // As when parsing: no context unless the column asks for one, or something fails and the error needs

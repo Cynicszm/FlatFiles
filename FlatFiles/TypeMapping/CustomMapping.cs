@@ -13,6 +13,13 @@ namespace FlatFiles.TypeMapping
 
         public Action<IColumnContext?, object?, object?[]>? Writer { get; private set; }
 
+        /// <summary>
+        ///     Set beside <see cref="Writer" /> by the overloads that take a writer returning a value, which is
+        ///     every one that ends up assigning a single slot. Kept because the array-filling form erases the
+        ///     difference, and only this form can be asked for the value without an array to put it in.
+        /// </summary>
+        public Func<IColumnContext?, object?, object?>? ValueWriter { get; private set; }
+
         public IColumnDefinition ColumnDefinition { get; } = column;
 
         public int PhysicalIndex { get; } = physicalIndex;
@@ -94,24 +101,28 @@ namespace FlatFiles.TypeMapping
         public ICustomMapping<TEntity> WithWriter( Action<TEntity, object?[]>? writer )
         {
             Writer = writer is null ? null : ( _, e, v ) => writer( (TEntity) e!, v );
+            ValueWriter = null;
             return this;
         }
 
         public ICustomMapping<TEntity> WithWriter( Action<IColumnContext?, TEntity, object?[]>? writer )
         {
             Writer = writer is null ? null : ( ctx, e, v ) => writer( ctx, (TEntity) e!, v );
+            ValueWriter = null;
             return this;
         }
 
         ICustomMapping ICustomMapping.WithWriter( Action<object?, object?[]>? writer )
         {
             Writer = writer is null ? null : ( _, e, v ) => writer( e, v );
+            ValueWriter = null;
             return this;
         }
 
         ICustomMapping ICustomMapping.WithWriter( Action<IColumnContext?, object?, object?[]>? writer )
         {
             Writer = writer;
+            ValueWriter = null;
             return this;
         }
 
@@ -121,6 +132,7 @@ namespace FlatFiles.TypeMapping
             {
                 v[LogicalIndex] = writer( (TEntity) e! );
             };
+            ValueWriter = writer is null ? null : ( _, e ) => writer( (TEntity) e! );
             return this;
         }
 
@@ -130,6 +142,7 @@ namespace FlatFiles.TypeMapping
             {
                 v[LogicalIndex] = writer( ctx, (TEntity) e! );
             };
+            ValueWriter = writer is null ? null : ( ctx, e ) => writer( ctx, (TEntity) e! );
             return this;
         }
 
@@ -139,6 +152,7 @@ namespace FlatFiles.TypeMapping
             {
                 v[LogicalIndex] = writer( e );
             };
+            ValueWriter = writer is null ? null : ( _, e ) => writer( e );
             return this;
         }
 
@@ -148,6 +162,7 @@ namespace FlatFiles.TypeMapping
             {
                 v[LogicalIndex] = writer( ctx, e );
             };
+            ValueWriter = writer;
             return this;
         }
     }

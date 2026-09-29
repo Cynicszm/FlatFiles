@@ -20,7 +20,7 @@ namespace FlatFiles.TypeMapping
             setter( entity, column.ParseTyped( context, value, out var parsed ) ? parsed : null );
         }
 
-        public void SetObject( TEntity entity, object? value )
+        public void SetObject( IColumnContext? context, TEntity entity, object? value )
         {
             setter( entity, (T?) value );
         }

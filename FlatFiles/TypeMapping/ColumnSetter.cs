@@ -24,7 +24,7 @@ namespace FlatFiles.TypeMapping
             member.SetValue( entity!, null );
         }
 
-        public void SetObject( TEntity entity, object? value )
+        public void SetObject( IColumnContext? context, TEntity entity, object? value )
         {
             member.SetValue( entity!, value );
         }

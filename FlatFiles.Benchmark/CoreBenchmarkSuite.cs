@@ -522,6 +522,116 @@ namespace FlatFiles.Benchmark
             _ = mapper.Read( reader, new DelimitedOptions { IsFirstRecordSchema = true } ).ToArray();
         }
 
+        /// <summary>
+        ///     The same mapping as <see cref="RunFlatFiles_TypeMapper_Read" /> with one member declared as a custom
+        ///     mapping rather than a property, which is what a mapping looks like when a member needs something the
+        ///     fluent API does not offer.
+        /// </summary>
+        /// <remarks>
+        ///     A mapping needs a setter for every column or it uses none of them, and no setter is built for a
+        ///     custom mapping, so one of these takes the other twelve columns off the assembled path with it. The
+        ///     difference against the benchmark above is what that costs; the twelve are doing exactly the same
+        ///     work either way.
+        /// </remarks>
+        [Benchmark]
+        public void RunFlatFiles_TypeMapper_OneCustomMapping_Read()
+        {
+            var mapper = DelimitedTypeMapper.Define( () => new Person() );
+            mapper.Property( x => x.FirstName );
+            mapper.Property( x => x.LastName );
+            mapper.CustomMapping( new Int32Column( "Age" ) ).WithReader( ( Person p, object? v ) => p.Age = (int) v! );
+            mapper.Property( x => x.Street1 );
+            mapper.Property( x => x.Street2 );
+            mapper.Property( x => x.City );
+            mapper.Property( x => x.State );
+            mapper.Property( x => x.Zip );
+            mapper.Property( x => x.FavouriteColour );
+            mapper.Property( x => x.FavouriteFood );
+            mapper.Property( x => x.FavouriteSport );
+            mapper.Property( x => x.CreatedOn );
+            mapper.Property( x => x.IsActive );
+
+            var reader = new StringReader( data );
+            _ = mapper.Read( reader, new DelimitedOptions { IsFirstRecordSchema = true } ).ToArray();
+        }
+
+        /// <summary>
+        ///     Thirteen ordinary properties on the entity the record number benchmark below uses, so that the two
+        ///     differ only by the record number column.
+        /// </summary>
+        [Benchmark]
+        public void RunFlatFiles_TypeMapper_Numbered_Read()
+        {
+            var reader = new StringReader( data );
+            _ = NumberedMapper().Read( reader, new DelimitedOptions { IsFirstRecordSchema = true } ).ToArray();
+        }
+
+        /// <summary>
+        ///     The same, with a column whose value comes from the context rather than the record.
+        /// </summary>
+        /// <remarks>
+        ///     A custom mapping is the only way to put such a column on a member, so this is what asking for the
+        ///     record number costs: one more column to walk, and every value in the record parsed as an object
+        ///     because the mapping no longer has setters.
+        /// </remarks>
+        [Benchmark]
+        public void RunFlatFiles_TypeMapper_RecordNumber_Read()
+        {
+            var mapper = NumberedMapper();
+            mapper.CustomMapping( new RecordNumberColumn( "RecordNumber" ) )
+                .WithReader( ( NumberedPerson p, object? v ) => p.RecordNumber = (int) v! )
+                .WithWriter( ( NumberedPerson p ) => p.RecordNumber );
+
+            var reader = new StringReader( data );
+            _ = mapper.Read( reader, new DelimitedOptions { IsFirstRecordSchema = true } ).ToArray();
+        }
+
+        /// <summary>
+        ///     The writing side of <see cref="RunFlatFiles_TypeMapper_OneCustomMapping_Read" />, against
+        ///     <see cref="RunFlatFiles_TypeMapper_Write" />.
+        /// </summary>
+        [Benchmark]
+        public string RunFlatFiles_TypeMapper_OneCustomMapping_Write()
+        {
+            var mapper = DelimitedTypeMapper.Define( () => new Person() );
+            mapper.Property( x => x.FirstName );
+            mapper.Property( x => x.LastName );
+            mapper.CustomMapping( new Int32Column( "Age" ) ).WithWriter( ( Person p ) => p.Age );
+            mapper.Property( x => x.Street1 );
+            mapper.Property( x => x.Street2 );
+            mapper.Property( x => x.City );
+            mapper.Property( x => x.State );
+            mapper.Property( x => x.Zip );
+            mapper.Property( x => x.FavouriteColour );
+            mapper.Property( x => x.FavouriteFood );
+            mapper.Property( x => x.FavouriteSport );
+            mapper.Property( x => x.CreatedOn );
+            mapper.Property( x => x.IsActive );
+
+            var writer = new StringWriter();
+            mapper.Write( writer, sample, new DelimitedOptions { IsFirstRecordSchema = true } );
+            return writer.ToString();
+        }
+
+        private static IDelimitedTypeMapper<NumberedPerson> NumberedMapper()
+        {
+            var mapper = DelimitedTypeMapper.Define( () => new NumberedPerson() );
+            mapper.Property( x => x.FirstName );
+            mapper.Property( x => x.LastName );
+            mapper.Property( x => x.Age );
+            mapper.Property( x => x.Street1 );
+            mapper.Property( x => x.Street2 );
+            mapper.Property( x => x.City );
+            mapper.Property( x => x.State );
+            mapper.Property( x => x.Zip );
+            mapper.Property( x => x.FavouriteColour );
+            mapper.Property( x => x.FavouriteFood );
+            mapper.Property( x => x.FavouriteSport );
+            mapper.Property( x => x.CreatedOn );
+            mapper.Property( x => x.IsActive );
+            return mapper;
+        }
+
         [Benchmark]
         public void RunFlatFiles_TypeMapper_CustomMapping_Read()
         {
@@ -774,6 +884,15 @@ namespace FlatFiles.Benchmark
                 };
                 people.Add( person );
             }
+        }
+
+        /// <summary>
+        ///     A person with somewhere to put the record number. Separate from <see cref="Person" /> so that the
+        ///     benchmarks which do not ask for one are measuring the same entity they always were.
+        /// </summary>
+        public class NumberedPerson : Person
+        {
+            public int RecordNumber { get; set; }
         }
 
         public class Person

@@ -17,6 +17,19 @@ namespace FlatFiles.TypeMapping
         ///     told what could not be formatted. A box per failure rather than per value.
         /// </summary>
         object? Read( TEntity entity );
+
+        /// <summary>
+        ///     The value as an object, with the context the getter asked for. Only called where
+        ///     <see cref="NeedsColumnContext" /> says so.
+        /// </summary>
+        object? ReadWith( IColumnContext? context, TEntity entity ) => Read( entity );
+
+        /// <summary>
+        ///     Whether this getter cannot write the value itself and wants to be asked for it instead, which is
+        ///     true of a custom writer: it produces an object, and it is handed a context of its own however the
+        ///     column is formatted. The schema asks before it decides how to reach the column.
+        /// </summary>
+        bool NeedsColumnContext => false;
     }
 
     /// <summary>
