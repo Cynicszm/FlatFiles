@@ -32,10 +32,10 @@ namespace FlatFiles.TypeMapping
     {
         public void Set( IColumnContext? context, TEntity entity, ReadOnlySpan<char> value )
         {
-            SetObject( entity, column.Parse( context, value ) );
+            SetObject( context, entity, column.Parse( context, value ) );
         }
 
-        public void SetObject( TEntity entity, object? value )
+        public void SetObject( IColumnContext? context, TEntity entity, object? value )
         {
             if (value is null)
             {

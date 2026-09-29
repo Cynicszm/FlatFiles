@@ -23,6 +23,13 @@ namespace FlatFiles.TypeMapping
         Action<IColumnContext?, object?, object?[]>? Writer { get; }
 
         /// <summary>
+        /// Gets a custom writer that produces the column's value, where the mapping was declared with one that
+        /// returns a value rather than one that fills the array of values itself. A writer that fills the array
+        /// cannot be reached without an array, so only this form can write straight from the entity.
+        /// </summary>
+        Func<IColumnContext?, object?, object?>? ValueWriter => null;
+
+        /// <summary>
         /// Gets the column that is mapped to. 
         /// </summary>
         IColumnDefinition ColumnDefinition { get; }

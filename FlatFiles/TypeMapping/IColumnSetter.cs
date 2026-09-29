@@ -22,8 +22,16 @@ namespace FlatFiles.TypeMapping
         ///     Puts a value that something else has already produced on the entity, which is how a substituted
         ///     value from an error handler arrives.
         /// </summary>
+        /// <param name="context">The column context. Never null where the setter asked for the value.</param>
         /// <param name="entity">The entity being read into.</param>
         /// <param name="value">The value to put on it.</param>
-        void SetObject( TEntity entity, object? value );
+        void SetObject( IColumnContext? context, TEntity entity, object? value );
+
+        /// <summary>
+        ///     Whether this setter cannot read the characters itself and wants the parsed value instead, which is
+        ///     true of a custom reader: it takes an object, and it is handed a context of its own however the
+        ///     column was parsed. The schema asks before it decides how to reach the column.
+        /// </summary>
+        bool NeedsParsedValue => false;
     }
 }
