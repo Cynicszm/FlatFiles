@@ -442,7 +442,7 @@ namespace FlatFiles
             {
                 return false;
             }
-            var e = new FixedLengthRecordReadEventArgs( record );
+            var e = new FixedLengthRecordReadEventArgs( GetMetadata( null, record ), record );
             RecordRead( this, e );
             return e.IsSkipped;
         }

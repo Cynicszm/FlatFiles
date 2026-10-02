@@ -858,6 +858,10 @@ namespace FlatFiles
             {
                 // Everything the last record's context could report goes with the buffer the parser is about to reuse.
                 ++generation;
+                // Including the context itself. An error raised before this record has one of its own now builds a
+                // fresh one rather than answering with the record before it, which is what GetMetadata did for
+                // every record after the first - naming the wrong number, the wrong text and the wrong values.
+                recordContext = null;
                 if (parser.IsEndOfStream())
                 {
                     endOfFile = true;
@@ -865,10 +869,12 @@ namespace FlatFiles
                     return null;
                 }
                 string record;
+                // Counted before the read rather than after it, so that a record the parser cannot read is still
+                // the record its error names. Nothing reads the number again once a read has failed.
+                ++physicalRecordNumber;
                 try
                 {
                     record = parser.ReadRecord();
-                    ++physicalRecordNumber;
                 }
                 catch (DelimitedSyntaxException exception)
                 {
@@ -893,6 +899,7 @@ namespace FlatFiles
             while (true)
             {
                 ++generation;
+                recordContext = null;
                 if (await parser.IsEndOfStreamAsync( cancellationToken ).ConfigureAwait( false ))
                 {
                     endOfFile = true;
@@ -900,10 +907,10 @@ namespace FlatFiles
                     return null;
                 }
                 string record;
+                ++physicalRecordNumber;
                 try
                 {
                     record = await parser.ReadRecordAsync( cancellationToken ).ConfigureAwait( false );
-                    ++physicalRecordNumber;
                 }
                 catch (DelimitedSyntaxException exception)
                 {
