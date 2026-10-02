@@ -10,10 +10,21 @@ namespace FlatFiles
         /// <summary>
         /// Creates a new instance of a FixedLengthRecordReadEventArgs.
         /// </summary>
-        internal FixedLengthRecordReadEventArgs(string record)
+        internal FixedLengthRecordReadEventArgs(IRecordContext context, string record)
         {
+            RecordContext = context;
             Record = record;
         }
+
+        /// <summary>
+        /// Gets any metadata associated with the current read process.
+        /// </summary>
+        /// <remarks>
+        /// This event is raised before a schema has been chosen for the record, so the context carries no schema.
+        /// What it does carry is which record this is, which a handler deciding whether to skip it needs in order
+        /// to say so.
+        /// </remarks>
+        public IRecordContext RecordContext { get; }
 
         /// <summary>
         /// Gets the unpartitioned, unparsed record values read from the source file.

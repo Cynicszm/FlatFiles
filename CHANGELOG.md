@@ -1,4 +1,15 @@
-﻿## 9.1.2 (2026-09-29)
+﻿## 9.2.0 (unreleased)
+**Not released.** Being built. What is written up here has landed on master.
+
+**The delimited reader named the record before the one that went wrong.** Two errors are raised before a record has a context of its own - a record the parser cannot read at all, and a record no schema matches - and both asked for one from a method that answered with the last record's, which it had kept in a field and never cleared. So a bad third record was reported as the second, by number, by text and by values. Only the first record in a file was ever named correctly, because until then there was nothing stale to answer with.
+
+The second of those is the one that shows it was never the intent: it passes the record it is about to the method that builds the context, and the cached answer threw it away. The fixed-length reader does not have this, because it clears the field at the start of every read - which is now where the delimited reader clears it too, next to the comment already saying that everything the last record's context could report goes with the buffer about to be reused.
+
+**Clearing it was not enough on its own.** A record the parser cannot read was never counted, because the count happened after a successful read, so a fresh context still named the record before it - just without the wrong text attached. The record is now counted before the read rather than after it, so the record an error names is the record that failed. Nothing reads the number again once a read has failed, and a record that reads successfully is numbered exactly as before.
+
+**`FixedLengthRecordReadEventArgs.RecordContext` is new.** A handler for a record being read could not see which record it was, where the delimited reader's handler always could. The event is raised before a schema has been chosen, so the context carries no schema - but it carries the record number, which is what a handler that skips a line needs in order to say which line it skipped. Nothing else changes, and the property is additive.
+
+## 9.1.2 (2026-09-29)
 **Summary** - One change callers have to rebuild for, and three about paths that had drifted apart or were never compared. `SpanParsingHooks.Unchanged` is now a value no length a hook asks for can be mistaken for, which means anyone who compiled against 9.1.0 or 9.1.1 must rebuild. The three ways of asking a column to parse a value share one implementation of what a value means, and the record and format paths are now compared with each other as well. One custom mapping no longer takes every column beside it through the array of values. And the package stopped shipping release notes describing 8.1.0, which it had done for ten releases. No signature changes.
 
 **The package's release notes had described 8.1.0 since before 8.2.0 shipped.** `PackageReleaseNotes` is what nuget.org shows beside the package, and nothing made anyone touch it: the release pull request moved the version and left the notes where they were, ten releases running. Anyone who read the package page was told about work from a year of releases ago.
