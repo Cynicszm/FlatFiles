@@ -42,7 +42,24 @@ namespace FlatFiles
             return matcher;
         }
 
-        internal FixedLengthSchema? GetSchema( string record )
+        private SchemaMatcher AddSkip( Func<string, bool> predicate )
+        {
+            var matcher = new SchemaMatcher( null, predicate ) { IsSkipped = true };
+            matchers.Add( matcher );
+            return matcher;
+        }
+
+        /// <summary>
+        ///     The schema for this record, or null where none was chosen.
+        /// </summary>
+        /// <param name="record">The record's text.</param>
+        /// <param name="isSkipped">
+        ///     True where a predicate matched and asked for the record to be passed over. Null comes back either
+        ///     way, and the two mean different things: a record nothing matched is an error, and a record a
+        ///     predicate asked to skip is not.
+        /// </param>
+        /// <returns>The schema, or null.</returns>
+        internal FixedLengthSchema? GetSchema( string record, out bool isSkipped )
         {
             foreach (var matcher in matchers)
             {
@@ -51,8 +68,10 @@ namespace FlatFiles
                     continue;
                 }
                 matcher.Action?.Invoke();
+                isSkipped = matcher.IsSkipped;
                 return matcher.Schema;
             }
+            isSkipped = false;
             if (defaultMatcher is null || !defaultMatcher.Predicate( record ))
             {
                 return null;
@@ -61,9 +80,12 @@ namespace FlatFiles
             return defaultMatcher.Schema;
         }
 
-        private sealed class SchemaMatcher( FixedLengthSchema schema, Func<string, bool> predicate )
+        private sealed class SchemaMatcher( FixedLengthSchema? schema, Func<string, bool> predicate )
         {
-            public FixedLengthSchema Schema { get; } = schema;
+            public FixedLengthSchema? Schema { get; } = schema;
+
+            /// <summary>Whether a match here means the record is passed over rather than read.</summary>
+            public bool IsSkipped { get; init; }
 
             public Func<string, bool> Predicate { get; } = predicate;
 
@@ -79,6 +101,12 @@ namespace FlatFiles
                 var matcher = selector.Add( schema, predicate );
                 return new FixedLengthSchemaSelectorUseBuilder( matcher );
             }
+
+            public IFixedLengthSchemaSelectorUseBuilder Skip()
+            {
+                return new FixedLengthSchemaSelectorUseBuilder( selector.AddSkip( predicate ) );
+            }
+
         }
 
         private sealed class FixedLengthSchemaSelectorUseBuilder( SchemaMatcher? matcher ) : IFixedLengthSchemaSelectorUseBuilder

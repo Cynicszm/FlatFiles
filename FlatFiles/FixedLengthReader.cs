@@ -626,10 +626,16 @@ namespace FlatFiles
             {
                 return schema;
             }
-            var currentSchema = schemaSelector.GetSchema( record );
+            var currentSchema = schemaSelector.GetSchema( record, out var isSkipped );
             if (currentSchema is not null)
             {
                 return currentSchema;
+            }
+            if (isSkipped)
+            {
+                // A predicate asked for this record to be passed over, which is not the same as nothing
+                // matching it. The record is dropped without being reported.
+                return null;
             }
             var currentContext = GetMetadata( null, record );
             ProcessError( new RecordProcessingException( currentContext, Resources.MissingMatcher ) );

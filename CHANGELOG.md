@@ -9,6 +9,22 @@ The second of those is the one that shows it was never the intent: it passes the
 
 **`FixedLengthRecordReadEventArgs.RecordContext` is new.** A handler for a record being read could not see which record it was, where the delimited reader's handler always could. The event is raised before a schema has been chosen, so the context carries no schema - but it carries the record number, which is what a handler that skips a line needs in order to say which line it skipped. Nothing else changes, and the property is additive.
 
+**A selector can be told to pass a record over: `When( predicate ).Skip()`.** A file carrying sections meant for somebody else could only be read by skipping those lines from a handler for the record being read - and the two readers raise that event on opposite sides of choosing a schema. The fixed-length reader offers the record before it has one; the delimited reader after, by which point a line no schema matches has already been reported as an error. So the same arrangement did not work for both, and the delimited one had to be told what every other section looked like just to keep it quiet.
+
+Deciding it in the selector decides it the same way in both. A record nothing matches is still an error; a record a skip matched is not. Predicates are asked in the order they were registered, so a skip registered before a `When` wins over it and one registered after does not - which is pinned by a test, because the alternative would let the order of two independent-looking calls decide what a file reads as.
+
+**`Skip` is on the builder, and it carries a default implementation.** A new member on
+`IDelimitedSchemaSelectorWhenBuilder` or `IFixedLengthSchemaSelectorWhenBuilder` is a break - package validation
+refuses it with CP0006 - so it is declared with a body that throws. The selector's own builder, which is what
+`When` and `WhenText` hand back, overrides it; the default exists only so that adding the member costs nobody a
+recompile. Nothing outside this library implements either interface in any case, because both are only ever
+returned and never taken as a parameter, but the default is what makes that an observation rather than a bet.
+There is a test that an implementation without its own `Skip` is refused rather than failing to compile.
+
+**`DelimitedReader.ParseRecord` is new**, for a caller holding one record's text already - a line out of a file of mixed formats - who wants its values without standing a reader up around it. The parser that knows how to split one has always been internal, so the alternative was a schemaless reader per line, or a quoting rule written by hand.
+
+It reads a *record* rather than a line, and the difference is the reason to be careful with it: a record separator inside a quoted value belongs to the value, so text that looks like several lines may be one record. Text holding more than one record is refused rather than quietly answered with the first, because a caller who thought they had one line and did not should hear about it. A single trailing record separator is not a second record, and text holding no record at all comes back empty.
+
 ## 9.1.2 (2026-09-29)
 **Summary** - One change callers have to rebuild for, and three about paths that had drifted apart or were never compared. `SpanParsingHooks.Unchanged` is now a value no length a hook asks for can be mistaken for, which means anyone who compiled against 9.1.0 or 9.1.1 must rebuild. The three ways of asking a column to parse a value share one implementation of what a value means, and the record and format paths are now compared with each other as well. One custom mapping no longer takes every column beside it through the array of values. And the package stopped shipping release notes describing 8.1.0, which it had done for ten releases. No signature changes.
 

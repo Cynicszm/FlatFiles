@@ -70,6 +70,13 @@ namespace FlatFiles
             return matcher;
         }
 
+        private SchemaMatcher AddSkip( Func<string[], bool>? values, RecordTextPredicate? text )
+        {
+            var matcher = new SchemaMatcher( null, values, text ) { IsSkipped = true };
+            matchers.Add( matcher );
+            return matcher;
+        }
+
         /// <summary>
         ///     Whether any predicate registered here is given the record's values rather than its text, and so
         ///     whether the reader has to split every record before it can choose a schema for it.
@@ -89,7 +96,18 @@ namespace FlatFiles
             }
         }
 
-        internal DelimitedSchema? GetSchema( ReadOnlySpan<char> record, string[]? values )
+        /// <summary>
+        ///     The schema for this record, or null where none was chosen.
+        /// </summary>
+        /// <param name="record">The record's text.</param>
+        /// <param name="values">The record's values, where any predicate here asks for them.</param>
+        /// <param name="isSkipped">
+        ///     True where a predicate matched and asked for the record to be passed over. Null comes back either
+        ///     way, and the two mean different things: a record nothing matched is an error, and a record a
+        ///     predicate asked to skip is not.
+        /// </param>
+        /// <returns>The schema, or null.</returns>
+        internal DelimitedSchema? GetSchema( ReadOnlySpan<char> record, string[]? values, out bool isSkipped )
         {
             foreach (var matcher in matchers)
             {
@@ -98,8 +116,10 @@ namespace FlatFiles
                     continue;
                 }
                 matcher.Action?.Invoke();
+                isSkipped = matcher.IsSkipped;
                 return matcher.Schema;
             }
+            isSkipped = false;
             if (!defaultMatcher.Matches( record, values ))
             {
                 return null;
@@ -115,6 +135,9 @@ namespace FlatFiles
         private sealed class SchemaMatcher( DelimitedSchema? schema, Func<string[], bool>? values, RecordTextPredicate? text )
         {
             public DelimitedSchema? Schema { get; } = schema;
+
+            /// <summary>Whether a match here means the record is passed over rather than read.</summary>
+            public bool IsSkipped { get; init; }
 
             public Action? Action { get; set; }
 
@@ -135,6 +158,12 @@ namespace FlatFiles
                 var matcher = selector.Add( schema, values, text );
                 return new DelimitedSchemaSelectorUseBuilder( matcher );
             }
+
+            public IDelimitedSchemaSelectorUseBuilder Skip()
+            {
+                return new DelimitedSchemaSelectorUseBuilder( selector.AddSkip( values, text ) );
+            }
+
         }
 
         private sealed class DelimitedSchemaSelectorUseBuilder( SchemaMatcher matcher ) : IDelimitedSchemaSelectorUseBuilder

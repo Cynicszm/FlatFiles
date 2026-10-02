@@ -386,6 +386,24 @@ namespace FlatFiles.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to This builder does not support skipping records..
+        /// </summary>
+        internal static string SkipNotSupported {
+            get {
+                return ResourceManager.GetString("SkipNotSupported", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The given text holds more than one record..
+        /// </summary>
+        internal static string MoreThanOneRecord {
+            get {
+                return ResourceManager.GetString("MoreThanOneRecord", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Could not find an appropriate property mapping for the type of the column &apos;{0}&apos;..
         /// </summary>
         internal static string NoAutoMapPropertyType {
