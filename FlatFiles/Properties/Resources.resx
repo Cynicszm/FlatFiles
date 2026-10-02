@@ -240,6 +240,12 @@
   <data name="AssignNullToNonNullable" xml:space="preserve">
     <value>Encountered a null when assigning to the non-nullable column.</value>
   </data>
+  <data name="SkipNotSupported" xml:space="preserve">
+    <value>This builder does not support skipping records.</value>
+  </data>
+  <data name="MoreThanOneRecord" xml:space="preserve">
+    <value>The given text holds more than one record.</value>
+  </data>
   <data name="MissingMatcher" xml:space="preserve">
     <value>No schema was found for the given record.</value>
   </data>

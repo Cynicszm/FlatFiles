@@ -150,6 +150,43 @@ namespace FlatFiles
         }
 
         /// <summary>
+        ///     Splits one record's text into its values, respecting quoting and escaping.
+        /// </summary>
+        /// <param name="record">The text of a single record.</param>
+        /// <param name="options">The options controlling how it is read, or null for the defaults.</param>
+        /// <returns>The record's values, or an empty array where the text holds no record at all.</returns>
+        /// <exception cref="ArgumentNullException">The record is null.</exception>
+        /// <exception cref="ArgumentException">The text holds more than one record.</exception>
+        /// <exception cref="DelimitedSyntaxException">The text is not a record this options set can read.</exception>
+        /// <remarks>
+        ///     For a caller holding one record's text already - a line taken from a file of mixed formats, say -
+        ///     and wanting its values without standing a reader up around it.
+        ///     <para>
+        ///         It reads a <em>record</em> rather than a line, and the difference matters: a record separator
+        ///         inside a quoted value belongs to the value, so text that looks like several lines may be one
+        ///         record. Text holding more than one record is refused rather than quietly answering with the
+        ///         first, because a caller who thought they had one line and did not should hear about it. A
+        ///         single trailing record separator is not a second record.
+        ///     </para>
+        /// </remarks>
+        public static string[] ParseRecord( string record, DelimitedOptions? options = null )
+        {
+            ArgumentNullException.ThrowIfNull( record );
+            var parser = new DelimitedRecordParser( new StringReader( record ), options ?? new DelimitedOptions() );
+            if (parser.IsEndOfStream())
+            {
+                return [];
+            }
+            parser.ReadRecord();
+            var values = parser.Values.Materialise();
+            if (!parser.IsEndOfStream())
+            {
+                throw new ArgumentException( Resources.MoreThanOneRecord, nameof( record ) );
+            }
+            return values;
+        }
+
+        /// <summary>
         ///     Raised when a record is read but before its columns are parsed.
         /// </summary>
         public event EventHandler<DelimitedRecordReadEventArgs>? RecordRead;
@@ -597,10 +634,16 @@ namespace FlatFiles
             {
                 return schema;
             }
-            var currentSchema = schemaSelector.GetSchema( recordText, rawValues );
+            var currentSchema = schemaSelector.GetSchema( recordText, rawValues, out var isSkipped );
             if (currentSchema is not null)
             {
                 return currentSchema;
+            }
+            if (isSkipped)
+            {
+                // A predicate asked for this record to be passed over, which is not the same as nothing
+                // matching it. The record is dropped without being reported.
+                return null;
             }
             var currentContext = GetMetadata( null, record );
             ProcessError( new RecordProcessingException( currentContext, Resources.MissingMatcher ) );
