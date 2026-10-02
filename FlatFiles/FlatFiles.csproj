@@ -10,10 +10,10 @@
     <RepositoryUrl>https://github.com/Cynicszm/FlatFiles.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>csv;comma;tab;separated;value;delimited;flat;file;fixed;width;fixed-width;length;fixed-length;parser;parsing;parse</PackageTags>
-    <PackageReleaseNotes>9.1.2 - SpanParsingHooks.Unchanged is now int.MinValue rather than -1, so that no length a hook asks for can be mistaken for it; anyone who compiled against 9.1.0 or 9.1.1 has to rebuild, because a const is copied into the calling assembly. The three ways of asking a column to parse a value - the string overload, the span overload and the typed parse a mapped property uses - now share one implementation of what a value means, and the record and format paths are compared with each other as well, by tests that drive the same input down every path and insist they agree. One custom mapping no longer takes every column beside it through the array of values: asking for a record number cost a thirteen column mapping 1.69 MB per ten thousand records and now costs 0.62 MB. No breaking changes to any signature.</PackageReleaseNotes>
+    <PackageReleaseNotes>9.2.0 - The delimited reader named the record before the one that went wrong: a record it could not read, and a record no schema matched, were both reported with the previous record's number, text and values. Only the first record in a file was ever named correctly. FixedLengthRecordReadEventArgs.RecordContext is new, so a handler for a record being read can see which record it is. A schema selector can now be told to pass a record over with When( predicate ).Skip(), which decides the same way in both readers - a handler for the record being read cannot, because the two raise that event on opposite sides of choosing a schema. DelimitedReader.ParseRecord splits one record's text into its values for a caller who has the text already. No breaking changes.</PackageReleaseNotes>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>FlatFiles.snk</AssemblyOriginatorKeyFile>
-    <Version>9.1.2</Version>
+    <Version>9.2.0</Version>
   </PropertyGroup>
 
   <PropertyGroup>

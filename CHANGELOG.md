@@ -1,5 +1,5 @@
-﻿## 9.2.0 (unreleased)
-**Not released.** Being built. What is written up here has landed on master.
+﻿## 9.2.0 (2026-10-02)
+**Summary** - One defect and three additions, all from reading a file whose records are not all the same shape. The delimited reader named the record before the one that went wrong in two of its errors, which is fixed. A handler for a fixed-length record being read can now see which record it is. A selector can be told to pass a record over, which the two readers previously could not be made to agree on. And one record's text can be split into its values without standing a reader up around it. Nothing here breaks anything.
 
 **The delimited reader named the record before the one that went wrong.** Two errors are raised before a record has a context of its own - a record the parser cannot read at all, and a record no schema matches - and both asked for one from a method that answered with the last record's, which it had kept in a field and never cleared. So a bad third record was reported as the second, by number, by text and by values. Only the first record in a file was ever named correctly, because until then there was nothing stale to answer with.
 
