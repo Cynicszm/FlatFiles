@@ -27,6 +27,7 @@ If you are working with data classes, defining schemas is even easier. You can u
     * [Column types](#column-types)
     * [Creating your own columns](#creating-your-own-columns)
 * [Delimited Files](#delimited-files)
+    * [Splitting one record's text](#splitting-one-records-text)
 * [Fixed Length Files](#fixed-length-files)
 * [Matching columns to the header](#matching-columns-to-the-header)
 * [Records that do not fit the schema](#records-that-do-not-fit-the-schema)
@@ -40,9 +41,11 @@ If you are working with data classes, defining schemas is even easier. You can u
     * [Creating your own metadata columns](#creating-your-own-metadata-columns)
 * [Skipping Records](#skipping-records)
     * [Comments and blank lines](#comments-and-blank-lines)
+    * [One name, two different events](#one-name-two-different-events)
 * [Error Handling](#error-handling)
 * [Files Containing Multiple Schemas](#files-containing-multiple-schemas)
     * [Choosing by the record's text](#choosing-by-the-records-text)
+    * [Passing records over](#passing-records-over)
 * [Custom Mapping](#custom-mapping)
 * [Runtime Mapping](#runtime-mapping)
 * [Disabling Optimisation](#disabling-optimisation)
@@ -343,6 +346,30 @@ below. The second of those is worth reading before you rely on the default. If y
 has a header, see also [Matching columns to the header](#matching-columns-to-the-header), which decides whether
 that header is checked against your schema or thrown away.
 
+### Splitting one record's text
+
+If you already hold one record's text - a line taken out of a file whose records are not all the same shape, say -
+`DelimitedReader.ParseRecord` gives you its values without standing a reader up around it:
+
+```csharp
+string[] values = DelimitedReader.ParseRecord("a,\"b,c\",d");   // a | b,c | d
+```
+
+It takes a `DelimitedOptions` too, so a tab-separated line or a different quote character works the same way.
+
+**It reads a *record*, not a line**, and the difference is the part to be careful with. A record separator inside
+a quoted value belongs to the value, so text that looks like two lines may be one record:
+
+```csharp
+var text = "a,\"b" + Environment.NewLine + "c\",d";
+string[] values = DelimitedReader.ParseRecord(text);   // three values; the second holds a newline
+```
+
+Text holding more than one record is refused with an `ArgumentException` rather than answered with the first,
+because a caller who thought they had one record and did not should hear about it. A single trailing record
+separator is not a second record. Text holding no record at all comes back empty, which is not the same as a
+record of empty values: `""` gives no values, and `","` gives two.
+
 ## Fixed Length Files
 If you have a file with fixed length columns, you will want to use the `FixedLengthTypeMapper` class. Internally, the mapper uses the `FixedLengthReader` and `FixedLengthWriter` classes, both of which work in terms of raw `object` arrays. In effect, all the mapper does is map the values in the array to the properties in your data objects. These classes read data from a `TextReader`, such as `StreamReader` or `StringReader`, and write data to a `TextWriter`, such as `StreamWriter` or `StringWriter`. Internally, the mapper will build a `FixedLengthSchema` based on the property/column configuration; this is where you customise the schema to match your file format. For more global settings, there is also a `FixedLengthOptions` object that allows you to customise the read/write behaviour to suit your needs.
 
@@ -635,6 +662,10 @@ reader.RecordRead += (sender, e) =>
 };
 ```
 
+`e.RecordContext` tells the handler which record it is being offered, so a handler that skips a line can report
+which line it skipped. This event is raised before a schema has been chosen, so that context carries no schema -
+what it carries is the record number.
+
 Similar to CSV files, you can also filter out fixed-length records *after* they are broken into columns. However, it is important to note that the record is expected to fit the configured windows.
 
 Again, the `FixedLengthReader` class provides the `RecordPartitioned` event, which allows you to skip unwanted records. For example, you could use the code below to find and skip records whose third column has a flag:
@@ -674,6 +705,31 @@ Three details worth knowing:
   and some files mean it.
 * A record passed over still counts towards the **physical** record number, which is where a record sits in the
   file. An error that reports one is only useful if it agrees with what a text editor shows.
+
+### One name, two different events
+
+`RecordRead` means different things on the two readers, which is worth getting straight before you go looking
+for a hook that is not there. Lined up by what they actually do:
+
+| event | raised | given |
+| --- | --- | --- |
+| `FixedLengthReader.RecordRead` | **before** a schema is chosen | the record's text |
+| `FixedLengthReader.RecordPartitioned` | **after** a schema is chosen | the record's values |
+| `DelimitedReader.RecordRead` | **after** a schema is chosen | the record's values |
+
+So **`DelimitedReader.RecordRead` is the counterpart of `FixedLengthReader.RecordPartitioned`**, not of the
+fixed-length event sharing its name. They take the same arguments and are raised at the same point in the
+life-cycle. What the delimited reader has no counterpart for is the *first* row: it offers you no hook before a
+schema has been chosen.
+
+That matters as soon as a file holds more than one kind of record, because by the time the delimited reader
+raises `RecordRead`, a record no schema matched **has already been reported as an error**. No arrangement of
+handlers makes both readers pass over the same lines: the delimited one would have to be told what every
+*other* section looks like purely to keep it quiet.
+
+Where the records you want to ignore can be recognised at all, say so on the selector instead - see
+[Passing records over](#passing-records-over). That decides it the same way in both readers, and before either
+raises an error, which is what the missing row would otherwise have been for.
 
 ## Error Handling
 The reader and writer classes support two events for handling errors: `RecordError` and `ColumnError`. The `ColumnError` event is raised whenever an error occurs while reading/writing a column; for example, when a value can't be parsed. In that case, an instance of `ColumnErrorEventArgs` will be sent to the listener(s), which provides access to the context (`ColumnContext`), the value that caused the error (`ColumnValue`) and the exception that was thrown (`Exception`).
@@ -778,6 +834,44 @@ mixed on one selector where some layouts really can only be told apart by their 
 
 The fixed-length selectors already take the record's text, because a fixed-length reader has to have it in hand
 to partition the record at all.
+
+### Passing records over
+
+A record nothing matches is an error. Sometimes that is right, and sometimes the file simply carries sections
+meant for somebody else and you want them gone. `Skip` says so:
+
+```csharp
+var selector = new DelimitedSchemaSelector();
+selector.WhenText(record => record.StartsWith("#")).Skip();
+selector.WhenText(record => record.StartsWith("PER")).Use(getPersonSchema());
+```
+
+A record a `Skip` matched is passed over without being read and without being reported. A record nothing matched
+at all is still an error, as before - the two are different answers and stay different.
+
+It reads as `When(...).Skip()` or `WhenText(...).Skip()`, beside `Use`, and `FixedLengthSchemaSelector` has it
+too:
+
+```csharp
+var selector = new FixedLengthSchemaSelector();
+selector.When(record => record.StartsWith("#")).Skip();
+selector.When(record => record.StartsWith("PER")).Use(getPersonSchema());
+```
+
+**Predicates are asked in the order they were registered**, skips included. A skip registered before a `When`
+takes records from it; one registered after it does not. Register the narrow conditions first, as you would with
+`Use`.
+
+`OnMatch` works on a skip as it does on a `Use`, which is how you count what went past:
+
+```csharp
+var ignored = 0;
+selector.WhenText(record => record.StartsWith("#")).Skip().OnMatch(() => ++ignored);
+```
+
+This is the answer to the delimited reader having no hook before a schema is chosen, described under
+[One name, two different events](#one-name-two-different-events): a selector decides the same way in both, and
+decides before either reader reports anything.
 
 If you want to *create* multi-schema files, there are "injector" equivalents for each "selector" class. For example:
 
