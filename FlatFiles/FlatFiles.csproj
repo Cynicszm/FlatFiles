@@ -10,10 +10,10 @@
     <RepositoryUrl>https://github.com/Cynicszm/FlatFiles.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>csv;comma;tab;separated;value;delimited;flat;file;fixed;width;fixed-width;length;fixed-length;parser;parsing;parse</PackageTags>
-    <PackageReleaseNotes>9.2.0 - The delimited reader named the record before the one that went wrong: a record it could not read, and a record no schema matched, were both reported with the previous record's number, text and values. Only the first record in a file was ever named correctly. FixedLengthRecordReadEventArgs.RecordContext is new, so a handler for a record being read can see which record it is. A schema selector can now be told to pass a record over with When( predicate ).Skip(), which decides the same way in both readers - a handler for the record being read cannot, because the two raise that event on opposite sides of choosing a schema. DelimitedReader.ParseRecord splits one record's text into its values for a caller who has the text already. No breaking changes.</PackageReleaseNotes>
+    <PackageReleaseNotes>9.2.1 - A type mapper defined a dynamic assembly every time it was asked to read or write. Read, Write, GetReader and GetWriter each built a fresh mapper, and with it a fresh code generator, which defines a dynamic assembly of its own; the emitted serialiser was cached on the mapper that was being thrown away, so reusing the type mapper did not help. A caller writing one record at a time built one dynamic assembly per record, until the process ran out of mappings for executable memory and the runtime failed with 'Failed to create RW mapping for RX memory' - a message naming insufficient memory and a Linux kernel limit, neither of which is the cause. The mapper and its generator are now held and reused. Turning optimisation off after a write still stops it emitting, and adding a mapping after a write still takes effect. No API changes.</PackageReleaseNotes>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>FlatFiles.snk</AssemblyOriginatorKeyFile>
-    <Version>9.2.0</Version>
+    <Version>9.2.1</Version>
   </PropertyGroup>
 
   <PropertyGroup>

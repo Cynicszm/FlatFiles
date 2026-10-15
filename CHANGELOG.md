@@ -1,5 +1,5 @@
-﻿## 9.2.1 (unreleased)
-**Not released.** Being built. What is written up here has landed on master.
+﻿## 9.2.1 (2026-10-15)
+**Summary** - One fix, and it is a crash rather than a nicety. A type mapper defined a dynamic assembly every time it was asked to read or write, so a caller writing a record at a time eventually exhausted the process's mappings for executable memory and the runtime stopped being able to make another. The message it fails with names causes that are not the cause. Nothing else changes, and nothing here breaks anything.
 
 **A type mapper defined a dynamic assembly every time it was asked to read or write.** Every call to `Read`, `Write`, `GetReader` or `GetWriter` built a fresh `Mapper`, and with it a fresh code generator - and a code generator defines a dynamic assembly of its own. The emitted serialiser *was* cached, on the mapper that was being thrown away.
 
