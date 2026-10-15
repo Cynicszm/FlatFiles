@@ -12,6 +12,13 @@ namespace FlatFiles.TypeMapping
 
         public int LogicalCount => lookup.Count - ignoredCount;
 
+        /// <summary>
+        ///     How many mappings have been registered, ignored ones included. It only ever grows, so a holder
+        ///     that remembers it can tell whether anything has been added since it last looked - which is what
+        ///     emitted code depends on, since it is built from the set of mappings and their order.
+        /// </summary>
+        public int MappingCount => lookup.Count;
+
         public TMemberMapping GetOrAddMember<TMemberMapping>( IMemberAccessor member, Func<int, int, TMemberMapping> factory )
             where TMemberMapping : IMemberMapping
         {

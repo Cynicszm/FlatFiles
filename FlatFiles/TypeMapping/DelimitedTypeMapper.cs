@@ -952,7 +952,7 @@ namespace FlatFiles.TypeMapping
 
         private DelimitedTypedReader<TEntity> GetTypedReader( DelimitedReader reader )
         {
-            var mapper = new Mapper<TEntity>( lookup, GetCodeGenerator() );
+            var mapper = CurrentMapper();
             var typedReader = new DelimitedTypedReader<TEntity>( reader, mapper );
             return typedReader;
         }
@@ -997,7 +997,7 @@ namespace FlatFiles.TypeMapping
 
         private TypedWriter<TEntity> GetTypedWriter( IWriterWithMetadata writer )
         {
-            var mapper = new Mapper<TEntity>( lookup, GetCodeGenerator() );
+            var mapper = CurrentMapper();
             return new TypedWriter<TEntity>( writer, mapper );
         }
 
@@ -1286,7 +1286,7 @@ namespace FlatFiles.TypeMapping
 
         public IMapper<TEntity> GetMapper()
         {
-            return new Mapper<TEntity>( lookup, GetCodeGenerator() );
+            return CurrentMapper();
         }
 
         IMapper IMapperSource.GetMapper()
@@ -1294,11 +1294,50 @@ namespace FlatFiles.TypeMapping
             return GetMapper();
         }
 
+        /// <summary>
+        ///     The mapper for this configuration, built once and kept.
+        /// </summary>
+        /// <remarks>
+        ///     Every call used to build a new one, and with it a new code generator - and an
+        ///     <see cref="EmitCodeGenerator" /> defines a dynamic assembly of its own. So a caller writing a
+        ///     record at a time, or reading a file at a time, built one dynamic assembly per call until the
+        ///     process ran out of mappings for executable memory and the runtime failed to start another. The
+        ///     emitted serialiser was already cached - on the mapper that was being thrown away.
+        ///     <para>
+        ///         It is rebuilt where a mapping has been added since, because that is what emitted code is
+        ///         built from. Changing a column's settings needs no rebuild: those are read from the schema
+        ///         when the record is parsed or formatted, not baked into the generated code.
+        ///     </para>
+        /// </remarks>
+        private Mapper<TEntity> CurrentMapper()
+        {
+            if (cachedMapper is not null && cachedMappingCount == lookup.MappingCount)
+            {
+                return cachedMapper;
+            }
+            cachedMappingCount = lookup.MappingCount;
+            cachedMapper = new Mapper<TEntity>( lookup, GetCodeGenerator() );
+            return cachedMapper;
+        }
+
+        private Mapper<TEntity>? cachedMapper;
+
+        private int cachedMappingCount = -1;
+
+        /// <summary>
+        ///     The code generator, held rather than built per call for the reason given on
+        ///     <see cref="CurrentMapper" />. Both kinds are kept, because whether the mapping is optimised can
+        ///     be changed after one has been handed out.
+        /// </summary>
         private ICodeGenerator GetCodeGenerator()
         {
             return isMappingOptimised && DynamicCode.IsSupported
-                ? new EmitCodeGenerator()
-                : new ReflectionCodeGenerator();
+                ? emitGenerator ??= new EmitCodeGenerator()
+                : reflectionGenerator ??= new ReflectionCodeGenerator();
         }
+
+        private EmitCodeGenerator? emitGenerator;
+
+        private ReflectionCodeGenerator? reflectionGenerator;
     }
 }

@@ -1,4 +1,19 @@
-﻿## 9.2.0 (2026-10-02)
+﻿## 9.2.1 (unreleased)
+**Not released.** Being built. What is written up here has landed on master.
+
+**A type mapper defined a dynamic assembly every time it was asked to read or write.** Every call to `Read`, `Write`, `GetReader` or `GetWriter` built a fresh `Mapper`, and with it a fresh code generator - and a code generator defines a dynamic assembly of its own. The emitted serialiser *was* cached, on the mapper that was being thrown away.
+
+A caller writing one record at a time therefore built one dynamic assembly per record. Each needs its own mappings for executable memory, and a process that makes enough of them stops being able to make another: the runtime fails with `Failed to create RW mapping for RX memory`, naming insufficient memory and a Linux kernel limit on memory mappings as the likely causes.
+
+Neither of those is the cause, and the frame that raises it is the code generator rather than anything a caller wrote, so it reads as an environment problem and is not one. Reusing the mapper did not help either, because the mapper was not what was being rebuilt.
+
+The mapper and its generator are now held on the type mapper and reused. Twenty writes through one type mapper emitted twenty times and now emit once. **Both generators are kept**, not one, so `OptimiseMapping( false )` after a write still stops it emitting; and the mapper is rebuilt where a mapping has been added since, so configuring a mapper further after using it still takes effect. There are tests for both, because holding something is only safe if what depended on it being fresh still works.
+
+`MemberLookup.MappingCount` is how it knows, and is internal.
+
+**Two workarounds, for anyone who cannot take this release yet:** hoist the writer, calling `GetWriter` once and writing every record through it, which is faster anyway; or `OptimiseMapping( false )`, which emits nothing at the cost of reading and writing each value reflectively.
+
+## 9.2.0 (2026-10-02)
 **Summary** - One defect and three additions, all from reading a file whose records are not all the same shape. The delimited reader named the record before the one that went wrong in two of its errors, which is fixed. A handler for a fixed-length record being read can now see which record it is. A selector can be told to pass a record over, which the two readers previously could not be made to agree on. And one record's text can be split into its values without standing a reader up around it. Nothing here breaks anything.
 
 **The delimited reader named the record before the one that went wrong.** Two errors are raised before a record has a context of its own - a record the parser cannot read at all, and a record no schema matches - and both asked for one from a method that answered with the last record's, which it had kept in a field and never cleared. So a bad third record was reported as the second, by number, by text and by values. Only the first record in a file was ever named correctly, because until then there was nothing stale to answer with.
