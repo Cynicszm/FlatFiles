@@ -1,5 +1,5 @@
-﻿## 9.2.2 (unreleased)
-**Not released.** Being built. What is written up here has landed on master.
+﻿## 9.2.2 (2026-10-23)
+**Summary** - One fix and some housekeeping. A custom mapping that reads a column and never writes it took the rest of the mapping off the path that writes straight from an entity, which is the last corner of the defect 9.2.1 fixed. The dependencies move up, including a major for MSTest, whose analysers found three things in the test suite worth fixing. Nothing a caller can see changes, and nothing here breaks anything.
 
 **A custom mapping that reads a column and never writes it no longer takes the rest of the mapping with it.** Writing needs a getter for every column or it uses none of them, and none was built for a column that was never going to write anything - so a mapping carrying one went back through the array of values, boxing every other column, on account of the one with nothing to say. It is the last corner of the defect the rest of the mapper was fixed for in 9.2.1.
 
