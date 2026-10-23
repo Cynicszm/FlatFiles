@@ -310,11 +310,11 @@ namespace FlatFiles.TypeMapping
                 return null;
             }
             var writerMappings = GetWriterMemberMappings( mappings );
-            if (writerMappings.Length == 0 || writerMappings.Length != lookup.LogicalCount)
+            if (writerMappings.Length == 0 || writerMappings.Length > lookup.LogicalCount)
             {
                 return null;
             }
-            var getters = new IColumnGetter<TEntity>[writerMappings.Length];
+            var getters = new IColumnGetter<TEntity>[lookup.LogicalCount];
             foreach (var mapping in writerMappings)
             {
                 var getter = BuildColumnGetter( mapping );
@@ -324,6 +324,22 @@ namespace FlatFiles.TypeMapping
                 }
                 getters[mapping.LogicalIndex] = getter;
             }
+            // A mapping that reads a column and never writes it - a custom mapping given a reader and no
+            // writer - is not among those above, and leaves a slot empty. It wrote nothing into the array of
+            // values either, so the column was formatted from the null left sitting there; it is formatted
+            // from a null here. Without this the whole mapping went back through the array on account of one
+            // column that was never going to write anything.
+            foreach (var mapping in mappings)
+            {
+                var index = mapping.LogicalIndex;
+                if (index >= 0 && index < getters.Length && getters[index] is null
+                    && mapping.Member is null && mapping.Writer is null)
+                {
+                    getters[index] = new NullColumnGetter<TEntity>( mapping.ColumnDefinition );
+                }
+            }
+            // Any slot still empty belongs to a column that was meant to write and could not, which is still
+            // a reason to take the whole mapping through the array.
             return Array.Exists( getters, g => g is null ) ? null : getters;
         }
 

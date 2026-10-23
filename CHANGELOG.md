@@ -1,6 +1,14 @@
 ﻿## 9.2.2 (unreleased)
 **Not released.** Being built. What is written up here has landed on master.
 
+**A custom mapping that reads a column and never writes it no longer takes the rest of the mapping with it.** Writing needs a getter for every column or it uses none of them, and none was built for a column that was never going to write anything - so a mapping carrying one went back through the array of values, boxing every other column, on account of the one with nothing to say. It is the last corner of the defect the rest of the mapper was fixed for in 9.2.1.
+
+Such a column writes what it always wrote: nothing filled its slot in the array of values, so it was formatted from the null left sitting there, and it is formatted from a null here - the column's own null formatter included, which is the part that would have been lost by writing an empty string instead. A column that was *meant* to write and could not is still a reason to take the whole mapping through the array; only one that writes nothing by construction is filled in.
+
+The test that it no longer does this fails against the old code, and the three beside it - what it writes, what the null formatter does with it, and that the reader still runs - pass either way, which is what makes them worth having.
+
+**The `IsRaggedRight` paragraph in the README is rewrapped.** A sentence had been broken mid-clause across three lines by an earlier edit. Nothing it says changes.
+
 **The dependencies move up.** `Microsoft.CodeAnalysis.CSharp` goes from 4.8.0 to 5.9.0 in the generator and in the tests, `Microsoft.NET.Test.Sdk` from 18.10.1 to 18.11.0, and `MSTest.TestAdapter` and `MSTest.TestFramework` from 3.11.1 to 4.5.1 - a major version for the last pair. `BenchmarkDotNet` 0.15.8 and `CsvHelper` 33.1.0 are unchanged and current.
 
 Only one of those is visible from outside, and it is worth saying which. **The generator ships inside the package**, at `analyzers/dotnet/cs/FlatFiles.Generator.dll`, so the Roslyn version it is built against is a floor on the compiler that builds a consuming project rather than a private build detail. Raising it to 5.9.0 raises that floor.
