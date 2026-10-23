@@ -725,14 +725,7 @@ Stephen,Tyler,""7452 Terrace """"At the Plaza"""" road"",SomeTown,SD, 91234
             mapper.Property( x => x.DateTime );
             mapper.Ignored();
 
-            try
-            {
-                _ = mapper.Read( reader ).ToArray();
-                Assert.IsTrue( false ); // The line above should always fail.
-            }
-            catch (FlatFileException)
-            {                
-            }
+            Assert.Throws<FlatFileException>( () => _ = mapper.Read( reader ).ToArray() );
         }
 
         [TestMethod]

@@ -20,7 +20,7 @@ namespace FlatFiles.Test
             csvReader.RecordError += ( _, e ) =>
             {
                 Assert.IsNotNull( e.RecordContext, "The record context was null" );
-                Assert.AreEqual( e.RecordContext.PhysicalRecordNumber, 1 );
+                Assert.AreEqual( 1, e.RecordContext.PhysicalRecordNumber );
                 Assert.IsNotNull( e.Exception, "The exception was null." );
                 e.IsHandled = true;
             };
