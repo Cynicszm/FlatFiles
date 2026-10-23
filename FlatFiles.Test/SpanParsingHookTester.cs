@@ -108,9 +108,18 @@ namespace FlatFiles.Test
         {
             // A request is the negation of the length, so asking for one is -1. Were Unchanged that value, a
             // reader would read this as "leave the value alone", parse the original and never call the hook
-            // again - losing its answer without a word. Unchanged is int.MinValue so that cannot happen.
+            // again - losing its answer without a word.
+            //
+            // Both of these compare compile-time constants, which is why MSTEST0032 calls them always true,
+            // and is exactly what they are for: they do not test what the library computes, they pin what it
+            // declares, and they go red the moment somebody edits Unchanged back to -1. An analyser cannot
+            // model that, so the rule is turned off here rather than the assertions being weakened to satisfy
+            // it. The behaviour this protects is tested below, where a hook asking for one character is
+            // asked again.
+#pragma warning disable MSTEST0032
             Assert.AreNotEqual( SpanParsingHooks.Unchanged, SpanParsingHooks.NeedsLength( 1 ) );
             Assert.AreEqual( int.MinValue, SpanParsingHooks.Unchanged );
+#pragma warning restore MSTEST0032
         }
 
         [TestMethod]

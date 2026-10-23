@@ -1,4 +1,23 @@
-﻿## 9.2.1 (2026-10-15)
+﻿## 9.2.2 (unreleased)
+**Not released.** Being built. What is written up here has landed on master.
+
+**The dependencies move up.** `Microsoft.CodeAnalysis.CSharp` goes from 4.8.0 to 5.9.0 in the generator and in the tests, `Microsoft.NET.Test.Sdk` from 18.10.1 to 18.11.0, and `MSTest.TestAdapter` and `MSTest.TestFramework` from 3.11.1 to 4.5.1 - a major version for the last pair. `BenchmarkDotNet` 0.15.8 and `CsvHelper` 33.1.0 are unchanged and current.
+
+Only one of those is visible from outside, and it is worth saying which. **The generator ships inside the package**, at `analyzers/dotnet/cs/FlatFiles.Generator.dll`, so the Roslyn version it is built against is a floor on the compiler that builds a consuming project rather than a private build detail. Raising it to 5.9.0 raises that floor.
+
+In practice it excludes nobody who could use this package anyway: the library targets `net10.0`, so a consumer is already building with a .NET 10 SDK, and the compiler in 10.0.401 loads the generator with no `CS9057` and no warning of any kind. It is a patch for that reason, not because the change is too small to notice.
+
+The MSTest major is the one that could have bitten and did not: all 927 tests pass against it unchanged, and the assertions this suite leans on - `Assert.IsEmpty`, `Assert.HasCount`, `Assert.ThrowsExactly` - are all still there and still mean what they did.
+
+**The MSTest major brought analysers with it, and they found three things.** A bump that leaves warnings behind is not finished, so they are fixed here rather than left:
+
+- An `Assert.AreEqual` in the record error handler had expected and actual the wrong way round, so a failure there would have read backwards - in a handler, where a confusing failure is hardest to chase.
+- An `Assert.IsTrue( false )` stood in for "that line should have thrown", wrapped in a `try` with an empty `catch`. It is now `Assert.Throws<FlatFileException>`, which says what it means and reports what actually happened when it does not.
+- Two assertions comparing compile-time constants are called always true, and are kept with the rule turned off at those two lines. They do not test what the library computes; they pin what it declares, and they go red the moment somebody edits `SpanParsingHooks.Unchanged` back to `-1`. An analyser cannot model an edit, which is the whole point of them.
+
+Nothing in `lib/net10.0` changes, and package validation is clean against the 9.2.1 baseline.
+
+## 9.2.1 (2026-10-15)
 **Summary** - One fix, and it is a crash rather than a nicety. A type mapper defined a dynamic assembly every time it was asked to read or write, so a caller writing a record at a time eventually exhausted the process's mappings for executable memory and the runtime stopped being able to make another. The message it fails with names causes that are not the cause. Nothing else changes, and nothing here breaks anything.
 
 **A type mapper defined a dynamic assembly every time it was asked to read or write.** Every call to `Read`, `Write`, `GetReader` or `GetWriter` built a fresh `Mapper`, and with it a fresh code generator - and a code generator defines a dynamic assembly of its own. The emitted serialiser *was* cached, on the mapper that was being thrown away.
