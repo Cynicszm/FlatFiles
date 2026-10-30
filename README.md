@@ -116,9 +116,12 @@ away pays the whole cost and keeps none of the benefit.
 
 The library holds what it can - the emitted code is kept on the mapper, and the one dynamic assembly it is
 written into is shared by every mapper in the process - so building them without limit no longer exhausts
-anything. What it still does is emit a deserialiser and a serialiser for each one, which accumulate for as long
-as the process runs. There is no way around that from inside the library: what those emit reads the mappings
-they were built from, so one mapper's cannot be handed to another.
+anything. Twenty thousand mappers, each built and read through once, cost one dynamic assembly and 89 MB, or
+about four kilobytes a mapper.
+
+What those kilobytes are is a deserialiser and a serialiser emitted for each mapper, which accumulate for as
+long as the process runs. There is no way around that from inside the library: what those emit reads the
+mappings they were built from, so one mapper's cannot be handed to another.
 
 ### Auto-mapping
 If your delimited file (CSV, TSV, etc.) has a schema with column names that match your class's property names, you can use the `GetAutoMappedReader` method as a shortcut. This method will read the schema from your file and map the columns to the properties automatically, returning a reader for retrieving the data. It's important to note that you cannot customise the parsing behaviour of any of the columns, at which point you are better off explicitly defining the schema. Fortunately, FlatFiles uses pretty liberal parsing out-of-the-box, so most common formats will work.
