@@ -1,5 +1,5 @@
-﻿## 9.2.3 (unreleased)
-**Not released.** Being built. What is written up here has landed on master.
+﻿## 9.2.3 (2026-10-30)
+**Summary** - One fix, and the third and last level of the same defect. A type mapper built per call defined a dynamic assembly of its own, so a process that makes enough of them stops being able to make another - the same failure 9.2.1 and 9.2.2 addressed one and two levels down. Every type mapper now shares one code generator. Building a type mapper once is still the right thing to do, and the README now says so. Nothing a caller can see changes, and nothing here breaks anything.
 
 **Every type mapper now shares one code generator.** 9.2.1 stopped a mapper emitting on every read and write, and 9.2.2 finished the corner it missed - but both held the generator on the type mapper, so a caller who builds a *type mapper* per call never had one to reuse. Each new type mapper defined a dynamic assembly of its own, and a process that makes enough of them stops being able to make another. It fails the same way and with the same misleading message as before, reached this time through `GetFactory` from a read rather than through a write.
 
