@@ -1,4 +1,15 @@
-﻿## 9.2.2 (2026-10-23)
+﻿## 9.2.3 (unreleased)
+**Not released.** Being built. What is written up here has landed on master.
+
+**Every type mapper now shares one code generator.** 9.2.1 stopped a mapper emitting on every read and write, and 9.2.2 finished the corner it missed - but both held the generator on the type mapper, so a caller who builds a *type mapper* per call never had one to reuse. Each new type mapper defined a dynamic assembly of its own, and a process that makes enough of them stops being able to make another. It fails the same way and with the same misleading message as before, reached this time through `GetFactory` from a read rather than through a write.
+
+Measured, twenty fixed-length reads: a mapper built per read defined twenty dynamic assemblies and now defines none. What grows instead is types in a single module, which is far cheaper - memory mappings are what a process runs out of, and those are per assembly.
+
+**The emitted factory is now held per entity type for the process.** It is `new TEntity()` and nothing else, so it depends on the type and not on the mapping, and two mappers over the same entity emitted it twice between them. This is the one piece of emission that is genuinely bounded by the program rather than by how often it is called. The deserialiser and the serialiser are not cached: what they emit reads the mappings they were built from, so sharing one between two mappings would be wrong rather than merely wasteful.
+
+**What it costs, which is worth stating rather than burying.** A shared generator is held statically, so its assembly is never collected, where one belonging to a single mapper could be. For a program with a bounded number of mappings that is one assembly it would have had anyway. For one that creates mappers without limit it turns running out of mappings into a module that grows - better, and still not free. **Building a type mapper once and keeping it remains the right thing to do**, and the README now says so.
+
+## 9.2.2 (2026-10-23)
 **Summary** - One fix and some housekeeping. A custom mapping that reads a column and never writes it took the rest of the mapping off the path that writes straight from an entity, which is the last corner of the defect 9.2.1 fixed. The dependencies move up, including a major for MSTest, whose analysers found three things in the test suite worth fixing. Nothing a caller can see changes, and nothing here breaks anything.
 
 **A custom mapping that reads a column and never writes it no longer takes the rest of the mapping with it.** Writing needs a getter for every column or it uses none of them, and none was built for a column that was never going to write anything - so a mapping carrying one went back through the array of values, boxing every other column, on account of the one with nothing to say. It is the last corner of the defect the rest of the mapper was fixed for in 9.2.1.

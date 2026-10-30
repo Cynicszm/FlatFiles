@@ -13,6 +13,26 @@ namespace FlatFiles.TypeMapping
         private readonly ConcurrentDictionary<string, int> nameLookup = new();
         private readonly ModuleBuilder moduleBuilder;
 
+        /// <summary>
+        ///     The one generator every type mapper uses.
+        /// </summary>
+        /// <remarks>
+        ///     Each instance defines a dynamic assembly of its own, and an assembly is what the runtime needs
+        ///     mappings for executable memory to hold. A caller who builds a type mapper per call - per file,
+        ///     say - built one assembly per call, and a process that makes enough of them stops being able to
+        ///     make another. Holding one assembly for the process turns that into types in a single module,
+        ///     which is far cheaper.
+        ///     <para>
+        ///         The cost of holding it is that it is never collected, where a generator belonging to one
+        ///         mapper could be. That is the trade: a bounded program pays for one assembly it would have
+        ///         had anyway, and an unbounded one grows a module rather than running out of mappings. Neither
+        ///         is a substitute for building a type mapper once and keeping it.
+        ///     </para>
+        /// </remarks>
+        internal static EmitCodeGenerator Shared => LazyShared.Value;
+
+        private static readonly Lazy<EmitCodeGenerator> LazyShared = new( () => new EmitCodeGenerator() );
+
         public EmitCodeGenerator()
         {
             var assemblyName = new AssemblyName( "FlatFiles.DynamicAssembly" );
@@ -27,11 +47,15 @@ namespace FlatFiles.TypeMapping
         }
 
         /// <summary>
-        ///     How many times a generator has been asked to prepare something: a factory, a constructor, a
+        ///     How many times a generator has actually emitted something: a factory, a constructor, a
         ///     deserialiser or a serialiser. Each one defines a type in the dynamic module, so what a read asks
         ///     for once is cheap and what it asks for per record is not - 8.1.0 shipped a factory built per
         ///     record, which every behavioural test passed. The tests read this either side of a read and hold
         ///     the count to what a read prepares rather than to what it reads.
+        ///     <para>
+        ///         Something served from a cache has emitted nothing and does not count, which is the point of
+        ///         caching it.
+        ///     </para>
         /// </summary>
         internal static int Preparations => preparations;
 
@@ -43,7 +67,23 @@ namespace FlatFiles.TypeMapping
             return $"{name}_{id}";
         }
 
+        /// <summary>
+        ///     A delegate that builds one entity, which the emitted form does by calling the type's
+        ///     parameterless constructor and nothing else.
+        /// </summary>
+        /// <remarks>
+        ///     What it emits depends on the type and on nothing about the mapping, so two mappers over the same
+        ///     entity would emit the same method twice. It is held for the process instead, which bounds this by
+        ///     the number of entity types a program has rather than by how many mappers it builds.
+        /// </remarks>
         public Func<TEntity> GetFactory<TEntity>()
+        {
+            return (Func<TEntity>) Factories.GetOrAdd( typeof( TEntity ), _ => BuildFactory<TEntity>() );
+        }
+
+        private static readonly ConcurrentDictionary<Type, object> Factories = new();
+
+        private Func<TEntity> BuildFactory<TEntity>()
         {
             Interlocked.Increment( ref preparations );
             var entityType = typeof( TEntity );

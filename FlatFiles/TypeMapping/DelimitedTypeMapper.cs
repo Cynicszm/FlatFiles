@@ -1325,18 +1325,20 @@ namespace FlatFiles.TypeMapping
         private int cachedMappingCount = -1;
 
         /// <summary>
-        ///     The code generator, held rather than built per call for the reason given on
-        ///     <see cref="CurrentMapper" />. Both kinds are kept, because whether the mapping is optimised can
-        ///     be changed after one has been handed out.
+        ///     The code generator for this mapping. The emitting one is shared by every type mapper in the
+        ///     process - see <see cref="EmitCodeGenerator.Shared" /> - because each instance defines a dynamic
+        ///     assembly, and a caller who builds a type mapper per call built one assembly per call.
         /// </summary>
+        /// <remarks>
+        ///     The reflective one is still held per mapper, since it costs nothing and whether the mapping is
+        ///     optimised can be changed after a generator has been handed out.
+        /// </remarks>
         private ICodeGenerator GetCodeGenerator()
         {
             return isMappingOptimised && DynamicCode.IsSupported
-                ? emitGenerator ??= new EmitCodeGenerator()
+                ? EmitCodeGenerator.Shared
                 : reflectionGenerator ??= new ReflectionCodeGenerator();
         }
-
-        private EmitCodeGenerator? emitGenerator;
 
         private ReflectionCodeGenerator? reflectionGenerator;
     }

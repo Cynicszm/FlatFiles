@@ -23,10 +23,15 @@ namespace FlatFiles.Test
     ///         flaky test. One emitted preparation is one too many here however the runtime is feeling.
     ///     </para>
     /// </remarks>
+    // Reads a counter the whole process shares, as the other classes that read it do.
+    [DoNotParallelize]
     [TestClass]
     public class CodeGenerationReuseTester
     {
         private const int Calls = 20;
+
+        // Ten characters for the key and six for the quantity, which is what the schema below declares.
+        private const string Record = "K         " + "     1";
 
         public class Trade
         {
@@ -96,6 +101,54 @@ namespace FlatFiles.Test
             }
 
             Assert.AreEqual( prepared, EmitCodeGenerator.Preparations, "code was emitted per call" );
+        }
+
+        /// <summary>
+        ///     Building a type mapper per call no longer defines a dynamic assembly per call.
+        /// </summary>
+        /// <remarks>
+        ///     Holding the mapper fixed the caller who reuses one. A caller who builds one per file never had a
+        ///     mapper to reuse, and went on defining an assembly each time - which is what runs a process out of
+        ///     mappings for executable memory. Every type mapper now shares one generator, so what grows is
+        ///     types in a single module.
+        ///     <para>
+        ///         The assertion is an upper bound rather than an equality on purpose: a generator defines its
+        ///         assembly as collectible, so the count can fall while this runs. It cannot rise for the reason
+        ///         this is about without rising by one per call.
+        ///     </para>
+        /// </remarks>
+        [TestMethod]
+        public void TestAMapperPerCall_DoesNotDefineAnAssemblyPerCall()
+        {
+            // Warm whatever the first mapper of a process emits, so none of it lands inside the count.
+            _ = FixedMapper().Read( new StringReader( Record ) ).ToArray();
+
+            var assemblies = AppDomain.CurrentDomain.GetAssemblies().Count( assembly => assembly.IsDynamic );
+            for (var index = 0; index != Calls; ++index)
+            {
+                _ = FixedMapper().Read( new StringReader( Record ) ).ToArray();
+            }
+
+            Assert.IsLessThanOrEqualTo( assemblies,
+                AppDomain.CurrentDomain.GetAssemblies().Count( assembly => assembly.IsDynamic ),
+                "a dynamic assembly was defined per type mapper" );
+        }
+
+        /// <summary>
+        ///     The emitted factory is <c>new TEntity()</c> and nothing else, so it depends on the type and not
+        ///     on the mapping. Two mappers over one entity emit it once between them.
+        /// </summary>
+        [TestMethod]
+        public void TestTheFactoryIsHeldPerEntityType()
+        {
+            var first = EmitCodeGenerator.Shared.GetFactory<Trade>();
+
+            var prepared = EmitCodeGenerator.Preparations;
+            var second = EmitCodeGenerator.Shared.GetFactory<Trade>();
+
+            Assert.AreSame( first, second, "the factory was emitted again for a type that already had one" );
+            Assert.AreEqual( prepared, EmitCodeGenerator.Preparations, "something was emitted for a cache hit" );
+            Assert.IsNotNull( second() );
         }
 
         /// <summary>
