@@ -20,6 +20,7 @@ If you are working with data classes, defining schemas is even easier. You can u
 ## Table of Contents
 * [Overview](#overview)
 * [Type Mappers](#type-mappers)
+    * [Build the mapper once](#build-the-mapper-once)
     * [Auto-mapping](#auto-mapping)
     * [Constructor mapping](#constructor-mapping)
     * [Attribute mapping](#attribute-mapping)
@@ -97,6 +98,27 @@ using (var writer = new StreamWriter(File.OpenCreate(@"C:\path\to\file2.csv")))
 ```
 
 *Note* I was able to customise the `OutputFormat` of properties that were previously configured. The first time `Property` is called on a property, FlatFiles assumes it's the next column to appear in the flat file. However, subsequent configuration on the property doesn't change the order of the columns or reset any other settings.
+
+### Build the mapper once
+
+**A type mapper is configuration, not a per-operation object.** Define it once - a `static readonly` field, or
+whatever your application uses for things it sets up and keeps - and call `Read` and `Write` on the same
+instance:
+
+```csharp
+private static readonly IDelimitedTypeMapper<Customer> CustomerMapper = BuildCustomerMapper();
+```
+
+Building one per file does more than repeat the fluent calls. Unless the mapping is unoptimised, the first read
+or write through a mapper emits code for it, and emitting is not free: it is why reading and writing are as fast
+as they are, and it is paid back over records rather than over calls. A mapper that reads one file and is thrown
+away pays the whole cost and keeps none of the benefit.
+
+The library holds what it can - the emitted code is kept on the mapper, and the one dynamic assembly it is
+written into is shared by every mapper in the process - so building them without limit no longer exhausts
+anything. What it still does is emit a deserialiser and a serialiser for each one, which accumulate for as long
+as the process runs. There is no way around that from inside the library: what those emit reads the mappings
+they were built from, so one mapper's cannot be handed to another.
 
 ### Auto-mapping
 If your delimited file (CSV, TSV, etc.) has a schema with column names that match your class's property names, you can use the `GetAutoMappedReader` method as a shortcut. This method will read the schema from your file and map the columns to the properties automatically, returning a reader for retrieving the data. It's important to note that you cannot customise the parsing behaviour of any of the columns, at which point you are better off explicitly defining the schema. Fortunately, FlatFiles uses pretty liberal parsing out-of-the-box, so most common formats will work.
